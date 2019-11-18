@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>test.html</title>
+<meta charset="UTF-8">
+</head>
+<body>
+<p>Please log in</p>
+<form action=/action/test method="post">
+<table>
+<tr><td>账号:</td><td><input type="text" name="name"></td></tr>
+<tr><td>密码:</td><td><input type="password" name="address"></td></tr>
+<tr><td><input type="submit" name="submit" value="submit"></td>
+<td><input type="reset" value="reset"></td></tr>
+</table>
+</form>
+
+<br />
+<p align="left"><b> 蜂鸣器控制示例</p>
+<form id="gpio-buzzer" action="/action/buzzer" method="post">
+<input type="hidden" name="lab_buzzer" value="buzzer" />
+<table>
+<tr>
+<td width=100>
+BUZZER</td>
+<td width=100>
+<input type="checkbox" name="dir_buz" checked disabled title="out" />out</td>
+<td width=100>
+<input type="checkbox" name="val_buz" /></td>
+<td width=100><input type="submit" value="set" /></td>
+</tr>
+</table>
+</form>
+
+<br />
+<p align="left"><b> LED控制示例</p>
+<form id="gpio-led" action="/action/led" method="post">
+<input type="hidden" name="lab_led" value="led" />
+<table>
+<tr>
+<td width=100>
+BUZZER</td>
+<td width=100>
+<input type="checkbox" name="dir_led" checked disabled title="out" />out</td>
+<td width=100>
+<input type="checkbox" name="val_led" /></td>
+<td width=100><input type="submit" value="set" /></td>
+</tr>
+</table>
+</form>
+
+<script type="text/javascript">
+function loadXMLDoc()
+{
+		var xmlhttp;
+		if (window.XMLHttpRequest)
+		{// code for IE7+, Firefox, Chrome, Opera, Safari
+				xmlhttp=new XMLHttpRequest();
+		}
+		else
+		{// code for IE6, IE5
+				xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+		}
+		xmlhttp.onreadystatechange=function()
+		{
+				if (xmlhttp.readyState==4 && xmlhttp.status==200)
+				{
+						document.getElementById("myDiv").innerHTML=xmlhttp.responseText;
+				}
+		}
+		xmlhttp.open("GET","action/test",true);
+		xmlhttp.send();
+}
+</script>
+
+<div id="myDiv"><h2>需要刷新的局部内容</h2></div>
+<button type="button" onclick="loadXMLDoc()">通过 AJAX 实现局部刷新</button>
+
+<p align="left"><b> &copy; 2019 HTGD Co.,Ltd.</b> <a href="http://www.htgd.com.cn">公司主页</a></p>
+</body>
+</html>
