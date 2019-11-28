@@ -21,11 +21,11 @@
 #include	"cJSON.h"
 #include	"actionhandler.h"
 #include	"filehandler.h"
+#include	"tools.h"
 
 /********************************* Defines ************************************/
 
 static int finished = 0;
-
 
 /********************************* Forwards ***********************************/
 
@@ -208,12 +208,32 @@ MAIN(goahead, int argc, char **argv, char **envp)
         }
     }
 #endif
+
+	//创建锁，相当于new一个对象
+	pthread_mutex_init(&mute_cmd, NULL);
+	pthread_mutex_init(&mute_file, NULL);
+	/* create thread, do socket connect */
+	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
+		perror("pthread_create error!");
+	}
+	if(pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
+		perror("pthread_create error!");
+	}
+
     websServiceEvents(&finished);
     logmsg(1, "Instructed to exit");
+	if(socket_cmd > 0)
+		close(socket_cmd);
+	if(socket_file > 0)
+		close(socket_file);
     websClose();
 #if WINDOWS
     windowsClose();
 #endif
+  	//释放互斥锁
+	pthread_mutex_destroy(&mute_cmd);
+	pthread_mutex_destroy(&mute_file);
+
     return 0;
 }
 
