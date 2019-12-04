@@ -20,7 +20,7 @@
 #define SUCCESS 1
 #define FAIL 0
 #define FILE_POINTS "/tmp/points/points.json"
-#define FILE_LUA "/tmp/lua"
+#define DIR_LUA "/tmp/lua"
 
 int socket_cmd;
 int socket_file;
@@ -29,14 +29,14 @@ pthread_mutex_t mute_file;
 pthread_t t_socket_cmd;
 pthread_t t_socket_file;
 
-char *openfile(const char *file_path);
-char *readFileList(const char *basePath);
-char *strrpc(char *str, char *oldstr, char *newstr);
-void delay_ms(int timeout);
-int create_connect(const char *server_ip, int server_port, int s);
+char *get_file_content(const char *file_path);
+char *get_dir_content(const char *dir_path);
+char *strrpc(char *str, const char *oldstr, const char *newstr);
+void delay_ms(const int timeout);
+int create_connect(const char *server_ip, int server_port, const int s);
 int socket_create();
-int socket_timeout(int sockfd, int s);
-int socket_send(int clientSocket, int no, const char *content, char *recvbuf);
+int socket_timeout(int sockfd, const int s);
+int socket_send(int clientSocket, const int no, const char *content, char *recvbuf);
 void *socket_cmd_thread(void * arg);
 void *socket_file_thread(void * arg);
 

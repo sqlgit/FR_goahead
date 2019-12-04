@@ -150,7 +150,7 @@ static int sendfile(const cJSON *data_json)
 		if(!strncmp(token, "PTP:", 4)) {
 			/* PTP */
 			/* open points file */
-			f_content = openfile(FILE_POINTS);
+			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
 			if (f_content == NULL) {
 				fprintf(stderr, "open file error!\n");
@@ -185,7 +185,7 @@ static int sendfile(const cJSON *data_json)
 		} else if (!strncmp(token, "Lin:", 4)) {
 			/* Lin */
 			/* open points file */
-			f_content = openfile(FILE_POINTS);
+			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
 			if (f_content == NULL) {
 				fprintf(stderr, "open file error!\n");
@@ -234,10 +234,10 @@ static int sendfile(const cJSON *data_json)
 	//	} else if (!strncmp(token, "Call:", 5)) {
 			/* call file */
 	//		strrpc(token, "Call:", "");
-	//		sprintf(call_file_path, "%s/%s", FILE_LUA, token);
+	//		sprintf(call_file_path, "%s/%s", DIR_LUA, token);
 	//		printf("call_file_path = %s\n", call_file_path);
 			/* open call lua file */
-	//		f_content = openfile(call_file_path);
+	//		f_content = get_file_content(call_file_path);
 			/* file is NULL */
 	/*		if (f_content == NULL) {
 				fprintf(stderr, "open file error!\n");
@@ -401,7 +401,6 @@ void set(Webs *wp)
 	if(ret == FAIL){
 		goto end;
 	}
-
 	ret = FAIL;
 	port_n = cJSON_GetObjectItem(data, "port");
 	if(port_n != NULL) {
@@ -433,6 +432,9 @@ void set(Webs *wp)
 			default:
 				goto end;
 		}
+	}
+	if(ret == FAIL){
+		goto end;
 	}
 
 	/*char *act = action->valuestring;
@@ -496,7 +498,7 @@ end:
 /* get points file content */
 static int get_points_file()
 {
-	ret_f_content = openfile(FILE_POINTS);
+	ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
 	if (ret_f_content == NULL) {
 		fprintf(stderr, "get points file error!\n");
@@ -510,7 +512,7 @@ static int get_points_file()
 /* get lua name */
 static int get_lua_data()
 {
-	ret_f_content = readfilelist(FILE_LUA);
+	ret_f_content = get_dir_content(DIR_LUA);
 	/* file is NULL */
 	if (ret_f_content == NULL) {
 		fprintf(stderr, "get lua name error!\n");

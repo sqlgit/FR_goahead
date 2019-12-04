@@ -1,7 +1,7 @@
 #include 	"goahead.h"
 
 /* file open and return file content */
-char *openfile(const char *file_path)
+char *get_file_content(const char *file_path)
 {
 	FILE *fp = NULL;
 	int file_size = 0;
@@ -47,7 +47,7 @@ char *openfile(const char *file_path)
 }
 
 /* read file list and save in array return */
-char *readfilelist(const char *basePath)
+char *get_dir_content(const char *dir_path)
 {
 	DIR *dir = NULL;
 	struct dirent *ptr = NULL;
@@ -55,14 +55,14 @@ char *readfilelist(const char *basePath)
 	char *buf = NULL;
 	cJSON *file_list = NULL;
 
-	if ((dir=opendir(basePath)) == NULL) {
+	if ((dir=opendir(dir_path)) == NULL) {
 		perror("Open dir error...");
 	}
 	file_list = cJSON_CreateArray();
 	while ((ptr=readdir(dir)) != NULL) {
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)    ///current dir OR parrent dir
 			continue;
-		printf("d_name:%s/%s\n", basePath, ptr->d_name);
+		printf("d_name:%s/%s\n", dir_path, ptr->d_name);
 		cJSON_AddStringToObject(file_list, "key", ptr->d_name);
 	}
 	printf("buf = %s\n", buf = cJSON_Print(file_list));
@@ -81,7 +81,7 @@ char *readfilelist(const char *basePath)
 }
 
 /* 实现字符串中指定字符串替换 */
-char *strrpc(char *str, char *oldstr, char *newstr)
+char *strrpc(char *str, const char *oldstr, const char *newstr)
 {
 	char bstr[strlen(str)];//转换缓冲区
 	memset(bstr, 0, sizeof(bstr));
@@ -101,7 +101,7 @@ char *strrpc(char *str, char *oldstr, char *newstr)
 }
 
 /* 毫秒定时器 */
-void delay_ms(int timeout)
+void delay_ms(const int timeout)
 {
 	struct timeval timer;
 	bzero(&timer, sizeof(struct timeval));
@@ -111,7 +111,7 @@ void delay_ms(int timeout)
 }
 
 /* create connect */
-int create_connect(const char *server_ip, int server_port, int s)
+int create_connect(const char *server_ip, int server_port, const int s)
 {
 	int ret = -1;
 	int sockfd = -1;
@@ -181,7 +181,7 @@ int create_connect(const char *server_ip, int server_port, int s)
 /* socket init */
 int socket_create()
 {
-	int sockfd;
+	int sockfd = -1;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
 	if(sockfd < 0){
@@ -194,7 +194,7 @@ int socket_create()
 }
 
 /* socket timeout */
-int socket_timeout(int sockfd, int s)
+int socket_timeout(int sockfd, const int s)
 {
 	int ret = 0;
 	fd_set writefd;
@@ -237,7 +237,7 @@ int socket_timeout(int sockfd, int s)
 }
 
 /* socket client connect with server */
-int socket_send(int clientSocket, int no, const char *content, char *recvbuf)
+int socket_send(int clientSocket, const int no, const char *content, char *recvbuf)
 {
 	int send_len = strlen(content)+100;
 	printf("send_len = %d\n", send_len);
