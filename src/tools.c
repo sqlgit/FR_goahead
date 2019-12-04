@@ -13,20 +13,21 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <sys/time.h>
 #include <pthread.h>
 #include "tools.h"
 #include "cJSON.h"
 
-/* file open */
-char *openfile(char *file_path)
+/* file open and return file content */
+char *openfile(const char *file_path)
 {
 	FILE *fp = NULL;
 	int file_size = 0;
 	int i = 0;
 	char *content = NULL;
 
-	printf("file_path = %s\n", file_path);
+	//printf("file_path = %s\n", file_path);
 	if(NULL != (fp = fopen(file_path, "r"))) {
 		fseek(fp , 0 , SEEK_END);
 		file_size = ftell(fp);
@@ -60,6 +61,38 @@ char *openfile(char *file_path)
 		}
 	}
 	fclose(fp);
+
+	return content;
+}
+
+/* read file list and save in array return */
+char *readfilelist(const char *basePath)
+{
+	DIR *dir;
+	struct dirent *ptr;
+	char *content = NULL;
+
+	if ((dir=opendir(basePath)) == NULL)
+	{
+		perror("Open dir error...");
+	}
+
+	cJSON *file_list = cJSON_CreateArray();
+	while ((ptr=readdir(dir)) != NULL) {
+		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)    ///current dir OR parrent dir
+			continue;
+		printf("d_name:%s/%s\n", basePath, ptr->d_name);
+		cJSON_AddStringToObject(file_list, "key", ptr->d_name);
+	}
+	char *buf = NULL;
+	printf("buf = %s\n", buf = cJSON_Print(file_list));
+	content = (char *)calloc(1, strlen(buf)+1);
+	if(content != NULL) {
+		strcpy(content, buf);
+	}
+	free(buf);
+	closedir(dir);
+	cJSON_Delete(file_list);
 
 	return content;
 }
@@ -221,47 +254,92 @@ int socket_timeout(int sockfd, int s)
 }
 
 /* socket client connect with server */
-int socket_send(int clientSocket, int no, char *content, char *recvbuf)
+int socket_send(int clientSocket, int no, const char *content, char *recvbuf)
 {
-	char *sendbuf = NULL;
-	sendbuf = (char *)calloc(1, sizeof(char)*(strlen(content)+100));
-	if (sendbuf == NULL){
+	int send_len = strlen(content)+100;
+	printf("send_len = %d\n", send_len);
+	char send_buf[send_len];
+	memset(send_buf, 0, send_len);
+	/* test package */
+	if(no == 100) {
+		sprintf(send_buf, "/f/bIII1III%dIII%dIII%s", no, strlen(content), content);
+	} else {
+		sprintf(send_buf, "/f/bIII1III%dIII%dIII%sIII/b/f", no, strlen(content), content);
+	}
+
+	/* send over 1024 bytes */
+	while(send_len > 1024) {
+		char buf[1024] = {0};
+		strncpy(buf, send_buf, 1024);
+		if(send(clientSocket, buf, 1024, 0) != 1024) {
+			perror("send");
+
+			return FAIL;
+		}
+		send_len = send_len - 1024;
+		char tmp_buf[send_len+1];
+		memset(tmp_buf, 0, (send_len+1));
+		int i;
+		for(i = 0; i < send_len; i++){
+			tmp_buf[i] = send_buf[i+1024];
+		}
+		bzero(send_buf, sizeof(send_buf));
+		strcpy(send_buf, tmp_buf);
+	}
+	if(no != 401) {
+		printf("send data to socket server is: %s\n", send_buf);
+	}
+	/* send normal (low)1024 bytes */
+	if(send(clientSocket, send_buf, strlen(send_buf), 0) != strlen(send_buf)) {
+		perror("send");
+
 		return FAIL;
 	}
-	sprintf(sendbuf, "/f/bIII1III%dIII%dIII%sIII/b/f", no, strlen(content), content);
-	if(no != 401) {
-		printf("send data to socket server is: %s\n", sendbuf);
-	}
-	send(clientSocket, sendbuf, strlen(sendbuf), 0);
-	free(sendbuf);
 
 	/* socket set recv timeout */
 	struct timeval timeout;
 	bzero(&timeout, sizeof(struct timeval));
 	timeout.tv_sec = SOCK_SEND_TIMEOUT;
 	timeout.tv_usec = 0;
-	printf("clientSocket = %d\n", clientSocket);
-	if(setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0 ){
+	if(setsockopt(clientSocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout)) < 0 ) {
 		perror("setsockopt");
 
 		return FAIL;
 	}
-	if(recv(clientSocket, recvbuf, MAX_BUF, 0) <= 0) {
-		perror("recv");
-
-		return FAIL;
-	}
-	//int iDataNum;
-	//iDataNum = recv(clientSocket, recvbuf, MAX_BUF, 0);
-	//recvbuf[iDataNum] = '\0';
 	if(no != 401) {
-		printf("recv data of socket server is: %s\n", recvbuf);
-	}
+		/* recv data */
+		if(recv(clientSocket, recvbuf, MAX_BUF, 0) <= 0) {
+			perror("recv");
 
-	return SUCCESS;
+			return FAIL;
+		}
+		//int iDataNum;
+		//iDataNum = recv(clientSocket, recvbuf, MAX_BUF, 0);
+		//recvbuf[iDataNum] = '\0';
+		printf("recv data of socket server is: %s\n", recvbuf);
+
+		return SUCCESS;
+	} else {
+		/*If the packet is not what the heartbeat packet wants within 10 seconds, continue to wait for 10s to see if you can receive the corresponding content. If you still cannot receive the corresponding data, it will be judged as timeout*/
+		do {
+			/* recv data */
+			if(recv(clientSocket, recvbuf, MAX_BUF, 0) <= 0) {
+				perror("recv");
+
+				return FAIL;
+			}
+			printf("recv data of socket server is: %s\n", recvbuf);
+#if local
+		} while (strcmp(recvbuf, "/f/bIII1III401III5IIIHEARTIII/b/f") != 0);
+#else
+		} while (strcmp(recvbuf, "/f/bIII1III401III1III1III/b/f") != 0);
+#endif
+
+		return SUCCESS;
+	}
 }
 
-void *socket_cmd_thread(void * arg)
+void *socket_cmd_thread(void *arg)
 {
 	socket_cmd = -1;
 	while(1) {
@@ -275,11 +353,7 @@ void *socket_cmd_thread(void * arg)
 			ret = socket_send(socket_cmd, 401, "HEART", recvbuf);
 			//解锁
 			pthread_mutex_unlock(&mute_cmd);
-#if local
-			if(ret == SUCCESS && strcmp(recvbuf, "/f/bIII1III401III5IIIHEARTIII/b/f") == 0) { 
-#else
-			if(ret == SUCCESS && strcmp(recvbuf, "/f/bIII1III401III1III1III/b/f") == 0) { 
-#endif
+			if(ret == SUCCESS) { 
 				/* Heartbeat package every 10 seconds */
 				delay_ms(DELAY_MS_TIMEOUT);
 				continue;
@@ -302,7 +376,7 @@ void *socket_cmd_thread(void * arg)
 	}
 }
 
-void *socket_file_thread(void * arg)
+void *socket_file_thread(void *arg)
 {
 	socket_file = -1;
 	while(1) {
@@ -316,11 +390,7 @@ void *socket_file_thread(void * arg)
 			ret = socket_send(socket_file, 401, "HEART", recvbuf);
 			//解锁
 			pthread_mutex_unlock(&mute_file);
-#if local
-			if(ret == SUCCESS && strcmp(recvbuf, "/f/bIII1III401III5IIIHEARTIII/b/f") == 0) { 
-#else
-			if(ret == SUCCESS && strcmp(recvbuf, "/f/bIII1III401III1III1III/b/f") == 0) { 
-#endif
+			if(ret == SUCCESS) { 
 				/* Heartbeat package every 5 seconds */
 				delay_ms(DELAY_MS_TIMEOUT);
 				continue;

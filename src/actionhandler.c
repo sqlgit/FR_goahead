@@ -5,16 +5,17 @@
 #include	"actionhandler.h"
 
 //static int no;
-static int program_start(cJSON *data);
-static int program_stop(cJSON *data);
-static int program_pause(cJSON *data);
-static int program_resume(cJSON *data);
-static int sendfilename(cJSON *data);
-static int sendfile(cJSON *data);
-static int movej(cJSON *data);
-static int mode(cJSON *data);
+static int program_start(const cJSON *data_json);
+static int program_stop(const cJSON *data_json);
+static int program_pause(const cJSON *data_json);
+static int program_resume(const cJSON *data_json);
+static int sendfilename(const cJSON *data_json);
+static int sendfile(const cJSON *data_json);
+static int movej(const cJSON *data_json);
+static int mode(const cJSON *data_json);
 
 static char *content = NULL;
+static char *file_content = NULL;
 static char *ret_f_content = NULL;
 
 /*static int joints(cJSON *data, char *recvbuf)
@@ -48,7 +49,7 @@ static int tcp(cJSON *data, char *recvbuf)
 }*/
 
 /* 101 START */
-static int program_start(cJSON *data)
+static int program_start(const cJSON *data_json)
 {
 	sprintf(content, "START");
 
@@ -56,7 +57,7 @@ static int program_start(cJSON *data)
 }
 
 /* 102 STOP */
-static int program_stop(cJSON *data)
+static int program_stop(const cJSON *data_json)
 {
 	sprintf(content, "STOP");
 
@@ -64,7 +65,7 @@ static int program_stop(cJSON *data)
 }
 
 /* 103 PAUSE */
-static int program_pause(cJSON *data)
+static int program_pause(const cJSON *data_json)
 {
 	sprintf(content, "PAUSE");
 
@@ -72,7 +73,7 @@ static int program_pause(cJSON *data)
 }
 
 /* 104 RESUME */
-static int program_resume(cJSON *data)
+static int program_resume(const cJSON *data_json)
 {
 	sprintf(content, "RESUME");
 
@@ -80,38 +81,60 @@ static int program_resume(cJSON *data)
 }
 
 /* 105 sendFileName */
-static int sendfilename(cJSON *data)
+static int sendfilename(const cJSON *data_json)
 {
-	cJSON *filename = cJSON_GetObjectItem(data, "data");
-	if(filename->valuestring == NULL) {
+	/*calloc file content*/
+	file_content = (char *)calloc(1, sizeof(char)*1024);
+	if(file_content == NULL){
+		perror("file_content error");
+
+		return FAIL;
+	}
+	if(data_json->valuestring == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 
 		return FAIL;
 	}
-	printf("filename:%s\n", filename->valuestring);
-	sprintf(content, "/fruser/%s", filename->valuestring);
+	printf("filename:%s\n", data_json->valuestring);
+	sprintf(file_content, "/fruser/%s", data_json->valuestring);
 
 	return SUCCESS;
 }
 
 /* 106 sendFile */
-static int sendfile(cJSON *data)
+static int sendfile(const cJSON *data_json)
 {
 	const char s[2] = "\n";
 	char *token = NULL;
 	char *f_content = NULL;
 	cJSON *f_json = NULL;
+	int line_num = 0;
+	char *tmp_file = NULL;
+	//char call_file_path[100] = {0};
+	//char call_ret = FAIL;
 
-	cJSON *filecontent = cJSON_GetObjectItem(data, "data");
-	if(filecontent->valuestring == NULL) {
+	if(data_json->valuestring == NULL || !strcmp(data_json->valuestring, "")) {
 		goto end;
 	}
-	printf("upload file content:\n%s\n", filecontent->valuestring);
-	/* get first line */
-	token = strtok(filecontent->valuestring, s);
+	printf("upload file content:%s\n", data_json->valuestring);
+	tmp_file = data_json->valuestring;
+	while(*tmp_file) {
+		if(*tmp_file == '\n')
+			line_num++;
+		tmp_file++;
+	}
+	/*calloc file content*/
+	file_content = (char *)calloc(1, line_num*sizeof(char)*1024);
+	if(file_content == NULL){
+		perror("file_content error");
 
-	while( token != NULL ) {
-		printf( "line = %s\n", token);
+		return FAIL;
+	}
+
+	/* get first line */
+	token = strtok(data_json->valuestring, s);
+	while(token != NULL) {
+		printf("line = %s\n", token);
 		cJSON *j1 = NULL;
 		cJSON *j2 = NULL;
 		cJSON *j3 = NULL;
@@ -137,11 +160,13 @@ static int sendfile(cJSON *data)
 
 				return FAIL;
 			}
+			printf("f_content = %s\n", f_content);
 			f_json = cJSON_Parse(f_content);
 			if (f_json == NULL) {
 				goto end;
 			}
 			strrpc(token, "PTP:", "");
+			printf("token = %s\n", token);
 			cJSON *ptp = cJSON_GetObjectItem(f_json, token);
 			if (ptp == NULL || ptp->type != cJSON_Object) {
 				goto end;
@@ -161,15 +186,7 @@ static int sendfile(cJSON *data)
 			if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) { 
 				goto end;
 			}
-			sprintf(content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s)\n", content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring, acc->valuestring);
-			if (f_json != NULL) {
-				cJSON_Delete(f_json);
-			}
-			if (f_content != NULL) {
-				printf("free f_content\n");
-				free(f_content);
-				f_content = NULL;
-			}
+			sprintf(file_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring, acc->valuestring);
 		} else if (!strncmp(token, "Lin:", 4)) {
 			/* Lin */
 			/* open points file */
@@ -214,36 +231,60 @@ static int sendfile(cJSON *data)
 			if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) { 
 				goto end;
 			}
-			sprintf(content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
-			if (f_json != NULL) {
-				cJSON_Delete(f_json);
-			}
-			if (f_content != NULL) {
-				printf("free f_content\n");
-				free(f_content);
-				f_content = NULL;
-			}
+			sprintf(file_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
 		} else if (!strncmp(token, "WaitTime:", 9)) {
 			/* wait time*/
 			strrpc(token, "WaitTime:", "");
-			sprintf(content, "%sWaitMs(%s)\n", content, token);
+			sprintf(file_content, "%sWaitMs(%s)\n", file_content, token);
+	//	} else if (!strncmp(token, "Call:", 5)) {
+			/* call file */
+	//		strrpc(token, "Call:", "");
+	//		sprintf(call_file_path, "%s/%s", FILE_LUA, token);
+	//		printf("call_file_path = %s\n", call_file_path);
+			/* open call lua file */
+	//		f_content = openfile(call_file_path);
+			/* file is NULL */
+	/*		if (f_content == NULL) {
+				fprintf(stderr, "open file error!\n");
+
+				return FAIL;
+			}
+			printf("f_content = %s\n", f_content);
+	*/
+			/* recursive parse lua file */
+	/*		call_ret = sendfile(f_content);
+			if (call_ret == FAIL) {
+				goto end;
+			}*/
 		} else {
 			/* other code send without processing */
-			sprintf(content, "%s%s\n", content, token);
+			sprintf(file_content, "%s%s\n", file_content, token);
 		}
+		printf("__LINE__ = %d\n", __LINE__);
+		if (f_json != NULL) {
+			cJSON_Delete(f_json);
+			f_json = NULL;
+		}
+		printf("__LINE__ = %d\n", __LINE__);
+		if (f_content != NULL) {
+			free(f_content);
+			f_content = NULL;
+		}
+		printf("__LINE__ = %d\n", __LINE__);
 		/* get other line */
 		token = strtok(NULL, s);
 	}
 
+	printf("return success\n");
 	return SUCCESS;
 
 end:
 	fprintf(stderr, "Parse json file Error!\n");
 	if (f_json != NULL) {
 		cJSON_Delete(f_json);
+		f_json = NULL;
 	}
 	if (f_content != NULL) {
-		printf("free f_content\n");
 		free(f_content);
 		f_content = NULL;
 	}
@@ -251,9 +292,14 @@ end:
 }
 
 /* 201 MoveJ */
-static int movej(cJSON *data)
+static int movej(const cJSON *data_json)
 {
-	cJSON *joints = cJSON_GetObjectItem(data, "data");
+	if (data_json == NULL || data_json->type != cJSON_Object) {
+		fprintf(stderr, "Parse json file Error!\n");
+
+		return FAIL;
+	}
+	cJSON *joints = cJSON_GetObjectItem(data_json, "joints");
 	if (joints == NULL || joints->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
 
@@ -270,21 +316,26 @@ static int movej(cJSON *data)
 
 		return FAIL;
 	}
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,30,100)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
+	cJSON *speed = cJSON_GetObjectItem(data_json, "speed");
+	if (speed->valuestring == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+
+		return FAIL;
+	}
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,100)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring);
 
 	return SUCCESS;
 }
 
 /* 303 Mode */
-static int mode(cJSON *data)
+static int mode(const cJSON *data_json)
 {
-	cJSON *type = cJSON_GetObjectItem(data, "data");
-	/*if(type->valueint == NULL) {
+	if(data_json->valuestring == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 
 		return FAIL;
-	}*/
-	sprintf(content, "Mode(%d)", type->valueint);
+	}
+	sprintf(content, "Mode(%s)", data_json->valuestring);
 
 	return SUCCESS;
 }
@@ -293,53 +344,63 @@ void set(Webs *wp)
 {
 	int ret = FAIL;
 	int cmd = 0;
+	int port = 0;
 	char recvbuf[MAX_BUF] = {0};
-
+	cJSON *data_json = NULL;
+	cJSON *f_content_json = NULL;
+	cJSON *command = NULL;
+	cJSON *port_n = NULL;
+	char *buf = NULL;
 	char *jsonString= wp->input.servp;
 	cJSON *data = cJSON_Parse(jsonString);
-	if (data == NULL)
-	{
+	if (data == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
 
-	char *buf = NULL;
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
-
+	data_json = cJSON_GetObjectItem(data, "data");
+	if (data_json == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
+	}
 	/*calloc content*/
 	content = (char *)calloc(1, sizeof(char)*1024);
-	if(content == NULL){
+	if (content == NULL) {
 		goto end;
 	}
 
-	cJSON *command = cJSON_GetObjectItem(data, "cmd");
+	command = cJSON_GetObjectItem(data, "cmd");
 	if(command != NULL) {
 		cmd = command->valueint;
 		switch(cmd) {
+			case 100:
+				ret = sendfile(data_json);
+				break;
 			case 101:
-				ret = program_start(data);
+				ret = program_start(data_json);
 				break;
 			case 102:
-				ret = program_stop(data);
+				ret = program_stop(data_json);
 				break;
 			case 103:
-				ret = program_pause(data);
+				ret = program_pause(data_json);
 				break;
 			case 104:
-				ret = program_resume(data);
+				ret = program_resume(data_json);
 				break;
 			case 105:
-				ret = sendfilename(data);
+				ret = sendfilename(data_json);
 				break;
 			case 106:
-				ret = sendfile(data);
+				ret = sendfile(data_json);
 				break;
 			case 201:
-				ret = movej(data);
+				ret = movej(data_json);
 				break;
 			case 303:
-				ret = mode(data);
+				ret = mode(data_json);
 				break;
 			default:
 				goto end;
@@ -351,17 +412,17 @@ void set(Webs *wp)
 	}
 
 	ret = FAIL;
-	cJSON *port_n = cJSON_GetObjectItem(data, "port");
+	port_n = cJSON_GetObjectItem(data, "port");
 	if(port_n != NULL) {
-		int port = port_n->valueint;
+		port = port_n->valueint;
 		printf("port = %d\n", port);
-		/* content is empty */
-		if(!strcmp(content, "")) {
-			goto end;
-		}
-		printf("content = %s\n", content);
 		switch(port) {
 			case CM_PORT:
+				/* content is empty */
+				if(content == NULL || !strcmp(content, "")) {
+					goto end;
+				}
+				printf("content = %s\n", content);
 				/* send cmd to 8080 port */
 				//上锁
 				pthread_mutex_lock(&mute_cmd);
@@ -370,10 +431,15 @@ void set(Webs *wp)
 				pthread_mutex_unlock(&mute_cmd);
 				break;
 			case FILE_PORT:
+				/* content is empty */
+				if(file_content == NULL || !strcmp(file_content, "")) {
+					goto end;
+				}
+				printf("file_content = %s\n", file_content);
 				/* send file cmd to 8082 port*/
 				//上锁
 				pthread_mutex_lock(&mute_file);
-				ret = socket_send(socket_file, cmd, content, recvbuf);
+				ret = socket_send(socket_file, cmd, file_content, recvbuf);
 				//解锁
 				pthread_mutex_unlock(&mute_file);
 				break;
@@ -399,8 +465,14 @@ void set(Webs *wp)
 		free(content);
 		content = NULL;
 	}
+	/* free file_content */
+	if(file_content != NULL) {
+		free(file_content);
+		file_content = NULL;
+	}
 	if(data != NULL) {
 		cJSON_Delete(data);
+		data = NULL;
 	}
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
@@ -416,8 +488,14 @@ end:
 		free(content);
 		content = NULL;
 	}
+	/* free file_content */
+	if(file_content != NULL) {
+		free(file_content);
+		file_content = NULL;
+	}
 	if(data != NULL) {
 		cJSON_Delete(data);
+		data = NULL;
 	}
 	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
@@ -428,13 +506,13 @@ end:
 	return;
 }
 
-
+/* get points file content */
 static int get_points_file()
 {
 	ret_f_content = openfile(FILE_POINTS);
 	/* file is NULL */
 	if (ret_f_content == NULL) {
-		fprintf(stderr, "open file error!\n");
+		fprintf(stderr, "get points file error!\n");
 
 		return FAIL;
 	}
@@ -442,10 +520,26 @@ static int get_points_file()
 	return SUCCESS;
 }
 
+/* get lua name */
+static int get_lua_data()
+{
+	ret_f_content = readfilelist(FILE_LUA);
+	/* file is NULL */
+	if (ret_f_content == NULL) {
+		fprintf(stderr, "get lua name error!\n");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
 
 void get(Webs *wp)
 {
 	int ret = FAIL;
+	char *buf = NULL;
+	char *cmd = NULL;
+	cJSON *command = NULL;
 	char *jsonString= wp->input.servp;
 	cJSON *data = cJSON_Parse(jsonString);
 	if (data == NULL)
@@ -453,16 +547,16 @@ void get(Webs *wp)
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
-
-	char *buf = NULL;
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
 
-	cJSON *command = cJSON_GetObjectItem(data, "data");
+	command = cJSON_GetObjectItem(data, "data");
 	if (command != NULL) {
-		char *cmd = command->valuestring;
+		cmd = command->valuestring;
 		if(!strcmp(cmd, "get_points")) {
 			ret = get_points_file();
+		} else if(!strcmp(cmd, "get_lua_data")) {
+			ret = get_lua_data();
 		} else {
 			goto end;
 		}
@@ -473,7 +567,10 @@ void get(Webs *wp)
 	}
 
 	printf("ret_f_content = %s\n", ret_f_content);
-	cJSON_Delete(data);
+	if(data != NULL) {
+		cJSON_Delete(data);
+		data = NULL;
+	}
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
@@ -481,7 +578,6 @@ void get(Webs *wp)
 	websDone(wp);
 	
 	if (ret_f_content != NULL) {
-		printf("free ret_f_content\n");
 		free(ret_f_content);
 		ret_f_content = NULL;
 	}
@@ -490,11 +586,13 @@ void get(Webs *wp)
 
 end:
 	if (ret_f_content != NULL) {
-		printf("free ret_f_content\n");
 		free(ret_f_content);
 		ret_f_content = NULL;
 	}
-	cJSON_Delete(data);
+	if(data != NULL) {
+		cJSON_Delete(data);
+		data = NULL;
+	}
 	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
