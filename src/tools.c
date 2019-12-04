@@ -68,31 +68,33 @@ char *openfile(const char *file_path)
 /* read file list and save in array return */
 char *readfilelist(const char *basePath)
 {
-	DIR *dir;
-	struct dirent *ptr;
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
 	char *content = NULL;
+	char *buf = NULL;
+	cJSON *file_list = NULL;
 
-	if ((dir=opendir(basePath)) == NULL)
-	{
+	if ((dir=opendir(basePath)) == NULL) {
 		perror("Open dir error...");
 	}
-
-	cJSON *file_list = cJSON_CreateArray();
+	file_list = cJSON_CreateArray();
 	while ((ptr=readdir(dir)) != NULL) {
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)    ///current dir OR parrent dir
 			continue;
 		printf("d_name:%s/%s\n", basePath, ptr->d_name);
 		cJSON_AddStringToObject(file_list, "key", ptr->d_name);
 	}
-	char *buf = NULL;
 	printf("buf = %s\n", buf = cJSON_Print(file_list));
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
 	}
 	free(buf);
-	closedir(dir);
+	buf = NULL;
 	cJSON_Delete(file_list);
+	file_list = NULL;
+	closedir(dir);
+	dir = NULL;
 
 	return content;
 }

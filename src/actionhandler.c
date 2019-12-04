@@ -116,7 +116,7 @@ static int sendfile(const cJSON *data_json)
 	if(data_json->valuestring == NULL || !strcmp(data_json->valuestring, "")) {
 		goto end;
 	}
-	printf("upload file content:%s\n", data_json->valuestring);
+	printf("upload lua file content:%s\n", data_json->valuestring);
 	tmp_file = data_json->valuestring;
 	while(*tmp_file) {
 		if(*tmp_file == '\n')
@@ -134,7 +134,7 @@ static int sendfile(const cJSON *data_json)
 	/* get first line */
 	token = strtok(data_json->valuestring, s);
 	while(token != NULL) {
-		printf("line = %s\n", token);
+		printf("line content = %s\n", token);
 		cJSON *j1 = NULL;
 		cJSON *j2 = NULL;
 		cJSON *j3 = NULL;
@@ -160,13 +160,11 @@ static int sendfile(const cJSON *data_json)
 
 				return FAIL;
 			}
-			printf("f_content = %s\n", f_content);
 			f_json = cJSON_Parse(f_content);
 			if (f_json == NULL) {
 				goto end;
 			}
 			strrpc(token, "PTP:", "");
-			printf("token = %s\n", token);
 			cJSON *ptp = cJSON_GetObjectItem(f_json, token);
 			if (ptp == NULL || ptp->type != cJSON_Object) {
 				goto end;
@@ -260,22 +258,18 @@ static int sendfile(const cJSON *data_json)
 			/* other code send without processing */
 			sprintf(file_content, "%s%s\n", file_content, token);
 		}
-		printf("__LINE__ = %d\n", __LINE__);
 		if (f_json != NULL) {
 			cJSON_Delete(f_json);
 			f_json = NULL;
 		}
-		printf("__LINE__ = %d\n", __LINE__);
 		if (f_content != NULL) {
 			free(f_content);
 			f_content = NULL;
 		}
-		printf("__LINE__ = %d\n", __LINE__);
 		/* get other line */
 		token = strtok(NULL, s);
 	}
 
-	printf("return success\n");
 	return SUCCESS;
 
 end:
@@ -424,23 +418,19 @@ void set(Webs *wp)
 				}
 				printf("content = %s\n", content);
 				/* send cmd to 8080 port */
-				//上锁
 				pthread_mutex_lock(&mute_cmd);
 				ret = socket_send(socket_cmd, cmd, content, recvbuf);
-				//解锁
 				pthread_mutex_unlock(&mute_cmd);
 				break;
 			case FILE_PORT:
-				/* content is empty */
+				/* file_content is empty */
 				if(file_content == NULL || !strcmp(file_content, "")) {
 					goto end;
 				}
 				printf("file_content = %s\n", file_content);
 				/* send file cmd to 8082 port*/
-				//上锁
 				pthread_mutex_lock(&mute_file);
 				ret = socket_send(socket_file, cmd, file_content, recvbuf);
-				//解锁
 				pthread_mutex_unlock(&mute_file);
 				break;
 			default:
