@@ -18,10 +18,8 @@
 
 #include    "goahead.h"
 #include	"js.h"
-#include	"cJSON.h"
 #include	"actionhandler.h"
 #include	"filehandler.h"
-#include	"tools.h"
 
 /********************************* Defines ************************************/
 

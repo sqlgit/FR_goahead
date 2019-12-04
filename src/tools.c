@@ -1,23 +1,4 @@
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <netdb.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <dirent.h>
-#include <sys/time.h>
-#include <pthread.h>
-#include "tools.h"
-#include "cJSON.h"
+#include 	"goahead.h"
 
 /* file open and return file content */
 char *openfile(const char *file_path)

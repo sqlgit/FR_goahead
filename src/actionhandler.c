@@ -1,7 +1,4 @@
 #include    "goahead.h"
-#include	"js.h"
-#include	"cJSON.h"
-#include	"tools.h"
 #include	"actionhandler.h"
 
 //static int no;

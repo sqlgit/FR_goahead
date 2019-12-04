@@ -1,8 +1,8 @@
 #include    "goahead.h"
-#include	"js.h"
-#include	"cJSON.h"
-#include	"tools.h"
 #include	"filehandler.h"
+
+static void fileWriteEvent(Webs *wp);
+static int avolfileHandler(Webs *wp);
 
 void upload(Webs *wp)
 {

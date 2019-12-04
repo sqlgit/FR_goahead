@@ -1,3 +1,6 @@
+#ifndef tools_h
+#define tools_h
+
 #define local 1
 #if local
 	//#define SERVER_IP "127.0.0.1"
@@ -36,3 +39,5 @@ int socket_timeout(int sockfd, int s);
 int socket_send(int clientSocket, int no, const char *content, char *recvbuf);
 void *socket_cmd_thread(void * arg);
 void *socket_file_thread(void * arg);
+
+#endif
