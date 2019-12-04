@@ -1,6 +1,6 @@
 #include 	"goahead.h"
 
-/* file open and return file content */
+/* oepn file and return file content */
 char *get_file_content(const char *file_path)
 {
 	FILE *fp = NULL;
@@ -46,36 +46,55 @@ char *get_file_content(const char *file_path)
 	return content;
 }
 
-/* read file list and save in array return */
+/* open dir and return dir's file name and file content */
 char *get_dir_content(const char *dir_path)
 {
 	DIR *dir = NULL;
 	struct dirent *ptr = NULL;
 	char *content = NULL;
 	char *buf = NULL;
+	char *f_content = NULL;
+	char dir_filename[100] = {0};
 	cJSON *file_list = NULL;
+	cJSON *root = NULL;
 
 	if ((dir=opendir(dir_path)) == NULL) {
 		perror("Open dir error...");
 	}
+	root = cJSON_CreateObject();
 	file_list = cJSON_CreateArray();
+	cJSON_AddItemToObject(root, "lua_name", file_list);
 	while ((ptr=readdir(dir)) != NULL) {
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)    ///current dir OR parrent dir
 			continue;
-		printf("d_name:%s/%s\n", dir_path, ptr->d_name);
+		bzero(dir_filename, sizeof(dir_filename));
+		sprintf(dir_filename, "%s/%s", dir_path, ptr->d_name);
+		printf("dir_filename:%s\n", dir_filename);
+		/* open lua file */
+		f_content = get_file_content(dir_filename);
+		if (f_content == NULL) {
+			perror("Open file error!\n");
+		}
+		printf("f_content = %s\n", f_content);
 		cJSON_AddStringToObject(file_list, "key", ptr->d_name);
+		cJSON_AddStringToObject(root, ptr->d_name, f_content);
+		free(f_content);
+		f_content = NULL;
 	}
-	printf("buf = %s\n", buf = cJSON_Print(file_list));
+	printf("print root json = %s\n", buf = cJSON_Print(root));
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
 	}
+
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(file_list);
 	file_list = NULL;
-	closedir(dir);
-	dir = NULL;
+	if (dir != NULL) {
+		closedir(dir);
+		dir = NULL;
+	}
 
 	return content;
 }

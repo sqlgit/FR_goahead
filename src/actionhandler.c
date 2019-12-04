@@ -255,14 +255,10 @@ static int sendfile(const cJSON *data_json)
 			/* other code send without processing */
 			sprintf(file_content, "%s%s\n", file_content, token);
 		}
-		if (f_json != NULL) {
-			cJSON_Delete(f_json);
-			f_json = NULL;
-		}
-		if (f_content != NULL) {
-			free(f_content);
-			f_content = NULL;
-		}
+		cJSON_Delete(f_json);
+		f_json = NULL;
+		free(f_content);
+		f_content = NULL;
 		/* get other line */
 		token = strtok(NULL, s);
 	}
@@ -271,14 +267,10 @@ static int sendfile(const cJSON *data_json)
 
 end:
 	fprintf(stderr, "Parse json file Error!\n");
-	if (f_json != NULL) {
-		cJSON_Delete(f_json);
-		f_json = NULL;
-	}
-	if (f_content != NULL) {
-		free(f_content);
-		f_content = NULL;
-	}
+	cJSON_Delete(f_json);
+	f_json = NULL;
+	free(f_content);
+	f_content = NULL;
 	return FAIL;
 }
 
@@ -450,19 +442,15 @@ void set(Webs *wp)
 		goto end;*/
 
 	/* free content */
-	if(content != NULL) {
-		free(content);
-		content = NULL;
-	}
+	free(content);
+	content = NULL;
 	/* free file_content */
-	if(file_content != NULL) {
-		free(file_content);
-		file_content = NULL;
-	}
-	if(data != NULL) {
-		cJSON_Delete(data);
-		data = NULL;
-	}
+	free(file_content);
+	file_content = NULL;
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
@@ -473,19 +461,14 @@ void set(Webs *wp)
 	
 end:
 	/* free content */
-	if(content != NULL) {
-		free(content);
-		content = NULL;
-	}
+	free(content);
+	content = NULL;
 	/* free file_content */
-	if(file_content != NULL) {
-		free(file_content);
-		file_content = NULL;
-	}
-	if(data != NULL) {
-		cJSON_Delete(data);
-		data = NULL;
-	}
+	free(file_content);
+	file_content = NULL;
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
 	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
@@ -539,49 +522,45 @@ void get(Webs *wp)
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
 
+	get_lua_data();
 	command = cJSON_GetObjectItem(data, "data");
 	if (command != NULL) {
 		cmd = command->valuestring;
 		if(!strcmp(cmd, "get_points")) {
-			ret = get_points_file();
+		//	ret = get_points_file();
 		} else if(!strcmp(cmd, "get_lua_data")) {
 			ret = get_lua_data();
 		} else {
 			goto end;
 		}
 	}
-
-	if(ret == FAIL){
-		goto end;
-	}
+//	if(ret == FAIL){
+//		goto end;
+//	}
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
 
 	printf("ret_f_content = %s\n", ret_f_content);
-	if(data != NULL) {
-		cJSON_Delete(data);
-		data = NULL;
-	}
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
 	websWrite(wp, ret_f_content);
 	websDone(wp);
-	
-	if (ret_f_content != NULL) {
-		free(ret_f_content);
-		ret_f_content = NULL;
-	}
+
+	/* free ret_f_content */
+	free(ret_f_content);
+	ret_f_content = NULL;
 
 	return;
 
 end:
-	if (ret_f_content != NULL) {
-		free(ret_f_content);
-		ret_f_content = NULL;
-	}
-	if(data != NULL) {
-		cJSON_Delete(data);
-		data = NULL;
-	}
+	/* free ret_f_content */
+	free(ret_f_content);
+	ret_f_content = NULL;
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
 	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
