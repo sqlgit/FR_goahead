@@ -16,7 +16,8 @@ static int get_points_file();
 static int get_lua_data();
 /* act */
 static int save_lua_file(const cJSON *data_json);
-static int delete_lua_file(const cJSON *data_json);
+static int remove_lua_file(const cJSON *data_json);
+static int rename_lua_file(const cJSON *data_json);
 
 static char *content = NULL;
 static char *file_content = NULL;
@@ -87,20 +88,18 @@ static int program_resume(const cJSON *data_json)
 /* 105 sendFileName */
 static int sendfilename(const cJSON *data_json)
 {
+	cJSON *name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		return FAIL;
+	}
 	/*calloc file content*/
 	file_content = (char *)calloc(1, sizeof(char)*1024);
 	if(file_content == NULL){
 		perror("file_content error");
-
 		return FAIL;
 	}
-	if(data_json->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
-
-		return FAIL;
-	}
-	printf("filename:%s\n", data_json->valuestring);
-	sprintf(file_content, "/fruser/%s", data_json->valuestring);
+	sprintf(file_content, "/fruser/%s", name->valuestring);
 
 	return SUCCESS;
 }
@@ -114,14 +113,13 @@ static int sendfile(const cJSON *data_json)
 	cJSON *f_json = NULL;
 	int line_num = 0;
 	char *tmp_file = NULL;
-	//char call_file_path[100] = {0};
-	//char call_ret = FAIL;
 
-	if(data_json->valuestring == NULL || !strcmp(data_json->valuestring, "")) {
+	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
+	if(pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
 		goto end;
 	}
-	printf("upload lua file content:%s\n", data_json->valuestring);
-	tmp_file = data_json->valuestring;
+	printf("upload lua file content:%s\n", pgvalue->valuestring);
+	tmp_file = pgvalue->valuestring;
 	while(*tmp_file) {
 		if(*tmp_file == '\n')
 			line_num++;
@@ -134,9 +132,8 @@ static int sendfile(const cJSON *data_json)
 
 		return FAIL;
 	}
-
 	/* get first line */
-	token = strtok(data_json->valuestring, s);
+	token = strtok(pgvalue->valuestring, s);
 	while(token != NULL) {
 		printf("line content = %s\n", token);
 		cJSON *j1 = NULL;
@@ -154,8 +151,8 @@ static int sendfile(const cJSON *data_json)
 		cJSON *speed = NULL;
 		cJSON *acc = NULL;
 		
+		/* PTP */
 		if(!strncmp(token, "PTP:", 4)) {
-			/* PTP */
 			/* open points file */
 			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
@@ -189,8 +186,8 @@ static int sendfile(const cJSON *data_json)
 				goto end;
 			}
 			sprintf(file_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring, acc->valuestring);
+		/* Lin */
 		} else if (!strncmp(token, "Lin:", 4)) {
-			/* Lin */
 			/* open points file */
 			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
@@ -234,32 +231,12 @@ static int sendfile(const cJSON *data_json)
 				goto end;
 			}
 			sprintf(file_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
+		/* wait time*/
 		} else if (!strncmp(token, "WaitTime:", 9)) {
-			/* wait time*/
 			strrpc(token, "WaitTime:", "");
 			sprintf(file_content, "%sWaitMs(%s)\n", file_content, token);
-	//	} else if (!strncmp(token, "Call:", 5)) {
-			/* call file */
-	//		strrpc(token, "Call:", "");
-	//		sprintf(call_file_path, "%s/%s", DIR_LUA, token);
-	//		printf("call_file_path = %s\n", call_file_path);
-			/* open call lua file */
-	//		f_content = get_file_content(call_file_path);
-			/* file is NULL */
-	/*		if (f_content == NULL) {
-				fprintf(stderr, "open file error!\n");
-
-				return FAIL;
-			}
-			printf("f_content = %s\n", f_content);
-	*/
-			/* recursive parse lua file */
-	/*		call_ret = sendfile(f_content);
-			if (call_ret == FAIL) {
-				goto end;
-			}*/
+		/* other code send without processing */
 		} else {
-			/* other code send without processing */
 			sprintf(file_content, "%s%s\n", file_content, token);
 		}
 		cJSON_Delete(f_json);
@@ -284,10 +261,6 @@ end:
 /* 201 MoveJ */
 static int movej(const cJSON *data_json)
 {
-	if (data_json == NULL || data_json->type != cJSON_Object) {
-		fprintf(stderr, "Parse json file Error!\n");
-		return FAIL;
-	}
 	cJSON *joints = cJSON_GetObjectItem(data_json, "joints");
 	if (joints == NULL || joints->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
@@ -318,12 +291,13 @@ static int movej(const cJSON *data_json)
 /* 303 Mode */
 static int mode(const cJSON *data_json)
 {
-	if(data_json->valuestring == NULL) {
+	cJSON *mode = cJSON_GetObjectItem(data_json, "mode");
+	if(mode == NULL || mode->valuestring == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 
 		return FAIL;
 	}
-	sprintf(content, "Mode(%s)", data_json->valuestring);
+	sprintf(content, "Mode(%s)", mode->valuestring);
 
 	return SUCCESS;
 }
@@ -351,7 +325,7 @@ void set(Webs *wp)
 	buf = NULL;
 	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
-	if (data_json == NULL) {
+	if (data_json == NULL || data_json->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
@@ -547,7 +521,7 @@ void get(Webs *wp)
 	} else {
 		goto end;
 	}
-	if(ret == FAIL){
+	if(ret == FAIL) {
 		goto end;
 	}
 	/* cjson delete */
@@ -586,10 +560,7 @@ static int save_lua_file(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char dir_filename[100] = {0};
-	if (data_json == NULL || data_json->type != cJSON_Object) {
-		fprintf(stderr, "Parse json file Error!\n");
-		return FAIL;
-	}
+
 	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (file_name == NULL || pgvalue == NULL || file_name->valuestring == NULL || pgvalue->valuestring == NULL) {
@@ -602,18 +573,41 @@ static int save_lua_file(const cJSON *data_json)
 	return ret;
 }
 
-/* delete lua file */
-static int delete_lua_file(const cJSON *data_json)
+/* remove lua file */
+static int remove_lua_file(const cJSON *data_json)
 {
 	char dir_filename[100] = {0};
-	if (data_json->valuestring == NULL) {
+
+	cJSON *name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s/%s", DIR_LUA, data_json->valuestring);
-	printf("Will removed %s\n", dir_filename);
-	if (remove(dir_filename)) {
+	sprintf(dir_filename, "%s/%s", DIR_LUA, name->valuestring);
+	if (remove(dir_filename) == -1) {
 		fprintf(stderr, "remove file fail!\n");
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* rename lua file */
+static int rename_lua_file(const cJSON *data_json)
+{
+	char old_filename[100] = {0};
+	char new_filename[100] = {0};
+
+	cJSON *oldname = cJSON_GetObjectItem(data_json, "oldname");
+	cJSON *newname = cJSON_GetObjectItem(data_json, "newname");
+	if (oldname == NULL || newname == NULL || oldname->valuestring == NULL || newname->valuestring == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		return FAIL;
+	}
+	sprintf(old_filename, "%s/%s", DIR_LUA, oldname->valuestring);
+	sprintf(new_filename, "%s/%s", DIR_LUA, newname->valuestring);
+	if (rename(old_filename, new_filename) == -1) {
+		fprintf(stderr, "rename file fail!\n");
 		return FAIL;
 	}
 
@@ -639,7 +633,7 @@ void act(Webs *wp)
 	buf = NULL;
 	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
-	if (data_json == NULL) {
+	if (data_json == NULL || data_json->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
@@ -652,8 +646,10 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
-	} else if(!strcmp(cmd, "delete_lua_file")) {
-		ret = delete_lua_file(data_json);
+	} else if(!strcmp(cmd, "remove_lua_file")) {
+		ret = remove_lua_file(data_json);
+	} else if(!strcmp(cmd, "rename_lua_file")) {
+		ret = rename_lua_file(data_json);
 	} else {
 		goto end;
 	}
