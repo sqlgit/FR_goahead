@@ -1,46 +1,101 @@
 #include 	"goahead.h"
 
-/* oepn file and return file content */
+/* write file */
+int write_file(const char *file_name, const char *file_content)
+{
+	printf("write filename = %s\n", file_name);
+	printf("write filecontent = %s\n", file_content);
+	FILE *fp = NULL;
+
+	if((fp = fopen(file_name, "w")) == NULL) {
+		perror("open file");
+		return FAIL;
+	}
+	if(fputs(file_content, fp) < 0){
+		perror("write file");
+		fclose(fp);
+		return FAIL;
+	}
+	fclose(fp);
+
+	return SUCCESS;
+}
+
+/* oepn file and return file content without '\n' '\r' '\t' */
 char *get_file_content(const char *file_path)
 {
 	FILE *fp = NULL;
 	int file_size = 0;
 	int i = 0;
 	char *content = NULL;
+	char *tmp = NULL;
 
-	//printf("file_path = %s\n", file_path);
-	if(NULL != (fp = fopen(file_path, "r"))) {
-		fseek(fp , 0 , SEEK_END);
-		file_size = ftell(fp);
-		//printf("file_size = %d\n", file_size);
-		fseek(fp , 0 , SEEK_SET);
-
-		char *tmp = (char *)calloc(1, file_size*sizeof(char)+1);
-		if(tmp != NULL) {
-			fread(tmp, sizeof(char), file_size, fp);
-			/*
-			printf("tmp = %s\n", tmp);
-			printf("strlen tmp = %d\n", strlen(tmp));
-			printf("sizeof tmp = %d\n", sizeof(tmp));
-			*/
-			char file_content[file_size+1];
-			memset(file_content, 0, (file_size+1));
-			char *tmp2 = tmp;
-			while(*tmp2 != '\0') {
-				if(*tmp2 != '\n' && *tmp2 != '\r' && *tmp2 !='\t'){
-					file_content[i] = *tmp2;
-					i++;
-				}
-				tmp2++;
-			}
-			free(tmp);
-			file_content[i] = '\0';
-			content = (char *)calloc(1, strlen(file_content)+1);
-			if(content != NULL) {
-				strcpy(content, file_content);
-			}
-		}
+//	printf("file_path = %s\n", file_path);
+	if ((fp = fopen(file_path, "r")) == NULL) {
+		perror("open file");
+		return NULL;
 	}
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+//	printf("file_size = %d\n", file_size);
+	fseek(fp, 0, SEEK_SET);
+
+	tmp = (char *)calloc(1, file_size*sizeof(char)+1);
+	if(tmp == NULL) {
+		perror("calloc");
+		fclose(fp);
+
+		return NULL;
+	}
+	fread(tmp, sizeof(char), file_size, fp);
+/*
+	printf("tmp = %s\n", tmp);
+	printf("strlen tmp = %d\n", strlen(tmp));
+	printf("sizeof tmp = %d\n", sizeof(tmp));
+*/
+	char file_content[file_size+1];
+	memset(file_content, 0, (file_size+1));
+	char *tmp2 = tmp;
+	while(*tmp2 != '\0') {
+		if(*tmp2 != '\n' && *tmp2 != '\r' && *tmp2 !='\t'){
+			file_content[i] = *tmp2;
+			i++;
+		}
+		tmp2++;
+	}
+	file_content[i] = '\0';
+	content = (char *)calloc(1, strlen(file_content)+1);
+	if(content != NULL) {
+		strcpy(content, file_content);
+	}
+	free(tmp);
+	tmp = NULL;
+	fclose(fp);
+
+	return content;
+}
+
+/* oepn file and return complete file content */
+char *get_complete_file_content(const char *file_path)
+{
+	FILE *fp = NULL;
+	int file_size = 0;
+	char *content = NULL;
+
+	if ((fp = fopen(file_path, "r")) == NULL) {
+		perror("open file");
+		return NULL;
+	}
+	fseek(fp, 0, SEEK_END);
+	file_size = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	content = (char *)calloc(1, file_size*sizeof(char)+1);
+	if(content == NULL) {
+		perror("calloc");
+		fclose(fp);
+		return NULL;
+	}
+	fread(content, sizeof(char), file_size, fp);
 	fclose(fp);
 
 	return content;
@@ -55,42 +110,44 @@ char *get_dir_content(const char *dir_path)
 	char *buf = NULL;
 	char *f_content = NULL;
 	char dir_filename[100] = {0};
-	cJSON *file_list = NULL;
-	cJSON *root = NULL;
+	cJSON *root_json = NULL;
+	cJSON *file_cont = NULL;
 
 	if ((dir=opendir(dir_path)) == NULL) {
 		perror("Open dir error...");
+		return NULL;
 	}
-	root = cJSON_CreateObject();
-	file_list = cJSON_CreateArray();
-	cJSON_AddItemToObject(root, "lua_name", file_list);
+	root_json = cJSON_CreateArray();
 	while ((ptr=readdir(dir)) != NULL) {
-		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)    ///current dir OR parrent dir
+		/* current dir OR parrent dir */
+		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
 		bzero(dir_filename, sizeof(dir_filename));
 		sprintf(dir_filename, "%s/%s", dir_path, ptr->d_name);
-		printf("dir_filename:%s\n", dir_filename);
 		/* open lua file */
-		f_content = get_file_content(dir_filename);
+		f_content = get_complete_file_content(dir_filename);
 		if (f_content == NULL) {
-			perror("Open file error!\n");
+			perror("Open file error");
+			continue;
 		}
-		printf("f_content = %s\n", f_content);
-		cJSON_AddStringToObject(file_list, "key", ptr->d_name);
-		cJSON_AddStringToObject(root, ptr->d_name, f_content);
+		//printf("f_content = %s\n", f_content);
+		file_cont = cJSON_CreateObject();
+		cJSON_AddItemToArray(root_json, file_cont);
+		cJSON_AddStringToObject(file_cont, "name", ptr->d_name);
+		cJSON_AddStringToObject(file_cont, "pgvalue", f_content);
 		free(f_content);
 		f_content = NULL;
 	}
-	printf("print root json = %s\n", buf = cJSON_Print(root));
+	buf = cJSON_Print(root_json);
+	//printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
 	}
-
 	free(buf);
 	buf = NULL;
-	cJSON_Delete(file_list);
-	file_list = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
 	if (dir != NULL) {
 		closedir(dir);
 		dir = NULL;

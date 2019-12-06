@@ -2,6 +2,7 @@
 #include	"actionhandler.h"
 
 //static int no;
+/* set */
 static int program_start(const cJSON *data_json);
 static int program_stop(const cJSON *data_json);
 static int program_pause(const cJSON *data_json);
@@ -10,6 +11,12 @@ static int sendfilename(const cJSON *data_json);
 static int sendfile(const cJSON *data_json);
 static int movej(const cJSON *data_json);
 static int mode(const cJSON *data_json);
+/* get */
+static int get_points_file();
+static int get_lua_data();
+/* act */
+static int save_lua_file(const cJSON *data_json);
+static int delete_lua_file(const cJSON *data_json);
 
 static char *content = NULL;
 static char *file_content = NULL;
@@ -279,13 +286,11 @@ static int movej(const cJSON *data_json)
 {
 	if (data_json == NULL || data_json->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
-
 		return FAIL;
 	}
 	cJSON *joints = cJSON_GetObjectItem(data_json, "joints");
 	if (joints == NULL || joints->type != cJSON_Object) {
 		fprintf(stderr, "Parse json file Error!\n");
-
 		return FAIL;
 	}
 	cJSON *j1 = cJSON_GetObjectItem(joints, "j1");
@@ -329,20 +334,22 @@ void set(Webs *wp)
 	int cmd = 0;
 	int port = 0;
 	char recvbuf[MAX_BUF] = {0};
+	char *buf = NULL;
 	cJSON *data_json = NULL;
 	cJSON *f_content_json = NULL;
 	cJSON *command = NULL;
 	cJSON *port_n = NULL;
-	char *buf = NULL;
-	char *jsonString= wp->input.servp;
-	cJSON *data = cJSON_Parse(jsonString);
+	cJSON *data = NULL;
+
+	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
-
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
+	buf = NULL;
+	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
 	if (data_json == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
@@ -353,77 +360,80 @@ void set(Webs *wp)
 	if (content == NULL) {
 		goto end;
 	}
-
+	/* get cmd */
 	command = cJSON_GetObjectItem(data, "cmd");
-	if(command != NULL) {
-		cmd = command->valueint;
-		switch(cmd) {
-			case 100:
-				ret = sendfile(data_json);
-				break;
-			case 101:
-				ret = program_start(data_json);
-				break;
-			case 102:
-				ret = program_stop(data_json);
-				break;
-			case 103:
-				ret = program_pause(data_json);
-				break;
-			case 104:
-				ret = program_resume(data_json);
-				break;
-			case 105:
-				ret = sendfilename(data_json);
-				break;
-			case 106:
-				ret = sendfile(data_json);
-				break;
-			case 201:
-				ret = movej(data_json);
-				break;
-			case 303:
-				ret = mode(data_json);
-				break;
-			default:
-				goto end;
-		}
+	if(command == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
 	}
-
+	cmd = command->valueint;
+	switch(cmd) {
+		case 100:
+			ret = sendfile(data_json);
+			break;
+		case 101:
+			ret = program_start(data_json);
+			break;
+		case 102:
+			ret = program_stop(data_json);
+			break;
+		case 103:
+			ret = program_pause(data_json);
+			break;
+		case 104:
+			ret = program_resume(data_json);
+			break;
+		case 105:
+			ret = sendfilename(data_json);
+			break;
+		case 106:
+			ret = sendfile(data_json);
+			break;
+		case 201:
+			ret = movej(data_json);
+			break;
+		case 303:
+			ret = mode(data_json);
+			break;
+		default:
+			goto end;
+	}
 	if(ret == FAIL){
 		goto end;
 	}
 	ret = FAIL;
+	/* get port */
 	port_n = cJSON_GetObjectItem(data, "port");
-	if(port_n != NULL) {
-		port = port_n->valueint;
-		printf("port = %d\n", port);
-		switch(port) {
-			case CM_PORT:
-				/* content is empty */
-				if(content == NULL || !strcmp(content, "")) {
-					goto end;
-				}
-				printf("content = %s\n", content);
-				/* send cmd to 8080 port */
-				pthread_mutex_lock(&mute_cmd);
-				ret = socket_send(socket_cmd, cmd, content, recvbuf);
-				pthread_mutex_unlock(&mute_cmd);
-				break;
-			case FILE_PORT:
-				/* file_content is empty */
-				if(file_content == NULL || !strcmp(file_content, "")) {
-					goto end;
-				}
-				printf("file_content = %s\n", file_content);
-				/* send file cmd to 8082 port*/
-				pthread_mutex_lock(&mute_file);
-				ret = socket_send(socket_file, cmd, file_content, recvbuf);
-				pthread_mutex_unlock(&mute_file);
-				break;
-			default:
+	if(port_n == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
+	}
+	port = port_n->valueint;
+	switch(port) {
+		case CM_PORT:
+			/* content is empty */
+			if(content == NULL || !strcmp(content, "")) {
 				goto end;
-		}
+			}
+			printf("content = %s\n", content);
+			/* send cmd to 8080 port */
+			pthread_mutex_lock(&mute_cmd);
+			ret = socket_send(socket_cmd, cmd, content, recvbuf);
+			pthread_mutex_unlock(&mute_cmd);
+			break;
+		case FILE_PORT:
+			/* file_content is empty */
+			if(file_content == NULL || !strcmp(file_content, "")) {
+				goto end;
+			}
+			printf("file_content = %s\n", file_content);
+			/* send file cmd to 8082 port*/
+			pthread_mutex_lock(&mute_file);
+			ret = socket_send(socket_file, cmd, file_content, recvbuf);
+			pthread_mutex_unlock(&mute_file);
+			break;
+		default:
+			goto end;
 	}
 	if(ret == FAIL){
 		goto end;
@@ -512,42 +522,43 @@ void get(Webs *wp)
 	char *buf = NULL;
 	char *cmd = NULL;
 	cJSON *command = NULL;
-	char *jsonString= wp->input.servp;
-	cJSON *data = cJSON_Parse(jsonString);
-	if (data == NULL)
-	{
+	cJSON *data = NULL;
+
+	ret_f_content = NULL;
+	data = cJSON_Parse(wp->input.servp);
+	if (data == NULL) {
 		fprintf(stderr, "Parse json file Error!\n");
 		goto end;
 	}
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
-
-	get_lua_data();
-	command = cJSON_GetObjectItem(data, "data");
-	if (command != NULL) {
-		cmd = command->valuestring;
-		if(!strcmp(cmd, "get_points")) {
-		//	ret = get_points_file();
-		} else if(!strcmp(cmd, "get_lua_data")) {
-			ret = get_lua_data();
-		} else {
-			goto end;
-		}
+	buf = NULL;
+	/* get cmd */
+	command = cJSON_GetObjectItem(data, "cmd");
+	if (command == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
 	}
-//	if(ret == FAIL){
-//		goto end;
-//	}
+	cmd = command->valuestring;
+	if(!strcmp(cmd, "get_points")) {
+		ret = get_points_file();
+	} else if(!strcmp(cmd, "get_lua_data")) {
+		ret = get_lua_data();
+	} else {
+		goto end;
+	}
+	if(ret == FAIL){
+		goto end;
+	}
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
-
 	printf("ret_f_content = %s\n", ret_f_content);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
 	websWrite(wp, ret_f_content);
 	websDone(wp);
-
 	/* free ret_f_content */
 	free(ret_f_content);
 	ret_f_content = NULL;
@@ -555,9 +566,6 @@ void get(Webs *wp)
 	return;
 
 end:
-	/* free ret_f_content */
-	free(ret_f_content);
-	ret_f_content = NULL;
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -565,6 +573,111 @@ end:
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
 	//websWrite(wp, ret_f_content);
+	websWrite(wp, "fail");
+	websDone(wp);
+	/* free ret_f_content */
+	free(ret_f_content);
+	ret_f_content = NULL;
+	return;
+}
+
+/* save lua file */
+static int save_lua_file(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char dir_filename[100] = {0};
+	if (data_json == NULL || data_json->type != cJSON_Object) {
+		fprintf(stderr, "Parse json file Error!\n");
+		return FAIL;
+	}
+	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
+	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
+	if (file_name == NULL || pgvalue == NULL || file_name->valuestring == NULL || pgvalue->valuestring == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s/%s", DIR_LUA, file_name->valuestring);
+	ret = write_file(dir_filename, pgvalue->valuestring);
+
+	return ret;
+}
+
+/* delete lua file */
+static int delete_lua_file(const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+	if (data_json->valuestring == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s/%s", DIR_LUA, data_json->valuestring);
+	printf("Will removed %s\n", dir_filename);
+	if (remove(dir_filename)) {
+		fprintf(stderr, "remove file fail!\n");
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+void act(Webs *wp)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *cmd = NULL;
+	cJSON *command = NULL;
+	cJSON *data = NULL;
+	cJSON *data_json = NULL;
+
+	data = cJSON_Parse(wp->input.servp);
+	if (data == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
+	}
+	printf("data:%s\n", buf = cJSON_Print(data));
+	free(buf);
+	buf = NULL;
+	/* get data json */
+	data_json = cJSON_GetObjectItem(data, "data");
+	if (data_json == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
+	}
+	/* get cmd */
+	command = cJSON_GetObjectItem(data, "cmd");
+	if (command == NULL) {
+		fprintf(stderr, "Parse json file Error!\n");
+		goto end;
+	}
+	cmd = command->valuestring;
+	if(!strcmp(cmd, "save_lua_file")) {
+		ret = save_lua_file(data_json);
+	} else if(!strcmp(cmd, "delete_lua_file")) {
+		ret = delete_lua_file(data_json);
+	} else {
+		goto end;
+	}
+	if(ret == FAIL){
+		goto end;
+	}
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 200);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "success");
+	websDone(wp);
+
+	return;
+
+end:
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 403);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
 	websWrite(wp, "fail");
 	websDone(wp);
 	return;

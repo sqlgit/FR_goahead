@@ -8,5 +8,7 @@
 void set(Webs *wp);
 /* get */
 void get(Webs *wp);
+/* act */
+void act(Webs *wp);
 
 #endif

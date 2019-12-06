@@ -173,6 +173,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 
 	websDefineAction("set", set);
 	websDefineAction("get", get);
+	websDefineAction("act", act);
 	websDefineAction("upload", upload);
 	websDefineAction("download", download);
 

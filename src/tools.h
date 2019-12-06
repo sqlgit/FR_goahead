@@ -29,7 +29,9 @@ pthread_mutex_t mute_file;
 pthread_t t_socket_cmd;
 pthread_t t_socket_file;
 
+int write_file(const char *file_name, const char *file_content);
 char *get_file_content(const char *file_path);
+char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);
 void delay_ms(const int timeout);
