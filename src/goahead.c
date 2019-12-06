@@ -18,7 +18,9 @@
 
 #include    "goahead.h"
 #include	"js.h"
-#include	"actionhandler.h"
+#include	"action_set.h"
+#include	"action_get.h"
+#include	"action_act.h"
 #include	"filehandler.h"
 
 /********************************* Defines ************************************/
