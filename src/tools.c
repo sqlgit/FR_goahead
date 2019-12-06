@@ -9,11 +9,13 @@ int write_file(const char *file_name, const char *file_content)
 
 	if((fp = fopen(file_name, "w")) == NULL) {
 		perror("open file");
+
 		return FAIL;
 	}
 	if(fputs(file_content, fp) < 0){
 		perror("write file");
 		fclose(fp);
+
 		return FAIL;
 	}
 	fclose(fp);
@@ -33,6 +35,7 @@ char *get_file_content(const char *file_path)
 //	printf("file_path = %s\n", file_path);
 	if ((fp = fopen(file_path, "r")) == NULL) {
 		perror("open file");
+
 		return NULL;
 	}
 	fseek(fp, 0, SEEK_END);
@@ -67,6 +70,8 @@ char *get_file_content(const char *file_path)
 	content = (char *)calloc(1, strlen(file_content)+1);
 	if(content != NULL) {
 		strcpy(content, file_content);
+	} else {
+		perror("calloc");
 	}
 	free(tmp);
 	tmp = NULL;
@@ -84,6 +89,7 @@ char *get_complete_file_content(const char *file_path)
 
 	if ((fp = fopen(file_path, "r")) == NULL) {
 		perror("open file");
+
 		return NULL;
 	}
 	fseek(fp, 0, SEEK_END);
@@ -93,6 +99,7 @@ char *get_complete_file_content(const char *file_path)
 	if(content == NULL) {
 		perror("calloc");
 		fclose(fp);
+
 		return NULL;
 	}
 	fread(content, sizeof(char), file_size, fp);
@@ -114,7 +121,8 @@ char *get_dir_content(const char *dir_path)
 	cJSON *file_cont = NULL;
 
 	if ((dir=opendir(dir_path)) == NULL) {
-		perror("Open dir error...");
+		perror("Open dir error");
+
 		return NULL;
 	}
 	root_json = cJSON_CreateArray();
@@ -143,6 +151,8 @@ char *get_dir_content(const char *dir_path)
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
+	} else {
+		perror("calloc");
 	}
 	free(buf);
 	buf = NULL;
@@ -203,6 +213,7 @@ int create_connect(const char *server_ip, int server_port, const int s)
 
 	sockfd = socket_create();
 	if(sockfd < 0){
+
 		return -1;
 	}
 
@@ -297,8 +308,7 @@ int socket_timeout(int sockfd, const int s)
 	}
 
 	//get socket status
-	if(getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0)
-	{
+	if(getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
 		printf( "get socket option failed\n" );
 
 		return -1;

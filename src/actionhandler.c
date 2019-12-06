@@ -1,7 +1,6 @@
 #include    "goahead.h"
 #include	"actionhandler.h"
 
-//static int no;
 /* set */
 static int program_start(const cJSON *data_json);
 static int program_stop(const cJSON *data_json);
@@ -23,6 +22,7 @@ static char *content = NULL;
 static char *file_content = NULL;
 static char *ret_f_content = NULL;
 
+//static int no;
 /*static int joints(cJSON *data, char *recvbuf)
 {
 	int ret;
@@ -90,13 +90,15 @@ static int sendfilename(const cJSON *data_json)
 {
 	cJSON *name = cJSON_GetObjectItem(data_json, "name");
 	if (name == NULL || name->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
+
 		return FAIL;
 	}
 	/*calloc file content*/
 	file_content = (char *)calloc(1, sizeof(char)*1024);
-	if(file_content == NULL){
-		perror("file_content error");
+	if (file_content == NULL) {
+		perror("calloc");
+
 		return FAIL;
 	}
 	sprintf(file_content, "/fruser/%s", name->valuestring);
@@ -153,11 +155,11 @@ static int sendfile(const cJSON *data_json)
 		
 		/* PTP */
 		if(!strncmp(token, "PTP:", 4)) {
-			/* open points file */
+			/* open and get points file content */
 			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
 			if (f_content == NULL) {
-				fprintf(stderr, "open file error!\n");
+				perror("get file content");
 
 				return FAIL;
 			}
@@ -192,7 +194,7 @@ static int sendfile(const cJSON *data_json)
 			f_content = get_file_content(FILE_POINTS);
 			/* file is NULL */
 			if (f_content == NULL) {
-				fprintf(stderr, "open file error!\n");
+				perror("get file content");
 
 				return FAIL;
 			}
@@ -250,7 +252,7 @@ static int sendfile(const cJSON *data_json)
 	return SUCCESS;
 
 end:
-	fprintf(stderr, "Parse json file Error!\n");
+	perror("json");
 	cJSON_Delete(f_json);
 	f_json = NULL;
 	free(f_content);
@@ -263,7 +265,8 @@ static int movej(const cJSON *data_json)
 {
 	cJSON *joints = cJSON_GetObjectItem(data_json, "joints");
 	if (joints == NULL || joints->type != cJSON_Object) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
+
 		return FAIL;
 	}
 	cJSON *j1 = cJSON_GetObjectItem(joints, "j1");
@@ -273,13 +276,13 @@ static int movej(const cJSON *data_json)
 	cJSON *j5 = cJSON_GetObjectItem(joints, "j5");
 	cJSON *j6 = cJSON_GetObjectItem(joints, "j6");
 	if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 
 		return FAIL;
 	}
 	cJSON *speed = cJSON_GetObjectItem(data_json, "speed");
 	if (speed->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 
 		return FAIL;
 	}
@@ -293,7 +296,7 @@ static int mode(const cJSON *data_json)
 {
 	cJSON *mode = cJSON_GetObjectItem(data_json, "mode");
 	if(mode == NULL || mode->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 
 		return FAIL;
 	}
@@ -317,7 +320,7 @@ void set(Webs *wp)
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	printf("data:%s\n", buf = cJSON_Print(data));
@@ -326,18 +329,19 @@ void set(Webs *wp)
 	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
 	if (data_json == NULL || data_json->type != cJSON_Object) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	/*calloc content*/
 	content = (char *)calloc(1, sizeof(char)*1024);
 	if (content == NULL) {
+		perror("calloc");
 		goto end;
 	}
 	/* get cmd */
 	command = cJSON_GetObjectItem(data, "cmd");
 	if(command == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	cmd = command->valueint;
@@ -370,16 +374,18 @@ void set(Webs *wp)
 			ret = mode(data_json);
 			break;
 		default:
+			perror("cmd not found");
 			goto end;
 	}
 	if(ret == FAIL){
+		perror("ret fail");
 		goto end;
 	}
 	ret = FAIL;
 	/* get port */
 	port_n = cJSON_GetObjectItem(data, "port");
 	if(port_n == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	port = port_n->valueint;
@@ -387,6 +393,7 @@ void set(Webs *wp)
 		case CM_PORT:
 			/* content is empty */
 			if(content == NULL || !strcmp(content, "")) {
+				perror("content");
 				goto end;
 			}
 			printf("content = %s\n", content);
@@ -398,6 +405,7 @@ void set(Webs *wp)
 		case FILE_PORT:
 			/* file_content is empty */
 			if(file_content == NULL || !strcmp(file_content, "")) {
+				perror("file content");
 				goto end;
 			}
 			printf("file_content = %s\n", file_content);
@@ -407,9 +415,11 @@ void set(Webs *wp)
 			pthread_mutex_unlock(&mute_file);
 			break;
 		default:
+			perror("port");
 			goto end;
 	}
 	if(ret == FAIL){
+		perror("ret fail");
 		goto end;
 	}
 
@@ -468,7 +478,7 @@ static int get_points_file()
 	ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
 	if (ret_f_content == NULL) {
-		fprintf(stderr, "get points file error!\n");
+		perror("get file content");
 
 		return FAIL;
 	}
@@ -482,7 +492,7 @@ static int get_lua_data()
 	ret_f_content = get_dir_content(DIR_LUA);
 	/* file is NULL */
 	if (ret_f_content == NULL) {
-		fprintf(stderr, "get lua name error!\n");
+		perror("get dir content");
 
 		return FAIL;
 	}
@@ -501,7 +511,7 @@ void get(Webs *wp)
 	ret_f_content = NULL;
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	printf("data:%s\n", buf = cJSON_Print(data));
@@ -510,7 +520,7 @@ void get(Webs *wp)
 	/* get cmd */
 	command = cJSON_GetObjectItem(data, "cmd");
 	if (command == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	cmd = command->valuestring;
@@ -519,9 +529,11 @@ void get(Webs *wp)
 	} else if(!strcmp(cmd, "get_lua_data")) {
 		ret = get_lua_data();
 	} else {
+		perror("cmd not found");
 		goto end;
 	}
 	if(ret == FAIL) {
+		perror("ret fail");
 		goto end;
 	}
 	/* cjson delete */
@@ -564,7 +576,8 @@ static int save_lua_file(const cJSON *data_json)
 	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (file_name == NULL || pgvalue == NULL || file_name->valuestring == NULL || pgvalue->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
+
 		return FAIL;
 	}
 	sprintf(dir_filename, "%s/%s", DIR_LUA, file_name->valuestring);
@@ -580,12 +593,14 @@ static int remove_lua_file(const cJSON *data_json)
 
 	cJSON *name = cJSON_GetObjectItem(data_json, "name");
 	if (name == NULL || name->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
+
 		return FAIL;
 	}
 	sprintf(dir_filename, "%s/%s", DIR_LUA, name->valuestring);
 	if (remove(dir_filename) == -1) {
-		fprintf(stderr, "remove file fail!\n");
+		perror("remove");
+
 		return FAIL;
 	}
 
@@ -601,13 +616,15 @@ static int rename_lua_file(const cJSON *data_json)
 	cJSON *oldname = cJSON_GetObjectItem(data_json, "oldname");
 	cJSON *newname = cJSON_GetObjectItem(data_json, "newname");
 	if (oldname == NULL || newname == NULL || oldname->valuestring == NULL || newname->valuestring == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
+
 		return FAIL;
 	}
 	sprintf(old_filename, "%s/%s", DIR_LUA, oldname->valuestring);
 	sprintf(new_filename, "%s/%s", DIR_LUA, newname->valuestring);
 	if (rename(old_filename, new_filename) == -1) {
-		fprintf(stderr, "rename file fail!\n");
+		perror("rename");
+
 		return FAIL;
 	}
 
@@ -625,7 +642,7 @@ void act(Webs *wp)
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	printf("data:%s\n", buf = cJSON_Print(data));
@@ -634,13 +651,13 @@ void act(Webs *wp)
 	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
 	if (data_json == NULL || data_json->type != cJSON_Object) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	/* get cmd */
 	command = cJSON_GetObjectItem(data, "cmd");
 	if (command == NULL) {
-		fprintf(stderr, "Parse json file Error!\n");
+		perror("json");
 		goto end;
 	}
 	cmd = command->valuestring;
@@ -651,9 +668,11 @@ void act(Webs *wp)
 	} else if(!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
 	} else {
+		perror("cmd not found");
 		goto end;
 	}
 	if(ret == FAIL){
+		perror("ret fail");
 		goto end;
 	}
 	/* cjson delete */
