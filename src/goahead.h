@@ -17,8 +17,6 @@
 
 #include    "me.h"
 #include    "osdep.h"
-#include 	"tools.h"
-#include	"cJSON.h"
 
 /************************************ Defaults ********************************/
 

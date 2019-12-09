@@ -1,5 +1,7 @@
 #include    "goahead.h"
 #include    "action_act.h"
+#include 	"tools.h"
+#include	"cJSON.h"
 
 /* static function */
 static int save_lua_file(const cJSON *data_json);

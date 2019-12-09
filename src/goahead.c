@@ -22,6 +22,8 @@
 #include	"action_get.h"
 #include	"action_act.h"
 #include	"filehandler.h"
+#include	"tools.h"
+#include	"cJSON.h"
 
 /********************************* Defines ************************************/
 

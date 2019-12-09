@@ -1,4 +1,6 @@
 #include 	"goahead.h"
+#include 	"tools.h"
+#include	"cJSON.h"
 
 /* write file */
 int write_file(const char *file_name, const char *file_content)
@@ -326,20 +328,27 @@ int socket_timeout(int sockfd, const int s)
 int socket_send(int clientSocket, const int no, const char *content, char *recvbuf)
 {
 	int send_len = strlen(content)+100;
-	printf("send_len = %d\n", send_len);
-	char send_buf[send_len];
-	memset(send_buf, 0, send_len);
+	char sendbuf[send_len];
+	char recv_success[MAX_BUF] = {0};
+	char recv_fail[MAX_BUF] = {0};
+	memset(sendbuf, 0, send_len);
 	/* test package */
 	if(no == 100) {
-		sprintf(send_buf, "/f/bIII1III%dIII%dIII%s", no, strlen(content), content);
+		sprintf(sendbuf, "/f/bIII1III%dIII%dIII%s", no, strlen(content), content);
 	} else {
-		sprintf(send_buf, "/f/bIII1III%dIII%dIII%sIII/b/f", no, strlen(content), content);
+		sprintf(sendbuf, "/f/bIII1III%dIII%dIII%sIII/b/f", no, strlen(content), content);
+#if local
+		sprintf(recv_success, "/f/bIII1III%dIII%dIII%sIII/b/f", no, strlen(content), content);
+#else
+		sprintf(recv_success, "/f/bIII1III%dIII1III1III/b/f", no);
+#endif
+		sprintf(recv_fail, "/f/bIII1III%dIII1III0III/b/f", no);
 	}
 
 	/* send over 1024 bytes */
 	while(send_len > 1024) {
 		char buf[1024] = {0};
-		strncpy(buf, send_buf, 1024);
+		strncpy(buf, sendbuf, 1024);
 		if(send(clientSocket, buf, 1024, 0) != 1024) {
 			perror("send");
 
@@ -350,16 +359,18 @@ int socket_send(int clientSocket, const int no, const char *content, char *recvb
 		memset(tmp_buf, 0, (send_len+1));
 		int i;
 		for(i = 0; i < send_len; i++){
-			tmp_buf[i] = send_buf[i+1024];
+			tmp_buf[i] = sendbuf[i+1024];
 		}
-		bzero(send_buf, sizeof(send_buf));
-		strcpy(send_buf, tmp_buf);
+		bzero(sendbuf, sizeof(sendbuf));
+		strcpy(sendbuf, tmp_buf);
 	}
-	if(no != 401) {
-		printf("send data to socket server is: %s\n", send_buf);
+
+	if (no != 401) {
+		printf("send data to socket server is: %s\n", sendbuf);
 	}
-	/* send normal (low)1024 bytes */
-	if(send(clientSocket, send_buf, strlen(send_buf), 0) != strlen(send_buf)) {
+
+	/* send normal (low) 1024 bytes */
+	if(send(clientSocket, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
 		perror("send");
 
 		return FAIL;
@@ -375,44 +386,38 @@ int socket_send(int clientSocket, const int no, const char *content, char *recvb
 
 		return FAIL;
 	}
-	if(no != 401) {
+
+	/*If the packet is not what the packet wants within 10 seconds,
+	continue to wait for 10s to see if you can receive the corresponding content,
+	If you still cannot receive the corresponding data, it will be judged as timeout*/
+	do {
 		/* recv data */
 		if(recv(clientSocket, recvbuf, MAX_BUF, 0) <= 0) {
+			/* recv timeout or error */
 			perror("recv");
 
 			return FAIL;
 		}
-		//int iDataNum;
-		//iDataNum = recv(clientSocket, recvbuf, MAX_BUF, 0);
-		//recvbuf[iDataNum] = '\0';
-		printf("recv data of socket server is: %s\n", recvbuf);
-
-		return SUCCESS;
-	} else {
-		/*If the packet is not what the heartbeat packet wants within 10 seconds, continue to wait for 10s to see if you can receive the corresponding content. If you still cannot receive the corresponding data, it will be judged as timeout*/
-		do {
-			/* recv data */
-			if(recv(clientSocket, recvbuf, MAX_BUF, 0) <= 0) {
-				perror("recv");
-
-				return FAIL;
-			}
+		if (no != 401) {
 			printf("recv data of socket server is: %s\n", recvbuf);
-#if local
-		} while (strcmp(recvbuf, "/f/bIII1III401III5IIIHEARTIII/b/f") != 0);
-#else
-		} while (strcmp(recvbuf, "/f/bIII1III401III1III1III/b/f") != 0);
-#endif
+		}
+		/* recv fail */
+		if (strcmp(recvbuf, recv_fail) == 0) {
+			perror("fail");
 
-		return SUCCESS;
-	}
+			return FAIL;
+		}
+	} while (strcmp(recvbuf, recv_success) != 0);
+
+	/* recv success */
+	return SUCCESS;
 }
 
 void *socket_cmd_thread(void *arg)
 {
 	socket_cmd = -1;
 	while(1) {
-		/* send Heartbeat package */
+		/* send Heartbeat packet */
 		if(socket_cmd > 0){
 			char recvbuf[MAX_BUF] = {0};
 			int ret = FAIL;
@@ -449,7 +454,7 @@ void *socket_file_thread(void *arg)
 {
 	socket_file = -1;
 	while(1) {
-		/* send Heartbeat package */
+		/* send Heartbeat packet */
 		if(socket_file > 0){
 			char recvbuf[MAX_BUF] = {0};
 			int ret = FAIL;

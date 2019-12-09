@@ -1,5 +1,7 @@
 #include    "goahead.h"
 #include	"action_get.h"
+#include 	"tools.h"
+#include	"cJSON.h"
 
 /* static function */
 static int get_points_file();
