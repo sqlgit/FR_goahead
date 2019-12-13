@@ -1,13 +1,21 @@
+
+/********************************* Includes ***********************************/
+
 #include    "goahead.h"
 #include	"action_get.h"
 #include 	"tools.h"
 #include	"cJSON.h"
 
-/* static function */
+/********************************* Defines ************************************/
+
+static char *ret_f_content = NULL;
+
+/********************************* Forwards ***********************************/
+
 static int get_points_file();
 static int get_lua_data();
-/* static variable */
-static char *ret_f_content = NULL;
+
+/*********************************** Code *************************************/
 
 /* get points file content */
 static int get_points_file()
@@ -37,6 +45,7 @@ static int get_lua_data()
 	return SUCCESS;
 }
 
+/* get webserver data and return to page */
 void get(Webs *wp)
 {
 	int ret = FAIL;

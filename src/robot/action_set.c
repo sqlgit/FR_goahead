@@ -1,9 +1,18 @@
+
+/********************************* Includes ***********************************/
+
 #include    "goahead.h"
 #include	"action_set.h"
 #include 	"tools.h"
 #include	"cJSON.h"
 
-/* static function */
+/********************************* Defines ************************************/
+
+static char *content = NULL;
+static char *file_content = NULL;
+
+/********************************* Forwards ***********************************/
+
 static int program_start(const cJSON *data_json);
 static int program_stop(const cJSON *data_json);
 static int program_pause(const cJSON *data_json);
@@ -12,9 +21,9 @@ static int sendfilename(const cJSON *data_json);
 static int sendfile(const cJSON *data_json);
 static int movej(const cJSON *data_json);
 static int mode(const cJSON *data_json);
-/* static variable */
-static char *content = NULL;
-static char *file_content = NULL;
+
+/*********************************** Code *************************************/
+
 
 /*action*/
 //static int joints(cJSON *data, char *recvbuf);
@@ -29,13 +38,13 @@ static char *file_content = NULL;
 
 	no = 303;
 	sprintf(content, "Mode(1)");
-	ret = socket_client(no, content, recvbuf, CM_PORT);
+	ret = socket_client(no, content, recvbuf, CMD_PORT);
 
 	int i;
 	for(i = 1; i <= 10; i++){
 		no = 208;
 		sprintf(content, "MJOINT(1,1,%d,100,100)", i);
-		ret = socket_client(no, content, recvbuf, CM_PORT);
+		ret = socket_client(no, content, recvbuf, CMD_PORT);
 	}
 
 	return ret;
@@ -302,6 +311,7 @@ static int mode(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* set user cmd to task manager */
 void set(Webs *wp)
 {
 	int ret = FAIL;
@@ -310,7 +320,6 @@ void set(Webs *wp)
 	char recvbuf[MAX_BUF] = {0};
 	char *buf = NULL;
 	cJSON *data_json = NULL;
-	cJSON *f_content_json = NULL;
 	cJSON *command = NULL;
 	cJSON *port_n = NULL;
 	cJSON *data = NULL;
@@ -387,7 +396,7 @@ void set(Webs *wp)
 	}
 	port = port_n->valueint;
 	switch(port) {
-		case CM_PORT:
+		case CMD_PORT:
 			/* content is empty */
 			if(content == NULL || !strcmp(content, "")) {
 				perror("content");

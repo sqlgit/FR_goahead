@@ -1,12 +1,18 @@
+
+/********************************* Includes ***********************************/
+
 #include    "goahead.h"
 #include    "action_act.h"
 #include 	"tools.h"
 #include	"cJSON.h"
 
-/* static function */
+/********************************* Forwards ***********************************/
+
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
+
+/*********************************** Code *************************************/
 
 /* save lua file */
 static int save_lua_file(const cJSON *data_json)
@@ -72,6 +78,7 @@ static int rename_lua_file(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* do some user actions on webserver */
 void act(Webs *wp)
 {
 	int ret = FAIL;

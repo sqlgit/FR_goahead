@@ -21,6 +21,7 @@
 #include	"action_set.h"
 #include	"action_get.h"
 #include	"action_act.h"
+#include	"action_sta.h"
 #include	"filehandler.h"
 #include	"tools.h"
 #include	"cJSON.h"
@@ -37,7 +38,7 @@ static void usage(void);
 
 static void personInfoAction(Webs *wp);
 static void actionTest(Webs *wp);
-static void actionTest2(Webs *wp);
+static int actionTest2(Webs *wp);
 static void ShowString(Webs *wp);
 static void on_led_set(Webs *wp);
 static void on_buzzer_set(Webs *wp);
@@ -175,8 +176,9 @@ MAIN(goahead, int argc, char **argv, char **envp)
     }
 #endif
 
-	websDefineAction("set", set);
 	websDefineAction("get", get);
+	websDefineAction("set", set);
+	websDefineAction("sta", sta);
 	websDefineAction("act", act);
 	websDefineAction("upload", upload);
 	websDefineAction("download", download);
@@ -217,10 +219,13 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_mutex_init(&mute_file, NULL);
 	/* create thread, do socket connect */
 	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
-		perror("pthread_create error!");
+		perror("pthread_create");
 	}
 	if(pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
-		perror("pthread_create error!");
+		perror("pthread_create");
+	}
+	if(pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, NULL)) {
+		perror("pthread_create");
 	}
 
     websServiceEvents(&finished);
@@ -252,7 +257,7 @@ unsigned int g_test_age = 0;
 
 static int AspMyTest(int eid, Webs *wp, int argc, char **argv)
 {
-		char *name;
+		//char *name;
 		char buffer[128];
 		/* 判断参数是否过少 */
 		/*if (jsArgs(argc, argv, "%s", &name) < 1) {
@@ -368,7 +373,7 @@ static void actionTest(Webs *wp)
 		websDone(wp);
 }
 
-static void actionTest2(Webs *wp)
+static int actionTest2(Webs *wp)
 {
 	websSetStatus(wp,200);
 

@@ -198,12 +198,23 @@ void delay_ms(const int timeout)
 	select(0, NULL, NULL, NULL, &timer);
 }
 
+/* socket init */
+int socket_create()
+{
+	int sockfd = -1;
+
+	while ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+		perror("create socket");
+	}
+
+	return sockfd;
+}
+
 /* create connect */
-int create_connect(const char *server_ip, int server_port, const int s)
+int socket_connect(int sockfd, const char *server_ip, int server_port, const int s)
 {
 	int ret = -1;
-	int sockfd = -1;
-	unsigned long ul;
+	int fdopt = -1;
 	//描述服务器的socket
 	struct sockaddr_in serverAddr;
 
@@ -213,73 +224,42 @@ int create_connect(const char *server_ip, int server_port, const int s)
 	//inet_addr()函数，将点分十进制IP转换成网络字节序IP
 	serverAddr.sin_addr.s_addr = inet_addr(server_ip);
 
-	sockfd = socket_create();
-	if(sockfd < 0){
-
-		return -1;
-	}
-
 	// set no block
-	//ul = 1;
-	//ioctl(sockfd, FIONBIO, &ul);
-	int fdopt = fcntl(sockfd, F_GETFL);
+	fdopt = fcntl(sockfd, F_GETFL);
 	fcntl(sockfd, F_SETFL, fdopt | O_NONBLOCK);
 
 	// client connect
-	ret = connect(sockfd, (struct sockaddr_in *)&serverAddr, sizeof(struct sockaddr_in));
+	ret = connect(sockfd, (const struct sockaddr *)&serverAddr, sizeof(serverAddr));
 
 	//unblock mode --> local connect, connect return immediately
-	if (ret == 0)
-	{
+	if (ret == 0) {
 		printf("connect with server immediately\n");
 		fcntl(sockfd, F_SETFL, fdopt);
 
-		return sockfd;
-	}
-	else if (errno != EINPROGRESS)
-	{
+		return SUCCESS;
+	} else if (errno != EINPROGRESS) {
 		printf("unblock connect failed!\n");
-		close(sockfd);
+		fcntl(sockfd, F_SETFL, fdopt);
 
-		return -1;
-	}
-	// ret = -1 & errno = EINPROGRESS
-	else if (errno == EINPROGRESS)
-	{
+		return FAIL;
+	} else if (errno == EINPROGRESS) {
 		printf("unblock mode socket is connecting...\n");
 	}
 
 	// set socket connect timeout 
 	ret = socket_timeout(sockfd, s);
-	if(ret < 0){
-		close(sockfd);
+	if (ret < 0) {
+		fcntl(sockfd, F_SETFL, fdopt);
 
-		return -1;
+		return FAIL;
 	}
 
 	//connection successful!
-	printf( "connection ready after select with the socket: %d \n", sockfd);
+	//printf("connection ready after select with the socket: %d \n", sockfd);
 	// set block
 	fcntl(sockfd, F_SETFL, fdopt);
-	//ul = 0;
-	//ioctl(sockfd, FIONBIO, &ul);
 
-	return sockfd;
-}
-
-/* socket init */
-int socket_create()
-{
-	int sockfd = -1;
-
-	sockfd = socket(AF_INET, SOCK_STREAM, 0);
-	if(sockfd < 0){
-		perror("create socket error");
-
-		return -1;
-	}
-
-	return sockfd;
+	return SUCCESS;
 }
 
 /* socket timeout */
@@ -415,74 +395,193 @@ int socket_send(int clientSocket, const int no, const char *content, char *recvb
 
 void *socket_cmd_thread(void *arg)
 {
-	socket_cmd = -1;
-	while(1) {
-		/* send Heartbeat packet */
-		if(socket_cmd > 0){
-			char recvbuf[MAX_BUF] = {0};
-			int ret = FAIL;
-			//上锁
-			pthread_mutex_lock(&mute_cmd);
-			/* send heartbeat packet */
-			ret = socket_send(socket_cmd, 401, "HEART", recvbuf);
-			//解锁
-			pthread_mutex_unlock(&mute_cmd);
-			if(ret == SUCCESS) { 
-				/* Heartbeat package every 10 seconds */
-				delay_ms(DELAY_MS_TIMEOUT);
-				continue;
-			}
-			/* close socket_cmd */
-			close(socket_cmd);
-			socket_cmd = -1;
-		}
-		/* socket reconnected */
-		while(socket_cmd < 0) {
-			socket_cmd = create_connect(SERVER_IP, CM_PORT, SOCK_TIMEOUT);
-			if(socket_cmd < 0){
-				printf("Connect failed! \n");
-			} else {
-				printf("Connect success, sockfd = %d\nserver_ip = %s, server_port = %d\n", socket_cmd, SERVER_IP, CM_PORT);
+	while (1) {
+		/* create socket */
+		while (1) {
+			/* socket init */
+			socket_cmd = socket_create();
+			/* socket connect */
+			if (socket_connect(socket_cmd, SERVER_IP, CMD_PORT, SOCK_TIMEOUT) == SUCCESS) {
+				/* connect success */
+				printf("Connect success, sockfd = %d\nserver_ip = %s, server_port = %d\n", socket_cmd, SERVER_IP, CMD_PORT);
+
 				break;
 			}
+			/* connect fail */
+			perror("connect");
+			close(socket_cmd);
 			delay_ms(1000);
 		}
+		/* send Heartbeat packet */
+		while (1) {
+			char recvbuf[MAX_BUF] = {0};
+			int ret = FAIL;
+
+			pthread_mutex_lock(&mute_cmd);
+			ret = socket_send(socket_cmd, 401, "HEART", recvbuf);
+			pthread_mutex_unlock(&mute_cmd);
+			if (ret == FAIL) {
+				perror("send");
+
+				break;
+			}
+			if (ret == SUCCESS) {
+				/* Heartbeat package every 10 seconds */
+				delay_ms(HEART_MS_TIMEOUT);
+			}
+		}
+		/* close socket */
+		close(socket_cmd);
 	}
 }
 
 void *socket_file_thread(void *arg)
 {
-	socket_file = -1;
-	while(1) {
-		/* send Heartbeat packet */
-		if(socket_file > 0){
-			char recvbuf[MAX_BUF] = {0};
-			int ret = FAIL;
-			//上锁
-			pthread_mutex_lock(&mute_file);
-			/* send heartbeat packet */
-			ret = socket_send(socket_file, 401, "HEART", recvbuf);
-			//解锁
-			pthread_mutex_unlock(&mute_file);
-			if(ret == SUCCESS) { 
-				/* Heartbeat package every 5 seconds */
-				delay_ms(DELAY_MS_TIMEOUT);
-				continue;
-			}
-			/* close socket_cmd */
-			close(socket_file);
-			socket_file = -1;
-		}
-		/* socket reconnected */
-		while(socket_file < 0) {
-			socket_file = create_connect(SERVER_IP, FILE_PORT, SOCK_TIMEOUT);
-			if(socket_file < 0){
-				printf("Connect failed! \n");
-			} else {
+	while (1) {
+		/* create socket */
+		while (1) {
+			/* socket init */
+			socket_file = socket_create();
+			/* socket connect */
+			if (socket_connect(socket_file, SERVER_IP, FILE_PORT, SOCK_TIMEOUT) == SUCCESS) {
+				/* connect success */
 				printf("Connect success, sockfd = %d\nserver_ip = %s, server_port = %d\n", socket_file, SERVER_IP, FILE_PORT);
+
 				break;
 			}
+			/* connect fail */
+			perror("connect");
+			close(socket_file);
 			delay_ms(1000);
 		}
+		/* send Heartbeat packet */
+		while (1) {
+			char recvbuf[MAX_BUF] = {0};
+			int ret = FAIL;
+
+			pthread_mutex_lock(&mute_file);
+			ret = socket_send(socket_file, 401, "HEART", recvbuf);
+			pthread_mutex_unlock(&mute_file);
+			if (ret == FAIL) {
+				perror("send");
+
+				break;
+			}
+			if (ret == SUCCESS) {
+				/* Heartbeat package every 10 seconds */
+				delay_ms(HEART_MS_TIMEOUT);
+			}
+		}
+		/* close socket */
+		close(socket_file);
+	}
+}
+
+/* The double type retains a few bits */
+double double_round(double dVal, int iPlaces) //iPlaces>=0
+{
+	unsigned char s[20];
+	double dRetval;
+
+	sprintf(s, "%.*lf", iPlaces, dVal);
+	sscanf(s, "%lf", &dRetval);
+
+	return dRetval;
+}
+
+int BytesToString(BYTE *pSrc, char *pDst, int nSrcLength)
+{
+	const char tab[] = "0123456789ABCDEF";
+	int i = 0;
+
+	for(i = 0; i < nSrcLength; i++) {
+		*pDst++ = tab[*pSrc >> 4];
+		*pDst++ = tab[*pSrc & 0x0f];
+		*pDst++ = ' ';
+		pSrc++;
+	}
+
+	*pDst = '\0';
+
+	return 3*nSrcLength;
+}
+
+int StringToBytes(char *pSrc, BYTE *pDst, int nSrcLength)
+{
+	int i = 0;
+
+	for (i = 0; i < nSrcLength; i++) {
+		// 输出高4位
+		if ((*pSrc >= '0') && (*pSrc <= '9'))
+			*pDst = (*pSrc - '0') << 4;
+		else if ((*pSrc >= 'A') && (*pSrc <= 'Z'))
+			*pDst = (*pSrc - 'A' + 10) << 4;
+		else
+			*pDst = (*pSrc - 'a' + 10) << 4;
+		pSrc++;
+
+		// 输出低4位
+		if ((*pSrc >= '0') && (*pSrc <= '9'))
+			*pDst |= *pSrc - '0';
+		else if ((*pSrc >= 'A') && (*pSrc <= 'Z'))
+			*pDst |= *pSrc - 'A' + 10;
+		else
+			*pDst |= *pSrc - 'a' + 10;
+
+		pSrc++;
+		pDst++;
+		pSrc++;
+	}
+
+	// 返回目标数据长度
+	return nSrcLength;
+}
+
+void *socket_status_thread(void *arg)
+{
+	while(1) {
+		/* create socket */
+		while (1) {
+			/* socket init */
+			socket_status = socket_create();
+			/* socket connect */
+			if (socket_connect(socket_status, SERVER_IP, STATUS_PORT, SOCK_TIMEOUT) == SUCCESS) {
+				/* connect success */
+				printf("Connect success, sockfd = %d\nserver_ip = %s, server_port = %d\n", socket_status, SERVER_IP, STATUS_PORT);
+
+				break;
+			}
+			/* connect fail */
+			perror("connect");
+			close(socket_status);
+			delay_ms(1000);
+		}
+		/* recv ctrl status */
+		while (1) {
+			char status_buf[STATUS_BUF] = {0}; /* Now recv buf is 3336 bytes*/
+			int recv_len = 0;
+
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1112 bytes */
+			recv_len = recv(socket_status, status_buf, 3350, 0);
+			/* recv timeout or error */
+			if (recv_len <= 0) {
+				perror("recv");
+
+				break;
+			}
+			//printf("recv len = %d\n", recv_len);
+			strrpc(status_buf, "/f/bIII", "");
+			strrpc(status_buf, "III/b/f", "");
+			//printf("strlen status_buf = %d\n", strlen(status_buf));
+			//printf("recv status_buf = %s\n", status_buf);
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE));
+			if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
+				memset(&ctrl_state, 0, sizeof(CTRL_STATE));
+				StringToBytes(status_buf, (BYTE *)&ctrl_state, sizeof(ctrl_state));
+			}
+			//printf("after StringToBytes\n");
+		}
+		/* close socket */
+		close(socket_status);
 	}
 }
