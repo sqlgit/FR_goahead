@@ -10,7 +10,7 @@
 
 static char *ret_f_content = NULL;
 
-/********************************* Forwards ***********************************/
+/********************************* Function declaration ***********************/
 
 static int get_points_file();
 static int get_lua_data();

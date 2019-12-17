@@ -1,15 +1,17 @@
 #ifndef tools_h
 #define tools_h
 
-#define local 1
+#define local 0
 #if local
 	//#define SERVER_IP "127.0.0.1"
-	#define SERVER_IP "192.168.152.129"
-	//#define SERVER_IP "192.168.172.128"
+	#define SERVER_IP "192.168.152.129" //sql
+	//#define SERVER_IP "192.168.172.128" //zjq
 #else
 	#define SERVER_IP "192.168.58.2"
 #endif
 
+#define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
+#define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
 #define SOCK_TIMEOUT 1 /* s */
 #define SOCK_SEND_TIMEOUT 10 /* s */
 #define HEART_MS_TIMEOUT 10000 /* ms */
@@ -22,6 +24,9 @@
 #define FAIL 0
 #define FILE_POINTS "/tmp/points/points.json"
 #define DIR_LUA "/tmp/lua"
+#define PATH_SEND_LUA "/fruser/"
+
+/********************************* Defines ************************************/
 
 typedef unsigned char BYTE;
 #pragma pack(push, 1)
@@ -97,19 +102,7 @@ typedef struct _CTRL_STATE
 }CTRL_STATE;
 #pragma pack(pop)
 
-/********************************* Defines ************************************/
-
-CTRL_STATE ctrl_state;
-int socket_cmd;
-int socket_file;
-int socket_status;
-pthread_mutex_t mute_cmd;
-pthread_mutex_t mute_file;
-pthread_t t_socket_cmd;
-pthread_t t_socket_file;
-pthread_t t_socket_status;
-
-/********************************* Forwards ***********************************/
+/********************************* Function declaration ***********************/
 
 double double_round(double dVal, int iPlaces);
 int write_file(const char *file_name, const char *file_content);

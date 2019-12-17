@@ -29,8 +29,15 @@
 /********************************* Defines ************************************/
 
 static int finished = 0;
+extern int socket_cmd;
+extern int socket_file;
+extern int socket_status;
+extern int socket_connect_status;
+extern pthread_mutex_t mute_cmd;
+extern pthread_mutex_t mute_file;
+extern pthread_mutex_t mute_connect_status;
 
-/********************************* Forwards ***********************************/
+/********************************* Function declaration ***********************/
 
 static void initPlatform(void);
 static void logHeader(void);
@@ -214,9 +221,14 @@ MAIN(goahead, int argc, char **argv, char **envp)
     }
 #endif
 
+	pthread_t t_socket_cmd;
+	pthread_t t_socket_file;
+	pthread_t t_socket_status;
+    socket_connect_status = 0;
 	//创建锁，相当于new一个对象
 	pthread_mutex_init(&mute_cmd, NULL);
 	pthread_mutex_init(&mute_file, NULL);
+	pthread_mutex_init(&mute_connect_status, NULL);
 	/* create thread, do socket connect */
 	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
 		perror("pthread_create");
@@ -230,10 +242,9 @@ MAIN(goahead, int argc, char **argv, char **envp)
 
     websServiceEvents(&finished);
     logmsg(1, "Instructed to exit");
-	if(socket_cmd > 0)
-		close(socket_cmd);
-	if(socket_file > 0)
-		close(socket_file);
+	close(socket_cmd);
+	close(socket_file);
+	close(socket_status);
     websClose();
 #if WINDOWS
     windowsClose();
@@ -241,6 +252,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
   	//释放互斥锁
 	pthread_mutex_destroy(&mute_cmd);
 	pthread_mutex_destroy(&mute_file);
+	pthread_mutex_destroy(&mute_connect_status);
 
     return 0;
 }

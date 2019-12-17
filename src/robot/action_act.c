@@ -6,7 +6,7 @@
 #include 	"tools.h"
 #include	"cJSON.h"
 
-/********************************* Forwards ***********************************/
+/********************************* Function declaration ***********************/
 
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);

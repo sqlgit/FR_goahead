@@ -1,6 +1,22 @@
+
+/********************************* Includes ***********************************/
+
 #include 	"goahead.h"
 #include 	"tools.h"
 #include	"cJSON.h"
+
+/********************************* Defines ************************************/
+
+CTRL_STATE ctrl_state;
+int socket_cmd;
+int socket_file;
+int socket_status;
+uint8_t socket_connect_status;
+pthread_mutex_t mute_cmd;
+pthread_mutex_t mute_file;
+pthread_mutex_t mute_connect_status;
+
+/*********************************** Code *************************************/
 
 /* write file */
 int write_file(const char *file_name, const char *file_content)
@@ -171,12 +187,12 @@ char *get_dir_content(const char *dir_path)
 /* 实现字符串中指定字符串替换 */
 char *strrpc(char *str, const char *oldstr, const char *newstr)
 {
-	char bstr[strlen(str)];//转换缓冲区
-	memset(bstr, 0, sizeof(bstr));
 	int i;
+	char bstr[strlen(str)+10];//转换缓冲区
+	memset(bstr, 0, sizeof(bstr));
 
-	for(i = 0; i < strlen(str); i++){
-		if(!strncmp(str+i, oldstr, strlen(oldstr))){//查找目标字符串
+	for (i = 0; i < strlen(str); i++) {
+		if (!strncmp(str+i, oldstr, strlen(oldstr))) {//查找目标字符串
 			strcat(bstr, newstr);
 			i += strlen(oldstr) - 1;
 		} else {
@@ -412,6 +428,11 @@ void *socket_cmd_thread(void *arg)
 			close(socket_cmd);
 			delay_ms(1000);
 		}
+		/* socket connected */
+		/* set socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		setbit(socket_connect_status, 1);
+		pthread_mutex_unlock(&mute_connect_status);
 		/* send Heartbeat packet */
 		while (1) {
 			char recvbuf[MAX_BUF] = {0};
@@ -430,8 +451,13 @@ void *socket_cmd_thread(void *arg)
 				delay_ms(HEART_MS_TIMEOUT);
 			}
 		}
+		/* socket disconnected */
 		/* close socket */
 		close(socket_cmd);
+		/* clear socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		clrbit(socket_connect_status, 1);
+		pthread_mutex_unlock(&mute_connect_status);
 	}
 }
 
@@ -454,6 +480,11 @@ void *socket_file_thread(void *arg)
 			close(socket_file);
 			delay_ms(1000);
 		}
+		/* socket connected */
+		/* set socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		setbit(socket_connect_status, 2);
+		pthread_mutex_unlock(&mute_connect_status);
 		/* send Heartbeat packet */
 		while (1) {
 			char recvbuf[MAX_BUF] = {0};
@@ -472,8 +503,13 @@ void *socket_file_thread(void *arg)
 				delay_ms(HEART_MS_TIMEOUT);
 			}
 		}
+		/* socket disconnected */
 		/* close socket */
 		close(socket_file);
+		/* clear socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		clrbit(socket_connect_status, 2);
+		pthread_mutex_unlock(&mute_connect_status);
 	}
 }
 
@@ -556,6 +592,11 @@ void *socket_status_thread(void *arg)
 			close(socket_status);
 			delay_ms(1000);
 		}
+		/* socket connected */
+		/* set socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		setbit(socket_connect_status, 3);
+		pthread_mutex_unlock(&mute_connect_status);
 		/* recv ctrl status */
 		while (1) {
 			char status_buf[STATUS_BUF] = {0}; /* Now recv buf is 3336 bytes*/
@@ -570,18 +611,28 @@ void *socket_status_thread(void *arg)
 				break;
 			}
 			//printf("recv len = %d\n", recv_len);
+			//printf("recv1 status_buf = %s\n", status_buf);
 			strrpc(status_buf, "/f/bIII", "");
 			strrpc(status_buf, "III/b/f", "");
 			//printf("strlen status_buf = %d\n", strlen(status_buf));
-			//printf("recv status_buf = %s\n", status_buf);
+			//printf("recv2 status_buf = %s\n", status_buf);
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE));
 			if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
-				memset(&ctrl_state, 0, sizeof(CTRL_STATE));
+				bzero(&ctrl_state, sizeof(ctrl_state));
 				StringToBytes(status_buf, (BYTE *)&ctrl_state, sizeof(ctrl_state));
+			/*	int i;
+				for (i = 0; i < 6; i++) {
+					printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
+				}*/
 			}
 			//printf("after StringToBytes\n");
 		}
+		/* socket disconnected */
 		/* close socket */
 		close(socket_status);
+		/* clear socket connect flag */
+		pthread_mutex_lock(&mute_connect_status);
+		clrbit(socket_connect_status, 3);
+		pthread_mutex_unlock(&mute_connect_status);
 	}
 }
