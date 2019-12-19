@@ -18,24 +18,21 @@
 
 #include    "goahead.h"
 #include	"js.h"
+#include	"cJSON.h"
 #include	"action_set.h"
 #include	"action_get.h"
 #include	"action_act.h"
 #include	"action_sta.h"
 #include	"filehandler.h"
 #include	"tools.h"
-#include	"cJSON.h"
+#include 	"robot_socket.h"
 
 /********************************* Defines ************************************/
 
 static int finished = 0;
-extern int socket_cmd;
-extern int socket_file;
-extern int socket_status;
-extern int socket_connect_status;
-extern pthread_mutex_t mute_cmd;
-extern pthread_mutex_t mute_file;
-extern pthread_mutex_t mute_connect_status;
+pthread_mutex_t mute_cmd;
+pthread_mutex_t mute_file;
+pthread_mutex_t mute_connect_status;
 
 /********************************* Function declaration ***********************/
 
@@ -224,35 +221,41 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;
-    socket_connect_status = 0;
-	//创建锁，相当于new一个对象
+
+	/* 创建锁，相当于new一个对象 */
 	pthread_mutex_init(&mute_cmd, NULL);
 	pthread_mutex_init(&mute_file, NULL);
 	pthread_mutex_init(&mute_connect_status, NULL);
-	/* create thread, do socket connect */
+
+	/* create socket_cmd thread */
 	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
 		perror("pthread_create");
 	}
+	/* create socket_file thread */
 	if(pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
 		perror("pthread_create");
 	}
+	/* create socket_status thread */
 	if(pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, NULL)) {
 		perror("pthread_create");
 	}
 
     websServiceEvents(&finished);
+
+	/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
+	pthread_join(&t_socket_cmd, NULL);
+	pthread_join(&t_socket_file, NULL);
+	pthread_join(&t_socket_status, NULL);
+	/* 释放互斥锁 */
+	pthread_mutex_destroy(&mute_cmd);
+	pthread_mutex_destroy(&mute_file);
+	pthread_mutex_destroy(&mute_connect_status);
+
     logmsg(1, "Instructed to exit");
-	close(socket_cmd);
-	close(socket_file);
-	close(socket_status);
     websClose();
 #if WINDOWS
     windowsClose();
 #endif
-  	//释放互斥锁
-	pthread_mutex_destroy(&mute_cmd);
-	pthread_mutex_destroy(&mute_file);
-	pthread_mutex_destroy(&mute_connect_status);
 
     return 0;
 }

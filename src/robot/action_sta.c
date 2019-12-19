@@ -2,9 +2,10 @@
 /********************************* Includes ***********************************/
 
 #include    "goahead.h"
-#include	"action_sta.h"
-#include 	"tools.h"
 #include	"cJSON.h"
+#include 	"tools.h"
+#include 	"robot_socket.h"
+#include	"action_sta.h"
 
 /********************************* Defines ************************************/
 
@@ -14,6 +15,7 @@ extern socket_connect_status;
 
 /********************************* Function declaration ***********************/
 
+static int connect_status();
 static int menu();
 static int basic();
 static int program_teach();
@@ -106,6 +108,7 @@ static int program_teach()
 	//printf("ctrl_state.line_number = %u\n", ctrl_state.line_number);
 	root_json = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root_json, "line_number", ctrl_state.line_number);
+	cJSON_AddNumberToObject(root_json, "program_state", ctrl_state.program_state);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);

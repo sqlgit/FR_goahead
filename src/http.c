@@ -987,7 +987,9 @@ static void parseFirstLine(Webs *wp)
         return;
     }
     if (websGetLogLevel() == 2) {
-        trace(2, "%s %s %s", wp->method, url, protoVer);
+		if (strcmp(url, "/action/sta")) {
+        	trace(2, "%s %s %s", wp->method, url, protoVer);
+		}
     }
 
     /*
