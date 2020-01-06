@@ -96,6 +96,7 @@ static int socket_connect(SOCKET_INFO *sock)
 	// set socket connect timeout 
 	ret = socket_timeout(sock);
 	if (ret < 0) {
+		//printf("__LINE__ = %d, set block\n", __LINE__);
 		fcntl(sock->fd, F_SETFL, fdopt);
 
 		return FAIL;
@@ -104,6 +105,7 @@ static int socket_connect(SOCKET_INFO *sock)
 	//connection successful!
 	//printf("connection ready after select with the socket: %d \n", sock->fd);
 	// set block
+	//printf("__LINE__ = %d, set block\n", __LINE__);
 	fcntl(sock->fd, F_SETFL, fdopt);
 
 	return SUCCESS;
@@ -333,24 +335,22 @@ void *socket_cmd_thread(void *arg)
 
 	while (1) {
 		/* do socket connect */
-		while (1) {
-			/* create socket */
-			while (1) {
-				if (socket_create(&socket_cmd) == SUCCESS) {
-					/* create success */
-					break;
-				}
-				perror("socket create fail");
-				usleep(1);
-			}
-			/* connect socket */
-			if (socket_connect(&socket_cmd) == SUCCESS) {
-				/* connect success */
-				break;
-			}
+		/* create socket */
+		if (socket_create(&socket_cmd) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+			usleep(1);
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(&socket_cmd) == FAIL) {
+			/* connect fail */
 			perror("socket connect fail");
 			close(socket_cmd.fd);
 			sleep(1);
+
+			continue;
 		}
 		/* socket connected */
 		socket_cmd.connect_status = 1;
@@ -428,24 +428,22 @@ void *socket_file_thread(void *arg)
 
 	while (1) {
 		/* do socket connect */
-		while (1) {
-			/* create socket */
-			while (1) {
-				if (socket_create(&socket_file) == SUCCESS) {
-					/* create success */
-					break;
-				}
-				perror("socket create fail");
-				usleep(1);
-			}
-			/* connect socket */
-			if (socket_connect(&socket_file) == SUCCESS) {
-				/* connect success */
-				break;
-			}
+		/* create socket */
+		if (socket_create(&socket_file) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+			usleep(1);
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(&socket_file) == FAIL) {
+			/* connect fail */
 			perror("socket connect fail");
 			close(socket_file.fd);
 			sleep(1);
+
+			continue;
 		}
 		/* socket connected */
 		socket_file.connect_status = 1;
@@ -524,24 +522,22 @@ void *socket_status_thread(void *arg)
 
 	while(1) {
 		/* do socket connect */
-		while (1) {
-			/* create socket */
-			while (1) {
-				if (socket_create(&socket_status) == SUCCESS) {
-					/* create success */
-					break;
-				}
-				perror("socket create fail");
-				usleep(1);
-			}
-			/* connect socket */
-			if (socket_connect(&socket_status) == SUCCESS) {
-				/* connect success */
-				break;
-			}
+		/* create socket */
+		if (socket_create(&socket_status) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+			usleep(1);
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(&socket_status) == FAIL) {
+			/* connect fail */
 			perror("socket connect fail");
 			close(socket_status.fd);
 			sleep(1);
+
+			continue;
 		}
 		/* socket connected */
 		socket_status.connect_status = 1;
