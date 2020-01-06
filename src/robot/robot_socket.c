@@ -260,8 +260,11 @@ static int socket_recv(SOCKET_INFO *sock, const LinkQuene q)
 	// TODO: 解决粘包的问题
 	if (recv(sock->fd, recvbuf, MAX_BUF, 0) <= 0) {
 		/* 认为连接已经断开 */
-		sock->connect_status = 0;
 		perror("recv");
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+		/* close socket */
+		close(sock->fd);
 
 		return FAIL;
 	}
@@ -311,7 +314,7 @@ static void *socket_cmd_send_thread(void *arg)
 			}
 			p = p->next;
 		}
-		usleep(1);
+		delay(1);
 	}
 }
 
@@ -339,7 +342,6 @@ void *socket_cmd_thread(void *arg)
 		if (socket_create(&socket_cmd) == FAIL) {
 			/* create fail */
 			perror("socket create fail");
-			usleep(1);
 
 			continue;
 		}
@@ -348,11 +350,12 @@ void *socket_cmd_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(socket_cmd.fd);
-			sleep(1);
+			delay(1000);
 
 			continue;
 		}
 		/* socket connected */
+		/* set socket status: connected */
 		socket_cmd.connect_status = 1;
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_cmd.fd, SERVER_IP, CMD_PORT);
 
@@ -373,10 +376,7 @@ void *socket_cmd_thread(void *arg)
 		if (pthread_join(t_socket_cmd_recv, NULL)) {
 			perror("pthread_join");
 		}
-		/* close socket */
-		close(socket_cmd.fd);
 		/* socket disconnected */
-		socket_cmd.connect_status = 0;
 	}
 }
 
@@ -403,7 +403,7 @@ static void *socket_file_send_thread(void *arg)
 			}
 			p = p->next;
 		}
-		usleep(1);
+		delay(1);
 	}
 }
 
@@ -432,7 +432,6 @@ void *socket_file_thread(void *arg)
 		if (socket_create(&socket_file) == FAIL) {
 			/* create fail */
 			perror("socket create fail");
-			usleep(1);
 
 			continue;
 		}
@@ -441,11 +440,12 @@ void *socket_file_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(socket_file.fd);
-			sleep(1);
+			delay(1000);
 
 			continue;
 		}
 		/* socket connected */
+		/* set socket status: connected */
 		socket_file.connect_status = 1;
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_file.fd, SERVER_IP, FILE_PORT);
 
@@ -490,7 +490,7 @@ void *socket_file_thread(void *arg)
 				break;
 			}
 			if (ret == SUCCESS) {
-				sleep(10);// Heartbeat package every 10 seconds
+				delay(10000);// Heartbeat package every 10 seconds
 			}
 		}
 		*/
@@ -508,10 +508,7 @@ void *socket_file_thread(void *arg)
 		if (pthread_join(t_socket_file_recv, NULL)) {
 			perror("pthread_join");
 		}
-		/* close socket */
-		close(socket_file.fd);
 		/* socket disconnected */
-		socket_file.connect_status = 0;
 	}
 }
 
@@ -526,7 +523,6 @@ void *socket_status_thread(void *arg)
 		if (socket_create(&socket_status) == FAIL) {
 			/* create fail */
 			perror("socket create fail");
-			usleep(1);
 
 			continue;
 		}
@@ -535,11 +531,12 @@ void *socket_status_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(socket_status.fd);
-			sleep(1);
+			delay(1000);
 
 			continue;
 		}
 		/* socket connected */
+		/* set socket status: connected */
 		socket_status.connect_status = 1;
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_status.fd, SERVER_IP, STATUS_PORT);
 
@@ -571,9 +568,10 @@ void *socket_status_thread(void *arg)
 			}
 			//printf("after StringToBytes\n");
 		}
+		/* socket disconnected */
 		/* close socket */
 		close(socket_status.fd);
-		/* socket disconnected */
+		/* set socket status: disconnected */
 		socket_status.connect_status = 0;
 	}
 }
