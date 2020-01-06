@@ -33,7 +33,8 @@ static int finished = 0;
 pthread_mutex_t mute_cmd;
 pthread_mutex_t mute_file;
 pthread_mutex_t mute_connect_status;
-
+//pthread_cond_t cond_cmd;
+//pthread_cond_t cond_file;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
@@ -226,6 +227,8 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_mutex_init(&mute_cmd, NULL);
 	pthread_mutex_init(&mute_file, NULL);
 	pthread_mutex_init(&mute_connect_status, NULL);
+	//pthread_cond_init(&cond_cmd, NULL);
+	//pthread_cond_init(&cond_file, NULL);
 
 	/* create socket_cmd thread */
 	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
@@ -243,9 +246,15 @@ MAIN(goahead, int argc, char **argv, char **envp)
     websServiceEvents(&finished);
 
 	/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
-	pthread_join(&t_socket_cmd, NULL);
-	pthread_join(&t_socket_file, NULL);
-	pthread_join(&t_socket_status, NULL);
+	if (pthread_join(t_socket_cmd, NULL)) {
+		perror("pthread_join");
+	}
+	if (pthread_join(t_socket_file, NULL)) {
+		perror("pthread_join");
+	}
+	if (pthread_join(t_socket_status, NULL)) {
+		perror("pthread_join");
+	}
 	/* 释放互斥锁 */
 	pthread_mutex_destroy(&mute_cmd);
 	pthread_mutex_destroy(&mute_file);

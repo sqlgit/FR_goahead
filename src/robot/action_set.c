@@ -5,15 +5,20 @@
 #include	"cJSON.h"
 #include 	"tools.h"
 #include 	"robot_socket.h"
+#include 	"robot_quene.h"
 #include	"action_set.h"
 
 /********************************* Defines ************************************/
 
 static char *content = NULL;
-extern int socket_cmd;
-extern int socket_file;
+extern LinkQuene cmd_quene;
+extern LinkQuene file_quene;
+extern SOCKET_INFO socket_cmd;
+extern SOCKET_INFO socket_file;
 extern pthread_mutex_t mute_cmd;
 extern pthread_mutex_t mute_file;
+//extern pthread_cond_t cond_cmd;
+//extern pthread_cond_t cond_file;
 
 /********************************* Function declaration ***********************/
 
@@ -29,41 +34,6 @@ static int movej(const cJSON *data_json);
 static int mode(const cJSON *data_json);
 
 /*********************************** Code *************************************/
-
-
-/*action*/
-//static int joints(cJSON *data, char *recvbuf);
-//static int tcp(cJSON *data, char *recvbuf);
-//static int no;
-/*static int joints(cJSON *data, char *recvbuf)
-{
-	int ret;
-
-	cJSON *shoulder_pan_joint = cJSON_GetObjectItem(data, "shoulder_pan_joint");
-	printf("shoulder_pan_joint:%s\n", shoulder_pan_joint->valuestring);
-
-	no = 303;
-	sprintf(content, "Mode(1)");
-	ret = socket_client(no, content, recvbuf, CMD_PORT);
-
-	int i;
-	for(i = 1; i <= 10; i++){
-		no = 208;
-		sprintf(content, "MJOINT(1,1,%d,100,100)", i);
-		ret = socket_client(no, content, recvbuf, CMD_PORT);
-	}
-
-	return ret;
-}
-
-static int tcp(cJSON *data, char *recvbuf)
-{
-	strcpy(recvbuf, "success");
-	cJSON *x = cJSON_GetObjectItem(data, "x");
-	printf("x:%s\n", x->valuestring);
-
-	return SUCCESS;
-}*/
 
 /* 101 START */
 static int program_start(const cJSON *data_json)
@@ -106,7 +76,7 @@ static int sendfilename(const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(content, "%s%s", PATH_SEND_LUA, name->valuestring);
+	sprintf(content, "%s%s", DIR_FRUSER, name->valuestring);
 
 	return SUCCESS;
 }
@@ -161,12 +131,22 @@ static int parse_lua_cmd(char *lua_cmd)
 		j4 = cJSON_GetObjectItem(joints, "j4");
 		j5 = cJSON_GetObjectItem(joints, "j5");
 		j6 = cJSON_GetObjectItem(joints, "j6");
-		speed = cJSON_GetObjectItem(ptp, "speed");
-		acc = cJSON_GetObjectItem(ptp, "acc");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) { 
+		cJSON *tcp = cJSON_GetObjectItem(ptp, "tcp");
+		if (tcp == NULL || tcp->type != cJSON_Object) {
 			goto end;
 		}
-		sprintf(content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s)\n", content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring, acc->valuestring);
+		x = cJSON_GetObjectItem(tcp, "x");
+		y = cJSON_GetObjectItem(tcp, "y");
+		z = cJSON_GetObjectItem(tcp, "z");
+		rx = cJSON_GetObjectItem(tcp, "rx");
+		ry = cJSON_GetObjectItem(tcp, "ry");
+		rz = cJSON_GetObjectItem(tcp, "rz");
+		speed = cJSON_GetObjectItem(ptp, "speed");
+		acc = cJSON_GetObjectItem(ptp, "acc");
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) {
+			goto end;
+		}
+		sprintf(content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
 	/* Lin */
 	} else if (!strncmp(lua_cmd, "Lin:", 4)) {
 		/* open points file */
@@ -258,13 +238,13 @@ static int sendfile(const cJSON *data_json)
 		tmp_file++;
 	}
 	/* realloc content */
-	content = (char *)realloc(content, line_num*sizeof(char)*1024);
+	content = (char *)realloc(content, line_num*sizeof(char)*MAX_BUF);
 	if (content == NULL) {
 		perror("realloc");
 
 		return FAIL;
 	}
-	memset(content, 0, line_num*sizeof(char)*1024);
+	memset(content, 0, line_num*sizeof(char)*MAX_BUF);
 	/* get first line */
 	token = strtok(pgvalue->valuestring, s);
 	while(token != NULL) {
@@ -281,7 +261,6 @@ static int sendfile(const cJSON *data_json)
 /* 1001 step over */
 static int step_over(const cJSON *data_json)
 {
-	int ret = FAIL;
 	int cmd = 0;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgline");
@@ -368,7 +347,6 @@ void set(Webs *wp)
 	int ret = FAIL;
 	int cmd = 0;
 	int port = 0;
-	char recvbuf[MAX_BUF] = {0};
 	char *buf = NULL;
 	cJSON *data_json = NULL;
 	cJSON *command = NULL;
@@ -389,8 +367,8 @@ void set(Webs *wp)
 		perror("json");
 		goto end;
 	}
-	/*calloc content*/
-	content = (char *)calloc(1, sizeof(char)*1024);
+	/* calloc content */
+	content = (char *)calloc(1, sizeof(char)*MAX_BUF);
 	if (content == NULL) {
 		perror("calloc");
 		goto end;
@@ -415,13 +393,13 @@ void set(Webs *wp)
 		case 103:
 			ret = program_pause(data_json);
 			break;
-		case 104:/*8081*/
+		case 104:
 			ret = program_resume(data_json);
 			break;
-		case 105:/*8081*/
+		case 105:/* 8082 */
 			ret = sendfilename(data_json);
 			break;
-		case 106:
+		case 106:/* 8082 */
 			ret = sendfile(data_json);
 			break;
 		case 201:
@@ -430,7 +408,7 @@ void set(Webs *wp)
 		case 303:
 			ret = mode(data_json);
 			break;
-		case 1001:
+		case 1001:/* 内部定义指令 */
 			ret = step_over(data_json);
 			cmd = ret;
 			break;
@@ -444,51 +422,79 @@ void set(Webs *wp)
 		goto end;
 	}
 	printf("content = %s\n", content);
-	if(ret == FAIL){
-		perror("ret fail");
+	if (ret == FAIL) {
+		perror("content fail");
 		goto end;
 	}
 	ret = FAIL;
+	/* 创建结点 */
+	QElemType node;
+	createnode(&node, cmd, content, 0);
 	/* get port */
 	port_n = cJSON_GetObjectItem(data, "port");
-	if(port_n == NULL) {
+	if (port_n == NULL) {
 		perror("json");
 		goto end;
 	}
 	port = port_n->valueint;
-	switch(port) {
+	switch (port) {
+		/* send cmd to 8080 port */
 		case CMD_PORT:
-			/* send cmd to 8080 port */
+			/* socket 连接已经断开 */
+			if (socket_cmd.connect_status == 0) {
+				break;
+			}
+			/* 创建结点插入队列中 */
 			pthread_mutex_lock(&mute_cmd);
-			ret = socket_send(socket_cmd, cmd, content, recvbuf);
+			if (socket_cmd.msghead >= MAX_MSGHEAD) {
+				socket_cmd.msghead = 1;
+			} else {
+				socket_cmd.msghead++;
+			}
+			node.msghead = socket_cmd.msghead;
+			enquene(&cmd_quene, node);
+			//pthread_cond_signal(&cond_cmd);
 			pthread_mutex_unlock(&mute_cmd);
+			ret = quene_recv_result(node, cmd_quene);
+			/* 把结点从队列中删除 */
+			pthread_mutex_lock(&mute_cmd);
+			dequene(&cmd_quene, node);
+			pthread_mutex_unlock(&mute_cmd);
+			// TODO: add signal
 			break;
+
+		/* send file cmd to 8082 port*/
 		case FILE_PORT:
-			/* send file cmd to 8082 port*/
+			/* socket 连接已经断开 */
+			if (socket_file.connect_status == 0) {
+				break;
+			}
+			/* 创建结点插入队列中 */
 			pthread_mutex_lock(&mute_file);
-			ret = socket_send(socket_file, cmd, content, recvbuf);
+			if (socket_file.msghead >= MAX_MSGHEAD) {
+				socket_file.msghead = 1;
+			} else {
+				socket_file.msghead++;
+			}
+			node.msghead = socket_file.msghead;
+			enquene(&file_quene, node);
+			//pthread_cond_signal(&cond_file);
+			pthread_mutex_unlock(&mute_file);
+			ret = quene_recv_result(node, file_quene);
+			/* 把结点从队列中删除 */
+			pthread_mutex_lock(&mute_file);
+			dequene(&file_quene, node);
 			pthread_mutex_unlock(&mute_file);
 			break;
+
 		default:
 			perror("port");
 			goto end;
 	}
 	if (ret == FAIL) {
-		perror("ret fail");
+		perror("socket fail");
 		goto end;
 	}
-
-	/*char *act = action->valuestring;
-	if(!strcmp(act, "tcp"))
-	{
-		ret = tcp(data, recvbuf);
-	}
-	else if(!strcmp(act, "joints"))
-	{
-		ret = joints(data, recvbuf);
-	}
-	else
-		goto end;*/
 
 	/* free content */
 	free(content);
@@ -500,7 +506,7 @@ void set(Webs *wp)
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
-	websWrite(wp, recvbuf);
+	websWrite(wp, "success");
 	websDone(wp);
 
 	return;
@@ -515,7 +521,6 @@ end:
 	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
-	//websWrite(wp, recvbuf);
 	websWrite(wp, "fail");
 	websDone(wp);
 	return;

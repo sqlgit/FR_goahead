@@ -11,7 +11,9 @@
 
 static char *ret_status = NULL;
 extern CTRL_STATE ctrl_state;
-extern socket_connect_status;
+extern SOCKET_INFO socket_cmd;
+extern SOCKET_INFO socket_file;
+extern SOCKET_INFO socket_status;
 
 /********************************* Function declaration ***********************/
 
@@ -29,9 +31,8 @@ static int connect_status()
 	cJSON *root_json = NULL;
 	int ret_connect_status = 0;
 
-	//printf("socket_connect_status = %u\n", socket_connect_status);
 	/* cmd file status all connect */
-	if (socket_connect_status == 7) {
+	if ((socket_status.connect_status + socket_cmd.connect_status + socket_file.connect_status) == 3) {
 		ret_connect_status = 1;
 	} else {
 		ret_connect_status = 0;

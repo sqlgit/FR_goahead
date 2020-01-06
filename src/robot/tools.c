@@ -7,6 +7,44 @@
 
 /*********************************** Code *************************************/
 
+/*
+pszInput:输入待分割字符串
+pszDelimiters:分割标识符
+uiAry_num:分割的份数
+uiAry_size:每份的size
+pszAry_out:分割的子串的输出参数
+ */
+int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out)
+{
+	//char *pszData = strdup(pszInput);
+	char pszData[2048]={0};
+	strcpy(pszData, pszInput);
+	char *pszToken = NULL, *pszToken_saveptr;
+	unsigned int Ary_cnt = 0;
+
+	pszToken = strtok_r(pszData, pszDelimiters, &pszToken_saveptr);
+	while( pszToken!=NULL)
+	{
+		//printf("pszToken=%s\n", pszToken);
+		memcpy(pszAry_out + Ary_cnt*Ary_size, pszToken, Ary_size);
+		if( ++Ary_cnt >= Ary_num)
+			break;
+		pszToken = strtok_r( NULL, pszDelimiters, &pszToken_saveptr);
+	}
+	//free(pszData);
+
+	return Ary_cnt;
+}
+
+/* 获取整数的长度 */
+int get_n_len(const int n)
+{
+	char str[100] = {0};
+	sprintf(str, "%d", n);
+
+	return strlen(str);
+}
+
 /* write file */
 int write_file(const char *file_name, const char *file_content)
 {
@@ -138,7 +176,7 @@ char *get_dir_content(const char *dir_path)
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
 		bzero(dir_filename, sizeof(dir_filename));
-		sprintf(dir_filename, "%s/%s", dir_path, ptr->d_name);
+		sprintf(dir_filename, "%s%s", dir_path, ptr->d_name);
 		/* open lua file */
 		f_content = get_complete_file_content(dir_filename);
 		if (f_content == NULL) {
@@ -193,12 +231,33 @@ char *strrpc(char *str, const char *oldstr, const char *newstr)
 	return str;
 }
 
+/* 判断一个字符串是否包含另一个字符串 */
+int is_in(char *s, char *c)
+{
+	int i=0,j=0,flag=-1;
+	while(i<strlen(s) && j<strlen(c)){
+		if(s[i]==c[j]){//如果字符相同则两个字符都增加
+			i++;
+			j++;
+		}else{
+			i=i-j+1; //主串字符回到比较最开始比较的后一个字符
+			j=0;     //字串字符重新开始
+		}
+		if(j==strlen(c)){ //如果匹配成功
+			flag=1;  //字串出现
+			break;
+		}
+	}
+
+	return flag;
+}
+
 /* 毫秒定时器 */
 void delay_ms(const int timeout)
 {
 	struct timeval timer;
 	bzero(&timer, sizeof(struct timeval));
-	timer.tv_sec        = 0;    // 0秒
+	timer.tv_sec        = 0;    // 秒
 	timer.tv_usec       = 1000*timeout; // 1000us = 1ms
 	select(0, NULL, NULL, NULL, &timer);
 }

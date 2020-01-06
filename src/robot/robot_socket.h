@@ -3,7 +3,6 @@
 
 /********************************* Defines ************************************/
 
-#define local 1
 #if local
 	//#define SERVER_IP "127.0.0.1"
 	#define SERVER_IP "192.168.152.129" //sql
@@ -11,13 +10,12 @@
 #else
 	#define SERVER_IP "192.168.58.2"
 #endif
-#define SOCK_TIMEOUT 1 /* s */
-#define SOCK_SEND_TIMEOUT 10 /* s */
-#define HEART_MS_TIMEOUT 10000 /* ms */
 #define CMD_PORT 8080
 #define STATUS_PORT 8081
 #define FILE_PORT 8082
-#define STATUS_BUF 4000
+#define SOCK_SELECT_TIMEOUT 1 /* 秒 */
+#define MAX_BUF 1024
+#define MAX_MSGHEAD 10000
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
@@ -92,9 +90,19 @@ typedef struct _CTRL_STATE
 } CTRL_STATE;
 #pragma pack(pop)
 
+/* socket 相关信息结构体 */
+typedef struct _SOCKET_INFO
+{
+	int fd;
+	char server_ip[20];
+	int server_port;
+	int select_timeout; // socket select timeout
+	uint8_t connect_status; // socket 连接状态
+	int msghead; // 消息头
+} SOCKET_INFO;
+
 /********************************* Function declaration ***********************/
 
-int socket_send(int clientSocket, const int no, const char *content, char *recvbuf);
 void *socket_cmd_thread(void *arg);
 void *socket_file_thread(void *arg);
 void *socket_status_thread(void *arg);
