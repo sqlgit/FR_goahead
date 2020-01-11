@@ -34,7 +34,7 @@ typedef struct LINKQuene {
 
 /********************************* Function declaration ***********************/
 
-void createnode(QElemType *pnode, int type, char *msgcontent, int state);
+void createnode(QElemType *pnode, int type, char *msgcontent);
 void initquene(LinkQuene *q);
 void clearquene(LinkQuene *q);
 void enquene(LinkQuene *q, QElemType e);

@@ -9,7 +9,6 @@
 
 /********************************* Defines ************************************/
 
-static char *ret_status = NULL;
 extern CTRL_STATE ctrl_state;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
@@ -17,15 +16,15 @@ extern SOCKET_INFO socket_status;
 
 /********************************* Function declaration ***********************/
 
-static int connect_status();
-static int menu();
-static int basic();
-static int program_teach();
+static int connect_status(char *ret_status);
+static int menu(char *ret_status);
+static int basic(char *ret_status);
+static int program_teach(char *ret_status);
 
 /********************************* Code *************************************/
 
 /* connect status */
-static int connect_status()
+static int connect_status(char *ret_status)
 {
 	char *buf = NULL;
 	cJSON *root_json = NULL;
@@ -50,7 +49,7 @@ static int connect_status()
 }
 
 /* menu */
-static int menu()
+static int menu(char *ret_status)
 {
 	char *buf = NULL;
 	cJSON *root_json = NULL;
@@ -69,7 +68,7 @@ static int menu()
 }
 
 /* basic */
-static int basic()
+static int basic(char *ret_status)
 {
 	int i = 0;
 	char *buf = NULL;
@@ -101,7 +100,7 @@ static int basic()
 }
 
 /* program teach */
-static int program_teach()
+static int program_teach(char *ret_status)
 {
 	char *buf = NULL;
 	cJSON *root_json = NULL;
@@ -123,6 +122,7 @@ static int program_teach()
 /* get motion controller data and return to page */
 void sta(Webs *wp)
 {
+	char *ret_status = NULL;
 	int ret = FAIL;
 	char *buf = NULL;
 	char *cmd = NULL;
@@ -151,13 +151,13 @@ void sta(Webs *wp)
 	}
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "cons")) {
-		ret = connect_status();
+		ret = connect_status(ret_status);
 	} else if(!strcmp(cmd, "menu")) {
-		ret = menu();
+		ret = menu(ret_status);
 	} else if(!strcmp(cmd, "basic")) {
-		ret = basic();
+		ret = basic(ret_status);
 	} else if(!strcmp(cmd, "program_teach")) {
-		ret = program_teach();
+		ret = program_teach(ret_status);
 	} else {
 		perror("cmd not found");
 		goto end;

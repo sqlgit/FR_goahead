@@ -3,7 +3,6 @@
 
 #include 	"goahead.h"
 #include 	"tools.h"
-#include 	"robot_quene.h"
 #include 	"robot_socket.h"
 
 /********************************* Defines ************************************/
@@ -12,13 +11,10 @@ SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
 CTRL_STATE ctrl_state;
-extern LinkQuene cmd_quene;
-extern LinkQuene file_quene;
-//extern pthread_cond_t cond_cmd;
-//extern pthread_cond_t cond_file;
-//extern pthread_mutex_t mute_cmd;
-//extern pthread_mutex_t mute_file;
-//extern pthread_mutex_t mute_connect_status;
+//pthread_cond_t cond_cmd;
+//pthread_cond_t cond_file;
+pthread_mutex_t mute_cmd;
+pthread_mutex_t mute_file;
 
 /********************************* Function declaration ***********************/
 
@@ -26,8 +22,8 @@ static void socket_init(SOCKET_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
-static int socket_send(const SOCKET_INFO sock, QElemType *node);
-static int socket_recv(SOCKET_INFO *sock, const LinkQuene q);
+static int socket_send(SOCKET_INFO *sock);
+static int socket_recv(SOCKET_INFO *sock);
 static void *socket_cmd_send_thread(void *arg);
 static void *socket_cmd_recv_thread(void *arg);
 static void *socket_file_send_thread(void *arg);
@@ -38,6 +34,8 @@ static void *socket_file_recv_thread(void *arg);
 /* socket init */
 static void socket_init(SOCKET_INFO *sock, const int port)
 {
+	bzero(sock, sizeof(SOCKET_INFO));
+
 	sock->fd = 0;
 	strcpy(sock->server_ip, SERVER_IP);
 	sock->server_port = port;
@@ -154,60 +152,75 @@ static int socket_timeout(SOCKET_INFO *sock)
 }
 
 /* socket send */
-static int socket_send(const SOCKET_INFO sock, QElemType *node)
+static int socket_send(SOCKET_INFO *sock)
 {
-	/* /f/bIII{msghead}III{type}III{msglen}III{msgcontent}III/b/f */
-	int send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
-	char sendbuf[send_len];
-	memset(sendbuf, 0, (send_len));
-	/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
-	sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
+	/* 遍历整个队列 */
+	Qnode *p = sock->quene.front->next;
+	while (p != NULL) {
+		/* 处于等待发送的初始状态 */
+		if (p->data.state == 0) {
+
+			// TODO: add signal
+
+			QElemType *node = &p->data;
+			/* /f/bIII{msghead}III{type}III{msglen}III{msgcontent}III/b/f */
+			int send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
+			char sendbuf[send_len];
+			memset(sendbuf, 0, send_len);
+			/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
+			sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
 #if test_package
-	if (node->type == 106) {
-		sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
-	}
-	if (node->type == 100) {
-		sprintf(sendbuf, "/b/f");
-	}
+			if (node->type == 106) {
+				sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
+			}
+			if (node->type == 100) {
+				sprintf(sendbuf, "/b/f");
+			}
 #endif
-	//printf("send_len = %d\n", send_len);
+			printf("send_len = %d\n", send_len);
 
-	/* send over 1024 bytes */
-	while (send_len > MAX_BUF) {
-		char buf[MAX_BUF] = {0};
-		strncpy(buf, sendbuf, MAX_BUF);
-		printf("send data to socket server is: %s\n", buf);
-		if(send(sock.fd, buf, MAX_BUF, 0) != MAX_BUF) {
-			perror("send");
+			/* send over 1024 bytes */
+			while (send_len > MAX_BUF) {
+				char buf[MAX_BUF+1] = {0};
+				strncpy(buf, sendbuf, MAX_BUF);
+				printf("send data to socket server is: %s\n", buf);
+				if (send(sock->fd, buf, MAX_BUF, 0) != MAX_BUF) {
+					perror("send");
+					/* set socket status: disconnected */
+					sock->connect_status = 0;
 
-			return FAIL;
+					return FAIL;
+				}
+				send_len = send_len - MAX_BUF;
+				char tmp_buf[send_len];
+				memset(tmp_buf, 0, send_len);
+				int i;
+				for(i = 0; i < send_len; i++){
+					tmp_buf[i] = sendbuf[i+MAX_BUF];
+				}
+				bzero(sendbuf, sizeof(sendbuf));
+				strcpy(sendbuf, tmp_buf);
+			}
+
+			//if (node->type != 401) {
+				printf("send data to socket server is: %s\n", sendbuf);
+			//}
+
+			/* send normal (low) 1024 bytes */
+			if (send(sock->fd, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
+				perror("send");
+				/* set socket status: disconnected */
+				sock->connect_status = 0;
+
+				return FAIL;
+			}
+			/* set state to 1:send to server */
+			node->state = 1;
 		}
-		send_len = send_len - MAX_BUF;
-		char tmp_buf[send_len];
-		memset(tmp_buf, 0, send_len);
-		int i;
-		for(i = 0; i < send_len; i++){
-			tmp_buf[i] = sendbuf[i+MAX_BUF];
-		}
-		bzero(sendbuf, sizeof(sendbuf));
-		strcpy(sendbuf, tmp_buf);
+		p = p->next;
 	}
-
-	//if (node->type != 401) {
-		printf("send data to socket server is: %s\n", sendbuf);
-	//}
-
-	/* send normal (low) 1024 bytes */
-	if (send(sock.fd, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
-		perror("send");
-
-		return FAIL;
-	}
-	/* set state to 1:send to server */
-	node->state = 1;
 
 	return SUCCESS;
-
 	/* socket set recv timeout */
 	/*struct timeval timeout;
 	bzero(&timeout, sizeof(struct timeval));
@@ -252,22 +265,23 @@ static int socket_send(const SOCKET_INFO sock, QElemType *node)
 //	} while (strcmp(recvbuf, recv_success) != 0);
 }
 
-static int socket_recv(SOCKET_INFO *sock, const LinkQuene q)
+static int socket_recv(SOCKET_INFO *sock)
 {
 	char recvbuf[MAX_BUF] = {0};
 	char array[6][100] = {{0}};
+	int recv_len = 0;
 
 	// TODO: 解决粘包的问题
-	if (recv(sock->fd, recvbuf, MAX_BUF, 0) <= 0) {
+	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
+	if (recv_len <= 0) {
 		/* 认为连接已经断开 */
 		perror("recv");
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
-		/* close socket */
-		close(sock->fd);
 
 		return FAIL;
 	}
+	recvbuf[recv_len] = '\0';
 
 	//if (atoi(array[2]) != 401) {
 		printf("recv data from socket server is: %s\n", recvbuf);
@@ -281,7 +295,7 @@ static int socket_recv(SOCKET_INFO *sock, const LinkQuene q)
 	}
 
 	/* 遍历整个队列, 更改相关结点信息 */
-	Qnode *p = q.front->next;
+	Qnode *p = sock->quene.front->next;
 	while (p != NULL) {
 		/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
 		if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
@@ -304,15 +318,8 @@ static void *socket_cmd_send_thread(void *arg)
 
 			pthread_exit(NULL);
 		}
-		/* 遍历整个队列 */
-		Qnode *p = cmd_quene.front->next;
-		while (p != NULL) {
-			/* 处于等待发送的初始状态 */
-			if (p->data.state == 0) {
-				socket_send(socket_cmd, &p->data);
-				// TODO: add signal
-			}
-			p = p->next;
+		if (socket_send(&socket_cmd) == FAIL) {
+			perror("socket send");
 		}
 		delay(1);
 	}
@@ -326,15 +333,18 @@ static void *socket_cmd_recv_thread(void *arg)
 
 			pthread_exit(NULL);
 		}
-		socket_recv(&socket_cmd, cmd_quene);
+		if (socket_recv(&socket_cmd) == FAIL) {
+			perror("socket recv");
+		}
 	}
 }
 
 void *socket_cmd_thread(void *arg)
 {
-	/* init cmd quene */
-	initquene(&cmd_quene);
+	/* init socket */
 	socket_init(&socket_cmd, CMD_PORT);
+	/* init socket quene */
+	initquene(&socket_cmd.quene);
 
 	while (1) {
 		/* do socket connect */
@@ -361,6 +371,10 @@ void *socket_cmd_thread(void *arg)
 
 		pthread_t t_socket_cmd_send;
 		pthread_t t_socket_cmd_recv;
+		/* 创建锁，相当于new一个对象 */
+		pthread_mutex_init(&mute_cmd, NULL);
+		//pthread_cond_init(&cond_cmd, NULL);
+
 		/* create socket_cmd_send thread */
 		if(pthread_create(&t_socket_cmd_send, NULL, (void *)&socket_cmd_send_thread, NULL)) {
 			perror("pthread_create");
@@ -377,6 +391,10 @@ void *socket_cmd_thread(void *arg)
 			perror("pthread_join");
 		}
 		/* socket disconnected */
+		/* 释放互斥锁 */
+		pthread_mutex_destroy(&mute_cmd);
+		/* close socket */
+		close(socket_cmd.fd);
 	}
 }
 
@@ -394,14 +412,8 @@ static void *socket_file_send_thread(void *arg)
 
 			pthread_exit(NULL);
 		}
-		/* 遍历整个队列 */
-		Qnode *p = file_quene.front->next;
-		while (p != NULL) {
-			/* 处于等待发送的初始状态 */
-			if (p->data.state == 0) {
-				socket_send(socket_file, &p->data);
-			}
-			p = p->next;
+		if (socket_send(&socket_file) == FAIL) {
+			perror("socket send");
 		}
 		delay(1);
 	}
@@ -416,15 +428,18 @@ static void *socket_file_recv_thread(void *arg)
 
 			pthread_exit(NULL);
 		}
-		socket_recv(&socket_file, file_quene);
+		if (socket_recv(&socket_file) == FAIL) {
+			perror("socket recv");
+		}
 	}
 }
 
 void *socket_file_thread(void *arg)
 {
-	/* init file quene */
-	initquene(&file_quene);
+	/* init socket */
 	socket_init(&socket_file, FILE_PORT);
+	/* init socket quene */
+	initquene(&socket_file.quene);
 
 	while (1) {
 		/* do socket connect */
@@ -451,6 +466,10 @@ void *socket_file_thread(void *arg)
 
 		pthread_t t_socket_file_send;
 		pthread_t t_socket_file_recv;
+		/* 创建锁，相当于new一个对象 */
+		pthread_mutex_init(&mute_file, NULL);
+		//pthread_cond_init(&cond_file, NULL);
+
 		/* create socket_file_send thread */
 		if(pthread_create(&t_socket_file_send, NULL, (void *)&socket_file_send_thread, NULL)) {
 			perror("pthread_create");
@@ -509,6 +528,10 @@ void *socket_file_thread(void *arg)
 			perror("pthread_join");
 		}
 		/* socket disconnected */
+		/* 释放互斥锁 */
+		pthread_mutex_destroy(&mute_file);
+		/* close socket */
+		close(socket_file.fd);
 	}
 }
 

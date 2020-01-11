@@ -30,11 +30,7 @@
 /********************************* Defines ************************************/
 
 static int finished = 0;
-pthread_mutex_t mute_cmd;
-pthread_mutex_t mute_file;
-pthread_mutex_t mute_connect_status;
-//pthread_cond_t cond_cmd;
-//pthread_cond_t cond_file;
+int sql_index = 0;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
@@ -223,23 +219,16 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;
 
-	/* 创建锁，相当于new一个对象 */
-	pthread_mutex_init(&mute_cmd, NULL);
-	pthread_mutex_init(&mute_file, NULL);
-	pthread_mutex_init(&mute_connect_status, NULL);
-	//pthread_cond_init(&cond_cmd, NULL);
-	//pthread_cond_init(&cond_file, NULL);
-
 	/* create socket_cmd thread */
-	if(pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
+	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
 		perror("pthread_create");
 	}
 	/* create socket_file thread */
-	if(pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
+	if (pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
 		perror("pthread_create");
 	}
 	/* create socket_status thread */
-	if(pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, NULL)) {
+	if (pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, NULL)) {
 		perror("pthread_create");
 	}
 
@@ -255,10 +244,6 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_join(t_socket_status, NULL)) {
 		perror("pthread_join");
 	}
-	/* 释放互斥锁 */
-	pthread_mutex_destroy(&mute_cmd);
-	pthread_mutex_destroy(&mute_file);
-	pthread_mutex_destroy(&mute_connect_status);
 
     logmsg(1, "Instructed to exit");
     websClose();

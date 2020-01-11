@@ -216,7 +216,7 @@ char *strrpc(char *str, const char *oldstr, const char *newstr)
 {
 	int i;
 	char bstr[strlen(str)+10];//转换缓冲区
-	memset(bstr, 0, sizeof(bstr));
+	memset(bstr, 0, sizeof(strlen(str)+10));
 
 	for (i = 0; i < strlen(str); i++) {
 		if (!strncmp(str+i, oldstr, strlen(oldstr))) {//查找目标字符串

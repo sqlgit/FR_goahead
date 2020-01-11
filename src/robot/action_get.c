@@ -8,21 +8,20 @@
 
 /********************************* Defines ************************************/
 
-static char *ret_f_content = NULL;
 
 /********************************* Function declaration ***********************/
 
-static int get_points_file();
-static int get_lua_data();
+static int get_points_file(char **ret_f_content);
+static int get_lua_data(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
 /* get points file content */
-static int get_points_file()
+static int get_points_file(char **ret_f_content)
 {
-	ret_f_content = get_file_content(FILE_POINTS);
+	*ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
-	if (ret_f_content == NULL) {
+	if (*ret_f_content == NULL) {
 		perror("get file content");
 
 		return FAIL;
@@ -32,11 +31,11 @@ static int get_points_file()
 }
 
 /* get lua name */
-static int get_lua_data()
+static int get_lua_data(char **ret_f_content)
 {
-	ret_f_content = get_dir_content(DIR_LUA);
+	*ret_f_content = get_dir_content(DIR_LUA);
 	/* file is NULL */
-	if (ret_f_content == NULL) {
+	if (*ret_f_content == NULL) {
 		perror("get dir content");
 
 		return FAIL;
@@ -53,8 +52,8 @@ void get(Webs *wp)
 	char *cmd = NULL;
 	cJSON *command = NULL;
 	cJSON *data = NULL;
+	char *ret_f_content = NULL;
 
-	ret_f_content = NULL;
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
 		perror("json");
@@ -71,9 +70,9 @@ void get(Webs *wp)
 	}
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "get_points")) {
-		ret = get_points_file();
+		ret = get_points_file(&ret_f_content);
 	} else if(!strcmp(cmd, "get_lua_data")) {
-		ret = get_lua_data();
+		ret = get_lua_data(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

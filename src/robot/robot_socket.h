@@ -1,6 +1,7 @@
 #ifndef robot_socket_h
 #define robot_socket_h
 
+#include 	"robot_quene.h"
 /********************************* Defines ************************************/
 
 #if local
@@ -98,7 +99,8 @@ typedef struct _SOCKET_INFO
 	int server_port;
 	int select_timeout; // socket select timeout
 	uint8_t connect_status; // socket 连接状态
-	int msghead; // 消息头
+	int msghead; // 当前有记录的消息头
+	LinkQuene quene;
 } SOCKET_INFO;
 
 /********************************* Function declaration ***********************/

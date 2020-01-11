@@ -7,21 +7,18 @@
 
 /********************************* Defines ************************************/
 
-LinkQuene cmd_quene;
-LinkQuene file_quene;
-
 /********************************* Function declaration ***********************/
 
 /*********************************** Code *************************************/
 
-void createnode(QElemType *pnode, int type, char *msgcontent, int state)
+void createnode(QElemType *pnode, int type, char *msgcontent)
 {
 	bzero(pnode, sizeof(QElemType));
 
 	pnode->type = type;
 	pnode->msgcontent = msgcontent;
 	pnode->msglen = strlen(pnode->msgcontent);
-	pnode->state = state;
+	pnode->state = 0;
 }
 
 /* 初始化带有头结点队列 */
