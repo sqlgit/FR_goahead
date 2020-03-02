@@ -23,13 +23,12 @@ int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int 
 	unsigned int Ary_cnt = 0;
 
 	pszToken = strtok_r(pszData, pszDelimiters, &pszToken_saveptr);
-	while( pszToken!=NULL)
-	{
+	while (pszToken != NULL) {
 		//printf("pszToken=%s\n", pszToken);
 		memcpy(pszAry_out + Ary_cnt*Ary_size, pszToken, Ary_size);
-		if( ++Ary_cnt >= Ary_num)
+		if(++Ary_cnt >= Ary_num)
 			break;
-		pszToken = strtok_r( NULL, pszDelimiters, &pszToken_saveptr);
+		pszToken = strtok_r(NULL, pszDelimiters, &pszToken_saveptr);
 	}
 	//free(pszData);
 

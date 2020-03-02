@@ -37,10 +37,10 @@ typedef struct LINKQuene {
 void createnode(QElemType *pnode, int type, char *msgcontent);
 void initquene(LinkQuene *q);
 void clearquene(LinkQuene *q);
+int queneempty(LinkQuene *q);
 void enquene(LinkQuene *q, QElemType e);
 void dequene(LinkQuene *q, QElemType e);
 void printquene(LinkQuene q);
-int queneempty(LinkQuene *q);
 int quene_recv_result(const QElemType node, const LinkQuene q);
 
 #endif

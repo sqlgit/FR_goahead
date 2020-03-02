@@ -23,7 +23,7 @@ static int socket_create(SOCKET_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
 static int socket_send(SOCKET_INFO *sock);
-static int socket_recv(SOCKET_INFO *sock);
+static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
 static void *socket_cmd_send_thread(void *arg);
 static void *socket_cmd_recv_thread(void *arg);
 static void *socket_file_send_thread(void *arg);
@@ -265,13 +265,12 @@ static int socket_send(SOCKET_INFO *sock)
 //	} while (strcmp(recvbuf, recv_success) != 0);
 }
 
-static int socket_recv(SOCKET_INFO *sock)
+static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
 	char recvbuf[MAX_BUF] = {0};
 	char array[6][100] = {{0}};
 	int recv_len = 0;
 
-	// TODO: 解决粘包的问题
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
 	if (recv_len <= 0) {
 		/* 认为连接已经断开 */
@@ -287,25 +286,77 @@ static int socket_recv(SOCKET_INFO *sock)
 		printf("recv data from socket server is: %s\n", recvbuf);
 	//}
 
-	/* 把接收到的包按照分割符"III"进行分割 */
-	if(separate_string_to_array(recvbuf, "III", 6, 100, (char *)&array) != 6) {
-		perror("separate recv");
+	/* 对于"粘包"，"断包"进行处理 */
+	char *pack_head = "/f/b";
+	char *pack_tail = "/b/f";
+	char *head = NULL;
+	char *tail = NULL;
+	int frame_len = 0;
+	char *frame = NULL;//提取出一帧, 存放buf
+	frame =	(char *)calloc(1, sizeof(char)*BUFFSIZE);
+	char *buf = NULL; // 内圈循环 buf
+	buf = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+	buf_memory = strcat(buf_memory, recvbuf);
 
-		return FAIL;
-	}
+	/* 如果缓冲区中为空，则可以直接进行下一轮tcp请求 */
+	while (strlen(buf_memory) != 0) {
+		bzero(buf, BUFFSIZE);
+		strcpy(buf, buf_memory);
+		//printf("buf = %s\n", buf);
+		head = strstr(buf, pack_head);
+		tail = strstr(buf, pack_tail);
+		/* 断包(有头无尾，没头没尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
+		if ((head != NULL && tail == NULL) || (head == NULL && tail == NULL)) {
+			perror("Broken packages");
 
-	/* 遍历整个队列, 更改相关结点信息 */
-	Qnode *p = sock->quene.front->next;
-	while (p != NULL) {
-		/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
-		if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
-			/* set state to 2: have recv data */
-			strcpy(p->data.msgcontent, array[4]);
-			p->data.msglen = strlen(p->data.msgcontent);
-			p->data.state = 2;
+			break;
 		}
-		p = p->next;
+		/* 找到了包头包尾，则提取出一帧 */
+		if (head != NULL && tail != NULL && head < tail) {
+			printf("exist complete frame!\n");
+			frame_len = tail - head + strlen(pack_tail);
+			/* 取出整包数据然后校验解包 */
+			bzero(frame, BUFFSIZE);
+			strncpy(frame, head, frame_len);
+			printf("frame data = %s\n", frame);
+
+			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
+			bzero(buf_memory, BUFFSIZE);
+			strcpy(buf_memory, (tail + strlen(pack_tail)));
+
+			/* 把接收到的包按照分割符"III"进行分割 */
+			if (separate_string_to_array(frame, "III", 6, 100, (char *)&array) != 6) {
+				perror("separate recv");
+
+				continue;
+				//return FAIL;
+			}
+
+			/* 遍历整个队列, 更改相关结点信息 */
+			Qnode *p = sock->quene.front->next;
+			while (p != NULL) {
+				/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
+				if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
+					/* set state to 2: have recv data */
+					strcpy(p->data.msgcontent, array[4]);
+					p->data.msglen = strlen(p->data.msgcontent);
+					p->data.state = 2;
+				}
+				p = p->next;
+			}
+		}
+		/* 残包，即只找到包尾或包头在包尾后面，则扔掉缓冲区中包尾及其之前的多余字节 */
+		if ((head == NULL && tail != NULL) || (head != NULL && tail != NULL && head > tail)) {
+			perror("Incomplete packages!");
+			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
+			bzero(buf_memory, BUFFSIZE);
+			strcpy(buf_memory, (tail + strlen(pack_tail)));
+		}
 	}
+	free(frame);
+	frame = NULL;
+	free(buf);
+	buf = NULL;
 
 	return SUCCESS;
 }
@@ -327,13 +378,25 @@ static void *socket_cmd_send_thread(void *arg)
 
 static void *socket_cmd_recv_thread(void *arg)
 {
+	char *buf_memory = NULL;
+	/* calloc buf */
+	buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+	if (buf_memory == NULL) {
+		perror("calloc");
+		socket_cmd.connect_status = 0;
+
+		pthread_exit(NULL);
+	}
 	while (1) {
+		//printf("buf_memory content = %s\n", buf_memory);
 		/* socket 连接已经断开 */
 		if (socket_cmd.connect_status == 0) {
+			free(buf_memory);
+			buf_memory = NULL;
 
 			pthread_exit(NULL);
 		}
-		if (socket_recv(&socket_cmd) == FAIL) {
+		if (socket_recv(&socket_cmd, buf_memory) == FAIL) {
 			perror("socket recv");
 		}
 	}
@@ -421,14 +484,26 @@ static void *socket_file_send_thread(void *arg)
 
 static void *socket_file_recv_thread(void *arg)
 {
+	char *buf_memory = NULL;
+	/* calloc buf */
+	buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+	if (buf_memory == NULL) {
+		perror("calloc");
+		socket_file.connect_status = 0;
+
+		pthread_exit(NULL);
+	}
 	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
 	while (1) {
+		//printf("buf_memory content = %s\n", buf_memory);
 		/* socket 连接已经断开 */
 		if (socket_file.connect_status == 0) {
+			free(buf_memory);
+			buf_memory = NULL;
 
 			pthread_exit(NULL);
 		}
-		if (socket_recv(&socket_file) == FAIL) {
+		if (socket_recv(&socket_file, buf_memory) == FAIL) {
 			perror("socket recv");
 		}
 	}

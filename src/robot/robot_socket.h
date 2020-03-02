@@ -17,6 +17,7 @@
 #define SOCK_SELECT_TIMEOUT 1 /* 秒 */
 #define MAX_BUF 1024
 #define MAX_MSGHEAD 10000
+#define BUFFSIZE 1300000*2
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */

@@ -15,6 +15,13 @@ void upload(Webs *wp)
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
 	if (scaselessmatch(wp->method, "POST")) {
+		/* create file dir */
+		if (opendir("/opt/file") == NULL) {
+			perror("Not found /opt/file");
+			if (mkdir("./frtpd",0777) != 0) {
+				printf("mkdir /opt/file");
+			}
+		}
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
 			up = s->content.value.symbol;
 			/* close printf */
@@ -34,7 +41,7 @@ void upload(Webs *wp)
 			websWrite(wp, "%s=%s\r\n", s->name.value.string, s->content.value.string);
 		}*/
 	}
-	websRedirect(wp,"/iss/wss_status.html");
+	websRedirect(wp,"/index.html#/programteach");
 	websDone(wp);
 }
 

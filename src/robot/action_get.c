@@ -11,13 +11,13 @@
 
 /********************************* Function declaration ***********************/
 
-static int get_points_file(char **ret_f_content);
+static int get_points_data(char **ret_f_content);
 static int get_lua_data(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
 /* get points file content */
-static int get_points_file(char **ret_f_content)
+static int get_points_data(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
@@ -30,7 +30,7 @@ static int get_points_file(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get lua name */
+/* get lua file content */
 static int get_lua_data(char **ret_f_content)
 {
 	*ret_f_content = get_dir_content(DIR_LUA);
@@ -70,7 +70,7 @@ void get(Webs *wp)
 	}
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "get_points")) {
-		ret = get_points_file(&ret_f_content);
+		ret = get_points_data(&ret_f_content);
 	} else if(!strcmp(cmd, "get_lua_data")) {
 		ret = get_lua_data(&ret_f_content);
 	} else {
