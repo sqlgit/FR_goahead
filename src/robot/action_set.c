@@ -526,7 +526,7 @@ void set(Webs *wp)
 		case CMD_PORT:
 			ret = enquene_result_dequene(&socket_cmd, cmd, &mute_cmd, content);
 			break;
-		/* send file cmd to 8082 port*/
+		/* send file cmd to 8082 port */
 		case FILE_PORT:
 			ret = enquene_result_dequene(&socket_file, cmd, &mute_file, content);
 			break;

@@ -7,8 +7,8 @@
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
-#define FILE_POINTS "/tmp/points/points.json"
-#define DIR_LUA "/tmp/lua/"
+#define FILE_POINTS "/root/webserver/points/points.json"
+#define DIR_LUA "/root/webserver/lua/"
 #define DIR_FRUSER "/fruser/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0

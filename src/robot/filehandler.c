@@ -1,5 +1,6 @@
 #include    "goahead.h"
 #include	"filehandler.h"
+#include 	"tools.h"
 
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
@@ -14,14 +15,16 @@ void upload(Webs *wp)
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
-	if (scaselessmatch(wp->method, "POST")) {
-		/* create file dir */
-		if (opendir("/opt/file") == NULL) {
-			perror("Not found /opt/file");
-			if (mkdir("./frtpd",0777) != 0) {
-				printf("mkdir /opt/file");
-			}
+	/* create file dir */
+	if (opendir(DIR_LUA) == NULL) {
+		perror("Not found DIR_LUA");
+		if (mkdir(DIR_LUA, 0777) != 0) {
+			perror("mkdir DIR_LUA");
+		} else {
+			printf("mkdir DIR_LUA SUCCESS!\n");
 		}
+	}
+	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
 			up = s->content.value.symbol;
 			/* close printf */
@@ -30,7 +33,7 @@ void upload(Webs *wp)
 			websWrite(wp, "CLIENT=%s\r\n", up->clientFilename);
 			websWrite(wp, "TYPE=%s\r\n", up->contentType);
 			websWrite(wp, "SIZE=%d\r\n", up->size);*/
-			upfile = sfmt("/opt/file/%s", up->clientFilename);
+			upfile = sfmt("%s%s", DIR_LUA, up->clientFilename);
 			if (rename(up->filename, upfile) < 0) {
 				error("Cannot rename uploaded file: %s to %s, errno %d", up->filename, upfile, errno);
 			}
