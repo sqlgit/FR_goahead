@@ -27,7 +27,7 @@ static int save_lua_file(const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s%s", DIR_LUA, file_name->valuestring);
+	sprintf(dir_filename, "%s%s", DIR_USER, file_name->valuestring);
 	ret = write_file(dir_filename, pgvalue->valuestring);
 
 	return ret;
@@ -44,7 +44,7 @@ static int remove_lua_file(const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s%s", DIR_LUA, name->valuestring);
+	sprintf(dir_filename, "%s%s", DIR_USER, name->valuestring);
 	if (remove(dir_filename) == -1) {
 		perror("remove");
 
@@ -67,8 +67,8 @@ static int rename_lua_file(const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(old_filename, "%s%s", DIR_LUA, oldname->valuestring);
-	sprintf(new_filename, "%s%s", DIR_LUA, newname->valuestring);
+	sprintf(old_filename, "%s%s", DIR_USER, oldname->valuestring);
+	sprintf(new_filename, "%s%s", DIR_USER, newname->valuestring);
 	if (rename(old_filename, new_filename) == -1) {
 		perror("rename");
 

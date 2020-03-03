@@ -166,8 +166,12 @@ char *get_dir_content(const char *dir_path)
 
 	if ((dir=opendir(dir_path)) == NULL) {
 		perror("Open dir error");
-
-		return NULL;
+		if (mkdir(dir_path, 0777) != 0) {
+			perror("mkdir");
+		} else {
+			printf("mkdir SUCCESS!\n");
+		}
+		//return NULL;
 	}
 	root_json = cJSON_CreateArray();
 	while ((ptr=readdir(dir)) != NULL) {

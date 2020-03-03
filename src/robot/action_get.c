@@ -12,7 +12,8 @@
 /********************************* Function declaration ***********************/
 
 static int get_points_data(char **ret_f_content);
-static int get_lua_data(char **ret_f_content);
+static int get_user_data(char **ret_f_content);
+static int get_template_data(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -30,10 +31,24 @@ static int get_points_data(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get lua file content */
-static int get_lua_data(char **ret_f_content)
+/* get user file content */
+static int get_user_data(char **ret_f_content)
 {
-	*ret_f_content = get_dir_content(DIR_LUA);
+	*ret_f_content = get_dir_content(DIR_USER);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get template file content */
+static int get_template_data(char **ret_f_content)
+{
+	*ret_f_content = get_dir_content(DIR_TEMPLATE);
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get dir content");
@@ -71,8 +86,10 @@ void get(Webs *wp)
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "get_points")) {
 		ret = get_points_data(&ret_f_content);
-	} else if(!strcmp(cmd, "get_lua_data")) {
-		ret = get_lua_data(&ret_f_content);
+	} else if(!strcmp(cmd, "get_user_data")) {
+		ret = get_user_data(&ret_f_content);
+	} else if(!strcmp(cmd, "get_template_data")) {
+		ret = get_template_data(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

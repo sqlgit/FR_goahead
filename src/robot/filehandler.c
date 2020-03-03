@@ -16,12 +16,12 @@ void upload(Webs *wp)
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
 	/* create file dir */
-	if (opendir(DIR_LUA) == NULL) {
-		perror("Not found DIR_LUA");
-		if (mkdir(DIR_LUA, 0777) != 0) {
-			perror("mkdir DIR_LUA");
+	if (opendir(DIR_USER) == NULL) {
+		perror("Not found DIR_USER");
+		if (mkdir(DIR_USER, 0777) != 0) {
+			perror("mkdir DIR_USER");
 		} else {
-			printf("mkdir DIR_LUA SUCCESS!\n");
+			printf("mkdir DIR_USER SUCCESS!\n");
 		}
 	}
 	if (scaselessmatch(wp->method, "POST")) {
@@ -33,7 +33,7 @@ void upload(Webs *wp)
 			websWrite(wp, "CLIENT=%s\r\n", up->clientFilename);
 			websWrite(wp, "TYPE=%s\r\n", up->contentType);
 			websWrite(wp, "SIZE=%d\r\n", up->size);*/
-			upfile = sfmt("%s%s", DIR_LUA, up->clientFilename);
+			upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
 			if (rename(up->filename, upfile) < 0) {
 				error("Cannot rename uploaded file: %s to %s, errno %d", up->filename, upfile, errno);
 			}
