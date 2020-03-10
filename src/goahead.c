@@ -139,6 +139,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
     if (argind < argc) {
         while (argind < argc) {
             endpoint = argv[argind++];
+			printf("endpoint = %s\n", endpoint); // endpoint = ip, Ex: 192.168.152.129
             if (websListen(endpoint) < 0) {
                 return -1;
             }

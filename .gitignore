@@ -1,4 +1,8 @@
-x86/o/
-x86/o-g/
-*.sw*
+.svn
+test
+*.o
+*.a
+*.so
+*.swp
 tags
+*.dylib

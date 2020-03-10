@@ -173,7 +173,7 @@ char *get_dir_content(const char *dir_path)
 		}
 		//return NULL;
 	}
-	root_json = cJSON_CreateArray();
+	root_json = cJSON_CreateObject();
 	while ((ptr=readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -188,9 +188,9 @@ char *get_dir_content(const char *dir_path)
 		}
 		//printf("f_content = %s\n", f_content);
 		file_cont = cJSON_CreateObject();
-		cJSON_AddItemToArray(root_json, file_cont);
 		cJSON_AddStringToObject(file_cont, "name", ptr->d_name);
 		cJSON_AddStringToObject(file_cont, "pgvalue", f_content);
+		cJSON_AddItemToObject(root_json, ptr->d_name, file_cont);
 		free(f_content);
 		f_content = NULL;
 	}
