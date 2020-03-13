@@ -221,11 +221,11 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_status;
 
 	/* create socket_cmd thread */
-	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_cmd_thread, NULL)) {
+	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_thread, (void *)CMD_PORT)) {
 		perror("pthread_create");
 	}
 	/* create socket_file thread */
-	if (pthread_create(&t_socket_file, NULL, (void *)&socket_file_thread, NULL)) {
+	if (pthread_create(&t_socket_file, NULL, (void *)&socket_thread, (void *)FILE_PORT)) {
 		perror("pthread_create");
 	}
 	/* create socket_status thread */

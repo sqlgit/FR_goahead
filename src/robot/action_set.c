@@ -11,8 +11,6 @@
 
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
-extern pthread_mutex_t mute_cmd;
-extern pthread_mutex_t mute_file;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -524,11 +522,11 @@ void set(Webs *wp)
 	switch (port) {
 		/* send cmd to 8080 port */
 		case CMD_PORT:
-			ret = enquene_result_dequene(&socket_cmd, cmd, &mute_cmd, content);
+			ret = enquene_result_dequene(&socket_cmd, cmd, &socket_cmd.mute, content);
 			break;
 		/* send file cmd to 8082 port */
 		case FILE_PORT:
-			ret = enquene_result_dequene(&socket_file, cmd, &mute_file, content);
+			ret = enquene_result_dequene(&socket_file, cmd, &socket_file.mute, content);
 			break;
 		default:
 			perror("port");

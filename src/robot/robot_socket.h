@@ -102,12 +102,14 @@ typedef struct _SOCKET_INFO
 	uint8_t connect_status; // socket 连接状态
 	int msghead; // 当前有记录的消息头
 	LinkQuene quene;
+	pthread_t t_socket_send;
+	pthread_t t_socket_recv;
+	pthread_mutex_t mute;
 } SOCKET_INFO;
 
 /********************************* Function declaration ***********************/
 
-void *socket_cmd_thread(void *arg);
-void *socket_file_thread(void *arg);
+void *socket_thread(void *arg);
 void *socket_status_thread(void *arg);
 
 #endif

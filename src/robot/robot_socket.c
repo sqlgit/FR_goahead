@@ -13,8 +13,8 @@ SOCKET_INFO socket_status;
 CTRL_STATE ctrl_state;
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
-pthread_mutex_t mute_cmd;
-pthread_mutex_t mute_file;
+//pthread_mutex_t mute_cmd;
+//pthread_mutex_t mute_file;
 
 /********************************* Function declaration ***********************/
 
@@ -368,8 +368,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 static void *socket_send_thread(void *arg)
 {
 	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
-	SOCKET_INFO *sock_info;
-	sock_info = (SOCKET_INFO *)arg;
+	SOCKET_INFO *sock;
+	sock = (SOCKET_INFO *)arg;
 	while (1) {
 		/*
 		pthread_mutex_lock(&mute_file);
@@ -377,11 +377,11 @@ static void *socket_send_thread(void *arg)
 		pthread_mutex_unlock(&mute_file);
 		*/
 		/* socket 连接已经断开 */
-		if (sock_info->connect_status == 0) {
+		if (sock->connect_status == 0) {
 
 			pthread_exit(NULL);
 		}
-		if (socket_send(sock_info) == FAIL) {
+		if (socket_send(sock) == FAIL) {
 			perror("socket send");
 		}
 		delay(1);
@@ -390,134 +390,109 @@ static void *socket_send_thread(void *arg)
 
 static void *socket_recv_thread(void *arg)
 {
-	SOCKET_INFO *sock_info;
-	sock_info = (SOCKET_INFO *)arg;
+	SOCKET_INFO *sock;
+	sock = (SOCKET_INFO *)arg;
 	char *buf_memory = NULL;
 	/* calloc buf */
 	buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
 	if (buf_memory == NULL) {
 		perror("calloc");
-		sock_info->connect_status = 0;
+		sock->connect_status = 0;
 
 		pthread_exit(NULL);
 	}
 	while (1) {
 		//printf("buf_memory content = %s\n", buf_memory);
 		/* socket 连接已经断开 */
-		if (sock_info->connect_status == 0) {
+		if (sock->connect_status == 0) {
 			free(buf_memory);
 			buf_memory = NULL;
 
 			pthread_exit(NULL);
 		}
-		if (socket_recv(sock_info, buf_memory) == FAIL) {
+		if (socket_recv(sock, buf_memory) == FAIL) {
 			perror("socket recv");
 		}
 	}
 }
-void *socket_cmd_thread(void *arg)
+
+void *socket_thread(void *arg)
 {
+	SOCKET_INFO *sock = NULL;
+	int port = (int)arg;
+	printf("port = %d\n", port);
+
 	/* init socket */
-	socket_init(&socket_cmd, CMD_PORT);
-	/* init socket quene */
-	initquene(&socket_cmd.quene);
+	switch(port) {
+		case CMD_PORT:
+			socket_init(&socket_cmd, port);
+			/* init socket quene */
+			initquene(&socket_cmd.quene);
+			sock = &socket_cmd;
+			break;
+		case FILE_PORT:
+			/* init socket */
+			socket_init(&socket_file, port);
+			/* init socket quene */
+			initquene(&socket_file.quene);
+			sock = &socket_file;
+			break;
+		default:
+			pthread_exit(NULL);
+	}
 
 	while (1) {
 		/* do socket connect */
 		/* create socket */
-		if (socket_create(&socket_cmd) == FAIL) {
+		if (socket_create(sock) == FAIL) {
 			/* create fail */
 			perror("socket create fail");
 
 			continue;
 		}
 		/* connect socket */
-		if (socket_connect(&socket_cmd) == FAIL) {
+		if (socket_connect(sock) == FAIL) {
 			/* connect fail */
 			perror("socket connect fail");
-			close(socket_cmd.fd);
+			close(sock->fd);
 			delay(1000);
 
 			continue;
 		}
 		/* socket connected */
 		/* set socket status: connected */
-		socket_cmd.connect_status = 1;
-		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_cmd.fd, SERVER_IP, CMD_PORT);
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
 
-		pthread_t t_socket_cmd_send;
-		pthread_t t_socket_cmd_recv;
+		//pthread_t t_socket_cmd_send;
+		//pthread_t t_socket_cmd_recv;
 		/* 创建锁，相当于new一个对象 */
-		pthread_mutex_init(&mute_cmd, NULL);
+		//pthread_mutex_init(&mute_cmd, NULL);
+		pthread_mutex_init(&sock->mute, NULL);
 		//pthread_cond_init(&cond_cmd, NULL);
 
 		/* create socket_cmd_send thread */
-		if(pthread_create(&t_socket_cmd_send, NULL, (void *)&socket_send_thread, (void *)&socket_cmd)) {
+		if(pthread_create(&sock->t_socket_send, NULL, (void *)&socket_send_thread, (void *)sock)) {
 			perror("pthread_create");
 		}
 		/* create socket_cmd_recv thread */
-		if(pthread_create(&t_socket_cmd_recv, NULL, (void *)&socket_recv_thread, (void *)&socket_cmd)) {
+		if(pthread_create(&sock->t_socket_recv, NULL, (void *)&socket_recv_thread, (void *)sock)) {
 			perror("pthread_create");
 		}
 		/* 等待线程退出 */
-		if (pthread_join(t_socket_cmd_send, NULL)) {
+		if (pthread_join(sock->t_socket_send, NULL)) {
 			perror("pthread_join");
 		}
-		if (pthread_join(t_socket_cmd_recv, NULL)) {
+		if (pthread_join(sock->t_socket_recv, NULL)) {
 			perror("pthread_join");
 		}
 		/* socket disconnected */
 		/* 释放互斥锁 */
-		pthread_mutex_destroy(&mute_cmd);
+		pthread_mutex_destroy(&sock->mute);
 		/* close socket */
-		close(socket_cmd.fd);
+		close(sock->fd);
 	}
 }
-
-void *socket_file_thread(void *arg)
-{
-	/* init socket */
-	socket_init(&socket_file, FILE_PORT);
-	/* init socket quene */
-	initquene(&socket_file.quene);
-
-	while (1) {
-		/* do socket connect */
-		/* create socket */
-		if (socket_create(&socket_file) == FAIL) {
-			/* create fail */
-			perror("socket create fail");
-
-			continue;
-		}
-		/* connect socket */
-		if (socket_connect(&socket_file) == FAIL) {
-			/* connect fail */
-			perror("socket connect fail");
-			close(socket_file.fd);
-			delay(1000);
-
-			continue;
-		}
-		/* socket connected */
-		/* set socket status: connected */
-		socket_file.connect_status = 1;
-		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_file.fd, SERVER_IP, FILE_PORT);
-
-		pthread_t t_socket_file_send;
-		pthread_t t_socket_file_recv;
-		/* 创建锁，相当于new一个对象 */
-		pthread_mutex_init(&mute_file, NULL);
-		//pthread_cond_init(&cond_file, NULL);
-
-		/* create socket_file_send thread */
-		if(pthread_create(&t_socket_file_send, NULL, (void *)&socket_send_thread, (void *)&socket_file)) {
-			perror("pthread_create");
-		}
-		/* create socket_file_recv thread */
-		if(pthread_create(&t_socket_file_recv, NULL, (void *)&socket_recv_thread, (void *)&socket_file)) {
-			perror("pthread_create");
-		}
 	/*
 		// send Heartbeat packet
 		while (1) {
@@ -560,21 +535,6 @@ void *socket_file_thread(void *arg)
 		if (pthread_cancel(t_socket_file_recv)) {
 			perror("pthread cancel");
 		}*/
-		/* 等待线程退出 */
-		if (pthread_join(t_socket_file_send, NULL)) {
-			perror("pthread_join");
-		}
-		if (pthread_join(t_socket_file_recv, NULL)) {
-			perror("pthread_join");
-		}
-		/* socket disconnected */
-		/* 释放互斥锁 */
-		pthread_mutex_destroy(&mute_file);
-		/* close socket */
-		close(socket_file.fd);
-	}
-}
-
 void *socket_status_thread(void *arg)
 {
 	bzero(&ctrl_state, sizeof(ctrl_state));
