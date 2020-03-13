@@ -24,10 +24,14 @@ static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
 static int socket_send(SOCKET_INFO *sock);
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
+static void *socket_send_thread(void *arg);
+static void *socket_recv_thread(void *arg);
+/*
 static void *socket_cmd_send_thread(void *arg);
 static void *socket_cmd_recv_thread(void *arg);
 static void *socket_file_send_thread(void *arg);
 static void *socket_file_recv_thread(void *arg);
+*/
 
 /*********************************** Code *************************************/
 
@@ -361,47 +365,56 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	return SUCCESS;
 }
 
-static void *socket_cmd_send_thread(void *arg)
+static void *socket_send_thread(void *arg)
 {
+	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
+	SOCKET_INFO *sock_info;
+	sock_info = (SOCKET_INFO *)arg;
 	while (1) {
+		/*
+		pthread_mutex_lock(&mute_file);
+		pthread_cond_wait(&cond_file, &mute_file);
+		pthread_mutex_unlock(&mute_file);
+		*/
 		/* socket 连接已经断开 */
-		if (socket_cmd.connect_status == 0) {
+		if (sock_info->connect_status == 0) {
 
 			pthread_exit(NULL);
 		}
-		if (socket_send(&socket_cmd) == FAIL) {
+		if (socket_send(sock_info) == FAIL) {
 			perror("socket send");
 		}
 		delay(1);
 	}
 }
 
-static void *socket_cmd_recv_thread(void *arg)
+static void *socket_recv_thread(void *arg)
 {
+	SOCKET_INFO *sock_info;
+	sock_info = (SOCKET_INFO *)arg;
 	char *buf_memory = NULL;
 	/* calloc buf */
 	buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
 	if (buf_memory == NULL) {
 		perror("calloc");
-		socket_cmd.connect_status = 0;
+		sock_info->connect_status = 0;
 
 		pthread_exit(NULL);
 	}
 	while (1) {
 		//printf("buf_memory content = %s\n", buf_memory);
 		/* socket 连接已经断开 */
-		if (socket_cmd.connect_status == 0) {
+		if (sock_info->connect_status == 0) {
 			free(buf_memory);
 			buf_memory = NULL;
 
 			pthread_exit(NULL);
 		}
-		if (socket_recv(&socket_cmd, buf_memory) == FAIL) {
+		if (socket_recv(sock_info, buf_memory) == FAIL) {
 			perror("socket recv");
 		}
 	}
 }
-
 void *socket_cmd_thread(void *arg)
 {
 	/* init socket */
@@ -439,11 +452,11 @@ void *socket_cmd_thread(void *arg)
 		//pthread_cond_init(&cond_cmd, NULL);
 
 		/* create socket_cmd_send thread */
-		if(pthread_create(&t_socket_cmd_send, NULL, (void *)&socket_cmd_send_thread, NULL)) {
+		if(pthread_create(&t_socket_cmd_send, NULL, (void *)&socket_send_thread, (void *)&socket_cmd)) {
 			perror("pthread_create");
 		}
 		/* create socket_cmd_recv thread */
-		if(pthread_create(&t_socket_cmd_recv, NULL, (void *)&socket_cmd_recv_thread, NULL)) {
+		if(pthread_create(&t_socket_cmd_recv, NULL, (void *)&socket_recv_thread, (void *)&socket_cmd)) {
 			perror("pthread_create");
 		}
 		/* 等待线程退出 */
@@ -458,54 +471,6 @@ void *socket_cmd_thread(void *arg)
 		pthread_mutex_destroy(&mute_cmd);
 		/* close socket */
 		close(socket_cmd.fd);
-	}
-}
-
-static void *socket_file_send_thread(void *arg)
-{
-	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
-	while (1) {
-		/*
-		pthread_mutex_lock(&mute_file);
-		pthread_cond_wait(&cond_file, &mute_file);
-		pthread_mutex_unlock(&mute_file);
-		*/
-		/* socket 连接已经断开 */
-		if (socket_file.connect_status == 0) {
-
-			pthread_exit(NULL);
-		}
-		if (socket_send(&socket_file) == FAIL) {
-			perror("socket send");
-		}
-		delay(1);
-	}
-}
-
-static void *socket_file_recv_thread(void *arg)
-{
-	char *buf_memory = NULL;
-	/* calloc buf */
-	buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
-	if (buf_memory == NULL) {
-		perror("calloc");
-		socket_file.connect_status = 0;
-
-		pthread_exit(NULL);
-	}
-	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
-	while (1) {
-		//printf("buf_memory content = %s\n", buf_memory);
-		/* socket 连接已经断开 */
-		if (socket_file.connect_status == 0) {
-			free(buf_memory);
-			buf_memory = NULL;
-
-			pthread_exit(NULL);
-		}
-		if (socket_recv(&socket_file, buf_memory) == FAIL) {
-			perror("socket recv");
-		}
 	}
 }
 
@@ -546,11 +511,11 @@ void *socket_file_thread(void *arg)
 		//pthread_cond_init(&cond_file, NULL);
 
 		/* create socket_file_send thread */
-		if(pthread_create(&t_socket_file_send, NULL, (void *)&socket_file_send_thread, NULL)) {
+		if(pthread_create(&t_socket_file_send, NULL, (void *)&socket_send_thread, (void *)&socket_file)) {
 			perror("pthread_create");
 		}
 		/* create socket_file_recv thread */
-		if(pthread_create(&t_socket_file_recv, NULL, (void *)&socket_file_recv_thread, NULL)) {
+		if(pthread_create(&t_socket_file_recv, NULL, (void *)&socket_recv_thread, (void *)&socket_file)) {
 			perror("pthread_create");
 		}
 	/*
