@@ -10,7 +10,11 @@
 SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
+SOCKET_INFO socket_vir_cmd;
+SOCKET_INFO socket_vir_file;
+SOCKET_INFO socket_vir_status;
 CTRL_STATE ctrl_state;
+CTRL_STATE vir_ctrl_state;
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -422,24 +426,26 @@ void *socket_thread(void *arg)
 	int port = (int)arg;
 	printf("port = %d\n", port);
 
-	/* init socket */
 	switch(port) {
 		case CMD_PORT:
-			socket_init(&socket_cmd, port);
-			/* init socket quene */
-			initquene(&socket_cmd.quene);
 			sock = &socket_cmd;
 			break;
 		case FILE_PORT:
-			/* init socket */
-			socket_init(&socket_file, port);
-			/* init socket quene */
-			initquene(&socket_file.quene);
 			sock = &socket_file;
+			break;
+		case VIR_CMD_PORT:
+			sock = &socket_vir_cmd;
+			break;
+		case VIR_FILE_PORT:
+			sock = &socket_vir_file;
 			break;
 		default:
 			pthread_exit(NULL);
 	}
+	/* init socket */
+	socket_init(sock, port);
+	/* init socket quene */
+	initquene(&sock->quene);
 
 	while (1) {
 		/* do socket connect */
@@ -535,33 +541,51 @@ void *socket_thread(void *arg)
 		if (pthread_cancel(t_socket_file_recv)) {
 			perror("pthread cancel");
 		}*/
+
 void *socket_status_thread(void *arg)
 {
-	bzero(&ctrl_state, sizeof(ctrl_state));
-	socket_init(&socket_status, STATUS_PORT);
+	SOCKET_INFO *sock = NULL;
+	CTRL_STATE *state = NULL;
+	int port = (int)arg;
+	printf("port = %d\n", port);
+
+	switch(port) {
+		case STATUS_PORT:
+			sock = &socket_status;
+			state = &ctrl_state;
+			break;
+		case VIR_STATUS_PORT:
+			sock = &socket_vir_status;
+			state = &vir_ctrl_state;
+			break;
+		default:
+			pthread_exit(NULL);
+	}
+	socket_init(sock, port);
+	bzero(state, sizeof(CTRL_STATE));
 
 	while(1) {
 		/* do socket connect */
 		/* create socket */
-		if (socket_create(&socket_status) == FAIL) {
+		if (socket_create(sock) == FAIL) {
 			/* create fail */
 			perror("socket create fail");
 
 			continue;
 		}
 		/* connect socket */
-		if (socket_connect(&socket_status) == FAIL) {
+		if (socket_connect(sock) == FAIL) {
 			/* connect fail */
 			perror("socket connect fail");
-			close(socket_status.fd);
+			close(sock->fd);
 			delay(1000);
 
 			continue;
 		}
 		/* socket connected */
 		/* set socket status: connected */
-		socket_status.connect_status = 1;
-		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", socket_status.fd, SERVER_IP, STATUS_PORT);
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
 
 		/* recv ctrl status */
 		while (1) {
@@ -569,7 +593,7 @@ void *socket_status_thread(void *arg)
 			int recv_len = 0;
 
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1112 bytes */
-			recv_len = recv(socket_status.fd, status_buf, 3350, 0);
+			recv_len = recv(sock->fd, status_buf, 3350, 0);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");
@@ -583,7 +607,7 @@ void *socket_status_thread(void *arg)
 			//printf("strlen status_buf = %d\n", strlen(status_buf));
 			//printf("recv status_buf = %s\n", status_buf);
 			if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
-				StringToBytes(status_buf, (BYTE *)&ctrl_state, sizeof(ctrl_state));
+				StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
 			/*	int i;
 				for (i = 0; i < 6; i++) {
 					printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
@@ -593,8 +617,8 @@ void *socket_status_thread(void *arg)
 		}
 		/* socket disconnected */
 		/* close socket */
-		close(socket_status.fd);
+		close(sock->fd);
 		/* set socket status: disconnected */
-		socket_status.connect_status = 0;
+		sock->connect_status = 0;
 	}
 }

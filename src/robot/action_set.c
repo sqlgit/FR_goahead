@@ -11,6 +11,9 @@
 
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
+extern SOCKET_INFO socket_vir_cmd;
+extern SOCKET_INFO socket_vir_file;
+extern int robot_type;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -519,6 +522,22 @@ void set(Webs *wp)
 		goto end;
 	}
 	port = port_n->valueint;
+
+	/** virtual robot */
+	if (robot_type == 0) {
+		switch (port) {
+			case CMD_PORT:
+				port = 8070;
+				break;
+			case FILE_PORT:
+				port = 8072;
+				break;
+			default:
+				perror("port");
+				goto end;
+		}
+	}
+
 	switch (port) {
 		/* send cmd to 8080 port */
 		case CMD_PORT:
@@ -527,6 +546,14 @@ void set(Webs *wp)
 		/* send file cmd to 8082 port */
 		case FILE_PORT:
 			ret = enquene_result_dequene(&socket_file, cmd, &socket_file.mute, content);
+			break;
+		/* send cmd to 8070 port */
+		case VIR_CMD_PORT:
+			ret = enquene_result_dequene(&socket_vir_cmd, cmd, &socket_vir_cmd.mute, content);
+			break;
+		/* send file cmd to 8072 port */
+		case VIR_FILE_PORT:
+			ret = enquene_result_dequene(&socket_vir_file, cmd, &socket_vir_file.mute, content);
 			break;
 		default:
 			perror("port");

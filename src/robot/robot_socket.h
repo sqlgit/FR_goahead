@@ -14,6 +14,9 @@
 #define CMD_PORT 8080
 #define STATUS_PORT 8081
 #define FILE_PORT 8082
+#define VIR_CMD_PORT 8070
+#define VIR_STATUS_PORT 8071
+#define VIR_FILE_PORT 8072
 #define SOCK_SELECT_TIMEOUT 1 /* 秒 */
 #define MAX_BUF 1024
 #define MAX_MSGHEAD 10000

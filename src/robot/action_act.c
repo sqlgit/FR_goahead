@@ -6,11 +6,16 @@
 #include 	"tools.h"
 #include    "action_act.h"
 
+/********************************* Defines ************************************/
+
+extern int robot_type;
+
 /********************************* Function declaration ***********************/
 
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
+static int change_type(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -78,6 +83,21 @@ static int rename_lua_file(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* change type */
+static int change_type(const cJSON *data_json)
+{
+	cJSON *type = cJSON_GetObjectItem(data_json, "type");
+	if (type == NULL || type->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	robot_type = atoi(type->valuestring);
+	printf("robot_type = %d\n", robot_type);
+
+	return SUCCESS;
+}
+
 /* do some user actions on webserver */
 void act(Webs *wp)
 {
@@ -115,6 +135,8 @@ void act(Webs *wp)
 		ret = remove_lua_file(data_json);
 	} else if(!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
+	} else if(!strcmp(cmd, "change_type")) {
+		ret = change_type(data_json);
 	} else {
 		perror("cmd not found");
 		goto end;

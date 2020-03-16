@@ -10,16 +10,21 @@
 /********************************* Defines ************************************/
 
 extern CTRL_STATE ctrl_state;
+extern CTRL_STATE vir_ctrl_state;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
 extern SOCKET_INFO socket_status;
+extern SOCKET_INFO socket_vir_cmd;
+extern SOCKET_INFO socket_vir_file;
+extern SOCKET_INFO socket_vir_status;
+extern int robot_type;
 
 /********************************* Function declaration ***********************/
 
 static int connect_status(char *ret_status);
-static int menu(char *ret_status);
-static int basic(char *ret_status);
-static int program_teach(char *ret_status);
+static int menu(char *ret_status, CTRL_STATE *state);
+static int basic(char *ret_status, CTRL_STATE *state);
+static int program_teach(char *ret_status, CTRL_STATE *state);
 
 /********************************* Code *************************************/
 
@@ -49,14 +54,14 @@ static int connect_status(char *ret_status)
 }
 
 /* menu */
-static int menu(char *ret_status)
+static int menu(char *ret_status, CTRL_STATE *state)
 {
 	char *buf = NULL;
 	cJSON *root_json = NULL;
 
-	//printf("ctrl_state.robot_mode = %u\n", ctrl_state.robot_mode);
+	//printf("state->robot_mode = %u\n", state->robot_mode);
 	root_json = cJSON_CreateObject();
-	cJSON_AddNumberToObject(root_json, "mode", ctrl_state.robot_mode);
+	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);
@@ -68,7 +73,7 @@ static int menu(char *ret_status)
 }
 
 /* basic */
-static int basic(char *ret_status)
+static int basic(char *ret_status, CTRL_STATE *state)
 {
 	int i = 0;
 	char *buf = NULL;
@@ -78,13 +83,13 @@ static int basic(char *ret_status)
 	cJSON *joints_json = NULL;
 
 	/*for (i = 0; i < 6; i++) {
-		printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
+		printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
 	}*/
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	for (i = 0; i < 6; i++) {
-		joint_value = double_round(ctrl_state.jt_cur_pos[i], 3);
+		joint_value = double_round(state->jt_cur_pos[i], 3);
 		//printf("joint_value = %.3lf\n", joint_value);
 		sprintf(joint, "j%d", (i+1));
 		cJSON_AddNumberToObject(joints_json, joint, joint_value);
@@ -100,15 +105,15 @@ static int basic(char *ret_status)
 }
 
 /* program teach */
-static int program_teach(char *ret_status)
+static int program_teach(char *ret_status, CTRL_STATE *state)
 {
 	char *buf = NULL;
 	cJSON *root_json = NULL;
 
-	//printf("ctrl_state.line_number = %u\n", ctrl_state.line_number);
+	//printf("state.line_number = %u\n", state->line_number);
 	root_json = cJSON_CreateObject();
-	cJSON_AddNumberToObject(root_json, "line_number", ctrl_state.line_number);
-	cJSON_AddNumberToObject(root_json, "program_state", ctrl_state.program_state);
+	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
+	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);
@@ -149,15 +154,22 @@ void sta(Webs *wp)
 		perror("json");
 		goto end;
 	}
+	CTRL_STATE *state = NULL;
+	if (robot_type == 1) {
+		state = &ctrl_state;
+	} else {
+		state = &vir_ctrl_state;
+	}
+
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "cons")) {
 		ret = connect_status(ret_status);
 	} else if(!strcmp(cmd, "menu")) {
-		ret = menu(ret_status);
+		ret = menu(ret_status, state);
 	} else if(!strcmp(cmd, "basic")) {
-		ret = basic(ret_status);
+		ret = basic(ret_status, state);
 	} else if(!strcmp(cmd, "program_teach")) {
-		ret = program_teach(ret_status);
+		ret = program_teach(ret_status, state);
 	} else {
 		perror("cmd not found");
 		goto end;

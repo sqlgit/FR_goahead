@@ -31,6 +31,7 @@
 
 static int finished = 0;
 int sql_index = 0;
+int robot_type = 1;// 默认实体机器人
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
@@ -219,6 +220,9 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;
+	pthread_t t_socket_vir_cmd;
+	pthread_t t_socket_vir_file;
+	pthread_t t_socket_vir_status;
 
 	/* create socket_cmd thread */
 	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_thread, (void *)CMD_PORT)) {
@@ -229,7 +233,19 @@ MAIN(goahead, int argc, char **argv, char **envp)
 		perror("pthread_create");
 	}
 	/* create socket_status thread */
-	if (pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, NULL)) {
+	if (pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, (void *)STATUS_PORT)) {
+		perror("pthread_create");
+	}
+	/* create socket_vir_cmd thread */
+	if (pthread_create(&t_socket_vir_cmd, NULL, (void *)&socket_thread, (void *)VIR_CMD_PORT)) {
+		perror("pthread_create");
+	}
+	/* create socket_vir_file thread */
+	if (pthread_create(&t_socket_vir_file, NULL, (void *)&socket_thread, (void *)VIR_FILE_PORT)) {
+		perror("pthread_create");
+	}
+	/* create socket_vir_status thread */
+	if (pthread_create(&t_socket_vir_status, NULL, (void *)&socket_status_thread, (void *)VIR_STATUS_PORT)) {
 		perror("pthread_create");
 	}
 
