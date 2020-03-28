@@ -8,12 +8,14 @@
 
 /********************************* Defines ************************************/
 
+extern int cur_state;
 
 /********************************* Function declaration ***********************/
 
 static int get_points_data(char **ret_f_content);
 static int get_user_data(char **ret_f_content);
 static int get_template_data(char **ret_f_content);
+static int get_state_feedback(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -59,6 +61,32 @@ static int get_template_data(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get state feedback */
+static int get_state_feedback(char **ret_f_content)
+{
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateObject();
+	printf("cur_state = %d\n", cur_state);
+	cJSON_AddNumberToObject(root_json, "state", cur_state);
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+	} else {
+		perror("calloc");
+	}
+	printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return SUCCESS;
+}
+
 /* get webserver data and return to page */
 void get(Webs *wp)
 {
@@ -90,6 +118,8 @@ void get(Webs *wp)
 		ret = get_user_data(&ret_f_content);
 	} else if(!strcmp(cmd, "get_template_data")) {
 		ret = get_template_data(&ret_f_content);
+	} else if(!strcmp(cmd, "get_state_feedback")) {
+		ret = get_state_feedback(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

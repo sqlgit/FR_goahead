@@ -11,13 +11,19 @@
 
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
+extern FB_LinkQuene fb_quene;
+//extern STATE_FB state_fb;
+//extern float state_ret[100][10];
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
 extern SOCKET_INFO socket_status;
+extern SOCKET_INFO socket_state;
 extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern SOCKET_INFO socket_vir_status;
 extern int robot_type;
+extern int state_id[10];
+extern int state_icount;
 
 /********************************* Function declaration ***********************/
 
@@ -25,6 +31,7 @@ static int connect_status(char *ret_status);
 static int menu(char *ret_status, CTRL_STATE *state);
 static int basic(char *ret_status, CTRL_STATE *state);
 static int program_teach(char *ret_status, CTRL_STATE *state);
+static int vardata_feedback(char *ret_status);
 
 /********************************* Code *************************************/
 
@@ -81,6 +88,24 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	double joint_value = 0;
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
+	int io[16] = {0};
+	int n1 = 0;
+	int n2 = 0;
+
+	//printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
+	//printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
+	n1 = state->cl_dgt_output_l;
+	n2 = state->cl_dgt_output_h;
+	for(i = 0; i < 16; i++) {
+		if (i < 8) {
+			io[i]=n1%2;
+			n1=n1/2;
+		}
+		if (i >= 8) {
+			io[i] = n2%2;
+			n2 = n2/2;
+		}
+	}
 
 	/*for (i = 0; i < 6; i++) {
 		printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
@@ -88,6 +113,7 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
+	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(io, 16));
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);
 		//printf("joint_value = %.3lf\n", joint_value);
@@ -107,15 +133,70 @@ static int basic(char *ret_status, CTRL_STATE *state)
 /* program teach */
 static int program_teach(char *ret_status, CTRL_STATE *state)
 {
-	char *buf = NULL;
 	cJSON *root_json = NULL;
+	char *buf = NULL;
 
 	//printf("state.line_number = %u\n", state->line_number);
+//	printf("state->program_state d = %d\n", state->program_state);
 	root_json = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return SUCCESS;
+}
+
+/* vardata_feedback */
+static int vardata_feedback(char *ret_status)
+{
+	int i = 0;
+	int j = 0;
+	char key[10] = {0};
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+	cJSON *root = NULL;
+
+	if (fb_queneempty(&fb_quene)) {
+		fb_print_node_num(fb_quene);
+		root_json = cJSON_CreateObject();
+
+		/*printf("state_iCount= %d\n", state_icount);
+		printf("state_ret[0][0] = %f\n", state_ret[0][0]);
+		printf("state_ret[1][0] = %f\n", state_ret[1][0]);
+		printf("state_ret[0][1] = %f\n", state_ret[0][1]);
+		printf("state_ret[1][1] = %f\n", state_ret[1][1]);*/
+		for (i = 0; i < state_icount; i++) {
+			itoa(state_id[i], key, 10);
+			root = cJSON_CreateArray();
+			cJSON_AddItemToObject(root_json, key, root);
+			for (j = 0; j < 100; j++) {
+				//cJSON_AddNumberToObject(root, "key", state_fb.var[j][i]);
+				cJSON_AddNumberToObject(root, "key", fb_quene.front->next->data.fb[j][i]);
+				//cJSON_AddNumberToObject(root, "key", 100);
+			}
+		}
+		buf = cJSON_Print(root_json);
+		printf("send to GUI = %s\n", buf);
+		printf("end send\n");
+		strcpy(ret_status, buf);
+
+		/* delete front node */
+		pthread_mutex_lock(&socket_state.mute);
+		fb_dequene(&fb_quene);
+		pthread_mutex_unlock(&socket_state.mute);
+	/** quene is empty */
+	} else {
+		root_json = cJSON_CreateObject();
+		cJSON_AddNumberToObject(root_json, "empty_data", 0);
+		buf = cJSON_Print(root_json);
+		strcpy(ret_status, buf);
+		printf("send empty data to GUI\n");
+	}
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(root_json);
@@ -135,7 +216,8 @@ void sta(Webs *wp)
 	cJSON *data = NULL;
 
 	/*calloc content*/
-	ret_status = (char *)calloc(1, sizeof(char)*1024);
+	//ret_status = (char *)calloc(1, sizeof(char)*1024);
+	ret_status = (char *)calloc(1, sizeof(float)*1000+100);
 	if (ret_status == NULL) {
 		perror("calloc");
 		goto end;
@@ -170,6 +252,8 @@ void sta(Webs *wp)
 		ret = basic(ret_status, state);
 	} else if(!strcmp(cmd, "program_teach")) {
 		ret = program_teach(ret_status, state);
+	} else if(!strcmp(cmd, "vardata_feedback")) {
+		ret = vardata_feedback(ret_status);
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -10,11 +10,15 @@
 SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
+SOCKET_INFO socket_state;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
 CTRL_STATE ctrl_state;
 CTRL_STATE vir_ctrl_state;
+FB_LinkQuene fb_quene;
+//STATE_FB state_fb;
+//float state_ret[100][10] = {{0}};
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -497,6 +501,8 @@ void *socket_thread(void *arg)
 		pthread_mutex_destroy(&sock->mute);
 		/* close socket */
 		close(sock->fd);
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
 	}
 }
 	/*
@@ -589,11 +595,11 @@ void *socket_status_thread(void *arg)
 
 		/* recv ctrl status */
 		while (1) {
-			char status_buf[4000] = {0}; /* Now recv buf is 3336 bytes*/
+			char status_buf[5000] = {0}; /* Now recv buf is  bytes*/
 			int recv_len = 0;
 
-			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1112 bytes */
-			recv_len = recv(sock->fd, status_buf, 3350, 0);
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1122 bytes */
+			recv_len = recv(sock->fd, status_buf, (sizeof(CTRL_STATE)*3+14), 0);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");
@@ -606,11 +612,16 @@ void *socket_status_thread(void *arg)
 			strrpc(status_buf, "III/b/f", "");
 			//printf("strlen status_buf = %d\n", strlen(status_buf));
 			//printf("recv status_buf = %s\n", status_buf);
+			//printf("state = %p\n", state);
 			if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
 				StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
+			/*	printf("state->program_state d = %d\n", state->program_state);
+				printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
+				printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
+				*/
 			/*	int i;
 				for (i = 0; i < 6; i++) {
-					printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
+					printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
 				}*/
 			}
 			//printf("after StringToBytes\n");
@@ -621,4 +632,163 @@ void *socket_status_thread(void *arg)
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
 	}
+}
+
+void *socket_state_feedback_thread(void *arg)
+{
+	//STATE_FB *state = NULL;
+	SOCKET_INFO *sock = NULL;
+	char *state_buf = NULL;
+	int i;
+	int j;
+	int port = (int)arg;
+	printf("port = %d\n", port);
+
+	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+	sock = &socket_state;
+	//state = &state_fb;
+	/* init socket */
+	socket_init(sock, port);
+	/* init FB quene */
+	fb_initquene(&fb_quene);
+
+	while(1) {
+		/* do socket connect */
+		/* create socket */
+		if (socket_create(sock) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(sock) == FAIL) {
+			/* connect fail */
+			perror("socket connect fail");
+			close(sock->fd);
+			delay(1000);
+
+			continue;
+		}
+		pthread_mutex_init(&sock->mute, NULL);
+		/* socket connected */
+		/* set socket status: connected */
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
+
+		/* recv ctrl status */
+		while (1) {
+			bzero(state_buf, sizeof(char)*(STATEFB_SIZE+100));
+			char array[5][13000] = {{0}};
+			int recv_len = 0;
+
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
+			recv_len = recv(sock->fd, state_buf, (7+1+3+5+3+sizeof(STATE_FB)*3+7), 0); /* Now recv buf is 1225 bytes*/
+			/* recv timeout or error */
+			if (recv_len <= 0) {
+				perror("recv");
+
+				break;
+			}
+			//printf("recv len = %d\n", recv_len);
+			//printf("recv state_buf = %s\n", state_buf);
+			/* 把接收到的包按照分割符"III"进行分割 */
+			if (separate_string_to_array(state_buf, "III", 5, 13000, (char *)&array) != 5) {
+				perror("separate recv");
+			}
+			/*printf("array[0]=%s\n", array[0]);
+			printf("array[1]=%s\n", array[1]);
+			printf("array[2]=%s\n", array[2]);
+			printf("array[3]=%s\n", array[3]);
+			printf("array[4]=%s\n", array[4]);*/
+			//strrpc(state_buf, "/f/bIII", "");
+			//strrpc(state_buf, "III/b/f", "");
+			//printf("strlen state_buf = %d\n", strlen(state_buf));
+			//printf("recv state_buf = %s\n", state_buf);
+			//printf("strlen(array[3]) = %d\n", strlen(array[3]));
+			//printf("3*sizeof(STATE_FB) = %d\n", 3*sizeof(STATE_FB));
+			if (strlen(array[3]) == 3*sizeof(STATE_FB)) {
+				//printf("enter if\n");
+				STATE_FB state_fb;
+				fb_createnode(&state_fb);
+				//bzero(state, sizeof(STATE_FB));
+				StringToBytes(array[3], (BYTE *)&state_fb, sizeof(STATE_FB));
+				pthread_mutex_lock(&sock->mute);
+				fb_enquene(&fb_quene, state_fb);
+				pthread_mutex_unlock(&sock->mute);
+				/*for (i = 0; i < 900; i++) {
+					for(j = 0; j < 10; j++) {
+						state_ret[i][j] = state_ret[i+100][j];
+					}
+				}
+				for(i = 0; i < 100; i++) {
+					for(j = 0; j < 10; j++) {
+						state_ret[i+900][j] = state->var[i][j];
+					}
+				}*/
+				/*for(i = 0; i < 100; i++) {
+					for(j = 0; j < 10; j++) {
+						state_ret[i][j] = state->var[i][j];
+					}
+				}*/
+				/*
+				printf("state_ret = \n");
+				for(i = 0; i < 1000; i++) {
+					for(j = 0; j < 10; j++) {
+						printf("%.2lf ", state_ret[i][j]);
+					}
+					printf("\n");
+				}*/
+
+
+				printf("state fb = ");
+				for(i = 0; i < 100; i++) {
+					//for(j = 0; j < 10; j++) {
+						printf("%f ", state_fb.fb[i][0]);
+					//}
+				}
+				printf("end print state fb\n");
+
+
+
+				//printf("state->var[0][0] = %f\n", state->var[0][0]);
+				/*int i;
+				for (i = 0; i < 10; i++) {
+					state_fb.var1[i] = state;
+					state++;
+					state_fb.var2[i] = state;
+					state++;
+					state_fb.var3[i] = state;
+					state++;
+					state_fb.var4[i] = state;
+					state++;
+					state_fb.var5[i] = state;
+					state++;
+					state_fb.var6[i] = state;
+					state++;
+					state_fb.var7[i] = state;
+					state++;
+					state_fb.var8[i] = state;
+					state++;
+					state_fb.var9[i] = state;
+					state++;
+					state_fb.var10[i] = state;
+				}*/
+			/*	int i;
+				for (i = 0; i < 6; i++) {
+					printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
+				}*/
+			}
+			//printf("after StringToBytes\n");
+		}
+		/* socket disconnected */
+		/* 释放互斥锁 */
+		pthread_mutex_destroy(&sock->mute);
+		/* close socket */
+		close(sock->fd);
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+	}
+	free(state_buf);
+	state_buf = NULL;
 }

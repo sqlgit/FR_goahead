@@ -3,7 +3,8 @@
 
 /********************************* Defines ************************************/
 
-#define local 1
+#define local 0
+#define virtual_robot 1
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0

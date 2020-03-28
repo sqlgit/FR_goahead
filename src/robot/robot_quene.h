@@ -10,7 +10,7 @@
    ... -----> 
    noden,next(rear,next) 
 */
-typedef struct COMMAND_INTERACTION {
+typedef struct _COMMAND_INTERACTION {
 	//uint8_t msghead;                  	// 指令信息头，唯一标识,8位
 	//uint8_t type;                       	// 指令标签,具体参照指令字典,8位
 	int 	msghead;                  		// 指令信息头，唯一标识
@@ -41,6 +41,6 @@ int queneempty(LinkQuene *q);
 void enquene(LinkQuene *q, QElemType e);
 void dequene(LinkQuene *q, QElemType e);
 void printquene(LinkQuene q);
-int quene_recv_result(const QElemType node, const LinkQuene q);
+int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_content);
 
 #endif

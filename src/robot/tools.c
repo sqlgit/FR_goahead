@@ -17,7 +17,7 @@ pszAry_out:分割的子串的输出参数
 int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out)
 {
 	//char *pszData = strdup(pszInput);
-	char pszData[2048]={0};
+	char pszData[20480]={0};
 	strcpy(pszData, pszInput);
 	char *pszToken = NULL, *pszToken_saveptr;
 	unsigned int Ary_cnt = 0;

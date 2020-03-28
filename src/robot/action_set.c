@@ -9,11 +9,17 @@
 
 /********************************* Defines ************************************/
 
+extern CTRL_STATE ctrl_state;
+extern CTRL_STATE vir_ctrl_state;
+extern FB_LinkQuene fb_quene;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
 extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern int robot_type;
+int state_id[10];
+int state_icount;
+extern int cur_state;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -28,8 +34,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content);
 static int sendfile(const cJSON *data_json, int content_len, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
+static int set_state_id(const cJSON *data_json, char *content);
+static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content);
+static int jointtotcp(const cJSON *data_json, char *content);
+//static int setvirtualrobotinitpos(const cJSON *data_json, char *content);
+static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content, char *recv_content);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -87,6 +97,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	char *f_content = NULL;
 	cJSON *f_json = NULL;
 	char tmp_content[len];
+	char cmd_array[10][10] = {{0}};
 	memset(tmp_content, 0, len);
 
 	cJSON *j1 = NULL;
@@ -103,9 +114,36 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *rz = NULL;
 	cJSON *speed = NULL;
 	cJSON *acc = NULL;
+	cJSON *toolnum = NULL;
+
+	cJSON *j1_2 = NULL;
+	cJSON *j2_2 = NULL;
+	cJSON *j3_2 = NULL;
+	cJSON *j4_2 = NULL;
+	cJSON *j5_2 = NULL;
+	cJSON *j6_2 = NULL;
+	cJSON *x_2 = NULL;
+	cJSON *y_2 = NULL;
+	cJSON *z_2 = NULL;
+	cJSON *rx_2 = NULL;
+	cJSON *ry_2 = NULL;
+	cJSON *rz_2 = NULL;
+	cJSON *speed_2 = NULL;
+	cJSON *acc_2 = NULL;
+	cJSON *toolnum_2 = NULL;
 
 	/* PTP */
 	if(!strncmp(lua_cmd, "PTP:", 4)) {
+		strrpc(lua_cmd, "PTP:", "");
+		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		*/
 		/* open and get points file content */
 		f_content = get_file_content(FILE_POINTS);
 		/* file is NULL */
@@ -118,8 +156,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if (f_json == NULL) {
 			goto end;
 		}
-		strrpc(lua_cmd, "PTP:", "");
-		cJSON *ptp = cJSON_GetObjectItem(f_json, lua_cmd);
+		cJSON *ptp = cJSON_GetObjectItem(f_json, cmd_array[0]);
 		if (ptp == NULL || ptp->type != cJSON_Object) {
 			goto end;
 		}
@@ -143,15 +180,114 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		rx = cJSON_GetObjectItem(tcp, "rx");
 		ry = cJSON_GetObjectItem(tcp, "ry");
 		rz = cJSON_GetObjectItem(tcp, "rz");
+		toolnum = cJSON_GetObjectItem(ptp, "toolnum");
 		speed = cJSON_GetObjectItem(ptp, "speed");
 		acc = cJSON_GetObjectItem(ptp, "acc");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) {
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
 			goto end;
 		}
-		sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
+		sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* ARC */
+	} else if(!strncmp(lua_cmd, "ARC:", 3)) {
+		strrpc(lua_cmd, "ARC:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		*/
+		/* open and get points file content */
+		f_content = get_file_content(FILE_POINTS);
+		/* file is NULL */
+		if (f_content == NULL) {
+			perror("get file content");
+
+			return FAIL;
+		}
+		f_json = cJSON_Parse(f_content);
+		if (f_json == NULL) {
+			goto end;
+		}
+		cJSON *point_1 = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			goto end;
+		}
+		cJSON *joints = cJSON_GetObjectItem(point_1, "joints");
+		if (joints == NULL || joints->type != cJSON_Object) {
+			goto end;
+		}
+		j1 = cJSON_GetObjectItem(joints, "j1");
+		j2 = cJSON_GetObjectItem(joints, "j2");
+		j3 = cJSON_GetObjectItem(joints, "j3");
+		j4 = cJSON_GetObjectItem(joints, "j4");
+		j5 = cJSON_GetObjectItem(joints, "j5");
+		j6 = cJSON_GetObjectItem(joints, "j6");
+		cJSON *tcp = cJSON_GetObjectItem(point_1, "tcp");
+		if (tcp == NULL || tcp->type != cJSON_Object) {
+			goto end;
+		}
+		x = cJSON_GetObjectItem(tcp, "x");
+		y = cJSON_GetObjectItem(tcp, "y");
+		z = cJSON_GetObjectItem(tcp, "z");
+		rx = cJSON_GetObjectItem(tcp, "rx");
+		ry = cJSON_GetObjectItem(tcp, "ry");
+		rz = cJSON_GetObjectItem(tcp, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL) {
+			goto end;
+		}
+		cJSON *point_2 = cJSON_GetObjectItem(f_json, cmd_array[1]);
+		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			goto end;
+		}
+		cJSON *joints_2 = cJSON_GetObjectItem(point_2, "joints");
+		if (joints_2 == NULL || joints_2->type != cJSON_Object) {
+			goto end;
+		}
+		j1_2 = cJSON_GetObjectItem(joints_2, "j1");
+		j2_2 = cJSON_GetObjectItem(joints_2, "j2");
+		j3_2 = cJSON_GetObjectItem(joints_2, "j3");
+		j4_2 = cJSON_GetObjectItem(joints_2, "j4");
+		j5_2 = cJSON_GetObjectItem(joints_2, "j5");
+		j6_2 = cJSON_GetObjectItem(joints_2, "j6");
+		cJSON *tcp_2 = cJSON_GetObjectItem(point_2, "tcp");
+		if (tcp_2 == NULL || tcp_2->type != cJSON_Object) {
+			goto end;
+		}
+		x_2 = cJSON_GetObjectItem(tcp_2, "x");
+		y_2 = cJSON_GetObjectItem(tcp_2, "y");
+		z_2 = cJSON_GetObjectItem(tcp_2, "z");
+		rx_2 = cJSON_GetObjectItem(tcp_2, "rx");
+		ry_2 = cJSON_GetObjectItem(tcp_2, "ry");
+		rz_2 = cJSON_GetObjectItem(tcp_2, "rz");
+		toolnum_2 = cJSON_GetObjectItem(point_2, "toolnum");
+		speed_2 = cJSON_GetObjectItem(point_2, "speed");
+		acc_2 = cJSON_GetObjectItem(point_2, "acc");
+		if(j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL|| x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL|| speed_2->valuestring == NULL || acc_2->valuestring == NULL || cmd_array[2] == NULL) {
+			goto end;
+		}
+		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s))\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if (!strncmp(lua_cmd, "Lin:", 4)) {
+		strrpc(lua_cmd, "Lin:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		*/
 		/* open points file */
 		f_content = get_file_content(FILE_POINTS);
 		/* file is NULL */
@@ -164,7 +300,6 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if (f_json == NULL) {
 			goto end;
 		}
-		strrpc(lua_cmd, "Lin:", "");
 		cJSON *lin = cJSON_GetObjectItem(f_json, lua_cmd);
 		if (lin == NULL || lin->type != cJSON_Object) {
 			goto end;
@@ -191,12 +326,42 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		rz = cJSON_GetObjectItem(tcp, "rz");
 		speed = cJSON_GetObjectItem(lin, "speed");
 		acc = cJSON_GetObjectItem(lin, "acc");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) { 
+		toolnum = cJSON_GetObjectItem(lin, "toolnum");
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) { 
 			goto end;
 		}
-		sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, speed->valuestring, acc->valuestring);
+		sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
-	/* wait time*/
+	/* set DO */
+	} else if (!strncmp(lua_cmd, "SetDO:", 6)) {
+		strrpc(lua_cmd, "SetDO:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		*/
+		sprintf(tmp_content, "%sSetDO(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* set AO */
+	} else if (!strncmp(lua_cmd, "SetAO:", 6)) {
+		strrpc(lua_cmd, "SetAO:", "");
+		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		*/
+		sprintf(tmp_content, "%sSetAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* wait time */
 	} else if (!strncmp(lua_cmd, "WaitTime:", 9)) {
 		strrpc(lua_cmd, "WaitTime:", "");
 		sprintf(tmp_content, "%sWaitMs(%s)\n", file_content, lua_cmd);
@@ -282,6 +447,14 @@ static int step_over(const cJSON *data_json, char *content)
 /* 201 MoveJ */
 static int movej(const cJSON *data_json, char *content)
 {
+	CTRL_STATE *state = NULL;
+	if (robot_type == 1) {
+		state = &ctrl_state;
+	} else {
+		state = &vir_ctrl_state;
+	}
+	printf("state->toolNum = %d\n", state->toolNum);
+
 	cJSON *joints = cJSON_GetObjectItem(data_json, "joints");
 	if (joints == NULL || joints->type != cJSON_Object) {
 		perror("json");
@@ -299,6 +472,23 @@ static int movej(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
+	cJSON *tcf = cJSON_GetObjectItem(data_json, "tcf");
+	if (tcf == NULL || tcf->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	cJSON *x = cJSON_GetObjectItem(tcf, "x");
+	cJSON *y = cJSON_GetObjectItem(tcf, "y");
+	cJSON *z = cJSON_GetObjectItem(tcf, "z");
+	cJSON *rx = cJSON_GetObjectItem(tcf, "rx");
+	cJSON *ry = cJSON_GetObjectItem(tcf, "ry");
+	cJSON *rz = cJSON_GetObjectItem(tcf, "rz");
+	if(x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
 	cJSON *speed = cJSON_GetObjectItem(data_json, "speed");
 	if (speed->valuestring == NULL) {
 		perror("json");
@@ -311,7 +501,61 @@ static int movej(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, speed->valuestring, acc->valuestring);
+	cJSON *ovl = cJSON_GetObjectItem(data_json, "ovl");
+	if (ovl->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, speed->valuestring, acc->valuestring, ovl->valuestring);
+
+	return SUCCESS;
+}
+
+/* 230 set_state_id */
+static int set_state_id(const cJSON *data_json, char *content)
+{
+	int icount = 0;
+	int i;
+	cJSON *id_num = NULL;
+	cJSON *id = cJSON_GetObjectItem(data_json, "id");
+	if (id == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	printf("id = %s\n",cJSON_Print(id));
+	state_icount = cJSON_GetArraySize(id); /*获取数组长度*/
+	printf("state_iCount= %d\n",state_icount);
+
+	/* empty state_id */
+	for (i = 0; i < 10; i++) {
+		state_id[i] = 0;
+	}
+	for (i = 0; i < state_icount; i++) {
+		id_num = cJSON_GetArrayItem(id, i);  /* 目前按1笔处理, 取出一笔放入 state_id */
+		printf("string, state_id[%d] = %s\n", i, id_num->valuestring);
+		state_id[i] = atoi(id_num->valuestring);
+		printf("array , state_id[%d] = %d\n", i, state_id[i]);
+	}
+	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_icount, state_id[0], state_id[1], state_id[2], state_id[3], state_id[4], state_id[5], state_id[6], state_id[7], state_id[8], state_id[9]);
+
+	return SUCCESS;
+}
+
+/* 231 set_state */
+static int set_state(const cJSON *data_json, char *content)
+{
+	cJSON *flag = cJSON_GetObjectItem(data_json, "flag");
+	if(flag == NULL || flag->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	/** clear state quene */
+	fb_clearquene(&fb_quene);
+	cur_state = !(atoi(flag->valuestring));
+	sprintf(content, "SetCTLStateQuery(%s)", flag->valuestring);
 
 	return SUCCESS;
 }
@@ -330,7 +574,46 @@ static int mode(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content)
+/* 320 jointtotcp */
+static int jointtotcp(const cJSON *data_json, char *content)
+{
+	cJSON *j1 = cJSON_GetObjectItem(data_json, "j1");
+	cJSON *j2 = cJSON_GetObjectItem(data_json, "j2");
+	cJSON *j3 = cJSON_GetObjectItem(data_json, "j3");
+	cJSON *j4 = cJSON_GetObjectItem(data_json, "j4");
+	cJSON *j5 = cJSON_GetObjectItem(data_json, "j5");
+	cJSON *j6 = cJSON_GetObjectItem(data_json, "j6");
+	if(j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "JointToTCP(%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
+
+	return SUCCESS;
+}
+
+/* 321 setvirtualrobotinitpos */
+/*static int setvirtualrobotinitpos(const cJSON *data_json, char *content)
+{
+	cJSON *j1 = cJSON_GetObjectItem(data_json, "j1");
+	cJSON *j2 = cJSON_GetObjectItem(data_json, "j2");
+	cJSON *j3 = cJSON_GetObjectItem(data_json, "j3");
+	cJSON *j4 = cJSON_GetObjectItem(data_json, "j4");
+	cJSON *j5 = cJSON_GetObjectItem(data_json, "j5");
+	cJSON *j6 = cJSON_GetObjectItem(data_json, "j6");
+	if(j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || j1->valuedouble == NULL || j2->valuedouble == NULL || j3->valuedouble == NULL || j4->valuedouble == NULL || j5->valuedouble == NULL || j6->valuedouble == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "SetVirtualRobotInitPos(%lf,%lf,%lf,%lf,%lf,%lf)", j1->valuedouble, j2->valuedouble, j3->valuedouble, j4->valuedouble, j5->valuedouble, j6->valuedouble);
+	printf("content = %s\n", content);
+
+	return SUCCESS;
+}*/
+
+static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content, char *recv_content)
 {
 	int ret = FAIL;
 	/* socket 连接已经断开 */
@@ -355,7 +638,7 @@ static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mut
 	//pthread_cond_signal(&cond_cmd);
 	pthread_mutex_unlock(mute);
 
-	ret = quene_recv_result(node, sock->quene);
+	ret = quene_recv_result(node, sock->quene, recv_content);
 
 	/* 把结点从队列中删除 */
 	pthread_mutex_lock(mute);
@@ -402,6 +685,9 @@ void set(Webs *wp)
 	int cmd = 0;
 	int port = 0;
 	int content_len = sizeof(char)*MAX_BUF;
+	char recv_content[100] = {0};
+	char recv_array[6][10] = {{0}};
+	cJSON *recv_json = NULL;
 
 	cJSON *data_json = NULL;
 	cJSON *command = NULL;
@@ -488,9 +774,21 @@ void set(Webs *wp)
 		case 201:
 			ret = movej(data_json, content);
 			break;
+		case 230:
+			ret = set_state_id(data_json, content);
+			break;
+		case 231:
+			ret = set_state(data_json, content);
+			break;
 		case 303:
 			ret = mode(data_json, content);
 			break;
+		case 320:
+			ret = jointtotcp(data_json, content);
+			break;
+	/*	case 321:
+			ret = setvirtualrobotinitpos(data_json, content);
+			break;*/
 		case 1001:/* 内部定义指令 */
 			ret = step_over(data_json, content);
 			if (ret == FAIL) {
@@ -538,22 +836,23 @@ void set(Webs *wp)
 		}
 	}
 
+	//printf("port = %d\n", port);
 	switch (port) {
 		/* send cmd to 8080 port */
 		case CMD_PORT:
-			ret = enquene_result_dequene(&socket_cmd, cmd, &socket_cmd.mute, content);
+			ret = enquene_result_dequene(&socket_cmd, cmd, &socket_cmd.mute, content, recv_content);
 			break;
 		/* send file cmd to 8082 port */
 		case FILE_PORT:
-			ret = enquene_result_dequene(&socket_file, cmd, &socket_file.mute, content);
+			ret = enquene_result_dequene(&socket_file, cmd, &socket_file.mute, content, recv_content);
 			break;
 		/* send cmd to 8070 port */
 		case VIR_CMD_PORT:
-			ret = enquene_result_dequene(&socket_vir_cmd, cmd, &socket_vir_cmd.mute, content);
+			ret = enquene_result_dequene(&socket_vir_cmd, cmd, &socket_vir_cmd.mute, content, recv_content);
 			break;
 		/* send file cmd to 8072 port */
 		case VIR_FILE_PORT:
-			ret = enquene_result_dequene(&socket_vir_file, cmd, &socket_vir_file.mute, content);
+			ret = enquene_result_dequene(&socket_vir_file, cmd, &socket_vir_file.mute, content, recv_content);
 			break;
 		default:
 			perror("port");
@@ -574,7 +873,23 @@ void set(Webs *wp)
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
-	websWrite(wp, "success");
+	if(strlen(recv_content) == 0) {
+		websWrite(wp, "success");
+	} else {
+		/* 320 jointtotcp */
+		if (separate_string_to_array(recv_content, ",", 6, 10, (char *)&recv_array) != 6) {
+			perror("separate recv");
+			goto end;
+		}
+		recv_json = cJSON_CreateObject();
+		cJSON_AddStringToObject(recv_json, "x", recv_array[0]);
+		cJSON_AddStringToObject(recv_json, "y", recv_array[1]);
+		cJSON_AddStringToObject(recv_json, "z", recv_array[2]);
+		cJSON_AddStringToObject(recv_json, "rx", recv_array[3]);
+		cJSON_AddStringToObject(recv_json, "ry", recv_array[4]);
+		cJSON_AddStringToObject(recv_json, "rz", recv_array[5]);
+		websWrite(wp, cJSON_Print(recv_json));
+	}
 	websDone(wp);
 
 	return;

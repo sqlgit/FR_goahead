@@ -137,7 +137,7 @@ void printquene(LinkQuene q)
 }
 
 /* 判断队列中的某个结点的内容，状态是否已经改变 */
-int quene_recv_result(const QElemType node, const LinkQuene q)
+int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_content)
 {
 	// TODO: 优化,不使用轮询的方式
 	/* 遍历整个队列, 更改相关结点信息 */
@@ -161,8 +161,9 @@ int quene_recv_result(const QElemType node, const LinkQuene q)
 					} else {
 						/* 获取到了除了“0”和“1”的其他返回值, 需要进一步处理 */
 						printf("recv server return data: %s\n", p->data.msgcontent);
+						strcpy(recv_content, p->data.msgcontent);
 
-						return FAIL;
+						return SUCCESS;
 					}
 #endif
 				}

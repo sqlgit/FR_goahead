@@ -32,6 +32,7 @@
 static int finished = 0;
 int sql_index = 0;
 int robot_type = 1;// 默认实体机器人
+int cur_state = 1;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
@@ -220,6 +221,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;
+	pthread_t t_socket_state_feedback;
 	pthread_t t_socket_vir_cmd;
 	pthread_t t_socket_vir_file;
 	pthread_t t_socket_vir_status;
@@ -236,6 +238,11 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_create(&t_socket_status, NULL, (void *)&socket_status_thread, (void *)STATUS_PORT)) {
 		perror("pthread_create");
 	}
+	/* create socket_state_feedback thread */
+	if (pthread_create(&t_socket_state_feedback, NULL, (void *)&socket_state_feedback_thread, (void *)STATE_FEEDBACK_PORT)) {
+		perror("pthread_create");
+	}
+#if virtual_robot
 	/* create socket_vir_cmd thread */
 	if (pthread_create(&t_socket_vir_cmd, NULL, (void *)&socket_thread, (void *)VIR_CMD_PORT)) {
 		perror("pthread_create");
@@ -248,6 +255,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_create(&t_socket_vir_status, NULL, (void *)&socket_status_thread, (void *)VIR_STATUS_PORT)) {
 		perror("pthread_create");
 	}
+#endif
 
     websServiceEvents(&finished);
 
@@ -261,6 +269,20 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_join(t_socket_status, NULL)) {
 		perror("pthread_join");
 	}
+	if (pthread_join(t_socket_state_feedback, NULL)) {
+		perror("pthread_join");
+	}
+#if virtual_robot
+	if (pthread_join(t_socket_vir_cmd, NULL)) {
+		perror("pthread_join");
+	}
+	if (pthread_join(t_socket_vir_file, NULL)) {
+		perror("pthread_join");
+	}
+	if (pthread_join(t_socket_vir_status, NULL)) {
+		perror("pthread_join");
+	}
+#endif
 
     logmsg(1, "Instructed to exit");
     websClose();

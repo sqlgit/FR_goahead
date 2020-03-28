@@ -2,6 +2,7 @@
 #define robot_socket_h
 
 #include 	"robot_quene.h"
+#include    "statefb_quene.h"
 /********************************* Defines ************************************/
 
 #if local
@@ -14,6 +15,7 @@
 #define CMD_PORT 8080
 #define STATUS_PORT 8081
 #define FILE_PORT 8082
+#define STATE_FEEDBACK_PORT 8083
 #define VIR_CMD_PORT 8070
 #define VIR_STATUS_PORT 8071
 #define VIR_FILE_PORT 8072
@@ -21,6 +23,7 @@
 #define MAX_BUF 1024
 #define MAX_MSGHEAD 10000
 #define BUFFSIZE 1300000*2
+#define STATEFB_SIZE 12000
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
@@ -88,13 +91,46 @@ typedef struct _CTRL_STATE
 	double     tool_pos_att[6];         /**< 工具坐标中心相对于末端的位置及姿态 */
 	uint8_t    strangePosFlag;          /**< 当前处于奇异位姿标志 */
 	int        configStatus;            /**< 机器人关节配置状态  */
-	uint8_t    tpd_state;               /**< TPD状态,低位->高位,bit0-允许轨迹记录，bit1-点数超限,bit2-文件保存完成,1为真,0为非 */
 	uint8_t    aliveSlaveNumError;    /**< 活动从站数量错误，1：数量错误；0：正常  */
 	uint8_t    slaveComError;      /**< 从站错误，0：正常；1：从站掉线；2：从站状态与设置值不一致；3：从站未配置；4：从站配置错误；5：从站初始化错误；6：从站邮箱通信初始化错误 */
 	uint8_t    cmdPointError;      /**< 指令点关节位置与末端位姿不符错误，0：正常；1：直线指令错误；2：圆弧指令点错误；3：TPD指令工具与当前工具不符；4：TPD当前指令与下一条指令起始点偏差过大*/
+	uint8_t    ioError;                 /** IO错误 */
+	uint8_t    gripperError;            /** 夹爪错误 */
+	uint8_t    fileError;               /** 文件错误 */
+	uint8_t    paraError;               /** 参数错误 */
+	uint8_t    alarm;                   /** 警告 */
+	int        toolNum;                 /** 工具号 */
+	uint8_t    gripperFaultId;          /** 错误夹爪号 */
+	uint8_t    gripperFaultNum;         /** 夹爪错误编号 */
+	uint16_t   gripperConfigStatus;
+	uint16_t   gripperActStatus;
 } CTRL_STATE;
 #pragma pack(pop)
 
+//#pragma pack(push, 1)
+/** 状态反馈结构体 from socket server */
+/*typedef struct _STATE_FB
+{
+	float var[100][10];
+} STATE_FB;
+#pragma pack(pop)*/
+
+//#pragma pack(push, 1)
+/** 状态反馈结构体 */
+/*typedef struct _STATE_FEEDBACK
+{
+	float var[100][10];
+} STATE_FEEDBACK;
+#pragma pack(pop)
+
+typedef struct _STATE_FB
+{
+	STATE_FEEDBACK state_feedback
+	//float var[100][10];
+	int state_id[10];
+	int state_icount;
+} STATE_FB
+*/
 /* socket 相关信息结构体 */
 typedef struct _SOCKET_INFO
 {
@@ -114,5 +150,6 @@ typedef struct _SOCKET_INFO
 
 void *socket_thread(void *arg);
 void *socket_status_thread(void *arg);
+void *socket_state_feedback_thread(void *arg);
 
 #endif
