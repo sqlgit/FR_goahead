@@ -30,9 +30,7 @@
 /********************************* Defines ************************************/
 
 static int finished = 0;
-int sql_index = 0;
 int robot_type = 1;// 默认实体机器人
-int cur_state = 1;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);

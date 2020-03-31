@@ -4,11 +4,12 @@
 #include    "goahead.h"
 #include	"cJSON.h"
 #include 	"tools.h"
+#include 	"robot_socket.h"
 #include	"action_get.h"
 
 /********************************* Defines ************************************/
 
-extern int cur_state;
+extern STATE_FEEDBACK state_fb;
 
 /********************************* Function declaration ***********************/
 
@@ -68,8 +69,8 @@ static int get_state_feedback(char **ret_f_content)
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateObject();
-	printf("cur_state = %d\n", cur_state);
-	cJSON_AddNumberToObject(root_json, "state", cur_state);
+	printf("state_fb.cur_state = %d\n", state_fb.cur_state);
+	cJSON_AddNumberToObject(root_json, "state", state_fb.cur_state);
 	buf = cJSON_Print(root_json);
 	printf("buf = %s\n", buf);
 	*ret_f_content = (char *)calloc(1, strlen(buf)+1);

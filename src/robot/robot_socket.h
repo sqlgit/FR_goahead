@@ -24,6 +24,7 @@
 #define MAX_MSGHEAD 10000
 #define BUFFSIZE 1300000*2
 #define STATEFB_SIZE 12000
+#define STATE_FB_ID 3
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
@@ -122,15 +123,16 @@ typedef struct _CTRL_STATE
 	float var[100][10];
 } STATE_FEEDBACK;
 #pragma pack(pop)
-
-typedef struct _STATE_FB
-{
-	STATE_FEEDBACK state_feedback
-	//float var[100][10];
-	int state_id[10];
-	int state_icount;
-} STATE_FB
 */
+
+/** 状态反馈结构体 */
+typedef struct _STATE_FEEDBACK
+{
+	int id[10];			// state feedback id
+	int icount;			// state feedback icount
+	int cur_state;		// current feedback state (1:stop  0:start)
+} STATE_FEEDBACK;
+
 /* socket 相关信息结构体 */
 typedef struct _SOCKET_INFO
 {

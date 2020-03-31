@@ -17,9 +17,7 @@ extern SOCKET_INFO socket_file;
 extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern int robot_type;
-int state_id[10];
-int state_icount;
-extern int cur_state;
+extern STATE_FEEDBACK state_fb;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -525,20 +523,20 @@ static int set_state_id(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	printf("id = %s\n",cJSON_Print(id));
-	state_icount = cJSON_GetArraySize(id); /*获取数组长度*/
-	printf("state_iCount= %d\n",state_icount);
+	state_fb.icount = cJSON_GetArraySize(id); /*获取数组长度*/
+	printf("state_fb.iCount= %d\n",state_fb.icount);
 
-	/* empty state_id */
+	/* empty state_fb id */
 	for (i = 0; i < 10; i++) {
-		state_id[i] = 0;
+		state_fb.id[i] = 0;
 	}
-	for (i = 0; i < state_icount; i++) {
-		id_num = cJSON_GetArrayItem(id, i);  /* 目前按1笔处理, 取出一笔放入 state_id */
-		printf("string, state_id[%d] = %s\n", i, id_num->valuestring);
-		state_id[i] = atoi(id_num->valuestring);
-		printf("array , state_id[%d] = %d\n", i, state_id[i]);
+	for (i = 0; i < state_fb.icount; i++) {
+		id_num = cJSON_GetArrayItem(id, i);  /* 目前按1笔处理, 取出一笔放入 state_fb.id */
+		printf("string, state_fb.id[%d] = %s\n", i, id_num->valuestring);
+		state_fb.id[i] = atoi(id_num->valuestring);
+		printf("array , state_fb.id[%d] = %d\n", i, state_fb.id[i]);
 	}
-	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_icount, state_id[0], state_id[1], state_id[2], state_id[3], state_id[4], state_id[5], state_id[6], state_id[7], state_id[8], state_id[9]);
+	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_fb.icount, state_fb.id[0], state_fb.id[1], state_fb.id[2], state_fb.id[3], state_fb.id[4], state_fb.id[5], state_fb.id[6], state_fb.id[7], state_fb.id[8], state_fb.id[9]);
 
 	return SUCCESS;
 }
@@ -554,7 +552,7 @@ static int set_state(const cJSON *data_json, char *content)
 	}
 	/** clear state quene */
 	fb_clearquene(&fb_quene);
-	cur_state = !(atoi(flag->valuestring));
+	state_fb.cur_state = !(atoi(flag->valuestring));
 	sprintf(content, "SetCTLStateQuery(%s)", flag->valuestring);
 
 	return SUCCESS;

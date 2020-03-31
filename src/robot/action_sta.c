@@ -21,9 +21,8 @@ extern SOCKET_INFO socket_state;
 extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern SOCKET_INFO socket_vir_status;
+extern STATE_FEEDBACK state_fb;
 extern int robot_type;
-extern int state_id[10];
-extern int state_icount;
 
 /********************************* Function declaration ***********************/
 
@@ -165,13 +164,13 @@ static int vardata_feedback(char *ret_status)
 		fb_print_node_num(fb_quene);
 		root_json = cJSON_CreateObject();
 
-		/*printf("state_iCount= %d\n", state_icount);
+		/*printf("state_fb.iCount= %d\n", state_fb.icount);
 		printf("state_ret[0][0] = %f\n", state_ret[0][0]);
 		printf("state_ret[1][0] = %f\n", state_ret[1][0]);
 		printf("state_ret[0][1] = %f\n", state_ret[0][1]);
 		printf("state_ret[1][1] = %f\n", state_ret[1][1]);*/
-		for (i = 0; i < state_icount; i++) {
-			itoa(state_id[i], key, 10);
+		for (i = 0; i < state_fb.icount; i++) {
+			itoa(state_fb.id[i], key, 10);
 			root = cJSON_CreateArray();
 			cJSON_AddItemToObject(root_json, key, root);
 			for (j = 0; j < 100; j++) {
@@ -182,7 +181,6 @@ static int vardata_feedback(char *ret_status)
 		}
 		buf = cJSON_Print(root_json);
 		printf("send to GUI = %s\n", buf);
-		printf("end send\n");
 		strcpy(ret_status, buf);
 
 		/* delete front node */
@@ -195,7 +193,7 @@ static int vardata_feedback(char *ret_status)
 		cJSON_AddNumberToObject(root_json, "empty_data", 0);
 		buf = cJSON_Print(root_json);
 		strcpy(ret_status, buf);
-		printf("send empty data to GUI\n");
+		//printf("send empty data to GUI\n");
 	}
 	free(buf);
 	buf = NULL;
@@ -217,7 +215,7 @@ void sta(Webs *wp)
 
 	/*calloc content*/
 	//ret_status = (char *)calloc(1, sizeof(char)*1024);
-	ret_status = (char *)calloc(1, sizeof(float)*1000+100);
+	ret_status = (char *)calloc(1, 10000);
 	if (ret_status == NULL) {
 		perror("calloc");
 		goto end;
@@ -237,9 +235,9 @@ void sta(Webs *wp)
 		goto end;
 	}
 	CTRL_STATE *state = NULL;
-	if (robot_type == 1) {
+	if (robot_type == 1) { // "1" 代表实体机器人
 		state = &ctrl_state;
-	} else {
+	} else { // "0" 代表实体机器人
 		state = &vir_ctrl_state;
 	}
 

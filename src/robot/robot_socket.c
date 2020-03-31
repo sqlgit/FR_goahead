@@ -14,10 +14,10 @@ SOCKET_INFO socket_state;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
+STATE_FEEDBACK state_fb;
 CTRL_STATE ctrl_state;
 CTRL_STATE vir_ctrl_state;
 FB_LinkQuene fb_quene;
-//STATE_FB state_fb;
 //float state_ret[100][10] = {{0}};
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
@@ -26,6 +26,7 @@ FB_LinkQuene fb_quene;
 
 /********************************* Function declaration ***********************/
 
+static void state_feedback_init(STATE_FEEDBACK *fb);
 static void socket_init(SOCKET_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
@@ -42,6 +43,19 @@ static void *socket_file_recv_thread(void *arg);
 */
 
 /*********************************** Code *************************************/
+
+/* state feedback init */
+static void state_feedback_init(STATE_FEEDBACK *fb)
+{
+	bzero(fb, sizeof(STATE_FEEDBACK));
+
+	int i = 0;
+	for (i = 0; i < STATE_FB_ID; i++) {
+		fb->id[i] = 0;
+	}
+	fb->icount = 0;
+	fb->cur_state = 1;
+}
 
 /* socket init */
 static void socket_init(SOCKET_INFO *sock, const int port)
@@ -636,7 +650,6 @@ void *socket_status_thread(void *arg)
 
 void *socket_state_feedback_thread(void *arg)
 {
-	//STATE_FB *state = NULL;
 	SOCKET_INFO *sock = NULL;
 	char *state_buf = NULL;
 	int i;
@@ -646,11 +659,12 @@ void *socket_state_feedback_thread(void *arg)
 
 	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
 	sock = &socket_state;
-	//state = &state_fb;
 	/* init socket */
 	socket_init(sock, port);
 	/* init FB quene */
 	fb_initquene(&fb_quene);
+	/* init FB struct */
+	state_feedback_init(&state_fb);
 
 	while(1) {
 		/* do socket connect */
@@ -747,7 +761,7 @@ void *socket_state_feedback_thread(void *arg)
 						printf("%f ", state_fb.fb[i][0]);
 					//}
 				}
-				printf("end print state fb\n");
+				//printf("end print state fb\n");
 
 
 
