@@ -27,7 +27,6 @@ extern int robot_type;
 /********************************* Function declaration ***********************/
 
 static int connect_status(char *ret_status);
-static int menu(char *ret_status, CTRL_STATE *state);
 static int basic(char *ret_status, CTRL_STATE *state);
 static int program_teach(char *ret_status, CTRL_STATE *state);
 static int vardata_feedback(char *ret_status);
@@ -41,33 +40,23 @@ static int connect_status(char *ret_status)
 	cJSON *root_json = NULL;
 	int ret_connect_status = 0;
 
-	/* cmd file status all connect */
-	if ((socket_status.connect_status + socket_cmd.connect_status + socket_file.connect_status) == 3) {
-		ret_connect_status = 1;
-	} else {
-		ret_connect_status = 0;
+	if (robot_type == 1) { // "1" 代表实体机器人
+		/* cmd file status state all connect */
+		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status && socket_state.connect_status) {
+			ret_connect_status = 1;
+		} else {
+			ret_connect_status = 0;
+		}
+	} else { // "0" 代表虚拟机器人
+		/* cmd file status state all connect */
+		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status && socket_state.connect_status) {
+			ret_connect_status = 1;
+		} else {
+			ret_connect_status = 0;
+		}
 	}
 	root_json = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root_json, "cons", ret_connect_status);
-	buf = cJSON_Print(root_json);
-	strcpy(ret_status, buf);
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
-
-	return SUCCESS;
-}
-
-/* menu */
-static int menu(char *ret_status, CTRL_STATE *state)
-{
-	char *buf = NULL;
-	cJSON *root_json = NULL;
-
-	//printf("state->robot_mode = %u\n", state->robot_mode);
-	root_json = cJSON_CreateObject();
-	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);
@@ -113,6 +102,10 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	joints_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(io, 16));
+	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
+	cJSON_AddNumberToObject(root_json, "toolnum", state->toolNum);
+	cJSON_AddNumberToObject(root_json, "vel_ratio", state->vel_ratio);
+	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);
 		//printf("joint_value = %.3lf\n", joint_value);
@@ -244,8 +237,6 @@ void sta(Webs *wp)
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "cons")) {
 		ret = connect_status(ret_status);
-	} else if(!strcmp(cmd, "menu")) {
-		ret = menu(ret_status, state);
 	} else if(!strcmp(cmd, "basic")) {
 		ret = basic(ret_status, state);
 	} else if(!strcmp(cmd, "program_teach")) {
