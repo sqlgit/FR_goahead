@@ -33,7 +33,20 @@ void upload(Webs *wp)
 			websWrite(wp, "CLIENT=%s\r\n", up->clientFilename);
 			websWrite(wp, "TYPE=%s\r\n", up->contentType);
 			websWrite(wp, "SIZE=%d\r\n", up->size);*/
-			upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
+			/*printf("FILE: %s\r\n", s->name.value.string);
+		    printf("FILENAME=%s\r\n", up->filename);
+			printf("CLIENT=%s\r\n", up->clientFilename);
+			printf("TYPE=%s\r\n", up->contentType);
+			printf("SIZE=%d\r\n", up->size);*/
+
+			/* point json file */
+			if (strcmp(up->clientFilename, "points.json") == 0) {
+				upfile = sfmt("%s", FILE_POINTS);
+			/* user lua file */
+			} else if (is_in(up->clientFilename, ".lua") == 1) {
+				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
+			}
+			printf("upfile = %s\n", upfile);
 			if (rename(up->filename, upfile) < 0) {
 				error("Cannot rename uploaded file: %s to %s, errno %d", up->filename, upfile, errno);
 			}

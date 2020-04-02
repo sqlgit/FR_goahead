@@ -4,10 +4,13 @@
 #include    "goahead.h"
 #include	"cJSON.h"
 #include 	"tools.h"
+#include 	"robot_socket.h"
 #include    "action_act.h"
 
 /********************************* Defines ************************************/
 
+extern CTRL_STATE ctrl_state;
+extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
 
 /********************************* Function declaration ***********************/
@@ -16,6 +19,8 @@ static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
 static int save_tool_cdsystem(const cJSON *data_json);
+static int save_point(const cJSON *data_json);
+static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -140,6 +145,7 @@ static int save_tool_cdsystem(const cJSON *data_json)
 	}
 	//printf("f_content = %s\n", f_content);
 	f_json = cJSON_Parse(f_content);
+	/* replace exist object */
 	cJSON_ReplaceItemInObject(f_json, cd_name->valuestring, newitem);
 	buf = cJSON_Print(f_json);
 	//printf("buf = %s\n", buf);
@@ -147,6 +153,158 @@ static int save_tool_cdsystem(const cJSON *data_json)
 	ret = write_file(FILE_CDSYSTEM, buf);
 
 	//printf("ret = %d\n", ret);
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(f_json);
+	f_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	return ret;
+}
+
+/* save point */
+static int save_point(const cJSON *data_json)
+{
+	CTRL_STATE *state = NULL;
+	cJSON *f_json = NULL;
+	cJSON *newitem = NULL;
+	cJSON *joints_json = NULL;
+	cJSON *tcp_json = NULL;
+	int i = 0;
+	int ret = FAIL;
+	char *buf = NULL;
+	char *f_content = NULL;
+	char joint[10] = {0};
+	double joint_value = 0;
+	double tcp_value[6] = {0};
+	cJSON *name = NULL;
+	cJSON *speed = NULL;
+	cJSON *elbow_speed = NULL;
+	cJSON *acc = NULL;
+	cJSON *elbow_acc = NULL;
+	cJSON *toolnum = NULL;
+	cJSON *j1 = NULL;
+	cJSON *j2 = NULL;
+	cJSON *j3 = NULL;
+	cJSON *j4 = NULL;
+	cJSON *j5 = NULL;
+	cJSON *j6 = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
+	newitem = cJSON_CreateObject();
+	name = cJSON_GetObjectItem(data_json, "name");
+	speed = cJSON_GetObjectItem(data_json, "speed");
+	acc = cJSON_GetObjectItem(data_json, "acc");
+	elbow_speed = cJSON_GetObjectItem(data_json, "elbow_speed");
+	elbow_acc = cJSON_GetObjectItem(data_json, "elbow_acc");
+	toolnum = cJSON_GetObjectItem(data_json, "toolnum");
+	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	joints_json = cJSON_CreateObject();
+	for (i = 0; i < 6; i++) {
+		joint_value = double_round(state->jt_cur_pos[i], 3);
+		//printf("joint_value = %.3lf\n", joint_value);
+		sprintf(joint, "j%d", (i+1));
+		cJSON_AddNumberToObject(joints_json, joint, joint_value);
+	}
+	tcp_json = cJSON_CreateObject();
+	for (i = 0; i < 6; i++) {
+		tcp_value[i] = double_round(state->tl_cur_pos[i], 3);
+	}
+	cJSON_AddNumberToObject(tcp_json, "x", tcp_value[0]);
+	cJSON_AddNumberToObject(tcp_json, "y", tcp_value[1]);
+	cJSON_AddNumberToObject(tcp_json, "z", tcp_value[2]);
+	cJSON_AddNumberToObject(tcp_json, "rx", tcp_value[3]);
+	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
+	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
+
+	cJSON_AddStringToObject(newitem, "name", name->valuestring);
+	cJSON_AddStringToObject(newitem, "speed", speed->valuestring);
+	cJSON_AddStringToObject(newitem, "elbow_speed", elbow_speed->valuestring);
+	cJSON_AddStringToObject(newitem, "acc", acc->valuestring);
+	cJSON_AddStringToObject(newitem, "elbow_acc", elbow_acc->valuestring);
+	cJSON_AddStringToObject(newitem, "toolnum", toolnum->valuestring);
+	cJSON_AddItemToObject(newitem, "joints", joints_json);
+	cJSON_AddItemToObject(newitem, "tcp", tcp_json);
+
+	f_content = get_file_content(FILE_POINTS);
+	/* file is NULL */
+	if (f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	f_json = cJSON_Parse(f_content);
+	if(cJSON_GetObjectItem(f_json, name->valuestring) == NULL) {
+		/* add new object to file */
+		cJSON_AddItemToObject(f_json, name->valuestring, newitem);
+	} else {
+		/* replace exist object with new onject */
+		cJSON_ReplaceItemInObject(f_json, name->valuestring, newitem);
+	}
+	buf = cJSON_Print(f_json);
+	ret = write_file(FILE_POINTS, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(f_json);
+	f_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	return ret;
+}
+
+/* remove points info */
+static int remove_points(const cJSON *data_json)
+{
+	int ret = FAIL;
+	int num = 0;
+	int i = 0;
+	char *f_content = NULL;
+	cJSON *f_json = NULL;
+	char *buf = NULL;
+	//char points_name[100][10] = {{0}};
+	cJSON *name_index = NULL;
+	cJSON *name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	printf("name = %s\n", cJSON_Print(name));
+	num = cJSON_GetArraySize(name);
+
+	f_content = get_file_content(FILE_POINTS);
+	/* file is NULL */
+	if (f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	f_json = cJSON_Parse(f_content);
+	printf("num = %d\n", num);
+	for (i = 0; i < num; i++) {
+		name_index = cJSON_GetArrayItem(name, i);
+		printf("name_index->valuestring = %s\n", name_index->valuestring);
+		cJSON_DeleteItemFromObject(f_json, name_index->valuestring);
+	}
+	buf = cJSON_Print(f_json);
+	ret = write_file(FILE_POINTS, buf);
 
 	free(buf);
 	buf = NULL;
@@ -212,6 +370,10 @@ void act(Webs *wp)
 		ret = rename_lua_file(data_json);
 	} else if(!strcmp(cmd, "save_tool_cdsystem")) {
 		ret = save_tool_cdsystem(data_json);
+	} else if(!strcmp(cmd, "save_point")) {
+		ret = save_point(data_json);
+	} else if(!strcmp(cmd, "remove_points")) {
+		ret = remove_points(data_json);
 	} else if(!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
 	} else {

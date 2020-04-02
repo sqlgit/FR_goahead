@@ -74,8 +74,11 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	char *buf = NULL;
 	char joint[10] = {0};
 	double joint_value = 0;
+	double tcp_value[6] = {0};
+	char key[10] = {0};
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
+	cJSON *tcp_json = NULL;
 	int io[16] = {0};
 	int n1 = 0;
 	int n2 = 0;
@@ -100,11 +103,14 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	}*/
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
+	tcp_json = cJSON_CreateObject();
+	itoa(state->toolNum, key, 10);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
+	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
 	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(io, 16));
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
-	cJSON_AddNumberToObject(root_json, "toolnum", state->toolNum);
-	cJSON_AddNumberToObject(root_json, "vel_ratio", state->vel_ratio);
+	cJSON_AddStringToObject(root_json, "toolnum", key);
+	cJSON_AddNumberToObject(root_json, "vel_radio", state->vel_ratio);
 	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);
@@ -112,6 +118,15 @@ static int basic(char *ret_status, CTRL_STATE *state)
 		sprintf(joint, "j%d", (i+1));
 		cJSON_AddNumberToObject(joints_json, joint, joint_value);
 	}
+	for (i = 0; i < 6; i++) {
+		tcp_value[i] = double_round(state->tl_cur_pos[i], 3);
+	}
+	cJSON_AddNumberToObject(tcp_json, "x", tcp_value[0]);
+	cJSON_AddNumberToObject(tcp_json, "y", tcp_value[1]);
+	cJSON_AddNumberToObject(tcp_json, "z", tcp_value[2]);
+	cJSON_AddNumberToObject(tcp_json, "rx", tcp_value[3]);
+	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
+	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);

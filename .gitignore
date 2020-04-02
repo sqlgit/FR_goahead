@@ -5,6 +5,7 @@ test
 *.so
 *.swp
 *.swo
+*.swn
 tags
 *.dylib
 x86
