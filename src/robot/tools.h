@@ -9,6 +9,7 @@
 #define SUCCESS 1
 #define FAIL 0
 #define FILE_POINTS "/root/webserver/points/points.json"
+#define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"
 #define DIR_USER "/root/webserver/user/"
 #define DIR_TEMPLATE "/root/webserver/template/"
 #define DIR_FRUSER "/fruser/"

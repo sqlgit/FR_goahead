@@ -9,19 +9,24 @@
 
 /********************************* Defines ************************************/
 
+extern int robot_type;
 extern STATE_FEEDBACK state_fb;
+extern CTRL_STATE ctrl_state;
+extern CTRL_STATE vir_ctrl_state;
 
 /********************************* Function declaration ***********************/
 
-static int get_points_data(char **ret_f_content);
-static int get_user_data(char **ret_f_content);
-static int get_template_data(char **ret_f_content);
+static int get_points(char **ret_f_content);
+static int get_tool_cdsystem(char **ret_f_content);
+static int get_com_cdsystem(char **ret_f_content);
+static int get_user(char **ret_f_content);
+static int get_template(char **ret_f_content);
 static int get_state_feedback(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
 /* get points file content */
-static int get_points_data(char **ret_f_content)
+static int get_points(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
@@ -34,8 +39,65 @@ static int get_points_data(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get tool coordinate system data */
+static int get_tool_cdsystem(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(FILE_CDSYSTEM);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get com coordinate system data */
+static int get_com_cdsystem(char **ret_f_content)
+{
+	CTRL_STATE *state = NULL;
+	cJSON *root_json = NULL;
+	char *buf = NULL;
+	root_json = cJSON_CreateObject();
+	char key[6][10] = {{0}};
+	int i = 0;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
+	for(i = 0; i < 6; i++) {
+		sprintf(key[i], "%.3lf", state->tool_pos_att[i]);
+	}
+	cJSON_AddStringToObject(root_json, "x", key[0]);
+	cJSON_AddStringToObject(root_json, "y", key[1]);
+	cJSON_AddStringToObject(root_json, "z", key[2]);
+	cJSON_AddStringToObject(root_json, "rx", key[3]);
+	cJSON_AddStringToObject(root_json, "ry", key[4]);
+	cJSON_AddStringToObject(root_json, "rz", key[5]);
+	buf = cJSON_Print(root_json);
+	//printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+	} else {
+		perror("calloc");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return SUCCESS;
+}
+
 /* get user file content */
-static int get_user_data(char **ret_f_content)
+static int get_user(char **ret_f_content)
 {
 	*ret_f_content = get_dir_content(DIR_USER);
 	/* file is NULL */
@@ -49,7 +111,7 @@ static int get_user_data(char **ret_f_content)
 }
 
 /* get template file content */
-static int get_template_data(char **ret_f_content)
+static int get_template(char **ret_f_content)
 {
 	*ret_f_content = get_dir_content(DIR_TEMPLATE);
 	/* file is NULL */
@@ -78,6 +140,8 @@ static int get_state_feedback(char **ret_f_content)
 		strcpy((*ret_f_content), buf);
 	} else {
 		perror("calloc");
+
+		return FAIL;
 	}
 	printf("*ret_f_content = %s\n", (*ret_f_content));
 	free(buf);
@@ -114,11 +178,15 @@ void get(Webs *wp)
 	}
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "get_points")) {
-		ret = get_points_data(&ret_f_content);
+		ret = get_points(&ret_f_content);
+	} else if(!strcmp(cmd, "get_tool_cdsystem")) {
+		ret = get_tool_cdsystem(&ret_f_content);
+	} else if(!strcmp(cmd, "get_com_cdsystem")) {
+		ret = get_com_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_user_data")) {
-		ret = get_user_data(&ret_f_content);
+		ret = get_user(&ret_f_content);
 	} else if(!strcmp(cmd, "get_template_data")) {
-		ret = get_template_data(&ret_f_content);
+		ret = get_template(&ret_f_content);
 	} else if(!strcmp(cmd, "get_state_feedback")) {
 		ret = get_state_feedback(&ret_f_content);
 	} else {

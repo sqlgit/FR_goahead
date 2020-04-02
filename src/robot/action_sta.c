@@ -237,7 +237,7 @@ void sta(Webs *wp)
 	CTRL_STATE *state = NULL;
 	if (robot_type == 1) { // "1" 代表实体机器人
 		state = &ctrl_state;
-	} else { // "0" 代表实体机器人
+	} else { // "0" 代表虚拟机器人
 		state = &vir_ctrl_state;
 	}
 

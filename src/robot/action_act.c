@@ -15,6 +15,7 @@ extern int robot_type;
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
+static int save_tool_cdsystem(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -22,7 +23,6 @@ static int change_type(const cJSON *data_json);
 /* save lua file */
 static int save_lua_file(const cJSON *data_json)
 {
-	int ret = FAIL;
 	char dir_filename[100] = {0};
 
 	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
@@ -33,9 +33,8 @@ static int save_lua_file(const cJSON *data_json)
 		return FAIL;
 	}
 	sprintf(dir_filename, "%s%s", DIR_USER, file_name->valuestring);
-	ret = write_file(dir_filename, pgvalue->valuestring);
 
-	return ret;
+	return write_file(dir_filename, pgvalue->valuestring);
 }
 
 /* remove lua file */
@@ -81,6 +80,82 @@ static int rename_lua_file(const cJSON *data_json)
 	}
 
 	return SUCCESS;
+}
+
+/* save tool cdsystem */
+static int save_tool_cdsystem(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	cJSON *f_json = NULL;
+	char *f_content = NULL;
+	cJSON *newitem = NULL;
+	cJSON *cd_name = NULL;
+	cJSON *value = NULL;
+	cJSON *name = NULL;
+	cJSON *id = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+
+	newitem = cJSON_CreateObject();
+	cd_name = cJSON_GetObjectItem(data_json, "name");
+	value = cJSON_GetObjectItem(data_json, "value");
+	if (cd_name == NULL || cd_name->valuestring == NULL || value == NULL || value->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	name = cJSON_GetObjectItem(value, "name");
+	id = cJSON_GetObjectItem(value, "id");
+	x = cJSON_GetObjectItem(value, "x");
+	y = cJSON_GetObjectItem(value, "y");
+	z = cJSON_GetObjectItem(value, "z");
+	rx = cJSON_GetObjectItem(value, "rx");
+	ry = cJSON_GetObjectItem(value, "ry");
+	rz = cJSON_GetObjectItem(value, "rz");
+	if(name == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cJSON_AddStringToObject(newitem, "name", name->valuestring);
+	cJSON_AddStringToObject(newitem, "id", id->valuestring);
+	cJSON_AddStringToObject(newitem, "x", x->valuestring);
+	cJSON_AddStringToObject(newitem, "y", y->valuestring);
+	cJSON_AddStringToObject(newitem, "z", z->valuestring);
+	cJSON_AddStringToObject(newitem, "rx", rx->valuestring);
+	cJSON_AddStringToObject(newitem, "ry", ry->valuestring);
+	cJSON_AddStringToObject(newitem, "rz", rz->valuestring);
+	f_content = get_file_content(FILE_CDSYSTEM);
+	/* file is NULL */
+	if (f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	//printf("f_content = %s\n", f_content);
+	f_json = cJSON_Parse(f_content);
+	cJSON_ReplaceItemInObject(f_json, cd_name->valuestring, newitem);
+	buf = cJSON_Print(f_json);
+	//printf("buf = %s\n", buf);
+
+	ret = write_file(FILE_CDSYSTEM, buf);
+
+	//printf("ret = %d\n", ret);
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(f_json);
+	f_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	return ret;
 }
 
 /* change type */
@@ -135,6 +210,8 @@ void act(Webs *wp)
 		ret = remove_lua_file(data_json);
 	} else if(!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
+	} else if(!strcmp(cmd, "save_tool_cdsystem")) {
+		ret = save_tool_cdsystem(data_json);
 	} else if(!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
 	} else {

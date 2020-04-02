@@ -23,6 +23,7 @@ extern STATE_FEEDBACK state_fb;
 
 /********************************* Function declaration ***********************/
 
+static int copy_content(const cJSON *data_json, char *content);
 static int program_start(const cJSON *data_json, char *content);
 static int program_stop(const cJSON *data_json, char *content);
 static int program_pause(const cJSON *data_json, char *content);
@@ -41,6 +42,20 @@ static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mut
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
+
+/* copy json data to content */
+static int copy_content(const cJSON *data_json, char *content)
+{
+	cJSON *data = cJSON_GetObjectItem(data_json, "content");
+	if (data == NULL || data->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "%s", data->valuestring);
+
+	return SUCCESS;
+}
 
 /* 101 START */
 static int program_start(const cJSON *data_json, char *content)
@@ -281,11 +296,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			return FAIL;
 		}
-		/*
+	/*
 		printf("cmd_array[0] = %s", cmd_array[0]);
 		printf("cmd_array[1] = %s", cmd_array[1]);
 		printf("cmd_array[2] = %s", cmd_array[2]);
-		*/
+	*/
 		/* open points file */
 		f_content = get_file_content(FILE_POINTS);
 		/* file is NULL */
@@ -298,7 +313,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if (f_json == NULL) {
 			goto end;
 		}
-		cJSON *lin = cJSON_GetObjectItem(f_json, lua_cmd);
+		cJSON *lin = cJSON_GetObjectItem(f_json, cmd_array[0]);
 		if (lin == NULL || lin->type != cJSON_Object) {
 			goto end;
 		}
@@ -325,7 +340,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		speed = cJSON_GetObjectItem(lin, "speed");
 		acc = cJSON_GetObjectItem(lin, "acc");
 		toolnum = cJSON_GetObjectItem(lin, "toolnum");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) { 
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) {
 			goto end;
 		}
 		sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
@@ -399,7 +414,9 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 	/* get first line */
 	token = strtok(pgvalue->valuestring, s);
 	while (token != NULL) {
+		//printf("token = %s\n", token);
 		if (parse_lua_cmd(token, content_len, content) == FAIL) {
+
 			return FAIL;
 		}
 		/* get other line */
@@ -754,6 +771,7 @@ void set(Webs *wp)
 			break;
 		case 106:/* 8082 */
 			content_len = get_lua_content_size(data_json);
+			//printf("content_len = %d\n", content_len);
 			if (content_len == FAIL) {
 				perror("get lua content size");
 
@@ -772,6 +790,9 @@ void set(Webs *wp)
 		case 201:
 			ret = movej(data_json, content);
 			break;
+		case 206:
+			ret = copy_content(data_json, content);
+			break;
 		case 230:
 			ret = set_state_id(data_json, content);
 			break;
@@ -780,6 +801,30 @@ void set(Webs *wp)
 			break;
 		case 303:
 			ret = mode(data_json, content);
+			break;
+		case 305:
+			ret = copy_content(data_json, content);
+			break;
+		case 306:
+			ret = copy_content(data_json, content);
+			break;
+		case 307:
+			ret = copy_content(data_json, content);
+			break;
+		case 308:
+			ret = copy_content(data_json, content);
+			break;
+		case 309:
+			ret = copy_content(data_json, content);
+			break;
+		case 313:
+			ret = copy_content(data_json, content);
+			break;
+		case 314:
+			ret = copy_content(data_json, content);
+			break;
+		case 316:
+			ret = copy_content(data_json, content);
 			break;
 		case 320:
 			ret = jointtotcp(data_json, content);
