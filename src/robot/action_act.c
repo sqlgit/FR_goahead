@@ -362,6 +362,7 @@ void act(Webs *wp)
 		goto end;
 	}
 	cmd = command->valuestring;
+	my_syslog("普通操作", cmd, "admin");
 	if(!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
 	} else if(!strcmp(cmd, "remove_lua_file")) {

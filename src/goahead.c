@@ -216,6 +216,12 @@ MAIN(goahead, int argc, char **argv, char **envp)
     }
 #endif
 
+	create_dir(DIR_USER);
+	create_dir(DIR_LOG);
+	create_dir(DIR_TEMPLATE);
+	create_dir(DIR_CDSYSTEM);
+	create_dir(DIR_POINTS);
+
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;

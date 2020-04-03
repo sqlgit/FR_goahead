@@ -164,15 +164,6 @@ char *get_dir_content(const char *dir_path)
 	cJSON *root_json = NULL;
 	cJSON *file_cont = NULL;
 
-	if ((dir=opendir(dir_path)) == NULL) {
-		perror("Open dir error");
-		if (mkdir(dir_path, 0777) != 0) {
-			perror("mkdir");
-		} else {
-			printf("mkdir SUCCESS!\n");
-		}
-		//return NULL;
-	}
 	root_json = cJSON_CreateObject();
 	while ((ptr=readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
@@ -196,6 +187,44 @@ char *get_dir_content(const char *dir_path)
 	}
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
+	content = (char *)calloc(1, strlen(buf)+1);
+	if(content != NULL) {
+		strcpy(content, buf);
+	} else {
+		perror("calloc");
+	}
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (dir != NULL) {
+		closedir(dir);
+		dir = NULL;
+	}
+
+	return content;
+}
+
+/* open dir and return dir's file name */
+// Ext:["2020-03-15","2020-03-14","2020-03-13","2020-03-12","2020-03-11","2020-03-10"]
+char *get_dir_filename(const char *dir_path)
+{
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
+	char *content = NULL;
+	char *buf = NULL;
+	char dir_filename[100] = {0};
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateArray();
+	while ((ptr=readdir(dir)) != NULL) {
+		/* current dir OR parrent dir */
+		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
+			continue;
+		cJSON_AddStringToObject(root_json, "key", ptr->d_name);
+	}
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
@@ -323,4 +352,75 @@ int StringToBytes(char *pSrc, BYTE *pDst, int nSrcLength)
 
 	// 返回目标数据长度
 	return nSrcLength;
+}
+
+/* record syslog */
+int my_syslog(const char *class, const char *content, const char *user)
+{
+	struct tm *my_local;
+	time_t t;
+	int ret = FAIL;
+	char filename[100] = {0};
+	char now_time[100] = {0};
+	char dir_filename[100] = {0};
+	char *buf = NULL;
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	cJSON *newitem = NULL;
+	t = time(NULL);
+
+	//printf("ctime(&t) = %s\n", ctime(&t));
+	my_local = localtime(&t);
+	printf("Local sec is: %d\n", my_local->tm_sec); /* 秒 – 取值区间为[0,59] */
+	printf("Local min is: %d\n", my_local->tm_min); /* 分 - 取值区间为[0,59] */
+	printf("Local hour is: %d\n", my_local->tm_hour); /* 时 - 取值区间为[0,23] */
+	printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
+	printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
+	printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
+	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
+	printf("filename = %s\n", filename);
+	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
+
+	sprintf(dir_filename, "%s%s.json", DIR_LOG, filename);
+	printf("dir_filename = %s\n", dir_filename);
+
+	f_content = get_file_content(dir_filename);
+	/* file is NULL */
+	if (f_content == NULL) {
+		root_json = cJSON_CreateArray();
+	} else {
+		root_json = cJSON_Parse(f_content);
+	}
+
+	newitem = cJSON_CreateObject();
+	cJSON_AddStringToObject(newitem, "time", now_time);
+	cJSON_AddStringToObject(newitem, "class", class);
+	cJSON_AddStringToObject(newitem, "content", content);
+	cJSON_AddStringToObject(newitem, "user", user);
+	cJSON_AddItemToArray(root_json, newitem);
+	buf = cJSON_Print(root_json);
+
+	ret = write_file(dir_filename, buf);//write file
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	return SUCCESS;
+}
+
+void *create_dir(const char *dir_path)
+{
+	/* create file dir */
+	if (opendir(dir_path) == NULL) {
+		perror("Not found DIR");
+		if (mkdir(DIR_LOG, 0777) != 0) {
+			perror("mkdir DIR");
+		} else {
+			printf("mkdir DIR SUCCESS!\n");
+		}
+	}
 }

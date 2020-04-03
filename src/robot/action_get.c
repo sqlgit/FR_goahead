@@ -22,6 +22,8 @@ static int get_com_cdsystem(char **ret_f_content);
 static int get_user(char **ret_f_content);
 static int get_template(char **ret_f_content);
 static int get_state_feedback(char **ret_f_content);
+static int get_log_name(char **ret_f_content);
+static int get_log_data(char **ret_f_content, const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -152,12 +154,50 @@ static int get_state_feedback(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get log name */
+static int get_log_name(char **ret_f_content)
+{
+	*ret_f_content = get_dir_filename(DIR_LOG);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get log data */
+static int get_log_data(char **ret_f_content, const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+
+	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
+	if (file_name == NULL || file_name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
+	*ret_f_content = get_file_content(dir_filename);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* get webserver data and return to page */
 void get(Webs *wp)
 {
 	int ret = FAIL;
 	char *buf = NULL;
 	char *cmd = NULL;
+	cJSON *data_json = NULL;
 	cJSON *command = NULL;
 	cJSON *data = NULL;
 	char *ret_f_content = NULL;
@@ -189,6 +229,16 @@ void get(Webs *wp)
 		ret = get_template(&ret_f_content);
 	} else if(!strcmp(cmd, "get_state_feedback")) {
 		ret = get_state_feedback(&ret_f_content);
+	} else if(!strcmp(cmd, "get_log_name")) {
+		ret = get_log_name(&ret_f_content);
+	} else if(!strcmp(cmd, "get_log_data")) {
+		/* get data json */
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = get_log_data(&ret_f_content, data_json);
 	} else {
 		perror("cmd not found");
 		goto end;

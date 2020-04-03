@@ -79,6 +79,7 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
 	cJSON *tcp_json = NULL;
+	cJSON *error_json = NULL;
 	int io[16] = {0};
 	int n1 = 0;
 	int n2 = 0;
@@ -104,7 +105,9 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
 	tcp_json = cJSON_CreateObject();
+	error_json = cJSON_CreateArray();
 	itoa(state->toolNum, key, 10);
+	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
 	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(io, 16));
@@ -127,6 +130,207 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON_AddNumberToObject(tcp_json, "rx", tcp_value[3]);
 	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
 	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
+
+	if (state->aliveSlaveNumError == 1) {
+		cJSON_AddStringToObject(error_json, "key", "活动从站数量错误");
+	}
+	switch(state->slaveComError) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "从站掉线");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "从站状态与设置值不一致");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "从站未配置");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "从站配置错误");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "从站初始化错误");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "从站邮箱通信初始化错误");
+			break;
+		default:
+			break;
+	}
+	switch(state->cmdPointError) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "关节指令点错误");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "直线目标点错误（包括工具不符）");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "圆弧中间点错误（包括工具不符）");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "圆弧目标点错误（包括工具不符）");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "TPD指令点错误");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "TPD指令工具与当前工具不符");
+			break;
+		case 7:
+			cJSON_AddStringToObject(error_json, "key", "TPD当前指令与下一指令起始点偏差过大");
+			break;
+		case 8:
+			cJSON_AddStringToObject(error_json, "key", "PTP关节指令超限");
+			break;
+		case 9:
+			cJSON_AddStringToObject(error_json, "key", "TPD关节指令超限");
+			break;
+		case 10:
+			cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限");
+			break;
+		case 11:
+			cJSON_AddStringToObject(error_json, "key", "关节空间内指令速度超限");
+			break;
+		case 12:
+			cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速");
+			break;
+		case 13:
+			cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限");
+			break;
+		case 14:
+			cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化");
+			break;
+		case 15:
+			cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限");
+			break;
+		default:
+			break;
+	}
+	switch(state->ioError) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "通道错误");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "数值错误");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "WaitDI等待超时");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "WaitAI等待超时");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "WaitAxleDI等待超时");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "WaitAxleAI等待超时");
+			break;
+		default:
+			break;
+	}
+	if (state->gripperError == 1) {
+		cJSON_AddStringToObject(error_json, "key", "指令顺序错误");
+	}
+	switch(state->fileError) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "zbt配置文件版本错误");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "zbt配置文件加载失败");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "user配置文件加载失败");
+			break;
+		default:
+			break;
+	}
+	if (state->paraError == 1) {
+		cJSON_AddStringToObject(error_json, "key", "工具号超限错误");
+	}
+	switch(state->alarm) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "肩关节配置变化");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "肘关节配置变化");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "腕关节配置变化");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "RPY初始化失败");
+			break;
+		default:
+			break;
+	}
+	if (state->dr_com_err == 1) {
+		cJSON_AddStringToObject(error_json, "key", "通信故障:控制器与驱动器心跳检测故障");
+	}
+	switch ((int)state->dr_err) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "1轴驱动器故障");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "2轴驱动器故障");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "3轴驱动器故障");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "4轴驱动器故障");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "5轴驱动器故障");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "6轴驱动器故障");
+			break;
+		default:
+			break;
+	}
+	switch ((int)state->out_sflimit_err) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "1轴超出软限位故障");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "2轴超出软限位故障");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "3轴超出软限位故障");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "4轴超出软限位故障");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "5轴超出软限位故障");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "6轴超出软限位故障");
+			break;
+		default:
+			break;
+	}
+	switch((int)state->collision_err) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "1轴碰撞故障");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "2轴碰撞故障");
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "3轴碰撞故障");
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "4轴碰撞故障");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "5轴碰撞故障");
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "6轴碰撞故障");
+			break;
+		default:
+			break;
+	}
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);

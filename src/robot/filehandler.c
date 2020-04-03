@@ -15,15 +15,7 @@ void upload(Webs *wp)
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
-	/* create file dir */
-	if (opendir(DIR_USER) == NULL) {
-		perror("Not found DIR_USER");
-		if (mkdir(DIR_USER, 0777) != 0) {
-			perror("mkdir DIR_USER");
-		} else {
-			printf("mkdir DIR_USER SUCCESS!\n");
-		}
-	}
+
 	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
 			up = s->content.value.symbol;

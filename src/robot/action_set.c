@@ -755,21 +755,27 @@ void set(Webs *wp)
 			ret = sendfile(data_json, content_len, content);
 			break;
 		case 101:
+			my_syslog("机器人操作", "开始程序示教", "admin");
 			ret = program_start(data_json, content);
 			break;
 		case 102:
+			my_syslog("机器人操作", "停止程序示教", "admin");
 			ret = program_stop(data_json, content);
 			break;
 		case 103:
+			my_syslog("机器人操作", "暂停程序示教", "admin");
 			ret = program_pause(data_json, content);
 			break;
 		case 104:
+			my_syslog("机器人操作", "恢复程序示教", "admin");
 			ret = program_resume(data_json, content);
 			break;
 		case 105:/* 8082 */
+			my_syslog("机器人操作", "下发程序示教名称", "admin");
 			ret = sendfilename(data_json, content);
 			break;
 		case 106:/* 8082 */
+			my_syslog("机器人操作", "下发程序示教文件内容", "admin");
 			content_len = get_lua_content_size(data_json);
 			//printf("content_len = %d\n", content_len);
 			if (content_len == FAIL) {
@@ -788,45 +794,59 @@ void set(Webs *wp)
 			ret = sendfile(data_json, content_len, content);
 			break;
 		case 201:
+			my_syslog("机器人操作", "下发关节数据", "admin");
 			ret = movej(data_json, content);
 			break;
 		case 206:
+			my_syslog("机器人操作", "设置速度百分比", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 230:
+			my_syslog("机器人操作", "设置查询图表id号", "admin");
 			ret = set_state_id(data_json, content);
 			break;
 		case 231:
+			my_syslog("机器人操作", "状态查询开始/结束", "admin");
 			ret = set_state(data_json, content);
 			break;
 		case 303:
+			my_syslog("机器人操作", "更改机器人模式", "admin");
 			ret = mode(data_json, content);
 			break;
 		case 305:
+			my_syslog("机器人操作", "设置碰撞等级", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 306:
+			my_syslog("机器人操作", "设置负载重量", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 307:
+			my_syslog("机器人操作", "设置负载质心", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 308:
+			my_syslog("机器人操作", "设置机器人正限位角度", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 309:
+			my_syslog("机器人操作", "设置机器人负限位角度", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 313:
+			my_syslog("机器人操作", "新建工具坐标系下发点", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 314:
+			my_syslog("机器人操作", "计算工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 316:
+			my_syslog("机器人操作", "应用当前显示的工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 320:
+			my_syslog("机器人操作", "计算TCF", "admin");
 			ret = jointtotcp(data_json, content);
 			break;
 	/*	case 321:
