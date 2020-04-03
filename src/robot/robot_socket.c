@@ -582,9 +582,9 @@ void *socket_status_thread(void *arg)
 			pthread_exit(NULL);
 	}
 	socket_init(sock, port);
-	bzero(state, sizeof(CTRL_STATE));
 
 	while(1) {
+		bzero(state, sizeof(CTRL_STATE));
 		/* do socket connect */
 		/* create socket */
 		if (socket_create(sock) == FAIL) {

@@ -165,6 +165,7 @@ char *get_dir_content(const char *dir_path)
 	cJSON *file_cont = NULL;
 
 	root_json = cJSON_CreateObject();
+	dir = opendir(dir_path);
 	while ((ptr=readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -217,6 +218,7 @@ char *get_dir_filename(const char *dir_path)
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateArray();
+	dir = opendir(dir_path);
 	while ((ptr=readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -414,10 +416,11 @@ int my_syslog(const char *class, const char *content, const char *user)
 
 void *create_dir(const char *dir_path)
 {
+	//printf("dir_path = %s\n", dir_path);
 	/* create file dir */
 	if (opendir(dir_path) == NULL) {
 		perror("Not found DIR");
-		if (mkdir(DIR_LOG, 0777) != 0) {
+		if (mkdir(dir_path, 0777) != 0) {
 			perror("mkdir DIR");
 		} else {
 			printf("mkdir DIR SUCCESS!\n");
