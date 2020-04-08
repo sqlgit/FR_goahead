@@ -18,7 +18,7 @@ extern int robot_type;
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
-static int save_tool_cdsystem(const cJSON *data_json);
+static int modify_tool_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
@@ -87,8 +87,8 @@ static int rename_lua_file(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* save tool cdsystem */
-static int save_tool_cdsystem(const cJSON *data_json)
+/* modify tool cdsystem */
+static int modify_tool_cdsystem(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
@@ -369,8 +369,8 @@ void act(Webs *wp)
 		ret = remove_lua_file(data_json);
 	} else if(!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
-	} else if(!strcmp(cmd, "save_tool_cdsystem")) {
-		ret = save_tool_cdsystem(data_json);
+	} else if(!strcmp(cmd, "modify_tool_cdsystem")) {
+		ret = modify_tool_cdsystem(data_json);
 	} else if(!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 	} else if(!strcmp(cmd, "remove_points")) {

@@ -11,7 +11,7 @@
    noden,next(rear,next) 
 */
 #pragma pack(push, 1)
-/** 状态反馈结构体 from socket server */
+/** 状态查询数据 */
 typedef struct _STATE_FB {
 	float fb[100][10]
 } STATE_FB;

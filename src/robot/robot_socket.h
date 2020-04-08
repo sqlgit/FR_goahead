@@ -108,24 +108,7 @@ typedef struct _CTRL_STATE
 } CTRL_STATE;
 #pragma pack(pop)
 
-//#pragma pack(push, 1)
-/** 状态反馈结构体 from socket server */
-/*typedef struct _STATE_FB
-{
-	float var[100][10];
-} STATE_FB;
-#pragma pack(pop)*/
-
-//#pragma pack(push, 1)
-/** 状态反馈结构体 */
-/*typedef struct _STATE_FEEDBACK
-{
-	float var[100][10];
-} STATE_FEEDBACK;
-#pragma pack(pop)
-*/
-
-/** 状态反馈结构体 */
+/** 状态查询结构体 */
 typedef struct _STATE_FEEDBACK
 {
 	int id[10];			// state feedback id

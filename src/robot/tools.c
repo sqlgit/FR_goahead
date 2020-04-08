@@ -207,7 +207,7 @@ char *get_dir_content(const char *dir_path)
 }
 
 /* open dir and return dir's file name */
-// Ext:["2020-03-15","2020-03-14","2020-03-13","2020-03-12","2020-03-11","2020-03-10"]
+// Ext:["2020-03-15.json","2020-03-14.json","2020-03-13.json","2020-03-12.json","2020-03-11.json","2020-03-10.json"]
 char *get_dir_filename(const char *dir_path)
 {
 	DIR *dir = NULL;

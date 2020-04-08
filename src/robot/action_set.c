@@ -104,6 +104,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
+/* parse cmd of lua file */
 static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 {
 	//printf("lua cmd = %s\n", lua_cmd);

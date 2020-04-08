@@ -49,7 +49,7 @@ static int connect_status(char *ret_status)
 		}
 	} else { // "0" 代表虚拟机器人
 		/* cmd file status state all connect */
-		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status && socket_state.connect_status) {
+		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status) {
 			ret_connect_status = 1;
 		} else {
 			ret_connect_status = 0;
@@ -392,7 +392,7 @@ static int vardata_feedback(char *ret_status)
 			}
 		}
 		buf = cJSON_Print(root_json);
-		printf("send to GUI = %s\n", buf);
+		//printf("send to GUI = %s\n", buf);
 		strcpy(ret_status, buf);
 
 		/* delete front node */

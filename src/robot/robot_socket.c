@@ -18,7 +18,6 @@ STATE_FEEDBACK state_fb;
 CTRL_STATE ctrl_state;
 CTRL_STATE vir_ctrl_state;
 FB_LinkQuene fb_quene;
-//float state_ret[100][10] = {{0}};
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -50,7 +49,7 @@ static void state_feedback_init(STATE_FEEDBACK *fb)
 	bzero(fb, sizeof(STATE_FEEDBACK));
 
 	int i = 0;
-	for (i = 0; i < STATE_FB_ID; i++) {
+	for (i = 0; i < 10; i++) {
 		fb->id[i] = 0;
 	}
 	fb->icount = 0;
@@ -648,6 +647,7 @@ void *socket_status_thread(void *arg)
 	}
 }
 
+/** 状态查询线程 */
 void *socket_state_feedback_thread(void *arg)
 {
 	SOCKET_INFO *sock = NULL;
@@ -709,6 +709,8 @@ void *socket_state_feedback_thread(void *arg)
 			/* 把接收到的包按照分割符"III"进行分割 */
 			if (separate_string_to_array(state_buf, "III", 5, 13000, (char *)&array) != 5) {
 				perror("separate recv");
+
+				continue;
 			}
 			/*printf("array[0]=%s\n", array[0]);
 			printf("array[1]=%s\n", array[1]);
@@ -730,30 +732,6 @@ void *socket_state_feedback_thread(void *arg)
 				pthread_mutex_lock(&sock->mute);
 				fb_enquene(&fb_quene, state_fb);
 				pthread_mutex_unlock(&sock->mute);
-				/*for (i = 0; i < 900; i++) {
-					for(j = 0; j < 10; j++) {
-						state_ret[i][j] = state_ret[i+100][j];
-					}
-				}
-				for(i = 0; i < 100; i++) {
-					for(j = 0; j < 10; j++) {
-						state_ret[i+900][j] = state->var[i][j];
-					}
-				}*/
-				/*for(i = 0; i < 100; i++) {
-					for(j = 0; j < 10; j++) {
-						state_ret[i][j] = state->var[i][j];
-					}
-				}*/
-				/*
-				printf("state_ret = \n");
-				for(i = 0; i < 1000; i++) {
-					for(j = 0; j < 10; j++) {
-						printf("%.2lf ", state_ret[i][j]);
-					}
-					printf("\n");
-				}*/
-
 
 				printf("state fb = ");
 				for(i = 0; i < 100; i++) {
@@ -762,36 +740,6 @@ void *socket_state_feedback_thread(void *arg)
 					//}
 				}
 				//printf("end print state fb\n");
-
-
-
-				//printf("state->var[0][0] = %f\n", state->var[0][0]);
-				/*int i;
-				for (i = 0; i < 10; i++) {
-					state_fb.var1[i] = state;
-					state++;
-					state_fb.var2[i] = state;
-					state++;
-					state_fb.var3[i] = state;
-					state++;
-					state_fb.var4[i] = state;
-					state++;
-					state_fb.var5[i] = state;
-					state++;
-					state_fb.var6[i] = state;
-					state++;
-					state_fb.var7[i] = state;
-					state++;
-					state_fb.var8[i] = state;
-					state++;
-					state_fb.var9[i] = state;
-					state++;
-					state_fb.var10[i] = state;
-				}*/
-			/*	int i;
-				for (i = 0; i < 6; i++) {
-					printf("ctrl_state.jt_cur_pos[%d] = %.3lf\n", i, ctrl_state.jt_cur_pos[i]);
-				}*/
 			}
 			//printf("after StringToBytes\n");
 		}

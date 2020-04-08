@@ -80,24 +80,23 @@ void fb_enquene(FB_LinkQuene *q, STATE_FB e)
 	return;
 }
 
-/* 从链式队列中删除头元素 e */
+/* 从链式队列中删除头元素 */
 void fb_dequene(FB_LinkQuene *q)
 {
 	FB_Qnode *p = q->front->next;
 	FB_Qnode *pre = q->front;
 
-	/* e is not found */
+	/* front node is not found */
 	if (p == NULL) {
 		printf("error: not found quene front node\n");
 
 		return;
 	}
-	/* e is found */
-	//printf("will delete node: e\n");
+	/* front node is found */
 	pre->next = p->next;
-	/* e is rear */
+	/* front node is rear */
 	if (p->next == NULL) {
-		//printf("will delete rear node: e\n");
+		//printf("will delete rear node\n");
 		q->rear = pre;
 	}
 	free(p);
