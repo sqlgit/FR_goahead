@@ -12,6 +12,7 @@
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
+extern int log_count;
 
 /********************************* Function declaration ***********************/
 
@@ -22,6 +23,7 @@ static int modify_tool_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
+static int log_management(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -331,6 +333,35 @@ static int change_type(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* log management */
+static int log_management(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+	cJSON *count = cJSON_GetObjectItem(data_json, "count");
+	if (count == NULL || count->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	log_count = atoi(count->valuestring);
+	printf("log_count = %d\n", log_count);
+
+	root_json = cJSON_CreateObject();
+	cJSON_AddStringToObject(root_json, "log_count", count->valuestring);
+	buf = cJSON_Print(root_json);
+	ret = write_file(SYSTEM_CFG, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	delete_log_file();
+
+	return ret;
+}
+
 /* do some user actions on webserver */
 void act(Webs *wp)
 {
@@ -377,6 +408,8 @@ void act(Webs *wp)
 		ret = remove_points(data_json);
 	} else if(!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
+	} else if(!strcmp(cmd, "log_management")) {
+		ret = log_management(data_json);
 	} else {
 		perror("cmd not found");
 		goto end;

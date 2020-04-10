@@ -13,6 +13,7 @@ extern int robot_type;
 extern STATE_FEEDBACK state_fb;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
+extern int log_count;
 
 /********************************* Function declaration ***********************/
 
@@ -24,6 +25,7 @@ static int get_template(char **ret_f_content);
 static int get_state_feedback(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
+static int get_system_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -191,6 +193,20 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* get system cfg and return to page */
+static int get_system_cfg(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(SYSTEM_CFG);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* get webserver data and return to page */
 void get(Webs *wp)
 {
@@ -239,6 +255,8 @@ void get(Webs *wp)
 			goto end;
 		}
 		ret = get_log_data(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "get_syscfg")) {
+		ret = get_system_cfg(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

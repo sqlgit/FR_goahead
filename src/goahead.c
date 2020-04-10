@@ -31,6 +31,7 @@
 
 static int finished = 0;
 int robot_type = 1;// 默认实体机器人
+int log_count = 10;// 默认实体机器人
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
@@ -221,6 +222,8 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_TEMPLATE);
 	create_dir(DIR_CDSYSTEM);
 	create_dir(DIR_POINTS);
+	create_dir(DIR_SHELL);
+	create_dir(DIR_CFG);
 
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;

@@ -420,7 +420,7 @@ void sta(Webs *wp)
 {
 	char *ret_status = NULL;
 	int ret = FAIL;
-	char *buf = NULL;
+	//char *buf = NULL;
 	char *cmd = NULL;
 	cJSON *command = NULL;
 	cJSON *data = NULL;
@@ -438,8 +438,8 @@ void sta(Webs *wp)
 		goto end;
 	}
 	//printf("data:%s\n", buf = cJSON_Print(data));
-	free(buf);
-	buf = NULL;
+	//free(buf);
+	//buf = NULL;
 	/* get cmd */
 	command = cJSON_GetObjectItem(data, "cmd");
 	if (command == NULL) {

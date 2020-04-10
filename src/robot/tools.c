@@ -5,6 +5,9 @@
 #include 	"tools.h"
 #include	"cJSON.h"
 
+/********************************* Defines ************************************/
+extern int log_count;
+
 /*********************************** Code *************************************/
 
 /*
@@ -124,7 +127,7 @@ char *get_file_content(const char *file_path)
 	return content;
 }
 
-/* oepn file and return complete file content */
+/* open file and return complete file content */
 char *get_complete_file_content(const char *file_path)
 {
 	FILE *fp = NULL;
@@ -389,6 +392,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	f_content = get_file_content(dir_filename);
 	/* file is NULL */
 	if (f_content == NULL) {
+		delete_log_file();
 		root_json = cJSON_CreateArray();
 	} else {
 		root_json = cJSON_Parse(f_content);
@@ -410,6 +414,17 @@ int my_syslog(const char *class, const char *content, const char *user)
 	root_json = NULL;
 	free(f_content);
 	f_content = NULL;
+
+	return SUCCESS;
+}
+
+/* delete log file: 删除最旧的 log 文件 */
+int delete_log_file()
+{
+	char cmd[128] = {0};
+
+	sprintf(cmd, "sh /root/webserver/shell/delete_file.sh %d", log_count);
+	system(cmd);
 
 	return SUCCESS;
 }

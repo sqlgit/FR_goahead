@@ -1,20 +1,27 @@
 #include    "goahead.h"
-#include	"filehandler.h"
+#include	"cJSON.h"
 #include 	"tools.h"
+#include	"filehandler.h"
 
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
+extern int log_count;
 
 void upload(Webs *wp)
 {
 	WebsKey         *s;
 	WebsUpload      *up;
 	char            *upfile;
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	cJSON *count = NULL;
+	char filename[128] = {0};
 
 	websSetStatus(wp, 204);
 	websWriteHeaders(wp, -1, 0);
 	websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
+	int flag = 0;
 
 	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
@@ -37,6 +44,10 @@ void upload(Webs *wp)
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
+			} else if (strcmp(up->clientFilename, "system.json") == 0) {
+				upfile = sfmt("%s", SYSTEM_CFG);
+				strcpy(filename, upfile);
+				flag = 1;
 			}
 			printf("upfile = %s\n", upfile);
 			if (rename(up->filename, upfile) < 0) {
@@ -51,6 +62,23 @@ void upload(Webs *wp)
 	}
 	websRedirect(wp,"/index.html#/programteach");
 	websDone(wp);
+
+	printf("filename = %s\n", filename);
+	if (flag == 1) {
+		f_content = get_file_content(filename);
+		/* file is NULL */
+		if (f_content != NULL) {
+			root_json = cJSON_Parse(f_content);
+			if (root_json != NULL) {
+				count = cJSON_GetObjectItem(root_json, "log_count");
+				if (count != NULL) {
+					printf("count = %d\n", count->valuestring);
+					log_count = atoi(count->valuestring);
+					delete_log_file();
+				}
+			}
+		}
+	}
 }
 
 static void fileWriteEvent(Webs *wp)
