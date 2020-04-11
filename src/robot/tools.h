@@ -8,6 +8,7 @@
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
+#define ROBOT_CFG "/root/robot/user.config"
 #define FILE_POINTS "/root/webserver/points/points.json"
 #define SYSTEM_CFG "/root/webserver/cfg/system.json"
 #define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"

@@ -17,10 +17,6 @@ void upload(Webs *wp)
 	cJSON *count = NULL;
 	char filename[128] = {0};
 
-	websSetStatus(wp, 204);
-	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
-	websWriteEndHeaders(wp);
 	int flag = 0;
 
 	if (scaselessmatch(wp->method, "POST")) {
@@ -48,6 +44,11 @@ void upload(Webs *wp)
 				upfile = sfmt("%s", SYSTEM_CFG);
 				strcpy(filename, upfile);
 				flag = 1;
+			} else if (strcmp(up->clientFilename, "user.config") == 0) {
+				upfile = sfmt("%s", ROBOT_CFG);
+				//system("shoutdown now");
+			} else {
+				goto end;
 			}
 			printf("upfile = %s\n", upfile);
 			if (rename(up->filename, upfile) < 0) {
@@ -60,9 +61,6 @@ void upload(Webs *wp)
 			websWrite(wp, "%s=%s\r\n", s->name.value.string, s->content.value.string);
 		}*/
 	}
-	websRedirect(wp,"/index.html#/programteach");
-	websDone(wp);
-
 	printf("filename = %s\n", filename);
 	if (flag == 1) {
 		f_content = get_file_content(filename);
@@ -79,6 +77,24 @@ void upload(Webs *wp)
 			}
 		}
 	}
+
+	websSetStatus(wp, 204);
+	websWriteHeaders(wp, -1, 0);
+	websWriteHeader(wp, "Content-Type", "text/plain");
+	websWriteEndHeaders(wp);
+	//websRedirect(wp,"/index.html#/programteach");
+	//websWrite(wp, "success");
+	websDone(wp);
+
+	return;
+
+end:
+	websSetStatus(wp, 404);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "fail");
+	websDone(wp);
+	return;
 }
 
 static void fileWriteEvent(Webs *wp)

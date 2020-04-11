@@ -50,8 +50,8 @@ int get_n_len(const int n)
 /* write file */
 int write_file(const char *file_name, const char *file_content)
 {
-	printf("write filename = %s\n", file_name);
-	printf("write filecontent = %s\n", file_content);
+	//printf("write filename = %s\n", file_name);
+	//printf("write filecontent = %s\n", file_content);
 	FILE *fp = NULL;
 
 	if((fp = fopen(file_name, "w")) == NULL) {
@@ -376,18 +376,18 @@ int my_syslog(const char *class, const char *content, const char *user)
 
 	//printf("ctime(&t) = %s\n", ctime(&t));
 	my_local = localtime(&t);
-	printf("Local sec is: %d\n", my_local->tm_sec); /* 秒 – 取值区间为[0,59] */
-	printf("Local min is: %d\n", my_local->tm_min); /* 分 - 取值区间为[0,59] */
-	printf("Local hour is: %d\n", my_local->tm_hour); /* 时 - 取值区间为[0,23] */
-	printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
-	printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
-	printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
+	//printf("Local sec is: %d\n", my_local->tm_sec); /* 秒 – 取值区间为[0,59] */
+	//printf("Local min is: %d\n", my_local->tm_min); /* 分 - 取值区间为[0,59] */
+	//printf("Local hour is: %d\n", my_local->tm_hour); /* 时 - 取值区间为[0,23] */
+	//printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
+	//printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
+	//printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
 	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
-	printf("filename = %s\n", filename);
+	//printf("filename = %s\n", filename);
 	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
 
 	sprintf(dir_filename, "%s%s.json", DIR_LOG, filename);
-	printf("dir_filename = %s\n", dir_filename);
+	//printf("dir_filename = %s\n", dir_filename);
 
 	f_content = get_file_content(dir_filename);
 	/* file is NULL */

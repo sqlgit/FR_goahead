@@ -26,6 +26,7 @@ static int get_state_feedback(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_system_cfg(char **ret_f_content);
+static int get_robot_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -207,6 +208,151 @@ static int get_system_cfg(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get robot cfg and return to page */
+static int get_robot_cfg(char **ret_f_content)
+{
+	char *buf = NULL;
+	const char s[2] = "\n";
+	char *token = NULL;
+	char *f_content = NULL;
+
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateObject();
+	f_content = get_complete_file_content(ROBOT_CFG);
+	/* file is NULL */
+	if (f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	/* get first line */
+	token = strtok(f_content, s);
+	while (token != NULL) {
+		printf("token = %s\n", token);
+		if(!strncmp(token, "SPEEDSCALE_AUTO = ", 18)) {
+			strrpc(token, "SPEEDSCALE_AUTO = ", "");
+			cJSON_AddStringToObject(root_json, "speedscale_auto", token);
+		} else if(!strncmp(token, "SPEEDSCALE_MANUAL = ", 20)) {
+			strrpc(token, "SPEEDSCALE_MANUAL = ", "");
+			cJSON_AddStringToObject(root_json, "speedscale_manual", token);
+		} else if(!strncmp(token, "TOOL_NUM = ", 11)) {
+			strrpc(token, "TOOL_NUM = ", "");
+			cJSON_AddStringToObject(root_json, "tool_num", token);
+		} else if(!strncmp(token, "TOOL_X = ", 9)) {
+			strrpc(token, "TOOL_X = ", "");
+			cJSON_AddStringToObject(root_json, "tool_x", token);
+		} else if(!strncmp(token, "TOOL_Y = ", 9)) {
+			strrpc(token, "TOOL_Y = ", "");
+			cJSON_AddStringToObject(root_json, "tool_y", token);
+		} else if(!strncmp(token, "TOOL_Z = ", 9)) {
+			strrpc(token, "TOOL_Z = ", "");
+			cJSON_AddStringToObject(root_json, "tool_z", token);
+		} else if(!strncmp(token, "TOOL_A = ", 9)) {
+			strrpc(token, "TOOL_A = ", "");
+			cJSON_AddStringToObject(root_json, "tool_a", token);
+		} else if(!strncmp(token, "TOOL_B = ", 9)) {
+			strrpc(token, "TOOL_B = ", "");
+			cJSON_AddStringToObject(root_json, "tool_b", token);
+		} else if(!strncmp(token, "TOOL_C = ", 9)) {
+			strrpc(token, "TOOL_C = ", "");
+			cJSON_AddStringToObject(root_json, "tool_c", token);
+		} else if(!strncmp(token, "COLLISION_LEVEL = ", 18)) {
+			strrpc(token, "COLLISION_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "collision_level", token);
+		} else if(!strncmp(token, "LOAD_WEIGHT = ", 14)) {
+			strrpc(token, "LOAD_WEIGHT = ", "");
+			cJSON_AddStringToObject(root_json, "load_weight", token);
+		} else if(!strncmp(token, "LOAD_Coord_X = ", 15)) {
+			strrpc(token, "LOAD_Coord_X = ", "");
+			cJSON_AddStringToObject(root_json, "load_coord_x", token);
+		} else if(!strncmp(token, "LOAD_Coord_Y = ", 15)) {
+			strrpc(token, "LOAD_Coord_Y = ", "");
+			cJSON_AddStringToObject(root_json, "load_coord_y", token);
+		} else if(!strncmp(token, "LOAD_Coord_Z = ", 15)) {
+			strrpc(token, "LOAD_Coord_Z = ", "");
+			cJSON_AddStringToObject(root_json, "load_coord_z", token);
+		} else if(!strncmp(token, "J1_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J1_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j1_max_joint_limit", token);
+		} else if(!strncmp(token, "J1_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J1_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j1_min_joint_limit", token);
+		} else if(!strncmp(token, "J2_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J2_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j2_max_joint_limit", token);
+		} else if(!strncmp(token, "J2_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J2_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j2_min_joint_limit", token);
+		} else if(!strncmp(token, "J3_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J3_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j3_max_joint_limit", token);
+		} else if(!strncmp(token, "J3_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J3_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j3_min_joint_limit", token);
+		} else if(!strncmp(token, "J4_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J4_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j4_max_joint_limit", token);
+		} else if(!strncmp(token, "J4_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J4_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j4_min_joint_limit", token);
+		} else if(!strncmp(token, "J5_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J5_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j5_max_joint_limit", token);
+		} else if(!strncmp(token, "J5_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J5_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j5_min_joint_limit", token);
+		} else if(!strncmp(token, "J6_MAX_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J6_MAX_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j6_max_joint_limit", token);
+		} else if(!strncmp(token, "J6_MIN_JOINT_LIMIT = ", 21)) {
+			strrpc(token, "J6_MIN_JOINT_LIMIT = ", "");
+			cJSON_AddStringToObject(root_json, "j6_min_joint_limit", token);
+		} else if(!strncmp(token, "COLLISION_ERROR_TIME = ", 23)) {
+			strrpc(token, "COLLISION_ERROR_TIME = ", "");
+			cJSON_AddStringToObject(root_json, "collision_error_time", token);
+		} else if(!strncmp(token, "J1_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J1_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j1_collisionvalue", token);
+		} else if(!strncmp(token, "J2_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J2_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j2_collisionvalue", token);
+		} else if(!strncmp(token, "J3_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J3_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j3_collisionvalue", token);
+		} else if(!strncmp(token, "J4_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J4_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j4_collisionvalue", token);
+		} else if(!strncmp(token, "J5_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J5_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j5_collisionvalue", token);
+		} else if(!strncmp(token, "J6_COLLISIONVALUE = ", 20)) {
+			strrpc(token, "J6_COLLISIONVALUE = ", "");
+			cJSON_AddStringToObject(root_json, "j6_collisionvalue", token);
+		}
+		/* get other line */
+		token = strtok(NULL, s);
+	}
+
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+	} else {
+		perror("calloc");
+
+		return FAIL;
+	}
+	printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return SUCCESS;
+}
+
 /* get webserver data and return to page */
 void get(Webs *wp)
 {
@@ -257,6 +403,8 @@ void get(Webs *wp)
 		ret = get_log_data(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_syscfg")) {
 		ret = get_system_cfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_robot_cfg")) {
+		ret = get_robot_cfg(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
