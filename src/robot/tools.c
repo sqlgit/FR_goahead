@@ -311,6 +311,23 @@ double double_round(double dVal, int iPlaces) //iPlaces>=0
 	return dRetval;
 }
 
+/* two uint8_t type value to save in array[16] */
+void uint8_to_array(int n1, int n2, int *array)
+{
+	int i = 0;
+
+	for(i = 0; i < 16; i++) {
+		if (i < 8) {
+			array[i]=n1%2;
+			n1=n1/2;
+		}
+		if (i >= 8) {
+			array[i] = n2%2;
+			n2 = n2/2;
+		}
+	}
+}
+
 int BytesToString(BYTE *pSrc, char *pDst, int nSrcLength)
 {
 	const char tab[] = "0123456789ABCDEF";

@@ -80,24 +80,10 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON *joints_json = NULL;
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
-	int io[16] = {0};
-	int n1 = 0;
-	int n2 = 0;
+	int array[16] = {0};
 
 	//printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
 	//printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
-	n1 = state->cl_dgt_output_l;
-	n2 = state->cl_dgt_output_h;
-	for(i = 0; i < 16; i++) {
-		if (i < 8) {
-			io[i]=n1%2;
-			n1=n1/2;
-		}
-		if (i >= 8) {
-			io[i] = n2%2;
-			n2 = n2/2;
-		}
-	}
 
 	/*for (i = 0; i < 6; i++) {
 		printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
@@ -107,10 +93,24 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	tcp_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
 	itoa(state->toolNum, key, 10);
+	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
-	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(io, 16));
+	memset(array, 0, sizeof(array));
+	uint8_to_array(state->cl_dgt_output_l, state->cl_dgt_output_h, array);
+	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(array, 16));
+	memset(array, 0, sizeof(array));
+	uint8_to_array(state->cl_dgt_input_l, state->cl_dgt_input_h, array);
+	cJSON_AddItemToObject(root_json, "cl_di", cJSON_CreateIntArray(array, 16));
+	memset(array, 0, sizeof(array));
+	uint8_to_array(state->tl_dgt_output_l, state->tl_dgt_output_h, array);
+	cJSON_AddItemToObject(root_json, "tl_do", cJSON_CreateIntArray(array, 16));
+	memset(array, 0, sizeof(array));
+	uint8_to_array(state->tl_dgt_input_l, state->tl_dgt_input_h, array);
+	cJSON_AddItemToObject(root_json, "tl_di", cJSON_CreateIntArray(array, 16));
+	cJSON_AddItemToObject(root_json, "ai", cJSON_CreateIntArray(state->analog_input, 6));
+	cJSON_AddItemToObject(root_json, "ao", cJSON_CreateIntArray(state->analog_output, 6));
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
 	cJSON_AddStringToObject(root_json, "toolnum", key);
 	cJSON_AddNumberToObject(root_json, "vel_radio", state->vel_ratio);
@@ -351,7 +351,6 @@ static int program_teach(char *ret_status, CTRL_STATE *state)
 //	printf("state->program_state d = %d\n", state->program_state);
 	root_json = cJSON_CreateObject();
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
-	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);

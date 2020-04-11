@@ -229,7 +229,7 @@ static int get_robot_cfg(char **ret_f_content)
 	/* get first line */
 	token = strtok(f_content, s);
 	while (token != NULL) {
-		printf("token = %s\n", token);
+		//printf("token = %s\n", token);
 		if(!strncmp(token, "SPEEDSCALE_AUTO = ", 18)) {
 			strrpc(token, "SPEEDSCALE_AUTO = ", "");
 			cJSON_AddStringToObject(root_json, "speedscale_auto", token);
@@ -335,7 +335,7 @@ static int get_robot_cfg(char **ret_f_content)
 	}
 
 	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
+	//printf("buf = %s\n", buf);
 	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
 	if(*ret_f_content != NULL) {
 		strcpy((*ret_f_content), buf);
@@ -344,7 +344,7 @@ static int get_robot_cfg(char **ret_f_content)
 
 		return FAIL;
 	}
-	printf("*ret_f_content = %s\n", (*ret_f_content));
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(root_json);
