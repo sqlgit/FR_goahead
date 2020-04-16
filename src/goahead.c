@@ -224,6 +224,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_POINTS);
 	create_dir(DIR_SHELL);
 	create_dir(DIR_CFG);
+	create_dir(DIR_GRIPPER);
 
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;

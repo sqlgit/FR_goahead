@@ -103,8 +103,10 @@ typedef struct _CTRL_STATE
 	int        toolNum;                 /** 工具号 */
 	uint8_t    gripperFaultId;          /** 错误夹爪号 */
 	uint8_t    gripperFaultNum;         /** 夹爪错误编号 */
-	uint16_t   gripperConfigStatus;
-	uint16_t   gripperActStatus;
+	uint16_t   gripperConfigStatus;     /** 夹爪配置状态 */
+	uint16_t   gripperActStatus;		/** 夹爪激活状态 */
+	int 	   aliveSlaveNumFeedback;   /** 活动从站数量反馈 */
+	uint8_t	   ctrl_query_state;		/** 控制器查询状态 0-未查询，1-查询中 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -113,7 +115,7 @@ typedef struct _STATE_FEEDBACK
 {
 	int id[10];			// state feedback id
 	int icount;			// state feedback icount
-	int cur_state;		// current feedback state (1:stop  0:start)
+	//int cur_state;		// current feedback state (1:stop  0:start)
 } STATE_FEEDBACK;
 
 /* socket 相关信息结构体 */

@@ -53,7 +53,6 @@ static void state_feedback_init(STATE_FEEDBACK *fb)
 		fb->id[i] = 0;
 	}
 	fb->icount = 0;
-	fb->cur_state = 1;
 }
 
 /* socket init */
@@ -697,13 +696,16 @@ void *socket_state_feedback_thread(void *arg)
 			int recv_len = 0;
 
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
+				printf("__LINE__ = %d\n", __LINE__);
 			recv_len = recv(sock->fd, state_buf, (7+1+3+5+3+sizeof(STATE_FB)*3+7), 0); /* Now recv buf is 1225 bytes*/
+			printf("recv_len = %d\n", recv_len);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");
 
 				break;
 			}
+				printf("__LINE__ = %d\n", __LINE__);
 			//printf("recv len = %d\n", recv_len);
 			//printf("recv state_buf = %s\n", state_buf);
 			/* 把接收到的包按照分割符"III"进行分割 */
@@ -725,20 +727,19 @@ void *socket_state_feedback_thread(void *arg)
 			//printf("3*sizeof(STATE_FB) = %d\n", 3*sizeof(STATE_FB));
 			if (strlen(array[3]) == 3*sizeof(STATE_FB)) {
 				//printf("enter if\n");
-				STATE_FB state_fb;
-				fb_createnode(&state_fb);
+				STATE_FB sta_fb;
+				fb_createnode(&sta_fb);
 				//bzero(state, sizeof(STATE_FB));
-				StringToBytes(array[3], (BYTE *)&state_fb, sizeof(STATE_FB));
+				StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
 				pthread_mutex_lock(&sock->mute);
-				fb_enquene(&fb_quene, state_fb);
+				fb_enquene(&fb_quene, sta_fb);
 				pthread_mutex_unlock(&sock->mute);
-
-				printf("state fb = ");
-				for(i = 0; i < 100; i++) {
+				//printf("state fb = ");
+				//for(i = 0; i < 100; i++) {
 					//for(j = 0; j < 10; j++) {
-						printf("%f ", state_fb.fb[i][0]);
+						//printf("%f ", sta_fb.fb[i][0]);
 					//}
-				}
+				//}
 				//printf("end print state fb\n");
 			}
 			//printf("after StringToBytes\n");

@@ -22,10 +22,11 @@ static int get_tool_cdsystem(char **ret_f_content);
 static int get_com_cdsystem(char **ret_f_content);
 static int get_user(char **ret_f_content);
 static int get_template(char **ret_f_content);
-static int get_state_feedback(char **ret_f_content);
+static int get_tpd_name(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
-static int get_system_cfg(char **ret_f_content);
+static int get_syscfg(char **ret_f_content);
+static int get_gripper_info(char **ret_f_content);
 static int get_robot_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
@@ -129,30 +130,16 @@ static int get_template(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get state feedback */
-static int get_state_feedback(char **ret_f_content)
+/* get DIR FRUSER .txt file, TPD file */
+static int get_tpd_name(char **ret_f_content)
 {
-	char *buf = NULL;
-	cJSON *root_json = NULL;
-
-	root_json = cJSON_CreateObject();
-	printf("state_fb.cur_state = %d\n", state_fb.cur_state);
-	cJSON_AddNumberToObject(root_json, "state", state_fb.cur_state);
-	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-	} else {
-		perror("calloc");
+	*ret_f_content = get_dir_filename_txt(DIR_FRUSER);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
 
 		return FAIL;
 	}
-	printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
 
 	return SUCCESS;
 }
@@ -195,7 +182,7 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 }
 
 /* get system cfg and return to page */
-static int get_system_cfg(char **ret_f_content)
+static int get_syscfg(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(SYSTEM_CFG);
 	/* file is NULL */
@@ -203,6 +190,39 @@ static int get_system_cfg(char **ret_f_content)
 		perror("get file content");
 
 		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get gripperinfo and return to page */
+static int get_gripper_info(char **ret_f_content)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+
+	*ret_f_content = get_file_content(FILE_GRIPPER);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+		root_json = cJSON_CreateArray();
+		buf = cJSON_Print(root_json);
+		*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+		if(*ret_f_content != NULL) {
+			strcpy((*ret_f_content), buf);
+		} else {
+			perror("calloc");
+
+			return FAIL;
+		}
+		ret = write_file(FILE_GRIPPER, buf);//write file
+		free(buf);
+		buf = NULL;
+		cJSON_Delete(root_json);
+		root_json = NULL;
+
+		return ret;
 	}
 
 	return SUCCESS;
@@ -329,6 +349,21 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(token, "J6_COLLISIONVALUE = ", 20)) {
 			strrpc(token, "J6_COLLISIONVALUE = ", "");
 			cJSON_AddStringToObject(root_json, "j6_collisionvalue", token);
+		} else if(!strncmp(token, "CTL_DI_FILTERTIME = ", 20)) {
+			strrpc(token, "CTL_DI_FILTERTIME = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di_filtertime", token);
+		} else if(!strncmp(token, "AXLE_DI_FILTERTIME = ", 21)) {
+			strrpc(token, "AXLE_DI_FILTERTIME = ", "");
+			cJSON_AddStringToObject(root_json, "axle_di_filtertime", token);
+		} else if(!strncmp(token, "CTL_AI0_FILTERTIME = ", 21)) {
+			strrpc(token, "CTL_AI0_FILTERTIME = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_ai0_filtertime", token);
+		} else if(!strncmp(token, "CTL_AI1_FILTERTIME = ", 21)) {
+			strrpc(token, "CTL_AI1_FILTERTIME = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_ai1_filtertime", token);
+		} else if(!strncmp(token, "AXLE_AI0_FILTERTIME = ", 22)) {
+			strrpc(token, "AXLE_AI0_FILTERTIME = ", "");
+			cJSON_AddStringToObject(root_json, "axle_ai0_filtertime", token);
 		}
 		/* get other line */
 		token = strtok(NULL, s);
@@ -389,8 +424,8 @@ void get(Webs *wp)
 		ret = get_user(&ret_f_content);
 	} else if(!strcmp(cmd, "get_template_data")) {
 		ret = get_template(&ret_f_content);
-	} else if(!strcmp(cmd, "get_state_feedback")) {
-		ret = get_state_feedback(&ret_f_content);
+	} else if(!strcmp(cmd, "get_tpd_name")) {
+		ret = get_tpd_name(&ret_f_content);
 	} else if(!strcmp(cmd, "get_log_name")) {
 		ret = get_log_name(&ret_f_content);
 	} else if(!strcmp(cmd, "get_log_data")) {
@@ -402,7 +437,9 @@ void get(Webs *wp)
 		}
 		ret = get_log_data(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_syscfg")) {
-		ret = get_system_cfg(&ret_f_content);
+		ret = get_syscfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_gripper_info")) {
+		ret = get_gripper_info(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
 	} else {

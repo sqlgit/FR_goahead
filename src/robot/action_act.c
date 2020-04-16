@@ -179,8 +179,9 @@ static int save_point(const cJSON *data_json)
 	char *buf = NULL;
 	char *f_content = NULL;
 	char joint[10] = {0};
-	double joint_value = 0;
+	char joint_value_string[10] = {0};
 	double tcp_value[6] = {0};
+	char tcp_value_string[6][10] = {0};
 	cJSON *name = NULL;
 	cJSON *speed = NULL;
 	cJSON *elbow_speed = NULL;
@@ -219,21 +220,20 @@ static int save_point(const cJSON *data_json)
 	}
 	joints_json = cJSON_CreateObject();
 	for (i = 0; i < 6; i++) {
-		joint_value = double_round(state->jt_cur_pos[i], 3);
-		//printf("joint_value = %.3lf\n", joint_value);
 		sprintf(joint, "j%d", (i+1));
-		cJSON_AddNumberToObject(joints_json, joint, joint_value);
+		sprintf(joint_value_string, "%.3lf", state->jt_cur_pos[i]);
+		cJSON_AddStringToObject(joints_json, joint, joint_value_string);
 	}
 	tcp_json = cJSON_CreateObject();
 	for (i = 0; i < 6; i++) {
-		tcp_value[i] = double_round(state->tl_cur_pos[i], 3);
+		sprintf(tcp_value_string[i], "%.3lf", state->tl_cur_pos[i]);
 	}
-	cJSON_AddNumberToObject(tcp_json, "x", tcp_value[0]);
-	cJSON_AddNumberToObject(tcp_json, "y", tcp_value[1]);
-	cJSON_AddNumberToObject(tcp_json, "z", tcp_value[2]);
-	cJSON_AddNumberToObject(tcp_json, "rx", tcp_value[3]);
-	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
-	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
+	cJSON_AddStringToObject(tcp_json, "x", tcp_value_string[0]);
+	cJSON_AddStringToObject(tcp_json, "y", tcp_value_string[1]);
+	cJSON_AddStringToObject(tcp_json, "z", tcp_value_string[2]);
+	cJSON_AddStringToObject(tcp_json, "rx", tcp_value_string[3]);
+	cJSON_AddStringToObject(tcp_json, "ry", tcp_value_string[4]);
+	cJSON_AddStringToObject(tcp_json, "rz", tcp_value_string[5]);
 
 	cJSON_AddStringToObject(newitem, "name", name->valuestring);
 	cJSON_AddStringToObject(newitem, "speed", speed->valuestring);

@@ -248,6 +248,46 @@ char *get_dir_filename(const char *dir_path)
 	return content;
 }
 
+/* open dir and return dir's file name only .txt file without name suffix*/
+// Ext:["test.txt","test2.txt"]
+char *get_dir_filename_txt(const char *dir_path)
+{
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
+	char *content = NULL;
+	char *buf = NULL;
+	char dir_filename[100] = {0};
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateArray();
+	dir = opendir(dir_path);
+	while ((ptr=readdir(dir)) != NULL) {
+		/* current dir OR parrent dir */
+		if(is_in(ptr->d_name, ".txt") == 1) {
+			strrpc(ptr->d_name, ".txt", "");
+			cJSON_AddStringToObject(root_json, "key", ptr->d_name);
+		}
+	}
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
+	content = (char *)calloc(1, strlen(buf)+1);
+	if(content != NULL) {
+		strcpy(content, buf);
+	} else {
+		perror("calloc");
+	}
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (dir != NULL) {
+		closedir(dir);
+		dir = NULL;
+	}
+
+	return content;
+}
+
 /* 实现字符串中指定字符串替换 */
 char *strrpc(char *str, const char *oldstr, const char *newstr)
 {

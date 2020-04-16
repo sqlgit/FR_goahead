@@ -80,6 +80,7 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON *joints_json = NULL;
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
+	cJSON *array_json = NULL;
 	int array[16] = {0};
 
 	//printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
@@ -93,6 +94,7 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	tcp_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
 	itoa(state->toolNum, key, 10);
+	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
@@ -109,8 +111,21 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	memset(array, 0, sizeof(array));
 	uint8_to_array(state->tl_dgt_input_l, state->tl_dgt_input_h, array);
 	cJSON_AddItemToObject(root_json, "tl_di", cJSON_CreateIntArray(array, 16));
-	cJSON_AddItemToObject(root_json, "ai", cJSON_CreateIntArray(state->analog_input, 6));
-	cJSON_AddItemToObject(root_json, "ao", cJSON_CreateIntArray(state->analog_output, 6));
+
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "ai", array_json);
+	for (i = 0; i < 6; i++) {
+		//printf("state->analog_input[%d] = %d\n", i, state->analog_input[i]);
+		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_input[i]/4095, 3));
+	}
+
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "ao", array_json);
+	for (i = 0; i < 6; i++) {
+		//printf("state->analog_output[%d] = %d\n", i, state->analog_output[i]);
+		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_output[i]/4095, 3));
+	}
+
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
 	cJSON_AddStringToObject(root_json, "toolnum", key);
 	cJSON_AddNumberToObject(root_json, "vel_radio", state->vel_ratio);
@@ -332,6 +347,7 @@ static int basic(char *ret_status, CTRL_STATE *state)
 			break;
 	}
 	buf = cJSON_Print(root_json);
+	//printf("basic buf = %s\n", buf);
 	strcpy(ret_status, buf);
 	free(buf);
 	buf = NULL;
@@ -372,7 +388,7 @@ static int vardata_feedback(char *ret_status)
 	cJSON *root = NULL;
 
 	if (fb_queneempty(&fb_quene)) {
-		fb_print_node_num(fb_quene);
+		//fb_print_node_num(fb_quene);
 		root_json = cJSON_CreateObject();
 
 		/*printf("state_fb.iCount= %d\n", state_fb.icount);

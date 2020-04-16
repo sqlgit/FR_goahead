@@ -33,10 +33,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content);
 static int sendfile(const cJSON *data_json, int content_len, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
+static int config_gripper(const cJSON *data_json, char *content);
+static int act_gripper(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
 static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
-static int jointtotcp(const cJSON *data_json, char *content);
+static int jointtotcf(const cJSON *data_json, char *content);
 //static int setvirtualrobotinitpos(const cJSON *data_json, char *content);
 static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content, char *recv_content);
 static int get_lua_content_size(const cJSON *data_json);
@@ -287,7 +289,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if(j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL|| x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL|| speed_2->valuestring == NULL || acc_2->valuestring == NULL || cmd_array[2] == NULL) {
 			goto end;
 		}
-		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s))\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
+		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if (!strncmp(lua_cmd, "Lin:", 4)) {
@@ -361,6 +363,47 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		*/
 		sprintf(tmp_content, "%sSetDO(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
+	/* set ToolDO */
+	} else if (!strncmp(lua_cmd, "SetToolDO:", 10)) {
+		strrpc(lua_cmd, "SetToolDO:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		*/
+		sprintf(tmp_content, "%sSetToolDO(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* get DI */
+	} else if (!strncmp(lua_cmd, "GetDI:", 6)) {
+		strrpc(lua_cmd, "GetDI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sGetDI(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* get ToolDI */
+	} else if (!strncmp(lua_cmd, "GetToolDI:", 10)) {
+		strrpc(lua_cmd, "GetToolDI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sGetToolDI(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
 	/* set AO */
 	} else if (!strncmp(lua_cmd, "SetAO:", 6)) {
 		strrpc(lua_cmd, "SetAO:", "");
@@ -375,16 +418,142 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		*/
 		sprintf(tmp_content, "%sSetAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
-	/* wait time */
+	/* set ToolAO */
+	} else if (!strncmp(lua_cmd, "SetToolAO:", 10)) {
+		strrpc(lua_cmd, "SetToolAO:", "");
+		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		*/
+		sprintf(tmp_content, "%sSetToolAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* get AI */
+	} else if (!strncmp(lua_cmd, "GetAI:", 6)) {
+		strrpc(lua_cmd, "GetAI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sGetAI(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* get ToolAI */
+	} else if (!strncmp(lua_cmd, "GetToolAI:", 10)) {
+		strrpc(lua_cmd, "GetToolAI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sGetToolAI(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* Wait Time */
 	} else if (!strncmp(lua_cmd, "WaitTime:", 9)) {
 		strrpc(lua_cmd, "WaitTime:", "");
 		sprintf(tmp_content, "%sWaitMs(%s)\n", file_content, lua_cmd);
+		strcpy(file_content, tmp_content);
+	/* WaitDI */
+	} else if (!strncmp(lua_cmd, "WaitDI:", 7)) {
+		strrpc(lua_cmd, "WaitDI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sWaitDI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* WaitToolDI */
+	} else if (!strncmp(lua_cmd, "WaitToolDI:", 11)) {
+		strrpc(lua_cmd, "WaitToolDI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sWaitToolDI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* WaitAI */
+	} else if (!strncmp(lua_cmd, "WaitAI:", 7)) {
+		strrpc(lua_cmd, "WaitAI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sWaitAI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* WaitToolAI */
+	} else if (!strncmp(lua_cmd, "WaitToolAI:", 11)) {
+		strrpc(lua_cmd, "WaitToolAI:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		sprintf(tmp_content, "%sWaitToolAI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+	/* set MoveTPD */
+	} else if (!strncmp(lua_cmd, "MoveTPD:", 8)) {
+		printf("enter moveTPD\n");
+		strrpc(lua_cmd, "MoveTPD:", "");
+		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		*/
+		sprintf(tmp_content, "%sMoveTPD(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		strcpy(file_content, tmp_content);
+		printf("finish moveTPD\n");
+	/* set MoveGripper */
+	} else if (!strncmp(lua_cmd, "MoveGripper:", 12)) {
+		strrpc(lua_cmd, "MoveGripper:", "");
+		if (separate_string_to_array(lua_cmd, ",", 5, 10, (char *)&cmd_array) != 5) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		printf("cmd_array[1] = %s", cmd_array[1]);
+		printf("cmd_array[2] = %s", cmd_array[2]);
+		printf("cmd_array[2] = %s", cmd_array[3]);
+		*/
+		sprintf(tmp_content, "%sMoveGripper(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
 		strcpy(file_content, tmp_content);
 	}
+	//printf("file_content = %s\n", file_content);
 	cJSON_Delete(f_json);
 	f_json = NULL;
 	free(f_content);
@@ -423,7 +592,7 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 		/* get other line */
 		token = strtok(NULL, s);
 	}
-	//printf("content = %s\n", content);
+	printf("content = %s\n", content);
 
 	return SUCCESS;
 }
@@ -528,6 +697,168 @@ static int movej(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
+/* 226 config_gripper */
+static int config_gripper(const cJSON *data_json, char *content)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	int array_size = 0;
+	int i = 0;
+	int flag = 0; // 0:new_id 1:exit_id
+	cJSON *newitem = NULL;
+	cJSON *item = NULL;
+	cJSON *exist_id = NULL;
+	cJSON *value = cJSON_GetObjectItem(data_json, "value");
+	if (value == NULL || value->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	cJSON *id = cJSON_GetObjectItem(value, "id");
+	cJSON *name = cJSON_GetObjectItem(value, "name");
+	cJSON *type = cJSON_GetObjectItem(value, "type");
+	cJSON *version = cJSON_GetObjectItem(value, "version");
+	cJSON *position = cJSON_GetObjectItem(value, "position");
+	cJSON *state = cJSON_GetObjectItem(value, "state");
+	if (id == NULL || id->valuestring == NULL || name == NULL || name->valuestring == NULL || type == NULL || type->valuestring == NULL || version == NULL || version->valuestring == NULL || position == NULL || position->valuestring == NULL || state == NULL || state->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	f_content = get_file_content(FILE_GRIPPER);
+	/* file is NULL */
+	if (f_content == NULL) {
+
+		return FAIL;
+	}
+	root_json = cJSON_Parse(f_content);
+	array_size = cJSON_GetArraySize(root_json); /*获取数组长度*/
+	for (i = 0; i < array_size; i++) {
+		item = cJSON_GetArrayItem(root_json, i);
+		exist_id = cJSON_GetObjectItem(item, "id");
+		// exist item
+		if (!strcmp(exist_id->valuestring, id->valuestring)) {
+			cJSON_ReplaceItemInObject(item, "id", cJSON_CreateString(id->valuestring));
+			cJSON_ReplaceItemInObject(item, "name", cJSON_CreateString(name->valuestring));
+			cJSON_ReplaceItemInObject(item, "type", cJSON_CreateString(type->valuestring));
+			cJSON_ReplaceItemInObject(item, "version", cJSON_CreateString(version->valuestring));
+			cJSON_ReplaceItemInObject(item, "position", cJSON_CreateString(position->valuestring));
+			cJSON_ReplaceItemInObject(item, "state", cJSON_CreateString(state->valuestring));
+
+			flag = 1;
+			break;
+		}
+	}
+	// add new item
+	if (flag == 0) {
+		newitem = cJSON_CreateObject();
+		cJSON_AddStringToObject(newitem, "id", id->valuestring);
+		cJSON_AddStringToObject(newitem, "name", name->valuestring);
+		cJSON_AddStringToObject(newitem, "type", type->valuestring);
+		cJSON_AddStringToObject(newitem, "version", version->valuestring);
+		cJSON_AddStringToObject(newitem, "position", position->valuestring);
+		cJSON_AddStringToObject(newitem, "state", state->valuestring);
+		cJSON_AddItemToArray(root_json, newitem);
+	}
+	buf = cJSON_Print(root_json);
+
+	ret = write_file(FILE_GRIPPER, buf);//write file
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	if (ret == FAIL) {
+
+		return FAIL;
+	}
+
+	cJSON *content_json = cJSON_GetObjectItem(data_json, "content");
+	if (content_json == NULL || content_json->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "%s", content_json->valuestring);
+
+	return SUCCESS;
+}
+
+/* 227 act_gripper */
+static int act_gripper(const cJSON *data_json, char *content)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	int array_size = 0;
+	int i = 0;
+	cJSON *item = NULL;
+	cJSON *exist_id = NULL;
+	cJSON *value = cJSON_GetObjectItem(data_json, "value");
+	if (value == NULL || value->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	cJSON *id = cJSON_GetObjectItem(value, "id");
+	cJSON *state = cJSON_GetObjectItem(value, "state");
+	if (id == NULL || id->valuestring == NULL || state == NULL || state->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	f_content = get_file_content(FILE_GRIPPER);
+	/* file is NULL */
+	if (f_content == NULL) {
+
+		return FAIL;
+	}
+	root_json = cJSON_Parse(f_content);
+	array_size = cJSON_GetArraySize(root_json); /*获取数组长度*/
+	for (i = 0; i < array_size; i++) {
+		item = cJSON_GetArrayItem(root_json, i);
+		exist_id = cJSON_GetObjectItem(item, "id");
+		// exist item
+		if (!strcmp(exist_id->valuestring, id->valuestring)) {
+			cJSON_ReplaceItemInObject(item, "id", cJSON_CreateString(id->valuestring));
+			cJSON_ReplaceItemInObject(item, "state", cJSON_CreateString(state->valuestring));
+
+			break;
+		}
+	}
+	buf = cJSON_Print(root_json);
+
+	ret = write_file(FILE_GRIPPER, buf);//write file
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	if (ret == FAIL) {
+
+		return FAIL;
+	}
+
+	cJSON *content_json = cJSON_GetObjectItem(data_json, "content");
+	if (content_json == NULL || content_json->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "%s", content_json->valuestring);
+
+	return SUCCESS;
+}
+
 /* 230 set_state_id */
 static int set_state_id(const cJSON *data_json, char *content)
 {
@@ -570,7 +901,6 @@ static int set_state(const cJSON *data_json, char *content)
 	}
 	/** clear state quene */
 	fb_clearquene(&fb_quene);
-	state_fb.cur_state = !(atoi(flag->valuestring));
 	sprintf(content, "SetCTLStateQuery(%s)", flag->valuestring);
 
 	return SUCCESS;
@@ -590,8 +920,8 @@ static int mode(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
-/* 320 jointtotcp */
-static int jointtotcp(const cJSON *data_json, char *content)
+/* 320 jointtotcf */
+static int jointtotcf(const cJSON *data_json, char *content)
 {
 	cJSON *j1 = cJSON_GetObjectItem(data_json, "j1");
 	cJSON *j2 = cJSON_GetObjectItem(data_json, "j2");
@@ -604,7 +934,7 @@ static int jointtotcp(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	sprintf(content, "JointToTCP(%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
+	sprintf(content, "JointToTCF(%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
 
 	return SUCCESS;
 }
@@ -802,6 +1132,38 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "设置速度百分比", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 208:
+			my_syslog("机器人操作", "单轴点动-点按开始", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 216:
+			my_syslog("机器人操作", "单轴点动-点按结束", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 222:
+			my_syslog("机器人操作", "控制箱DI滤波", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 223:
+			my_syslog("机器人操作", "工具DI滤波", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 224:
+			my_syslog("机器人操作", "控制箱AI滤波", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 225:
+			my_syslog("机器人操作", "工具AI0滤波", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 226:
+			my_syslog("机器人操作", "配置夹爪", "admin");
+			ret = config_gripper(data_json, content);
+			break;
+		case 227:
+			my_syslog("机器人操作", "激活和复位夹爪", "admin");
+			ret = act_gripper(data_json, content);
+			break;
 		case 230:
 			my_syslog("机器人操作", "设置查询图表id号", "admin");
 			ret = set_state_id(data_json, content);
@@ -809,6 +1171,18 @@ void set(Webs *wp)
 		case 231:
 			my_syslog("机器人操作", "状态查询开始/结束", "admin");
 			ret = set_state(data_json, content);
+			break;
+		case 232:
+			my_syslog("机器人操作", "单轴点动-长按开始", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 233:
+			my_syslog("机器人操作", "单轴点动-长按结束", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 302:
+			my_syslog("机器人操作", "机器手急停后电机使能", "admin");
+			ret = mode(data_json, content);
 			break;
 		case 303:
 			my_syslog("机器人操作", "更改机器人模式", "admin");
@@ -834,6 +1208,10 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "设置机器人负限位角度", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 312:
+			my_syslog("机器人操作", "零点设定", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 313:
 			my_syslog("机器人操作", "新建工具坐标系下发点", "admin");
 			ret = copy_content(data_json, content);
@@ -842,13 +1220,33 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "计算工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 315:
+			my_syslog("机器人操作", "开始记录TPD轨迹", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 316:
 			my_syslog("机器人操作", "应用当前显示的工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 317:
+			my_syslog("机器人操作", "停止记录TPD轨迹", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 318:
+			my_syslog("机器人操作", "删除TPD轨迹", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 320:
 			my_syslog("机器人操作", "计算TCF", "admin");
-			ret = jointtotcp(data_json, content);
+			ret = jointtotcf(data_json, content);
+			break;
+		case 321:
+			my_syslog("机器人操作", "机器人配置文件生效", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 400:
+			my_syslog("机器人操作", "获取控制器软件版本", "admin");
+			ret = copy_content(data_json, content);
 			break;
 	/*	case 321:
 			ret = setvirtualrobotinitpos(data_json, content);
@@ -937,9 +1335,8 @@ void set(Webs *wp)
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
-	if(strlen(recv_content) == 0) {
-		websWrite(wp, "success");
-	} else {
+
+	if (cmd == 320) {
 		/* 320 jointtotcp */
 		if (separate_string_to_array(recv_content, ",", 6, 10, (char *)&recv_array) != 6) {
 			perror("separate recv");
@@ -953,6 +1350,14 @@ void set(Webs *wp)
 		cJSON_AddStringToObject(recv_json, "ry", recv_array[4]);
 		cJSON_AddStringToObject(recv_json, "rz", recv_array[5]);
 		websWrite(wp, cJSON_Print(recv_json));
+	} else if (cmd == 400) {
+		/* 400 获取控制器软件版本 */
+		recv_json = cJSON_CreateObject();
+		cJSON_AddStringToObject(recv_json, "ver", recv_content);
+		printf("cJSON_Print(recv_json) = %s\n", cJSON_Print(recv_json));
+		websWrite(wp, cJSON_Print(recv_json));
+	} else {
+		websWrite(wp, "success");
 	}
 	websDone(wp);
 

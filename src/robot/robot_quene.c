@@ -152,10 +152,10 @@ int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_conten
 #if local
 					return SUCCESS;
 #else
-					if (atoi(p->data.msgcontent) == 1) {
+					if (!strcmp(p->data.msgcontent, "1")) {
 
 						return SUCCESS;
-					} else if (atoi(p->data.msgcontent) == 0) {
+					} else if (!strcmp(p->data.msgcontent, "0")) {
 
 						return FAIL;
 					} else {

@@ -12,6 +12,7 @@
 #define FILE_POINTS "/root/webserver/points/points.json"
 #define SYSTEM_CFG "/root/webserver/cfg/system.json"
 #define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"
+#define FILE_GRIPPER "/root/webserver/gripper/gripper.json"
 #define DIR_USER "/root/webserver/user/"
 #define DIR_LOG "/root/webserver/log/"
 #define DIR_TEMPLATE "/root/webserver/template/"
@@ -19,6 +20,7 @@
 #define DIR_POINTS "/root/webserver/points/"
 #define DIR_SHELL "/root/webserver/shell/"
 #define DIR_CFG "/root/webserver/cfg/"
+#define DIR_GRIPPER "/root/webserver/gripper/"
 #define DIR_FRUSER "/fruser/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
@@ -34,6 +36,7 @@ char *get_file_content(const char *file_path);
 char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);
 char *get_dir_filename(const char *dir_path);
+char *get_dir_filename_txt(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);
 int is_in(char *s, char *c);
 void delay_ms(const int timeout);
