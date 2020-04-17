@@ -75,7 +75,6 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	char joint[10] = {0};
 	double joint_value = 0;
 	double tcp_value[6] = {0};
-	char key[10] = {0};
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
 	cJSON *tcp_json = NULL;
@@ -93,7 +92,6 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	joints_json = cJSON_CreateObject();
 	tcp_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
-	itoa(state->toolNum, key, 10);
 	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
@@ -127,8 +125,8 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	}
 
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
-	cJSON_AddStringToObject(root_json, "toolnum", key);
-	cJSON_AddNumberToObject(root_json, "vel_radio", state->vel_ratio);
+	cJSON_AddNumberToObject(root_json, "toolnum", state->toolNum);
+	cJSON_AddNumberToObject(root_json, "vel_radio", double_round(state->vel_ratio, 3));
 	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);

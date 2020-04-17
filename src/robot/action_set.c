@@ -1030,6 +1030,8 @@ void set(Webs *wp)
 	int ret = FAIL;
 	int cmd = 0;
 	int port = 0;
+	int cmdport = 0;
+	int fileport = 0;
 	int content_len = sizeof(char)*MAX_BUF;
 	char recv_content[100] = {0};
 	char recv_array[6][10] = {{0}};
@@ -1039,6 +1041,16 @@ void set(Webs *wp)
 	cJSON *command = NULL;
 	cJSON *port_n = NULL;
 	cJSON *data = NULL;
+
+	/** virtual robot */
+	if (robot_type == 0) {
+		cmdport = VIR_CMD_PORT;
+		fileport = VIR_FILE_PORT;
+	/** Physical robot */
+	} else {
+		cmdport = CMD_PORT;
+		fileport = FILE_PORT;
+	}
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -1068,7 +1080,8 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	switch(cmd) {
-		case 100:/* 8082 */
+		case 100:// test
+			port = fileport;
 			content_len = get_lua_content_size(data_json);
 			if (content_len == FAIL) {
 				perror("get lua content size");
@@ -1086,26 +1099,32 @@ void set(Webs *wp)
 			ret = sendfile(data_json, content_len, content);
 			break;
 		case 101:
+			port = cmdport;
 			my_syslog("机器人操作", "开始程序示教", "admin");
 			ret = program_start(data_json, content);
 			break;
 		case 102:
+			port = cmdport;
 			my_syslog("机器人操作", "停止程序示教", "admin");
 			ret = program_stop(data_json, content);
 			break;
 		case 103:
+			port = cmdport;
 			my_syslog("机器人操作", "暂停程序示教", "admin");
 			ret = program_pause(data_json, content);
 			break;
 		case 104:
+			port = cmdport;
 			my_syslog("机器人操作", "恢复程序示教", "admin");
 			ret = program_resume(data_json, content);
 			break;
 		case 105:/* 8082 */
+			port = fileport;
 			my_syslog("机器人操作", "下发程序示教名称", "admin");
 			ret = sendfilename(data_json, content);
 			break;
 		case 106:/* 8082 */
+			port = fileport;
 			my_syslog("机器人操作", "下发程序示教文件内容", "admin");
 			content_len = get_lua_content_size(data_json);
 			//printf("content_len = %d\n", content_len);
@@ -1125,126 +1144,157 @@ void set(Webs *wp)
 			ret = sendfile(data_json, content_len, content);
 			break;
 		case 201:
+			port = cmdport;
 			my_syslog("机器人操作", "下发关节数据", "admin");
 			ret = movej(data_json, content);
 			break;
 		case 206:
+			port = cmdport;
 			my_syslog("机器人操作", "设置速度百分比", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 208:
+			port = cmdport;
 			my_syslog("机器人操作", "单轴点动-点按开始", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 216:
+			port = cmdport;
 			my_syslog("机器人操作", "单轴点动-点按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 222:
+			port = cmdport;
 			my_syslog("机器人操作", "控制箱DI滤波", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 223:
+			port = cmdport;
 			my_syslog("机器人操作", "工具DI滤波", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 224:
+			port = cmdport;
 			my_syslog("机器人操作", "控制箱AI滤波", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 225:
+			port = cmdport;
 			my_syslog("机器人操作", "工具AI0滤波", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 226:
+			port = cmdport;
 			my_syslog("机器人操作", "配置夹爪", "admin");
 			ret = config_gripper(data_json, content);
 			break;
 		case 227:
+			port = cmdport;
 			my_syslog("机器人操作", "激活和复位夹爪", "admin");
 			ret = act_gripper(data_json, content);
 			break;
 		case 230:
+			port = cmdport;
 			my_syslog("机器人操作", "设置查询图表id号", "admin");
 			ret = set_state_id(data_json, content);
 			break;
 		case 231:
+			port = cmdport;
 			my_syslog("机器人操作", "状态查询开始/结束", "admin");
 			ret = set_state(data_json, content);
 			break;
 		case 232:
+			port = cmdport;
 			my_syslog("机器人操作", "单轴点动-长按开始", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 233:
+			port = cmdport;
 			my_syslog("机器人操作", "单轴点动-长按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 302:
+			port = cmdport;
 			my_syslog("机器人操作", "机器手急停后电机使能", "admin");
 			ret = mode(data_json, content);
 			break;
 		case 303:
+			port = cmdport;
 			my_syslog("机器人操作", "更改机器人模式", "admin");
 			ret = mode(data_json, content);
 			break;
 		case 305:
+			port = cmdport;
 			my_syslog("机器人操作", "设置碰撞等级", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 306:
+			port = cmdport;
 			my_syslog("机器人操作", "设置负载重量", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 307:
+			port = cmdport;
 			my_syslog("机器人操作", "设置负载质心", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 308:
+			port = cmdport;
 			my_syslog("机器人操作", "设置机器人正限位角度", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 309:
+			port = cmdport;
 			my_syslog("机器人操作", "设置机器人负限位角度", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 312:
+			port = cmdport;
 			my_syslog("机器人操作", "零点设定", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 313:
+			port = cmdport;
 			my_syslog("机器人操作", "新建工具坐标系下发点", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 314:
+			port = cmdport;
 			my_syslog("机器人操作", "计算工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 315:
+			port = cmdport;
 			my_syslog("机器人操作", "开始记录TPD轨迹", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 316:
+			port = cmdport;
 			my_syslog("机器人操作", "应用当前显示的工具坐标系", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 317:
+			port = cmdport;
 			my_syslog("机器人操作", "停止记录TPD轨迹", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 318:
+			port = cmdport;
 			my_syslog("机器人操作", "删除TPD轨迹", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 320:
+			port = cmdport;
 			my_syslog("机器人操作", "计算TCF", "admin");
 			ret = jointtotcf(data_json, content);
 			break;
 		case 321:
+			port = cmdport;
 			my_syslog("机器人操作", "机器人配置文件生效", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 400:
+			port = cmdport;
 			my_syslog("机器人操作", "获取控制器软件版本", "admin");
 			ret = copy_content(data_json, content);
 			break;
@@ -1275,28 +1325,6 @@ void set(Webs *wp)
 		goto end;
 	}
 	//printf("content = %s\n", content);
-	/* get port */
-	port_n = cJSON_GetObjectItem(data, "port");
-	if (port_n == NULL) {
-		perror("json");
-		goto end;
-	}
-	port = port_n->valueint;
-
-	/** virtual robot */
-	if (robot_type == 0) {
-		switch (port) {
-			case CMD_PORT:
-				port = 8070;
-				break;
-			case FILE_PORT:
-				port = 8072;
-				break;
-			default:
-				perror("port");
-				goto end;
-		}
-	}
 
 	//printf("port = %d\n", port);
 	switch (port) {

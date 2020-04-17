@@ -188,14 +188,14 @@ static int socket_send(SOCKET_INFO *sock)
 
 			QElemType *node = &p->data;
 			/* /f/bIII{msghead}III{type}III{msglen}III{msgcontent}III/b/f */
-			int send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
+			int send_len = 4 + 3 + get_n_len(node->msghead) + 4 + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
 			char sendbuf[send_len];
 			memset(sendbuf, 0, send_len);
 			/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
-			sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
+			sprintf(sendbuf, "/f/bIII%dIII1III%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
 #if test_package
 			if (node->type == 106) {
-				sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
+				sprintf(sendbuf, "/f/bIII%dIII1III%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
 			}
 			if (node->type == 100) {
 				sprintf(sendbuf, "/b/f");
@@ -349,7 +349,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			strcpy(buf_memory, (tail + strlen(pack_tail)));
 
 			/* 把接收到的包按照分割符"III"进行分割 */
-			if (separate_string_to_array(frame, "III", 6, 100, (char *)&array) != 6) {
+			if (separate_string_to_array(frame, "III", 7, 100, (char *)&array) != 7) {
 				perror("separate recv");
 
 				continue;
@@ -362,7 +362,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
 				if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
 					/* set state to 2: have recv data */
-					strcpy(p->data.msgcontent, array[4]);
+					strcpy(p->data.msgcontent, array[5]);
 					p->data.msglen = strlen(p->data.msgcontent);
 					p->data.state = 2;
 				}
