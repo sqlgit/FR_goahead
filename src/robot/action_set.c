@@ -205,7 +205,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* ARC */
-	} else if(!strncmp(lua_cmd, "ARC:", 3)) {
+	} else if(!strncmp(lua_cmd, "ARC:", 4)) {
 		strrpc(lua_cmd, "ARC:", "");
 		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
 			perror("separate recv");
@@ -612,12 +612,57 @@ static int step_over(const cJSON *data_json, char *content)
 	/* PTP */
 	if (!strncmp(pgvalue->valuestring, "PTP:", 4)) {
 		cmd = 201;
+	/* ARC */
+	} else if (!strncmp(pgvalue->valuestring, "ARC:", 4)) {
+		cmd = 202;
 	/* Lin */
 	} else if (!strncmp(pgvalue->valuestring, "Lin:", 4)) {
 		cmd = 203;
+	/* set DO */
+	} else if (!strncmp(pgvalue->valuestring, "SetDO:", 6)) {
+		cmd = 204;
 	/* wait time*/
 	} else if (!strncmp(pgvalue->valuestring, "WaitTime:", 9)) {
 		cmd = 207;
+	/* set AO */
+	} else if (!strncmp(pgvalue->valuestring, "SetAO:", 6)) {
+		cmd = 209;
+	/* set ToolDO */
+	} else if (!strncmp(pgvalue->valuestring, "SetToolDO:", 10)) {
+		cmd = 210;
+	/* set ToolAO */
+	} else if (!strncmp(pgvalue->valuestring, "SetToolAO:", 10)) {
+		cmd = 211;
+	/* get DI */
+	} else if (!strncmp(pgvalue->valuestring, "GetDI:", 6)) {
+		cmd = 212;
+	/* get ToolDI */
+	} else if (!strncmp(pgvalue->valuestring, "GetToolDI:", 10)) {
+		cmd = 213;
+	/* get AI */
+	} else if (!strncmp(pgvalue->valuestring, "GetAI:", 6)) {
+		cmd = 214;
+	/* get ToolAI */
+	} else if (!strncmp(pgvalue->valuestring, "GetToolAI:", 10)) {
+		cmd = 215;
+	/* moveTPD */
+	} else if (!strncmp(pgvalue->valuestring, "MoveTPD:", 8)) {
+		cmd = 217;
+	/* waitDI */
+	} else if (!strncmp(pgvalue->valuestring, "WaitDI:", 7)) {
+		cmd = 218;
+	/* waitToolDI */
+	} else if (!strncmp(pgvalue->valuestring, "WaitToolDI:", 11)) {
+		cmd = 219;
+	/* waitAI */
+	} else if (!strncmp(pgvalue->valuestring, "WaitAI:", 7)) {
+		cmd = 220;
+	/* waitToolDI */
+	} else if (!strncmp(pgvalue->valuestring, "WaitToolAI:", 11)) {
+		cmd = 221;
+	/* MoveGripper */
+	} else if (!strncmp(pgvalue->valuestring, "MoveGripper:", 12)) {
+		cmd = 228;
 	/* error */
 	} else {
 		return FAIL;
@@ -1302,6 +1347,7 @@ void set(Webs *wp)
 			ret = setvirtualrobotinitpos(data_json, content);
 			break;*/
 		case 1001:/* 内部定义指令 */
+			port = cmdport;
 			ret = step_over(data_json, content);
 			if (ret == FAIL) {
 				perror("step over");
@@ -1309,6 +1355,7 @@ void set(Webs *wp)
 				goto end;
 			}
 			cmd = ret;
+			//printf("cmd = %d\n", cmd);
 			break;
 		default:
 			perror("cmd not found");
