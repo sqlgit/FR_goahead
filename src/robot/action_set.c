@@ -113,7 +113,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	char *f_content = NULL;
 	cJSON *f_json = NULL;
 	char tmp_content[len];
-	char cmd_array[10][10] = {{0}};
+	char cmd_array[10][20] = {{0}};
 	memset(tmp_content, 0, len);
 
 	cJSON *j1 = NULL;
@@ -151,7 +151,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* PTP */
 	if(!strncmp(lua_cmd, "PTP:", 4)) {
 		strrpc(lua_cmd, "PTP:", "");
-		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+		if (separate_string_to_array(lua_cmd, ",", 2, 20, (char *)&cmd_array) != 2) {
 			perror("separate recv");
 
 			return FAIL;
@@ -207,7 +207,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* ARC */
 	} else if(!strncmp(lua_cmd, "ARC:", 4)) {
 		strrpc(lua_cmd, "ARC:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -294,7 +294,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* Lin */
 	} else if (!strncmp(lua_cmd, "Lin:", 4)) {
 		strrpc(lua_cmd, "Lin:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -351,7 +351,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* set DO */
 	} else if (!strncmp(lua_cmd, "SetDO:", 6)) {
 		strrpc(lua_cmd, "SetDO:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -366,7 +366,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* set ToolDO */
 	} else if (!strncmp(lua_cmd, "SetToolDO:", 10)) {
 		strrpc(lua_cmd, "SetToolDO:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -381,7 +381,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* get DI */
 	} else if (!strncmp(lua_cmd, "GetDI:", 6)) {
 		strrpc(lua_cmd, "GetDI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
 			perror("separate recv");
 
 			return FAIL;
@@ -394,7 +394,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* get ToolDI */
 	} else if (!strncmp(lua_cmd, "GetToolDI:", 10)) {
 		strrpc(lua_cmd, "GetToolDI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
 			perror("separate recv");
 
 			return FAIL;
@@ -407,7 +407,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* set AO */
 	} else if (!strncmp(lua_cmd, "SetAO:", 6)) {
 		strrpc(lua_cmd, "SetAO:", "");
-		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+		if (separate_string_to_array(lua_cmd, ",", 2, 20, (char *)&cmd_array) != 2) {
 			perror("separate recv");
 
 			return FAIL;
@@ -421,7 +421,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* set ToolAO */
 	} else if (!strncmp(lua_cmd, "SetToolAO:", 10)) {
 		strrpc(lua_cmd, "SetToolAO:", "");
-		if (separate_string_to_array(lua_cmd, ",", 2, 10, (char *)&cmd_array) != 2) {
+		if (separate_string_to_array(lua_cmd, ",", 2, 20, (char *)&cmd_array) != 2) {
 			perror("separate recv");
 
 			return FAIL;
@@ -435,7 +435,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* get AI */
 	} else if (!strncmp(lua_cmd, "GetAI:", 6)) {
 		strrpc(lua_cmd, "GetAI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
 			perror("separate recv");
 
 			return FAIL;
@@ -448,7 +448,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* get ToolAI */
 	} else if (!strncmp(lua_cmd, "GetToolAI:", 10)) {
 		strrpc(lua_cmd, "GetToolAI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 1, 10, (char *)&cmd_array) != 1) {
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
 			perror("separate recv");
 
 			return FAIL;
@@ -466,7 +466,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* WaitDI */
 	} else if (!strncmp(lua_cmd, "WaitDI:", 7)) {
 		strrpc(lua_cmd, "WaitDI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -479,7 +479,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* WaitToolDI */
 	} else if (!strncmp(lua_cmd, "WaitToolDI:", 11)) {
 		strrpc(lua_cmd, "WaitToolDI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -492,7 +492,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* WaitAI */
 	} else if (!strncmp(lua_cmd, "WaitAI:", 7)) {
 		strrpc(lua_cmd, "WaitAI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -505,7 +505,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* WaitToolAI */
 	} else if (!strncmp(lua_cmd, "WaitToolAI:", 11)) {
 		strrpc(lua_cmd, "WaitToolAI:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
@@ -517,25 +517,25 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* set MoveTPD */
 	} else if (!strncmp(lua_cmd, "MoveTPD:", 8)) {
-		printf("enter moveTPD\n");
+	//	printf("enter moveTPD\n");
 		strrpc(lua_cmd, "MoveTPD:", "");
-		if (separate_string_to_array(lua_cmd, ",", 3, 10, (char *)&cmd_array) != 3) {
+		if (separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
 
 			return FAIL;
 		}
-		/*
+	/*
 		printf("cmd_array[0] = %s", cmd_array[0]);
 		printf("cmd_array[1] = %s", cmd_array[1]);
 		printf("cmd_array[2] = %s", cmd_array[2]);
-		*/
+	*/
 		sprintf(tmp_content, "%sMoveTPD(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
-		printf("finish moveTPD\n");
+	//	printf("finish moveTPD\n");
 	/* set MoveGripper */
 	} else if (!strncmp(lua_cmd, "MoveGripper:", 12)) {
 		strrpc(lua_cmd, "MoveGripper:", "");
-		if (separate_string_to_array(lua_cmd, ",", 5, 10, (char *)&cmd_array) != 5) {
+		if (separate_string_to_array(lua_cmd, ",", 5, 20, (char *)&cmd_array) != 5) {
 			perror("separate recv");
 
 			return FAIL;
@@ -1193,6 +1193,11 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "下发关节数据", "admin");
 			ret = movej(data_json, content);
 			break;
+		case 203:
+			port = cmdport;
+			my_syslog("机器人操作", "基坐标单轴点动-点按开始", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 206:
 			port = cmdport;
 			my_syslog("机器人操作", "设置速度百分比", "admin");
@@ -1200,12 +1205,12 @@ void set(Webs *wp)
 			break;
 		case 208:
 			port = cmdport;
-			my_syslog("机器人操作", "单轴点动-点按开始", "admin");
+			my_syslog("机器人操作", "关节坐标单轴点动-点按开始", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 216:
 			port = cmdport;
-			my_syslog("机器人操作", "单轴点动-点按结束", "admin");
+			my_syslog("机器人操作", "关节坐标单轴点动-点按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 222:
@@ -1258,10 +1263,15 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "单轴点动-长按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 234:
+			port = cmdport;
+			my_syslog("机器人操作", "基坐标单轴点动-点按结束", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 302:
 			port = cmdport;
 			my_syslog("机器人操作", "机器手急停后电机使能", "admin");
-			ret = mode(data_json, content);
+			ret = copy_content(data_json, content);
 			break;
 		case 303:
 			port = cmdport;

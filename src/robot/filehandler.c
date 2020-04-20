@@ -41,7 +41,7 @@ void upload(Webs *wp)
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
 			} else if (strcmp(up->clientFilename, "system.json") == 0) {
-				upfile = sfmt("%s", SYSTEM_CFG);
+				upfile = sfmt("%s", FILE_CFG);
 				strcpy(filename, upfile);
 				flag = 1;
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {

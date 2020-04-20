@@ -23,6 +23,7 @@ extern SOCKET_INFO socket_vir_file;
 extern SOCKET_INFO socket_vir_status;
 extern STATE_FEEDBACK state_fb;
 extern int robot_type;
+static int test_index = 0;
 
 /********************************* Function declaration ***********************/
 
@@ -383,11 +384,13 @@ static int vardata_feedback(char *ret_status)
 	char key[10] = {0};
 	char *buf = NULL;
 	cJSON *root_json = NULL;
+	cJSON *value_json = NULL;
 	cJSON *root = NULL;
 
 	if (fb_queneempty(&fb_quene)) {
 		//fb_print_node_num(fb_quene);
 		root_json = cJSON_CreateObject();
+		value_json = cJSON_CreateObject();
 
 		/*printf("state_fb.iCount= %d\n", state_fb.icount);
 		printf("state_ret[0][0] = %f\n", state_ret[0][0]);
@@ -397,13 +400,16 @@ static int vardata_feedback(char *ret_status)
 		for (i = 0; i < state_fb.icount; i++) {
 			itoa(state_fb.id[i], key, 10);
 			root = cJSON_CreateArray();
-			cJSON_AddItemToObject(root_json, key, root);
+			cJSON_AddItemToObject(value_json, key, root);
 			for (j = 0; j < 100; j++) {
 				//cJSON_AddNumberToObject(root, "key", state_fb.var[j][i]);
 				cJSON_AddNumberToObject(root, "key", fb_quene.front->next->data.fb[j][i]);
 				//cJSON_AddNumberToObject(root, "key", 100);
 			}
 		}
+		cJSON_AddItemToObject(root_json, "value", value_json);
+		test_index++;
+		cJSON_AddNumberToObject(root_json, "index", test_index);
 		buf = cJSON_Print(root_json);
 		//printf("send to GUI = %s\n", buf);
 		strcpy(ret_status, buf);

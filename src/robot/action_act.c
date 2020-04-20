@@ -351,7 +351,7 @@ static int log_management(const cJSON *data_json)
 	root_json = cJSON_CreateObject();
 	cJSON_AddStringToObject(root_json, "log_count", count->valuestring);
 	buf = cJSON_Print(root_json);
-	ret = write_file(SYSTEM_CFG, buf);
+	ret = write_file(FILE_CFG, buf);
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(root_json);

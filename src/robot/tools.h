@@ -10,7 +10,7 @@
 #define FAIL 0
 #define ROBOT_CFG "/root/robot/user.config"
 #define FILE_POINTS "/root/webserver/points/points.json"
-#define SYSTEM_CFG "/root/webserver/cfg/system.json"
+#define FILE_CFG "/root/webserver/cfg/system.json"
 #define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"
 #define FILE_GRIPPER "/root/webserver/gripper/gripper.json"
 #define DIR_USER "/root/webserver/user/"

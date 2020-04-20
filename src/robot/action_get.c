@@ -184,7 +184,7 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 /* get system cfg and return to page */
 static int get_syscfg(char **ret_f_content)
 {
-	*ret_f_content = get_file_content(SYSTEM_CFG);
+	*ret_f_content = get_file_content(FILE_CFG);
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
@@ -206,7 +206,7 @@ static int get_gripper_info(char **ret_f_content)
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
-		root_json = cJSON_CreateArray();
+		/*root_json = cJSON_CreateArray();
 		buf = cJSON_Print(root_json);
 		*ret_f_content = (char *)calloc(1, strlen(buf)+1);
 		if(*ret_f_content != NULL) {
@@ -222,7 +222,8 @@ static int get_gripper_info(char **ret_f_content)
 		cJSON_Delete(root_json);
 		root_json = NULL;
 
-		return ret;
+		return ret;*/
+		return FAIL;
 	}
 
 	return SUCCESS;
