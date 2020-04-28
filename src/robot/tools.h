@@ -42,10 +42,11 @@ int is_in(char *s, char *c);
 void delay_ms(const int timeout);
 double double_round(double dVal, int iPlaces);
 void uint8_to_array(int n1, int n2, int *array);
+void uint16_to_array(int n, int *array);
 int BytesToString(BYTE *pSrc, char *pDst, int nSrcLength);
 int StringToBytes(char *pSrc, BYTE *pDst, int nSrcLength);
 int my_syslog(const char *class, const char *content, const char *user);
-int delete_log_file();
+int delete_log_file(int flag);
 void *create_dir(const char *dir_path);
 
 #endif

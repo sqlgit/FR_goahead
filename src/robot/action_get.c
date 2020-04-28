@@ -13,7 +13,6 @@ extern int robot_type;
 extern STATE_FEEDBACK state_fb;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
-extern int log_count;
 
 /********************************* Function declaration ***********************/
 
@@ -26,7 +25,6 @@ static int get_tpd_name(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_syscfg(char **ret_f_content);
-static int get_gripper_info(char **ret_f_content);
 static int get_robot_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
@@ -195,40 +193,6 @@ static int get_syscfg(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get gripperinfo and return to page */
-static int get_gripper_info(char **ret_f_content)
-{
-	int ret = FAIL;
-	char *buf = NULL;
-	cJSON *root_json = NULL;
-
-	*ret_f_content = get_file_content(FILE_GRIPPER);
-	/* file is NULL */
-	if (*ret_f_content == NULL) {
-		perror("get file content");
-		/*root_json = cJSON_CreateArray();
-		buf = cJSON_Print(root_json);
-		*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-		if(*ret_f_content != NULL) {
-			strcpy((*ret_f_content), buf);
-		} else {
-			perror("calloc");
-
-			return FAIL;
-		}
-		ret = write_file(FILE_GRIPPER, buf);//write file
-		free(buf);
-		buf = NULL;
-		cJSON_Delete(root_json);
-		root_json = NULL;
-
-		return ret;*/
-		return FAIL;
-	}
-
-	return SUCCESS;
-}
-
 /* get robot cfg and return to page */
 static int get_robot_cfg(char **ret_f_content)
 {
@@ -365,6 +329,30 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(token, "AXLE_AI0_FILTERTIME = ", 22)) {
 			strrpc(token, "AXLE_AI0_FILTERTIME = ", "");
 			cJSON_AddStringToObject(root_json, "axle_ai0_filtertime", token);
+		} else if(!strncmp(token, "CTL_DO8_CONFIG = ", 17)) {
+			strrpc(token, "CTL_DO8_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do8_config", token);
+		} else if(!strncmp(token, "CTL_DO9_CONFIG = ", 17)) {
+			strrpc(token, "CTL_DO9_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do9_config", token);
+		} else if(!strncmp(token, "CTL_DO10_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO10_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do10_config", token);
+		} else if(!strncmp(token, "CTL_DO11_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO11_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do11_config", token);
+		} else if(!strncmp(token, "CTL_DO12_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO12_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do12_config", token);
+		} else if(!strncmp(token, "CTL_DO13_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO13_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do13_config", token);
+		} else if(!strncmp(token, "CTL_DO14_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO14_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do14_config", token);
+		} else if(!strncmp(token, "CTL_DO15_CONFIG = ", 18)) {
+			strrpc(token, "CTL_DO15_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do15_config", token);
 		}
 		/* get other line */
 		token = strtok(NULL, s);
@@ -439,8 +427,6 @@ void get(Webs *wp)
 		ret = get_log_data(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_syscfg")) {
 		ret = get_syscfg(&ret_f_content);
-	} else if(!strcmp(cmd, "get_gripper_info")) {
-		ret = get_gripper_info(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
 	} else {

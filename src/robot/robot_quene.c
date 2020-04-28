@@ -15,10 +15,10 @@ void createnode(QElemType *pnode, int type, char *msgcontent)
 {
 	bzero(pnode, sizeof(QElemType));
 
+	pnode->msghead = 0;
 	pnode->type = type;
-	pnode->msgcontent = msgcontent;
+	strcpy(pnode->msgcontent, msgcontent);
 	pnode->msglen = strlen(pnode->msgcontent);
-	pnode->state = 0;
 }
 
 /* 初始化带有头结点队列 */
@@ -127,7 +127,6 @@ void printquene(LinkQuene q)
 		printf("p->data.msghead = %d\t", p->data.msghead);
 		printf("p->data.msgcontent = %s\t", p->data.msgcontent);
 		printf("p->data.msglen = %d\t", p->data.msglen);
-		printf("p->data.state = %d\t", p->data.state);
 		p = p->next;
 		printf("\n");
 	}
@@ -148,7 +147,7 @@ int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_conten
 			/* 最多等待 10 s */
 			for (i = 0; i < 1000; i++) {
 				/* 标志已经拿到服务器端的返回值 */
-				if (p->data.state == 2) {
+			//	if (p->data.state == 2) {
 #if local
 					return SUCCESS;
 #else
@@ -166,7 +165,7 @@ int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_conten
 						return SUCCESS;
 					}
 #endif
-				}
+			//	}
 				delay(10);
 			}
 		}

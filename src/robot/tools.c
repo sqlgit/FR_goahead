@@ -6,7 +6,6 @@
 #include	"cJSON.h"
 
 /********************************* Defines ************************************/
-extern int log_count;
 
 /*********************************** Code *************************************/
 
@@ -358,13 +357,24 @@ void uint8_to_array(int n1, int n2, int *array)
 
 	for(i = 0; i < 16; i++) {
 		if (i < 8) {
-			array[i]=n1%2;
-			n1=n1/2;
+			array[i] = n1%2;
+			n1 = n1/2;
 		}
 		if (i >= 8) {
 			array[i] = n2%2;
 			n2 = n2/2;
 		}
+	}
+}
+
+/* uint16_t type value to save in array[16] */
+void uint16_to_array(int n, int *array)
+{
+	int i = 0;
+
+	for(i = 0; i < 16; i++) {
+		array[i] = n%2;
+		n = n/2;
 	}
 }
 
@@ -449,7 +459,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	f_content = get_file_content(dir_filename);
 	/* file is NULL */
 	if (f_content == NULL) {
-		delete_log_file();
+		delete_log_file(1);
 		root_json = cJSON_CreateArray();
 	} else {
 		root_json = cJSON_Parse(f_content);
@@ -475,13 +485,33 @@ int my_syslog(const char *class, const char *content, const char *user)
 	return SUCCESS;
 }
 
-/* delete log file: 删除最旧的 log 文件 */
-int delete_log_file()
+/* delete log file: 删除旧的 log 文件, 只保留 webserver 系统配置文件中的 log_count 个 log 文件 */
+int delete_log_file(int flag)
 {
 	char cmd[128] = {0};
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	cJSON *count = NULL;
+	int log_count = 0;
 
-	sprintf(cmd, "sh /root/webserver/shell/delete_file.sh %d", log_count);
-	system(cmd);
+	f_content = get_file_content(FILE_CFG);
+	/* file is not NULL */
+	if (f_content != NULL) {
+		root_json = cJSON_Parse(f_content);
+		if (root_json != NULL) {
+			count = cJSON_GetObjectItem(root_json, "log_count");
+			if (count != NULL) {
+				printf("count = %d\n", count->valuestring);
+				if (flag) {//此时马上需要新增一个 log文件，所以需要多删除一个最旧的 log 文件
+					log_count = atoi(count->valuestring) - 1;
+				} else {
+					log_count = atoi(count->valuestring);
+				}
+				sprintf(cmd, "sh /root/webserver/shell/delete_file.sh %d", log_count);
+				system(cmd);
+			}
+		}
+	}
 
 	return SUCCESS;
 }

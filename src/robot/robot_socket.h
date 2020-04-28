@@ -25,6 +25,7 @@
 #define BUFFSIZE 1300000*2
 #define STATEFB_SIZE 12000
 #define STATE_FB_ID 3
+#define MAXGRIPPER 8
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
@@ -110,12 +111,22 @@ typedef struct _CTRL_STATE
 } CTRL_STATE;
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+/** GRIPPERS_CONFIG_INFO 结构体 */
+typedef struct _GRIPPERS_CONFIG_INFO
+{
+	uint8_t id_company[MAXGRIPPER];
+	uint8_t id_device[MAXGRIPPER];
+	uint8_t id_softversion [MAXGRIPPER];
+	uint8_t id_bus[MAXGRIPPER];
+} GRIPPERS_CONFIG_INFO;
+#pragma pack(pop)
+
 /** 状态查询结构体 */
 typedef struct _STATE_FEEDBACK
 {
 	int id[10];			// state feedback id
 	int icount;			// state feedback icount
-	//int cur_state;		// current feedback state (1:stop  0:start)
 } STATE_FEEDBACK;
 
 /* socket 相关信息结构体 */
@@ -127,10 +138,15 @@ typedef struct _SOCKET_INFO
 	int select_timeout; // socket select timeout
 	uint8_t connect_status; // socket 连接状态
 	int msghead; // 当前有记录的消息头
-	LinkQuene quene;
+	LinkQuene quene; //非即时指令队列
+	LinkQuene im_quene; //即时指令队列
+	LinkQuene ret_quene; //指令执行结果反馈队列
 	pthread_t t_socket_send;
 	pthread_t t_socket_recv;
-	pthread_mutex_t mute;
+	pthread_mutex_t mut; // socket 锁
+	pthread_mutex_t mute;//非即时指令队列锁
+	pthread_mutex_t im_mute;//即时指令队列锁
+	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
 } SOCKET_INFO;
 
 /********************************* Function declaration ***********************/

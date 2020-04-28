@@ -5,16 +5,12 @@
 
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
-extern int log_count;
 
 void upload(Webs *wp)
 {
 	WebsKey         *s;
 	WebsUpload      *up;
 	char            *upfile;
-	char *f_content = NULL;
-	cJSON *root_json = NULL;
-	cJSON *count = NULL;
 	char filename[128] = {0};
 
 	int flag = 0;
@@ -63,19 +59,7 @@ void upload(Webs *wp)
 	}
 	printf("filename = %s\n", filename);
 	if (flag == 1) {
-		f_content = get_file_content(filename);
-		/* file is NULL */
-		if (f_content != NULL) {
-			root_json = cJSON_Parse(f_content);
-			if (root_json != NULL) {
-				count = cJSON_GetObjectItem(root_json, "log_count");
-				if (count != NULL) {
-					printf("count = %d\n", count->valuestring);
-					log_count = atoi(count->valuestring);
-					delete_log_file();
-				}
-			}
-		}
+		delete_log_file(0);
 	}
 
 	websSetStatus(wp, 204);

@@ -33,14 +33,14 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content);
 static int sendfile(const cJSON *data_json, int content_len, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
-static int config_gripper(const cJSON *data_json, char *content);
-static int act_gripper(const cJSON *data_json, char *content);
+//static int config_gripper(const cJSON *data_json, char *content);
+//static int act_gripper(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
 static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
 static int jointtotcf(const cJSON *data_json, char *content);
 //static int setvirtualrobotinitpos(const cJSON *data_json, char *content);
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content, char *recv_content);
+static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -737,13 +737,13 @@ static int movej(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, speed->valuestring, acc->valuestring, ovl->valuestring);
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, speed->valuestring, acc->valuestring, ovl->valuestring);
 
 	return SUCCESS;
 }
 
 /* 226 config_gripper */
-static int config_gripper(const cJSON *data_json, char *content)
+/*static int config_gripper(const cJSON *data_json, char *content)
 {
 	int ret = FAIL;
 	char *buf = NULL;
@@ -773,13 +773,13 @@ static int config_gripper(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	f_content = get_file_content(FILE_GRIPPER);
-	/* file is NULL */
+	// file is NULL
 	if (f_content == NULL) {
 
 		return FAIL;
 	}
 	root_json = cJSON_Parse(f_content);
-	array_size = cJSON_GetArraySize(root_json); /*获取数组长度*/
+	array_size = cJSON_GetArraySize(root_json); //获取数组长度
 	for (i = 0; i < array_size; i++) {
 		item = cJSON_GetArrayItem(root_json, i);
 		exist_id = cJSON_GetObjectItem(item, "id");
@@ -832,10 +832,10 @@ static int config_gripper(const cJSON *data_json, char *content)
 	sprintf(content, "%s", content_json->valuestring);
 
 	return SUCCESS;
-}
+}*/
 
 /* 227 act_gripper */
-static int act_gripper(const cJSON *data_json, char *content)
+/*static int act_gripper(const cJSON *data_json, char *content)
 {
 	int ret = FAIL;
 	char *buf = NULL;
@@ -859,13 +859,13 @@ static int act_gripper(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	f_content = get_file_content(FILE_GRIPPER);
-	/* file is NULL */
+	// file is NULL
 	if (f_content == NULL) {
 
 		return FAIL;
 	}
 	root_json = cJSON_Parse(f_content);
-	array_size = cJSON_GetArraySize(root_json); /*获取数组长度*/
+	array_size = cJSON_GetArraySize(root_json); //获取数组长度
 	for (i = 0; i < array_size; i++) {
 		item = cJSON_GetArrayItem(root_json, i);
 		exist_id = cJSON_GetObjectItem(item, "id");
@@ -902,7 +902,7 @@ static int act_gripper(const cJSON *data_json, char *content)
 	sprintf(content, "%s", content_json->valuestring);
 
 	return SUCCESS;
-}
+}*/
 
 /* 230 set_state_id */
 static int set_state_id(const cJSON *data_json, char *content)
@@ -1004,9 +1004,9 @@ static int jointtotcf(const cJSON *data_json, char *content)
 	return SUCCESS;
 }*/
 
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content, char *recv_content)
+static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
 {
-	int ret = FAIL;
+	//int ret = FAIL;
 	/* socket 连接已经断开 */
 	if (sock->connect_status == 0) {
 
@@ -1016,28 +1016,38 @@ static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mut
 	/* 创建结点 */
 	QElemType node;
 	createnode(&node, type, send_content);
-
-	/* 创建结点插入队列中 */
-	pthread_mutex_lock(mute);
+	pthread_mutex_lock(&sock->mut);
 	if (sock->msghead >= MAX_MSGHEAD) {
 		sock->msghead = 1;
 	} else {
 		sock->msghead++;
 	}
 	node.msghead = sock->msghead;
-	enquene(&sock->quene, node);
+	pthread_mutex_unlock(&sock->mut);
+	/* 创建结点插入队列中 */
+	if (cmd_type == 1) { //非即时指令
+		pthread_mutex_lock(&sock->mute);
+		enquene(&sock->quene, node);
+		pthread_mutex_unlock(&sock->mute);
+	} else { //即时指令
+		pthread_mutex_lock(&sock->im_mute);
+		enquene(&sock->im_quene, node);
+		pthread_mutex_unlock(&sock->im_mute);
+	}
 	//pthread_cond_signal(&cond_cmd);
-	pthread_mutex_unlock(mute);
 
-	ret = quene_recv_result(node, sock->quene, recv_content);
+	//ret = quene_recv_result(node, sock->quene, recv_content);
 
 	/* 把结点从队列中删除 */
+	/*
 	pthread_mutex_lock(mute);
 	dequene(&sock->quene, node);
 	pthread_mutex_unlock(mute);
+	*/
 	// TODO: add signal
 
-	return ret;
+	//return ret;
+	return SUCCESS;
 }
 
 /* get lua content size */
@@ -1077,8 +1087,9 @@ void set(Webs *wp)
 	int port = 0;
 	int cmdport = 0;
 	int fileport = 0;
+	int cmd_type = 1;// 1:非即时指令 0:即时指令
 	int content_len = sizeof(char)*MAX_BUF;
-	char recv_content[100] = {0};
+	//char recv_content[100] = {0};
 	char recv_array[6][10] = {{0}};
 	cJSON *recv_json = NULL;
 
@@ -1145,21 +1156,25 @@ void set(Webs *wp)
 			break;
 		case 101:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "开始程序示教", "admin");
 			ret = program_start(data_json, content);
 			break;
 		case 102:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "停止程序示教", "admin");
 			ret = program_stop(data_json, content);
 			break;
 		case 103:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "暂停程序示教", "admin");
 			ret = program_pause(data_json, content);
 			break;
 		case 104:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "恢复程序示教", "admin");
 			ret = program_resume(data_json, content);
 			break;
@@ -1210,6 +1225,7 @@ void set(Webs *wp)
 			break;
 		case 216:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "关节坐标单轴点动-点按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
@@ -1236,12 +1252,19 @@ void set(Webs *wp)
 		case 226:
 			port = cmdport;
 			my_syslog("机器人操作", "配置夹爪", "admin");
-			ret = config_gripper(data_json, content);
+			//ret = config_gripper(data_json, content);
+			ret = copy_content(data_json, content);
 			break;
 		case 227:
 			port = cmdport;
 			my_syslog("机器人操作", "激活和复位夹爪", "admin");
-			ret = act_gripper(data_json, content);
+			//ret = act_gripper(data_json, content);
+			ret = copy_content(data_json, content);
+			break;
+		case 229:
+			port = cmdport;
+			my_syslog("机器人操作", "读取夹爪配置信息", "admin");
+			ret = copy_content(data_json, content);
 			break;
 		case 230:
 			port = cmdport;
@@ -1260,11 +1283,13 @@ void set(Webs *wp)
 			break;
 		case 233:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "单轴点动-长按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 234:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "基坐标单轴点动-点按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
@@ -1305,6 +1330,7 @@ void set(Webs *wp)
 			break;
 		case 312:
 			port = cmdport;
+			cmd_type = 0;
 			my_syslog("机器人操作", "零点设定", "admin");
 			ret = copy_content(data_json, content);
 			break;
@@ -1348,6 +1374,11 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "机器人配置文件生效", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 324:
+			port = cmdport;
+			my_syslog("机器人操作", "设置 IO 配置", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 400:
 			port = cmdport;
 			my_syslog("机器人操作", "获取控制器软件版本", "admin");
@@ -1387,19 +1418,19 @@ void set(Webs *wp)
 	switch (port) {
 		/* send cmd to 8080 port */
 		case CMD_PORT:
-			ret = enquene_result_dequene(&socket_cmd, cmd, &socket_cmd.mute, content, recv_content);
+			ret = enquene_result_dequene(&socket_cmd, cmd, content, cmd_type);
 			break;
 		/* send file cmd to 8082 port */
 		case FILE_PORT:
-			ret = enquene_result_dequene(&socket_file, cmd, &socket_file.mute, content, recv_content);
+			ret = enquene_result_dequene(&socket_file, cmd, content, cmd_type);
 			break;
 		/* send cmd to 8070 port */
 		case VIR_CMD_PORT:
-			ret = enquene_result_dequene(&socket_vir_cmd, cmd, &socket_vir_cmd.mute, content, recv_content);
+			ret = enquene_result_dequene(&socket_vir_cmd, cmd, content, cmd_type);
 			break;
 		/* send file cmd to 8072 port */
 		case VIR_FILE_PORT:
-			ret = enquene_result_dequene(&socket_vir_file, cmd, &socket_vir_file.mute, content, recv_content);
+			ret = enquene_result_dequene(&socket_vir_file, cmd, content, cmd_type);
 			break;
 		default:
 			perror("port");
@@ -1420,30 +1451,7 @@ void set(Webs *wp)
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
-
-	if (cmd == 320) {
-		/* 320 jointtotcp */
-		if (separate_string_to_array(recv_content, ",", 6, 10, (char *)&recv_array) != 6) {
-			perror("separate recv");
-			goto end;
-		}
-		recv_json = cJSON_CreateObject();
-		cJSON_AddStringToObject(recv_json, "x", recv_array[0]);
-		cJSON_AddStringToObject(recv_json, "y", recv_array[1]);
-		cJSON_AddStringToObject(recv_json, "z", recv_array[2]);
-		cJSON_AddStringToObject(recv_json, "rx", recv_array[3]);
-		cJSON_AddStringToObject(recv_json, "ry", recv_array[4]);
-		cJSON_AddStringToObject(recv_json, "rz", recv_array[5]);
-		websWrite(wp, cJSON_Print(recv_json));
-	} else if (cmd == 400) {
-		/* 400 获取控制器软件版本 */
-		recv_json = cJSON_CreateObject();
-		cJSON_AddStringToObject(recv_json, "ver", recv_content);
-		printf("cJSON_Print(recv_json) = %s\n", cJSON_Print(recv_json));
-		websWrite(wp, cJSON_Print(recv_json));
-	} else {
-		websWrite(wp, "success");
-	}
+	websWrite(wp, "success");
 	websDone(wp);
 
 	return;

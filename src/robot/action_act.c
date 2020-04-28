@@ -12,7 +12,6 @@
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
-extern int log_count;
 
 /********************************* Function declaration ***********************/
 
@@ -345,8 +344,6 @@ static int log_management(const cJSON *data_json)
 
 		return FAIL;
 	}
-	log_count = atoi(count->valuestring);
-	printf("log_count = %d\n", log_count);
 
 	root_json = cJSON_CreateObject();
 	cJSON_AddStringToObject(root_json, "log_count", count->valuestring);
@@ -357,7 +354,7 @@ static int log_management(const cJSON *data_json)
 	cJSON_Delete(root_json);
 	root_json = NULL;
 
-	delete_log_file();
+	delete_log_file(0);
 
 	return ret;
 }

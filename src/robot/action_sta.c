@@ -74,14 +74,17 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	int i = 0;
 	char *buf = NULL;
 	char joint[10] = {0};
+	char content[100] = {0};
 	double joint_value = 0;
 	double tcp_value[6] = {0};
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
+	cJSON *feedback_json = NULL;
 	cJSON *array_json = NULL;
 	int array[16] = {0};
+	Qnode *p = NULL;
 
 	//printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
 	//printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
@@ -92,12 +95,24 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
 	tcp_json = cJSON_CreateObject();
+	feedback_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
 	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
+	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
+
+	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
+	memset(array, 0, sizeof(array));
+	uint16_to_array(state->gripperActStatus, array);
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "gripper_state", array_json);
+	for (i = 0; i < 8; i++) {
+		cJSON_AddNumberToObject(array_json, "key", array[i]);
+	}
+
 	memset(array, 0, sizeof(array));
 	uint8_to_array(state->cl_dgt_output_l, state->cl_dgt_output_h, array);
 	cJSON_AddItemToObject(root_json, "cl_do", cJSON_CreateIntArray(array, 16));
@@ -144,6 +159,37 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON_AddNumberToObject(tcp_json, "rx", tcp_value[3]);
 	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
 	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
+
+	p = socket_cmd.ret_quene.front->next;
+	while (p != NULL) {
+		memset(content, 0, sizeof(content));
+		sprintf(content, "%d", p->data.type);
+		printf("content = %s\n", content);
+		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+		cJSON_AddStringToObject(feedback_json, content,  p->data.msgcontent);
+		/* 删除结点信息 */
+		pthread_mutex_lock(&socket_cmd.ret_mute);
+		dequene(&socket_cmd.ret_quene, p->data);
+		pthread_mutex_unlock(&socket_cmd.ret_mute);
+		p = p->next;
+	}
+
+	p = socket_file.ret_quene.front->next;
+	while (p != NULL) {
+		memset(content, 0, sizeof(content));
+		//sprintf(content, "%d%s", p->data.type, p->data.msgcontent);
+		//cJSON_AddStringToObject(feedback_json, "key", content);
+		sprintf(content, "%d", p->data.type);
+		printf("content = %s\n", content);
+		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
+		/* 删除结点信息 */
+		pthread_mutex_lock(&socket_file.ret_mute);
+		dequene(&socket_file.ret_quene, p->data);
+		pthread_mutex_unlock(&socket_file.ret_mute);
+		p = p->next;
+	}
+	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
 	if (state->aliveSlaveNumError == 1) {
 		cJSON_AddStringToObject(error_json, "key", "活动从站数量错误");
