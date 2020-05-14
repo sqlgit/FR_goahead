@@ -33,13 +33,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content);
 static int sendfile(const cJSON *data_json, int content_len, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
-//static int config_gripper(const cJSON *data_json, char *content);
-//static int act_gripper(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
 static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
 static int jointtotcf(const cJSON *data_json, char *content);
-//static int setvirtualrobotinitpos(const cJSON *data_json, char *content);
 static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 static int get_lua_content_size(const cJSON *data_json);
 
@@ -742,168 +739,6 @@ static int movej(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
-/* 226 config_gripper */
-/*static int config_gripper(const cJSON *data_json, char *content)
-{
-	int ret = FAIL;
-	char *buf = NULL;
-	char *f_content = NULL;
-	cJSON *root_json = NULL;
-	int array_size = 0;
-	int i = 0;
-	int flag = 0; // 0:new_id 1:exit_id
-	cJSON *newitem = NULL;
-	cJSON *item = NULL;
-	cJSON *exist_id = NULL;
-	cJSON *value = cJSON_GetObjectItem(data_json, "value");
-	if (value == NULL || value->type != cJSON_Object) {
-		perror("json");
-
-		return FAIL;
-	}
-	cJSON *id = cJSON_GetObjectItem(value, "id");
-	cJSON *name = cJSON_GetObjectItem(value, "name");
-	cJSON *type = cJSON_GetObjectItem(value, "type");
-	cJSON *version = cJSON_GetObjectItem(value, "version");
-	cJSON *position = cJSON_GetObjectItem(value, "position");
-	cJSON *state = cJSON_GetObjectItem(value, "state");
-	if (id == NULL || id->valuestring == NULL || name == NULL || name->valuestring == NULL || type == NULL || type->valuestring == NULL || version == NULL || version->valuestring == NULL || position == NULL || position->valuestring == NULL || state == NULL || state->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	f_content = get_file_content(FILE_GRIPPER);
-	// file is NULL
-	if (f_content == NULL) {
-
-		return FAIL;
-	}
-	root_json = cJSON_Parse(f_content);
-	array_size = cJSON_GetArraySize(root_json); //获取数组长度
-	for (i = 0; i < array_size; i++) {
-		item = cJSON_GetArrayItem(root_json, i);
-		exist_id = cJSON_GetObjectItem(item, "id");
-		// exist item
-		if (!strcmp(exist_id->valuestring, id->valuestring)) {
-			cJSON_ReplaceItemInObject(item, "id", cJSON_CreateString(id->valuestring));
-			cJSON_ReplaceItemInObject(item, "name", cJSON_CreateString(name->valuestring));
-			cJSON_ReplaceItemInObject(item, "type", cJSON_CreateString(type->valuestring));
-			cJSON_ReplaceItemInObject(item, "version", cJSON_CreateString(version->valuestring));
-			cJSON_ReplaceItemInObject(item, "position", cJSON_CreateString(position->valuestring));
-			cJSON_ReplaceItemInObject(item, "state", cJSON_CreateString(state->valuestring));
-
-			flag = 1;
-			break;
-		}
-	}
-	// add new item
-	if (flag == 0) {
-		newitem = cJSON_CreateObject();
-		cJSON_AddStringToObject(newitem, "id", id->valuestring);
-		cJSON_AddStringToObject(newitem, "name", name->valuestring);
-		cJSON_AddStringToObject(newitem, "type", type->valuestring);
-		cJSON_AddStringToObject(newitem, "version", version->valuestring);
-		cJSON_AddStringToObject(newitem, "position", position->valuestring);
-		cJSON_AddStringToObject(newitem, "state", state->valuestring);
-		cJSON_AddItemToArray(root_json, newitem);
-	}
-	buf = cJSON_Print(root_json);
-
-	ret = write_file(FILE_GRIPPER, buf);//write file
-
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
-	free(f_content);
-	f_content = NULL;
-
-	if (ret == FAIL) {
-
-		return FAIL;
-	}
-
-	cJSON *content_json = cJSON_GetObjectItem(data_json, "content");
-	if (content_json == NULL || content_json->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	sprintf(content, "%s", content_json->valuestring);
-
-	return SUCCESS;
-}*/
-
-/* 227 act_gripper */
-/*static int act_gripper(const cJSON *data_json, char *content)
-{
-	int ret = FAIL;
-	char *buf = NULL;
-	char *f_content = NULL;
-	cJSON *root_json = NULL;
-	int array_size = 0;
-	int i = 0;
-	cJSON *item = NULL;
-	cJSON *exist_id = NULL;
-	cJSON *value = cJSON_GetObjectItem(data_json, "value");
-	if (value == NULL || value->type != cJSON_Object) {
-		perror("json");
-
-		return FAIL;
-	}
-	cJSON *id = cJSON_GetObjectItem(value, "id");
-	cJSON *state = cJSON_GetObjectItem(value, "state");
-	if (id == NULL || id->valuestring == NULL || state == NULL || state->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	f_content = get_file_content(FILE_GRIPPER);
-	// file is NULL
-	if (f_content == NULL) {
-
-		return FAIL;
-	}
-	root_json = cJSON_Parse(f_content);
-	array_size = cJSON_GetArraySize(root_json); //获取数组长度
-	for (i = 0; i < array_size; i++) {
-		item = cJSON_GetArrayItem(root_json, i);
-		exist_id = cJSON_GetObjectItem(item, "id");
-		// exist item
-		if (!strcmp(exist_id->valuestring, id->valuestring)) {
-			cJSON_ReplaceItemInObject(item, "id", cJSON_CreateString(id->valuestring));
-			cJSON_ReplaceItemInObject(item, "state", cJSON_CreateString(state->valuestring));
-
-			break;
-		}
-	}
-	buf = cJSON_Print(root_json);
-
-	ret = write_file(FILE_GRIPPER, buf);//write file
-
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
-	free(f_content);
-	f_content = NULL;
-
-	if (ret == FAIL) {
-
-		return FAIL;
-	}
-
-	cJSON *content_json = cJSON_GetObjectItem(data_json, "content");
-	if (content_json == NULL || content_json->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	sprintf(content, "%s", content_json->valuestring);
-
-	return SUCCESS;
-}*/
-
 /* 230 set_state_id */
 static int set_state_id(const cJSON *data_json, char *content)
 {
@@ -983,26 +818,6 @@ static int jointtotcf(const cJSON *data_json, char *content)
 
 	return SUCCESS;
 }
-
-/* 321 setvirtualrobotinitpos */
-/*static int setvirtualrobotinitpos(const cJSON *data_json, char *content)
-{
-	cJSON *j1 = cJSON_GetObjectItem(data_json, "j1");
-	cJSON *j2 = cJSON_GetObjectItem(data_json, "j2");
-	cJSON *j3 = cJSON_GetObjectItem(data_json, "j3");
-	cJSON *j4 = cJSON_GetObjectItem(data_json, "j4");
-	cJSON *j5 = cJSON_GetObjectItem(data_json, "j5");
-	cJSON *j6 = cJSON_GetObjectItem(data_json, "j6");
-	if(j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || j1->valuedouble == NULL || j2->valuedouble == NULL || j3->valuedouble == NULL || j4->valuedouble == NULL || j5->valuedouble == NULL || j6->valuedouble == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	sprintf(content, "SetVirtualRobotInitPos(%lf,%lf,%lf,%lf,%lf,%lf)", j1->valuedouble, j2->valuedouble, j3->valuedouble, j4->valuedouble, j5->valuedouble, j6->valuedouble);
-	printf("content = %s\n", content);
-
-	return SUCCESS;
-}*/
 
 static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
 {
@@ -1267,13 +1082,11 @@ void set(Webs *wp)
 		case 226:
 			port = cmdport;
 			my_syslog("机器人操作", "配置夹爪", "admin");
-			//ret = config_gripper(data_json, content);
 			ret = copy_content(data_json, content);
 			break;
 		case 227:
 			port = cmdport;
 			my_syslog("机器人操作", "激活和复位夹爪", "admin");
-			//ret = act_gripper(data_json, content);
 			ret = copy_content(data_json, content);
 			break;
 		case 229:
@@ -1430,9 +1243,6 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "获取控制器软件版本", "admin");
 			ret = copy_content(data_json, content);
 			break;
-	/*	case 321:
-			ret = setvirtualrobotinitpos(data_json, content);
-			break;*/
 		case 1001:/* 内部定义指令 */
 			port = cmdport;
 			ret = step_over(data_json, content);

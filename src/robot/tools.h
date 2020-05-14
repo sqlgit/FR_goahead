@@ -23,7 +23,6 @@
 #define DIR_POINTS "/root/webserver/points/"
 #define DIR_SHELL "/root/webserver/shell/"
 #define DIR_CFG "/root/webserver/cfg/"
-//#define DIR_GRIPPER "/root/webserver/gripper/"
 #define DIR_FRUSER "/fruser/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0

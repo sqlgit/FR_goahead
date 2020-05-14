@@ -10,6 +10,7 @@ A	src/mbedtls/mbedtls.c	20236;"	d	file:
 A	src/mbedtls/mbedtls.c	20242;"	d	file:
 A	src/mbedtls/mbedtls.c	20440;"	d	file:
 A	src/mbedtls/mbedtls.h	/^    mbedtls_mpi A;              \/*!<  1. A in the equation, or 2. (A + 2) \/ 4       *\/$/;"	m	struct:__anon20
+ACCOUNT_INFO	src/robot/tools.h	/^} ACCOUNT_INFO;$/;"	t	typeref:struct:_ACCOUNT_INFO
 ADD	src/mbedtls/mbedtls.c	11145;"	d	file:
 ADD	src/mbedtls/mbedtls.c	12260;"	d	file:
 ADD	src/mbedtls/mbedtls.c	12949;"	d	file:
@@ -261,7 +262,7 @@ BLOWFISH_SALT_LENGTH	src/crypt.c	13;"	d	file:
 BPUT	src/runtime.c	120;"	d	file:
 BPUTNULL	src/runtime.c	132;"	d	file:
 BSDI	src/osdep/osdep.h	180;"	d
-BUFFSIZE	src/robot/robot_socket.h	20;"	d
+BUFFSIZE	src/robot/robot_socket.h	25;"	d
 BUFSIZ	src/osdep/osdep.h	1234;"	d
 BYTE	src/robot/tools.h	/^typedef unsigned char BYTE;$/;"	t
 BYTES_TO_T_UINT_2	src/mbedtls/mbedtls.c	19405;"	d	file:
@@ -270,7 +271,7 @@ BYTES_TO_T_UINT_4	src/mbedtls/mbedtls.c	19399;"	d	file:
 BYTES_TO_T_UINT_4	src/mbedtls/mbedtls.c	19424;"	d	file:
 BYTES_TO_T_UINT_8	src/mbedtls/mbedtls.c	19408;"	d	file:
 BYTES_TO_T_UINT_8	src/mbedtls/mbedtls.c	19414;"	d	file:
-B_L	src/goahead.h	3989;"	d
+B_L	src/goahead.h	4003;"	d
 BytesToString	src/robot/tools.c	/^int BytesToString(BYTE *pSrc, char *pDst, int nSrcLength)$/;"	f
 CAMELLIA_TESTS_CBC	src/mbedtls/mbedtls.c	7450;"	d	file:
 CAMELLIA_TESTS_ECB	src/mbedtls/mbedtls.c	7389;"	d	file:
@@ -320,11 +321,10 @@ CLASS_PERCENT	src/runtime.c	27;"	d	file:
 CLASS_STAR	src/runtime.c	30;"	d	file:
 CLASS_TYPE	src/runtime.c	34;"	d	file:
 CLASS_ZERO	src/runtime.c	29;"	d	file:
-CMD_PORT	src/robot/robot_socket.h	14;"	d
+CMD_PORT	src/robot/robot_socket.h	15;"	d
 COMB_MAX_D	src/mbedtls/mbedtls.c	18286;"	d	file:
 COMB_MAX_PRE	src/mbedtls/mbedtls.c	18289;"	d	file:
-COMMAND_INTERACTION	src/robot/robot_quene.h	/^typedef struct COMMAND_INTERACTION {$/;"	s
-COMMAND_INTERACTION	src/robot/robot_quene.h	/^} COMMAND_INTERACTION;$/;"	t	typeref:struct:COMMAND_INTERACTION
+COMMAND_INTERACTION	src/robot/robot_quene.h	/^} COMMAND_INTERACTION;$/;"	t	typeref:struct:_COMMAND_INTERACTION
 COND_AND	src/js.h	75;"	d
 COND_NOT	src/js.h	77;"	d
 COND_OR	src/js.h	76;"	d
@@ -371,9 +371,14 @@ DES_FP	src/mbedtls/mbedtls.c	13661;"	d	file:
 DES_IP	src/mbedtls/mbedtls.c	13647;"	d	file:
 DES_ROUND	src/mbedtls/mbedtls.c	13675;"	d	file:
 DHM_MPI_EXPORT	src/mbedtls/mbedtls.c	14673;"	d	file:
-DIR_FRUSER	src/robot/tools.h	13;"	d
-DIR_TEMPLATE	src/robot/tools.h	12;"	d
-DIR_USER	src/robot/tools.h	11;"	d
+DIR_CDSYSTEM	src/robot/tools.h	22;"	d
+DIR_CFG	src/robot/tools.h	25;"	d
+DIR_FRUSER	src/robot/tools.h	26;"	d
+DIR_LOG	src/robot/tools.h	20;"	d
+DIR_POINTS	src/robot/tools.h	23;"	d
+DIR_SHELL	src/robot/tools.h	24;"	d
+DIR_TEMPLATE	src/robot/tools.h	21;"	d
+DIR_USER	src/robot/tools.h	19;"	d
 DP	src/mbedtls/mbedtls.h	/^    mbedtls_mpi DP;                     \/*!<  \\p D % (P - 1)       *\/$/;"	m	struct:__anon16
 DQ	src/mbedtls/mbedtls.h	/^    mbedtls_mpi DQ;                     \/*!<  \\p D % (Q - 1)       *\/$/;"	m	struct:__anon16
 E	src/mbedtls/mbedtls.h	/^    mbedtls_mpi E;                      \/*!<  The public exponent. *\/$/;"	m	struct:__anon16
@@ -1005,13 +1010,23 @@ F5	src/mbedtls/mbedtls.c	8274;"	d	file:
 F5	src/mbedtls/mbedtls.c	8714;"	d	file:
 F5	src/mbedtls/mbedtls.c	9666;"	d	file:
 FAIL	src/mbedtls/mbedtls.c	59441;"	d	file:
-FAIL	src/robot/tools.h	9;"	d
+FAIL	src/robot/tools.h	10;"	d
+FB_LINKQuene	src/robot/statefb_quene.h	/^typedef struct FB_LINKQuene {$/;"	s
+FB_LinkQuene	src/robot/statefb_quene.h	/^} FB_LinkQuene;$/;"	t	typeref:struct:FB_LINKQuene
+FB_QNode	src/robot/statefb_quene.h	/^typedef struct FB_QNode {$/;"	s
+FB_Qnode	src/robot/statefb_quene.h	/^} FB_Qnode;$/;"	t	typeref:struct:FB_QNode
 FF	src/crypt.c	60;"	d	file:
 FILE	src/osdep/osdep.h	/^    typedef void FILE;$/;"	t
+FILE_ACCOUNT	src/robot/tools.h	17;"	d
+FILE_AUTH	src/robot/tools.h	18;"	d
 FILE_BINARY	src/osdep/osdep.h	1009;"	d
 FILE_BINARY	src/osdep/osdep.h	1097;"	d
-FILE_POINTS	src/robot/tools.h	10;"	d
-FILE_PORT	src/robot/robot_socket.h	16;"	d
+FILE_CDSYSTEM	src/robot/tools.h	14;"	d
+FILE_CFG	src/robot/tools.h	13;"	d
+FILE_ET_CDSYSTEM	src/robot/tools.h	15;"	d
+FILE_GRIPPER	src/robot/tools.h	16;"	d
+FILE_POINTS	src/robot/tools.h	12;"	d
+FILE_PORT	src/robot/robot_socket.h	17;"	d
 FILE_TEXT	src/osdep/osdep.h	1008;"	d
 FILE_TEXT	src/osdep/osdep.h	1098;"	d
 FL	src/mbedtls/mbedtls.c	6957;"	d	file:
@@ -1149,6 +1164,7 @@ GET_UINT32_LE	src/mbedtls/mbedtls.c	34546;"	d	file:
 GET_UINT32_LE	src/mbedtls/mbedtls.c	77;"	d	file:
 GET_UINT64_BE	src/mbedtls/mbedtls.c	39245;"	d	file:
 GG	src/crypt.c	65;"	d	file:
+GRIPPERS_CONFIG_INFO	src/robot/robot_socket.h	/^} GRIPPERS_CONFIG_INFO;$/;"	t	typeref:struct:_GRIPPERS_CONFIG_INFO
 GX	src/mbedtls/mbedtls.h	/^    mbedtls_mpi GX;     \/*!<  Our public key = \\c G^X mod \\c P. *\/$/;"	m	struct:__anon10
 GY	src/mbedtls/mbedtls.h	/^    mbedtls_mpi GY;     \/*!<  The public key of the peer = \\c G^Y mod \\c P. *\/$/;"	m	struct:__anon10
 GetFileAttributes	src/osdep/osdep.h	1377;"	d
@@ -1496,6 +1512,7 @@ MAX32	src/mbedtls/mbedtls.c	20241;"	d	file:
 MAX32	src/mbedtls/mbedtls.c	20443;"	d	file:
 MAXFLOAT	src/osdep/osdep.h	752;"	d
 MAXFLOAT	src/osdep/osdep.h	754;"	d
+MAXGRIPPER	src/robot/robot_socket.h	28;"	d
 MAXINT	src/osdep/osdep.h	783;"	d
 MAXINT	src/osdep/osdep.h	785;"	d
 MAXINT64	src/osdep/osdep.h	798;"	d
@@ -1511,10 +1528,11 @@ MAXUINT	src/osdep/osdep.h	791;"	d
 MAXUINT	src/osdep/osdep.h	793;"	d
 MAXUINT64	src/osdep/osdep.h	801;"	d
 MAX_BT	src/mbedtls/mbedtls.c	27099;"	d	file:
-MAX_BUF	src/robot/robot_socket.h	18;"	d
+MAX_BUF	src/robot/robot_socket.h	23;"	d
+MAX_BUFFSIZE	src/robot/robot_quene.h	6;"	d
 MAX_CIPHERSUITES	src/mbedtls/mbedtls.c	41885;"	d	file:
 MAX_KEY_BYTES	src/mbedtls/mbedtls.c	50075;"	d	file:
-MAX_MSGHEAD	src/robot/robot_socket.h	19;"	d
+MAX_MSGHEAD	src/robot/robot_socket.h	24;"	d
 MAX_PASS	src/utils/gopass.c	16;"	d	file:
 MAX_TESTS	src/mbedtls/mbedtls.c	23162;"	d	file:
 MAX_TESTS	src/mbedtls/mbedtls.c	31938;"	d	file:
@@ -3621,6 +3639,7 @@ RCON	src/mbedtls/mbedtls.c	/^static uint32_t RCON[10];$/;"	v	file:
 RHs	src/mbedtls/mbedtls.c	/^static const uint32_t RHs[16] =$/;"	v	file:
 RINGQ_LEN	src/runtime.c	152;"	d	file:
 RN	src/mbedtls/mbedtls.h	/^    mbedtls_mpi RN;                     \/*!<  cached R^2 mod \\p N  *\/$/;"	m	struct:__anon16
+ROBOT_CFG	src/robot/tools.h	11;"	d
 ROTATE_LEFT	src/crypt.c	53;"	d	file:
 ROTL	src/mbedtls/mbedtls.c	6949;"	d	file:
 ROTL8	src/mbedtls/mbedtls.c	394;"	d	file:
@@ -4213,8 +4232,8 @@ SEC_PER_DAY	src/time.c	15;"	d	file:
 SEC_PER_HOUR	src/time.c	14;"	d	file:
 SEC_PER_MIN	src/time.c	13;"	d	file:
 SEC_PER_YEAR	src/time.c	16;"	d	file:
-SERVER_IP	src/robot/robot_socket.h	12;"	d
-SERVER_IP	src/robot/robot_socket.h	9;"	d
+SERVER_IP	src/robot/robot_socket.h	10;"	d
+SERVER_IP	src/robot/robot_socket.h	13;"	d
 SHIFT_AND_PLACE	src/mbedtls/mbedtls.c	6969;"	d	file:
 SHR	src/mbedtls/mbedtls.c	11167;"	d	file:
 SHR	src/mbedtls/mbedtls.c	12282;"	d	file:
@@ -4321,7 +4340,7 @@ SOCKET_RESERVICE	src/goahead.h	955;"	d
 SOCKET_RESET	src/goahead.h	976;"	d
 SOCKET_WOULDBLOCK	src/goahead.h	975;"	d
 SOCKET_WRITABLE	src/goahead.h	986;"	d
-SOCK_SELECT_TIMEOUT	src/robot/robot_socket.h	17;"	d
+SOCK_SELECT_TIMEOUT	src/robot/robot_socket.h	22;"	d
 SPECSTRING_SUPP_H	src/osdep/osdep.h	293;"	d
 SPRINTF_ALTERNATE	src/runtime.c	98;"	d	file:
 SPRINTF_COMMA	src/runtime.c	103;"	d	file:
@@ -4339,6 +4358,7 @@ SSL_MAX_HASH_LEN	src/mbedtls/mbedtls.c	55944;"	d	file:
 SSL_SOME_MODES_USE_MAC	src/mbedtls/mbedtls.c	51813;"	d	file:
 STARTF_USESHOWWINDOW	src/osdep/osdep.h	1231;"	d
 STARTF_USESTDHANDLES	src/osdep/osdep.h	1232;"	d
+STATEFB_SIZE	src/robot/robot_socket.h	26;"	d
 STATE_ARG_LIST	src/js.h	93;"	d
 STATE_ARG_LIST_DONE	src/js.h	94;"	d
 STATE_BEGIN	src/js.h	101;"	d
@@ -4355,6 +4375,10 @@ STATE_EOF	src/js.h	83;"	d
 STATE_ERR	src/js.h	82;"	d
 STATE_EXPR	src/js.h	88;"	d
 STATE_EXPR_DONE	src/js.h	89;"	d
+STATE_FB	src/robot/statefb_quene.h	/^} STATE_FB;$/;"	t	typeref:struct:_STATE_FB
+STATE_FB_ID	src/robot/robot_socket.h	27;"	d
+STATE_FEEDBACK	src/robot/robot_socket.h	/^} STATE_FEEDBACK;$/;"	t	typeref:struct:_STATE_FEEDBACK
+STATE_FEEDBACK_PORT	src/robot/robot_socket.h	18;"	d
 STATE_MODIFIER	src/runtime.c	38;"	d	file:
 STATE_NORMAL	src/runtime.c	36;"	d	file:
 STATE_PERCENT	src/runtime.c	37;"	d	file:
@@ -4367,12 +4391,12 @@ STATE_STMT_BLOCK_DONE	src/js.h	92;"	d
 STATE_STMT_DONE	src/js.h	91;"	d
 STATE_TYPE	src/runtime.c	43;"	d	file:
 STATE_WIDTH	src/runtime.c	39;"	d	file:
-STATUS_PORT	src/robot/robot_socket.h	15;"	d
+STATUS_PORT	src/robot/robot_socket.h	16;"	d
 STORE32	src/mbedtls/mbedtls.c	20237;"	d	file:
 STORE32	src/mbedtls/mbedtls.c	20243;"	d	file:
 STORE32	src/mbedtls/mbedtls.c	20442;"	d	file:
 SUB	src/mbedtls/mbedtls.c	20270;"	d	file:
-SUCCESS	src/robot/tools.h	8;"	d
+SUCCESS	src/robot/tools.h	9;"	d
 SWAP	src/mbedtls/mbedtls.c	13690;"	d	file:
 SWAP	src/mbedtls/mbedtls.c	23694;"	d	file:
 S_IEXEC	src/osdep/osdep.h	1222;"	d
@@ -4484,6 +4508,9 @@ V	src/mbedtls/mbedtls.c	352;"	d	file:
 V	src/mbedtls/mbedtls.h	/^    unsigned char V[MBEDTLS_MD_MAX_SIZE];  \/*!< V in the spec          *\/$/;"	m	struct:__anon65
 VALUE_ALLOCATE	src/goahead.h	455;"	d
 VERIFY_DEPTH	src/goahead-openssl/goahead-openssl.c	191;"	d	file:
+VIR_CMD_PORT	src/robot/robot_socket.h	19;"	d
+VIR_FILE_PORT	src/robot/robot_socket.h	21;"	d
+VIR_STATUS_PORT	src/robot/robot_socket.h	20;"	d
 VMS	src/osdep/osdep.h	218;"	d
 Vf	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_point Vf;    \/*!< The unblinding value. *\/$/;"	m	struct:__anon42
 Vf	src/mbedtls/mbedtls.h	/^    mbedtls_mpi Vf;                     \/*!<  The cached un-blinding value. *\/$/;"	m	struct:__anon16
@@ -4640,6 +4667,8 @@ Xp1	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_point Xp1;              \/**< Peer p
 Xp2	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_point Xp2;              \/**< Peer public key 2 C: X4, S: X2 *\/$/;"	m	struct:__anon23
 Y	src/mbedtls/mbedtls.h	/^    mbedtls_mpi Y;          \/*!<  the point's Y coordinate  *\/$/;"	m	struct:__anon19
 Z	src/mbedtls/mbedtls.h	/^    mbedtls_mpi Z;          \/*!<  the point's Z coordinate  *\/$/;"	m	struct:__anon19
+_ACCOUNT_INFO	src/robot/tools.h	/^typedef struct _ACCOUNT_INFO$/;"	s
+_COMMAND_INTERACTION	src/robot/robot_quene.h	/^typedef struct _COMMAND_INTERACTION {$/;"	s
 _CRT_SECURE_NO_DEPRECATE	src/cJSON.c	28;"	d	file:
 _CRT_SECURE_NO_DEPRECATE	src/mbedtls/mbedtls.h	49;"	d
 _CRT_SECURE_NO_DEPRECATE	src/osdep/osdep.h	277;"	d
@@ -4649,8 +4678,11 @@ _CRT_SECURE_NO_WARNINGS	src/osdep/osdep.h	280;"	d
 _CTRL_STATE	src/robot/robot_socket.h	/^typedef struct _CTRL_STATE$/;"	s
 _FILE_OFFSET_BITS	src/osdep/osdep.h	306;"	d
 _GNU_SOURCE	src/osdep/osdep.h	302;"	d
+_GRIPPERS_CONFIG_INFO	src/robot/robot_socket.h	/^typedef struct _GRIPPERS_CONFIG_INFO$/;"	s
 _LARGEFILE64_SOURCE	src/osdep/osdep.h	304;"	d
 _SOCKET_INFO	src/robot/robot_socket.h	/^typedef struct _SOCKET_INFO$/;"	s
+_STATE_FB	src/robot/statefb_quene.h	/^typedef struct _STATE_FB {$/;"	s
+_STATE_FEEDBACK	src/robot/robot_socket.h	/^typedef struct _STATE_FEEDBACK$/;"	s
 _VSB_CONFIG_FILE	src/osdep/osdep.h	313;"	d
 _WIN32_WINNT	src/mbedtls/mbedtls.c	21532;"	d	file:
 _WIN32_WINNT	src/mbedtls/mbedtls.c	27885;"	d	file:
@@ -4678,7 +4710,7 @@ _pms_ecjpake	src/mbedtls/mbedtls.h	/^    unsigned char _pms_ecjpake[32];     \/*
 _pms_psk	src/mbedtls/mbedtls.h	/^    unsigned char _pms_psk[4 + 2 * MBEDTLS_PSK_MAX_LEN];       \/* RFC 4279 2 *\/$/;"	m	union:mbedtls_ssl_premaster_secret
 _pms_rsa	src/mbedtls/mbedtls.h	/^    unsigned char _pms_rsa[48];                         \/* RFC 5246 8.1.1 *\/$/;"	m	union:mbedtls_ssl_premaster_secret
 _pms_rsa_psk	src/mbedtls/mbedtls.h	/^    unsigned char _pms_rsa_psk[52 + MBEDTLS_PSK_MAX_LEN];      \/* RFC 4279 4 *\/$/;"	m	union:mbedtls_ssl_premaster_secret
-a_assert	src/goahead.h	3990;"	d
+a_assert	src/goahead.h	4004;"	d
 abilities	src/goahead.h	/^    WebsHash        abilities;              \/**< Required user abilities *\/$/;"	m	struct:WebsRoute
 abilities	src/goahead.h	/^    WebsHash  abilities;                    \/**< Resolved role abilities *\/$/;"	m	struct:WebsRole
 abilities	src/goahead.h	/^    WebsHash abilities;                     \/**< Resolved user abilities *\/$/;"	m	struct:WebsUser
@@ -4775,8 +4807,10 @@ aesni_setkey_enc_128	src/mbedtls/mbedtls.c	/^static void aesni_setkey_enc_128( u
 aesni_setkey_enc_192	src/mbedtls/mbedtls.c	/^static void aesni_setkey_enc_192( unsigned char *rk,$/;"	f	file:
 aesni_setkey_enc_256	src/mbedtls/mbedtls.c	/^static void aesni_setkey_enc_256( unsigned char *rk,$/;"	f	file:
 age	src/goahead.c	/^		int age;$/;"	m	struct:PERSON	file:
+alarm	src/robot/robot_socket.h	/^	uint8_t    alarm;                   \/** 警告 *\/$/;"	m	struct:_CTRL_STATE
 alarmMs	src/mbedtls/mbedtls.c	/^static DWORD alarmMs;$/;"	v	file:
 aliveSlaveNumError	src/robot/robot_socket.h	/^	uint8_t    aliveSlaveNumError;    \/**< 活动从站数量错误，1：数量错误；0：正常  *\/$/;"	m	struct:_CTRL_STATE
+aliveSlaveNumFeedback	src/robot/robot_socket.h	/^	int 	   aliveSlaveNumFeedback;   \/** 活动从站数量反馈 *\/$/;"	m	struct:_CTRL_STATE
 alloc	src/mbedtls/mbedtls.c	/^    size_t          alloc;$/;"	m	struct:_memory_header	file:
 alloc_count	src/mbedtls/mbedtls.c	/^    size_t          alloc_count;$/;"	m	struct:__anon70	file:
 allocate	src/cJSON.c	/^    void *(CJSON_CDECL *allocate)(size_t size);$/;"	m	struct:internal_hooks	file:
@@ -4825,17 +4859,19 @@ assert	src/goahead.h	218;"	d
 assert	src/goahead.h	316;"	d
 assertError	src/runtime.c	/^PUBLIC void assertError(WEBS_ARGS_DEC, char *fmt, ...)$/;"	f
 at	src/runtime.c	/^    WebsTime    at;$/;"	m	struct:Callback	file:
+auth	src/robot/tools.h	/^	char auth[10];$/;"	m	struct:_ACCOUNT_INFO
 authDetails	src/goahead.h	/^    char            *authDetails;       \/**< Http header auth details *\/$/;"	m	struct:Webs
 authResponse	src/goahead.h	/^    char            *authResponse;      \/**< Outgoing auth header *\/$/;"	m	struct:Webs
 authType	src/goahead.h	/^    char            *authType;              \/**< Authentication type *\/$/;"	m	struct:WebsRoute
 authType	src/goahead.h	/^    char            *authType;          \/**< Authorization type (Basic\/DAA) *\/$/;"	m	struct:Webs
 authmode	src/mbedtls/mbedtls.h	/^    unsigned int authmode : 2;      \/*!< MBEDTLS_SSL_VERIFY_XXX             *\/$/;"	m	struct:mbedtls_ssl_config
+authority_management	src/robot/tools.c	/^int authority_management(const char *cmd_type)$/;"	f
 autoLogin	src/auth.c	/^static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;$/;"	v	file:
 avolfileHandler	src/robot/filehandler.c	/^static int avolfileHandler(Webs *wp)$/;"	f	file:
 awtom	src/runtime.c	/^PUBLIC char *awtom(wchar *src, ssize *lenp)$/;"	f
 badmac_limit	src/mbedtls/mbedtls.h	/^    unsigned int badmac_limit;      \/*!< limit of records with a bad MAC    *\/$/;"	m	struct:mbedtls_ssl_config
 badmac_seen	src/mbedtls/mbedtls.h	/^    unsigned badmac_seen;       \/*!< records with a bad MAC received    *\/$/;"	m	struct:mbedtls_ssl_context
-balloc	src/goahead.h	3991;"	d
+balloc	src/goahead.h	4005;"	d
 base	src/mbedtls/mbedtls.h	/^    const mbedtls_cipher_base_t *base;$/;"	m	struct:__anon37
 base64_dec_map	src/mbedtls/mbedtls.c	/^static const unsigned char base64_dec_map[128] =$/;"	v	file:
 base64_enc_map	src/mbedtls/mbedtls.c	/^static const unsigned char base64_enc_map[64] =$/;"	v	file:
@@ -4843,13 +4879,13 @@ base64_test_dec	src/mbedtls/mbedtls.c	/^static const unsigned char base64_test_d
 base64_test_enc	src/mbedtls/mbedtls.c	/^static const unsigned char base64_test_enc[] =$/;"	v	file:
 base_ectr	src/mbedtls/mbedtls.h	/^    unsigned char base_ectr[16];          \/*!< The first ECTR for tag. *\/$/;"	m	struct:__anon63
 basename	src/osdep.c	/^PUBLIC char *basename(char *name)$/;"	f
-basic	src/robot/action_sta.c	/^static int basic(char *ret_status)$/;"	f	file:
+basic	src/robot/action_sta.c	/^static int basic(char *ret_status, CTRL_STATE *state)$/;"	f	file:
 basicLogin	src/auth.c	/^static void basicLogin(Webs *wp)$/;"	f	file:
-bclose	src/goahead.h	3992;"	d
+bclose	src/goahead.h	4006;"	d
 bdecrypt	src/crypt.c	/^static void bdecrypt(WebsBlowfish *bp, uint *xl, uint *xr)$/;"	f	file:
 bencrypt	src/crypt.c	/^static void bencrypt(WebsBlowfish *bp, uint *xl, uint *xr)$/;"	f	file:
-bfree	src/goahead.h	3993;"	d
-bfreeSafe	src/goahead.h	3994;"	d
+bfree	src/goahead.h	4007;"	d
+bfreeSafe	src/goahead.h	4008;"	d
 biH	src/mbedtls/mbedtls.c	3575;"	d	file:
 biL	src/mbedtls/mbedtls.c	3574;"	d	file:
 big	src/goahead.h	/^        long    big[2];$/;"	m	union:WebsValue::__anon4
@@ -4875,7 +4911,7 @@ blowfish_info	src/mbedtls/mbedtls.c	/^static const mbedtls_cipher_base_t blowfis
 blowfish_setkey_wrap	src/mbedtls/mbedtls.c	/^static int blowfish_setkey_wrap( void *ctx, const unsigned char *key,$/;"	f	file:
 bool	src/osdep/osdep.h	/^                typedef char bool;$/;"	t
 boolean	src/cJSON.h	/^CJSON_PUBLIC(cJSON *) cJSON_CreateBool(cJSON_bool boolean);$/;"	v
-bopen	src/goahead.h	3995;"	d
+bopen	src/goahead.h	4009;"	d
 boundary	src/goahead.h	/^    char            *boundary;          \/**< Mime boundary (static) *\/$/;"	m	struct:Webs
 boundaryLen	src/goahead.h	/^    ssize           boundaryLen;        \/**< Boundary length *\/$/;"	m	struct:Webs
 brainpoolP256r1_a	src/mbedtls/mbedtls.c	/^static const mbedtls_mpi_uint brainpoolP256r1_a[] = {$/;"	v	file:
@@ -4896,8 +4932,8 @@ brainpoolP512r1_gx	src/mbedtls/mbedtls.c	/^static const mbedtls_mpi_uint brainpo
 brainpoolP512r1_gy	src/mbedtls/mbedtls.c	/^static const mbedtls_mpi_uint brainpoolP512r1_gy[] = {$/;"	v	file:
 brainpoolP512r1_n	src/mbedtls/mbedtls.c	/^static const mbedtls_mpi_uint brainpoolP512r1_n[] = {$/;"	v	file:
 brainpoolP512r1_p	src/mbedtls/mbedtls.c	/^static const mbedtls_mpi_uint brainpoolP512r1_p[] = {$/;"	v	file:
-brealloc	src/goahead.h	3996;"	d
-bstrdup	src/goahead.h	3997;"	d
+brealloc	src/goahead.h	4010;"	d
+bstrdup	src/goahead.h	4011;"	d
 bucket	src/goahead.h	/^    int             bucket;                 \/* Bucket index *\/$/;"	m	struct:WebsKey
 buf	src/goahead.h	/^    char    *buf;               \/**< Holding buffer for data *\/$/;"	m	struct:WebsBuf
 buf	src/mbedtls/mbedtls.c	/^    unsigned char   *buf;$/;"	m	struct:__anon70	file:
@@ -5123,6 +5159,7 @@ cgiPath	src/cgi.c	/^    char    *cgiPath;           \/* Path to executable proce
 cgiStdin	src/goahead.h	/^    char            *cgiStdin;          \/**< Filename for CGI program input *\/$/;"	m	struct:Webs
 cgifd	src/goahead.h	/^    int             cgifd;              \/**< File handle for CGI program input *\/$/;"	m	struct:Webs
 chain	src/mbedtls/mbedtls.h	/^    mbedtls_ssl_cache_entry *chain;     \/*!< start of the chain     *\/$/;"	m	struct:mbedtls_ssl_cache_context
+change_type	src/robot/action_act.c	/^static int change_type(const cJSON *data_json)$/;"	f	file:
 charConvert	src/js.c	/^static int charConvert(Js *ep, int base, int maxDig)$/;"	f	file:
 charMatch	src/http.c	/^static uchar charMatch[256] = {$/;"	v	file:
 chdir	src/osdep.c	110;"	d	file:
@@ -5271,7 +5308,7 @@ closeJst	src/jst.c	/^static void closeJst(void)$/;"	f	file:
 closesocket	src/osdep.c	/^int closesocket(SOCKET s)$/;"	f
 closesocket	src/osdep/osdep.h	1019;"	d
 closesocket	src/osdep/osdep.h	1072;"	d
-clrbit	src/robot/tools.h	15;"	d
+clrbit	src/robot/tools.h	28;"	d
 cmac_ctx	src/mbedtls/mbedtls.h	/^    mbedtls_cmac_context_t *cmac_ctx;$/;"	m	struct:__anon38
 cmac_generate_subkeys	src/mbedtls/mbedtls.c	/^static int cmac_generate_subkeys( mbedtls_cipher_context_t *ctx,$/;"	f	file:
 cmac_multiply_by_u	src/mbedtls/mbedtls.c	/^static int cmac_multiply_by_u( unsigned char *output,$/;"	f	file:
@@ -5306,10 +5343,12 @@ contentType	src/goahead.h	/^    char    *contentType;           \/**< Content ty
 continueHandler	src/route.c	/^static bool continueHandler(Webs *wp)$/;"	f	file:
 controlFlags	src/alloc.c	/^static int          controlFlags = WEBS_USE_MALLOC;     \/* Default to auto-malloc *\/$/;"	v	file:
 cookie	src/goahead.h	/^    char            *cookie;            \/**< Request cookie string *\/$/;"	m	struct:Webs
+copy_content	src/robot/action_set.c	/^static int copy_content(const cJSON *data_json, char *content)$/;"	f	file:
 count	src/crypt.c	/^    uint count[2];$/;"	m	struct:__anon81	file:
 counter	src/mbedtls/mbedtls.h	/^    unsigned char counter[16];  \/*!< The counter (V). *\/$/;"	m	struct:__anon49
 createDigestNonce	src/auth.c	/^static char *createDigestNonce(Webs *wp)$/;"	f	file:
 createUser	src/auth.c	/^static WebsUser *createUser(cchar *username, cchar *password, cchar *roles)$/;"	f	file:
+create_dir	src/robot/tools.c	/^void *create_dir(const char *dir_path)$/;"	f
 create_reference	src/cJSON.c	/^static cJSON *create_reference(const cJSON *item, const internal_hooks * const hooks)$/;"	f	file:
 createnode	src/robot/robot_quene.c	/^void createnode(QElemType *pnode, int type, char *msgcontent)$/;"	f
 cri	src/mbedtls/mbedtls.h	/^    mbedtls_x509_buf cri;           \/**< The raw CertificateRequestInfo body (DER). *\/$/;"	m	struct:mbedtls_x509_csr
@@ -5319,6 +5358,7 @@ ctr	src/goahead-mbedtls/goahead-mbedtls.c	/^    mbedtls_ctr_drbg_context    ctr;
 ctr_drbg_self_test_entropy	src/mbedtls/mbedtls.c	/^static int ctr_drbg_self_test_entropy( void *data, unsigned char *buf,$/;"	f	file:
 ctr_drbg_update_internal	src/mbedtls/mbedtls.c	/^static int ctr_drbg_update_internal( mbedtls_ctr_drbg_context *ctx,$/;"	f	file:
 ctr_func	src/mbedtls/mbedtls.h	/^    int (*ctr_func)( void *ctx, size_t length, size_t *nc_off,$/;"	m	struct:mbedtls_cipher_base_t
+ctrl_query_state	src/robot/robot_socket.h	/^	uint8_t	   ctrl_query_state;		\/** 控制器查询状态 0-未查询，1-查询中 *\/$/;"	m	struct:_CTRL_STATE
 ctrl_state	src/robot/robot_socket.c	/^CTRL_STATE ctrl_state;$/;"	v
 ctrl_time	src/robot/robot_socket.h	/^	double     ctrl_time;               \/**< 控制器实时线程执行时间         *\/$/;"	m	struct:_CTRL_STATE
 ctx	src/goahead-mbedtls/goahead-mbedtls.c	/^    mbedtls_ssl_context         ctx;            \/* SSL state *\/$/;"	m	struct:MbedSocket	file:
@@ -5332,6 +5372,7 @@ ctx_free_func	src/mbedtls/mbedtls.h	/^    void (*ctx_free_func)( void *ctx );$/;
 ctx_free_func	src/mbedtls/mbedtls.h	/^    void (*ctx_free_func)( void *ctx );$/;"	m	struct:mbedtls_pk_info_t
 ctx_inflate	src/mbedtls/mbedtls.h	/^    z_stream ctx_inflate;               \/*!<  decompression context   *\/$/;"	m	struct:mbedtls_ssl_transform
 cuchar	src/osdep/osdep.h	/^    typedef const unsigned char cuchar;$/;"	t
+cur_account	src/goahead.c	/^ACCOUNT_INFO cur_account;$/;"	v
 cur_msg	src/mbedtls/mbedtls.h	/^    mbedtls_ssl_flight_item *cur_msg;           \/*!<  Current message in flight      *\/$/;"	m	struct:mbedtls_ssl_handshake_params
 currentEvents	src/goahead.h	/^    int             currentEvents;      \/**< Mask of ready events (FD_xx) *\/$/;"	m	struct:WebsSocket
 currentFile	src/goahead.h	/^    WebsUpload      *currentFile;       \/**< Current file context *\/$/;"	m	struct:Webs
@@ -5342,6 +5383,7 @@ cvoid	src/osdep/osdep.h	/^    typedef const void cvoid;$/;"	t
 d	src/mbedtls/mbedtls.h	/^    mbedtls_mpi d;              \/*!<  our secret value                  *\/$/;"	m	struct:__anon21
 d	src/mbedtls/mbedtls.h	/^    mbedtls_mpi d;           \/*!< The private key. *\/$/;"	m	struct:__anon42
 data	src/robot/robot_quene.h	/^	QElemType data;$/;"	m	struct:QNode
+data	src/robot/statefb_quene.h	/^	STATE_FB data;$/;"	m	struct:FB_QNode
 day	src/mbedtls/mbedtls.h	/^    int year, mon, day;         \/**< Date. *\/$/;"	m	struct:mbedtls_x509_time
 days	src/time.c	/^static TimeToken days[] = {$/;"	v	file:
 daysSinceEpoch	src/time.c	/^static int daysSinceEpoch(int year)$/;"	f	file:
@@ -5364,6 +5406,7 @@ defaultLogHandler	src/runtime.c	/^static void defaultLogHandler(int flags, cchar
 defaultSslPort	src/http.c	/^static int          defaultSslPort;             \/* Default port number for https *\/$/;"	v	file:
 defineUploadVars	src/upload.c	/^static void defineUploadVars(Webs *wp)$/;"	f	file:
 delay_ms	src/robot/tools.c	/^void delay_ms(const int timeout)$/;"	f
+delete_log_file	src/robot/tools.c	/^int delete_log_file(int flag)$/;"	f
 depth	src/cJSON.c	/^    size_t depth; \/* How deeply nested (in arrays\/objects) is the input at the current offset. *\/$/;"	m	struct:__anon2	file:
 depth	src/cJSON.c	/^    size_t depth; \/* current nesting depth (for formatted printing) *\/$/;"	m	struct:__anon3	file:
 dequene	src/robot/robot_quene.c	/^void dequene(LinkQuene *q, QElemType e)$/;"	f
@@ -5436,7 +5479,7 @@ docfd	src/goahead.h	/^    int             docfd;              \/**< File descrip
 double_round	src/robot/tools.c	/^double double_round(double dVal, int iPlaces) \/\/iPlaces>=0$/;"	f
 download	src/robot/filehandler.c	/^void download(Webs *wp, char *path, char *query){$/;"	f
 dr_com_err	src/robot/robot_socket.h	/^	double     dr_com_err; 				\/**< 与驱动器通信故障               *\/$/;"	m	struct:_CTRL_STATE
-dr_err	src/robot/robot_socket.h	/^	double	   dr_err;                  \/**< 驱动器哪个轴故障               *\/$/;"	m	struct:_CTRL_STATE
+dr_err	src/robot/robot_socket.h	/^	double	   dr_err;                  \/**< 驱动器哪个轴故障,驱动器故障              *\/$/;"	m	struct:_CTRL_STATE
 dr_err_code	src/robot/robot_socket.h	/^	double     dr_err_code;  			\/**< 驱动器故障代码 			    *\/$/;"	m	struct:_CTRL_STATE
 drag_enable	src/robot/robot_socket.h	/^	double     drag_enable;   			\/**< 拖动使能                       *\/$/;"	m	struct:_CTRL_STATE
 dummy	src/mbedtls/mbedtls.h	/^    char dummy; \/**< Placeholder member, as empty structs are not portable. *\/$/;"	m	struct:__anon6
@@ -5555,11 +5598,11 @@ ejSetVar	src/js.h	325;"	d
 ej_t	src/js.h	/^    typedef Js ej_t;$/;"	t
 elbow_vel	src/robot/robot_socket.h	/^	double     elbow_vel[5];            \/**< 肘速度                         *\/$/;"	m	struct:_CTRL_STATE
 embedthisGoAheadCopyright	src/runtime.c	/^char *embedthisGoAheadCopyright = EMBEDTHIS_GOAHEAD_COPYRIGHT;$/;"	v
-emfReschedCallback	src/goahead.h	3998;"	d
-emfSchedCallback	src/goahead.h	3999;"	d
-emfSchedProc	src/goahead.h	4000;"	d
-emfSchedProcess	src/goahead.h	4001;"	d
-emfUnschedCallback	src/goahead.h	4002;"	d
+emfReschedCallback	src/goahead.h	4012;"	d
+emfSchedCallback	src/goahead.h	4013;"	d
+emfSchedProc	src/goahead.h	4014;"	d
+emfSchedProcess	src/goahead.h	4015;"	d
+emfUnschedCallback	src/goahead.h	4016;"	d
 encode	src/crypt.c	/^static void encode(uchar *output, uint *input, uint len)$/;"	f	file:
 encodeMap	src/crypt.c	/^static char encodeMap[] = {$/;"	v	file:
 encoded	src/goahead.h	/^    int             encoded;            \/**< True if the password is MD5(username:realm:password) *\/$/;"	m	struct:Webs
@@ -5572,7 +5615,7 @@ endbuf	src/runtime.c	/^    uchar   *endbuf;$/;"	m	struct:Format	file:
 endp	src/goahead.h	/^    char    *endp;              \/**< Pointer to end of data *\/$/;"	m	struct:WebsBuf
 endpoint	src/mbedtls/mbedtls.h	/^    unsigned int endpoint : 1;      \/*!< 0: client, 1: server               *\/$/;"	m	struct:mbedtls_ssl_config
 enquene	src/robot/robot_quene.c	/^void enquene(LinkQuene *q, QElemType e)$/;"	f
-enquene_result_dequene	src/robot/action_set.c	/^static int enquene_result_dequene(SOCKET_INFO *sock, const int type, pthread_mutex_t *mute, char *send_content)$/;"	f	file:
+enquene_result_dequene	src/robot/action_set.c	/^static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)$/;"	f	file:
 ensure	src/cJSON.c	/^static unsigned char* ensure(printbuffer * const p, size_t needed)$/;"	f	file:
 entropy	src/goahead-mbedtls/goahead-mbedtls.c	/^    mbedtls_entropy_context     entropy;        \/* Entropy context *\/$/;"	m	struct:MbedConfig	file:
 entropy_dummy_source	src/mbedtls/mbedtls.c	/^static int entropy_dummy_source( void *data, unsigned char *output,$/;"	f	file:
@@ -5637,6 +5680,15 @@ f_vrfy	src/mbedtls/mbedtls.h	/^    int (*f_vrfy)(void *, mbedtls_x509_crt *, int
 fallback	src/mbedtls/mbedtls.h	/^    unsigned int fallback : 1;      \/*!< is this a fallback?                *\/$/;"	m	struct:mbedtls_ssl_config
 false	src/cJSON.c	67;"	d	file:
 false	src/cJSON.c	69;"	d	file:
+fb_clearquene	src/robot/statefb_quene.c	/^void fb_clearquene(FB_LinkQuene *q)$/;"	f
+fb_createnode	src/robot/statefb_quene.c	/^void fb_createnode(STATE_FB *pnode)$/;"	f
+fb_dequene	src/robot/statefb_quene.c	/^void fb_dequene(FB_LinkQuene *q)$/;"	f
+fb_enquene	src/robot/statefb_quene.c	/^void fb_enquene(FB_LinkQuene *q, STATE_FB e)$/;"	f
+fb_initquene	src/robot/statefb_quene.c	/^void fb_initquene(FB_LinkQuene *q)$/;"	f
+fb_print_node_num	src/robot/statefb_quene.c	/^void fb_print_node_num(FB_LinkQuene q)$/;"	f
+fb_printquene	src/robot/statefb_quene.c	/^void fb_printquene(FB_LinkQuene q)$/;"	f
+fb_quene	src/robot/robot_socket.c	/^FB_LinkQuene fb_quene;$/;"	v
+fb_queneempty	src/robot/statefb_quene.c	/^int fb_queneempty(FB_LinkQuene *q)$/;"	f
 fd	src/mbedtls/mbedtls.h	/^    int fd;             \/**< The underlying file descriptor                 *\/$/;"	m	struct:__anon9
 fd	src/robot/robot_socket.h	/^	int fd;$/;"	m	struct:_SOCKET_INFO
 fd_mask	src/goahead.h	/^    typedef fd_set fd_mask;$/;"	t
@@ -5645,6 +5697,7 @@ fd_mask	src/goahead.h	/^    typedef long fd_mask;$/;"	t
 fd_mask	src/osdep/osdep.h	/^    typedef long fd_mask;$/;"	t
 features	src/mbedtls/mbedtls.c	/^static const char *features[] = {$/;"	v	file:
 fileClose	src/file.c	/^static void fileClose()$/;"	f	file:
+fileError	src/robot/robot_socket.h	/^	uint8_t    fileError;               \/** 文件错误 *\/$/;"	m	struct:_CTRL_STATE
 fileHandle	src/goahead.h	/^    int             fileHandle;         \/**< ID of the file handler *\/$/;"	m	struct:WebsSocket
 fileHandler	src/file.c	/^static bool fileHandler(Webs *wp)$/;"	f	file:
 fileWriteEvent	src/file.c	/^static void fileWriteEvent(Webs *wp)$/;"	f	file:
@@ -5687,7 +5740,7 @@ floating	src/goahead.h	/^    floating    = 9,$/;"	e	enum:WebsType
 flushChunkData	src/http.c	/^static bool flushChunkData(Webs *wp)$/;"	f	file:
 fmt	src/runtime.c	/^PUBLIC char *fmt(char *buf, ssize bufsize, cchar *format, ...)$/;"	f
 fmtAlloc	src/runtime.c	/^PUBLIC int fmtAlloc(char **sp, int n, cchar *format, ...)$/;"	f
-fmtStatic	src/goahead.h	4003;"	d
+fmtStatic	src/goahead.h	4017;"	d
 fmtValloc	src/runtime.c	/^PUBLIC int fmtValloc(char **sp, int n, cchar *format, va_list args)$/;"	f
 fname	src/js.h	/^    char        *fname;                         \/* Function name *\/$/;"	m	struct:JsFun
 format	src/cJSON.c	/^    cJSON_bool format; \/* is this print a formatted print *\/$/;"	m	struct:__anon3	file:
@@ -5708,22 +5761,23 @@ freeUser	src/auth.c	/^static void freeUser(WebsUser *up)$/;"	f	file:
 free_count	src/mbedtls/mbedtls.c	/^    size_t          free_count;$/;"	m	struct:__anon70	file:
 free_fn	src/cJSON.h	/^      void (CJSON_CDECL *free_fn)(void *ptr);$/;"	m	struct:cJSON_Hooks
 front	src/robot/robot_quene.h	/^	Qnode *front;$/;"	m	struct:LINKQuene
+front	src/robot/statefb_quene.h	/^	FB_Qnode *front;$/;"	m	struct:FB_LINKQuene
 fstat	src/osdep/osdep.h	1171;"	d
 fullDays	src/time.c	/^static TimeToken fullDays[] = {$/;"	v	file:
 fullMonths	src/time.c	/^static TimeToken fullMonths[] = {$/;"	v	file:
 func	src/js.h	/^    JsFun       *func;                          \/* Current function *\/$/;"	m	struct:Js
 functions	src/js.h	/^    WebsHash    functions;                      \/* Symbol table for functions *\/$/;"	m	struct:Js
-gFree	src/goahead.h	4008;"	d
+gFree	src/goahead.h	4022;"	d
 g_test_age	src/goahead.c	/^unsigned int g_test_age = 0;$/;"	v
 g_test_name	src/goahead.c	/^char g_test_name[32] = {0};$/;"	v
-gaccess	src/goahead.h	4010;"	d
-galloc	src/goahead.h	4005;"	d
-gallocEntry	src/goahead.h	4006;"	d
-gasctime	src/goahead.h	4011;"	d
-gassert	src/goahead.h	4004;"	d
-gatoi	src/goahead.h	4012;"	d
+gaccess	src/goahead.h	4024;"	d
+galloc	src/goahead.h	4019;"	d
+gallocEntry	src/goahead.h	4020;"	d
+gasctime	src/goahead.h	4025;"	d
+gassert	src/goahead.h	4018;"	d
+gatoi	src/goahead.h	4026;"	d
 gcd_pairs	src/mbedtls/mbedtls.c	/^static const int gcd_pairs[GCD_PAIR_COUNT][3] =$/;"	v	file:
-gchmod	src/goahead.h	4013;"	d
+gchmod	src/goahead.h	4027;"	d
 gcm_aes_info	src/mbedtls/mbedtls.c	/^static const mbedtls_cipher_base_t gcm_aes_info = {$/;"	v	file:
 gcm_aes_setkey_wrap	src/mbedtls/mbedtls.c	/^static int gcm_aes_setkey_wrap( void *ctx, const unsigned char *key,$/;"	f	file:
 gcm_camellia_info	src/mbedtls/mbedtls.c	/^static const mbedtls_cipher_base_t gcm_camellia_info = {$/;"	v	file:
@@ -5732,8 +5786,8 @@ gcm_ctx_alloc	src/mbedtls/mbedtls.c	/^static void *gcm_ctx_alloc( void )$/;"	f	f
 gcm_ctx_free	src/mbedtls/mbedtls.c	/^static void gcm_ctx_free( void *ctx )$/;"	f	file:
 gcm_gen_table	src/mbedtls/mbedtls.c	/^static int gcm_gen_table( mbedtls_gcm_context *ctx )$/;"	f	file:
 gcm_mult	src/mbedtls/mbedtls.c	/^static void gcm_mult( mbedtls_gcm_context *ctx, const unsigned char x[16],$/;"	f	file:
-gcreat	src/goahead.h	4016;"	d
-gctime	src/goahead.h	4017;"	d
+gcreat	src/goahead.h	4030;"	d
+gctime	src/goahead.h	4031;"	d
 gender	src/goahead.c	/^		char *gender;$/;"	m	struct:PERSON	file:
 generation_time	src/mbedtls/mbedtls.h	/^    uint32_t generation_time;       \/*!< key generation timestamp (seconds) *\/$/;"	m	struct:__anon59
 get	src/robot/action_get.c	/^void get(Webs *wp)$/;"	f
@@ -5750,12 +5804,19 @@ getPassword	src/utils/gopass.c	/^static char *getPassword(void)$/;"	f	file:
 getState	src/runtime.c	/^static int getState(char c, int state)$/;"	f	file:
 getTimeSinceMark	src/http.c	/^static int getTimeSinceMark(Webs *wp)$/;"	f	file:
 getToken	src/http.c	/^static char *getToken(Webs *wp, char *delim, int validation)$/;"	f	file:
+get_account_info	src/robot/action_get.c	/^static int get_account_info(char **ret_f_content)$/;"	f	file:
+get_accounts	src/robot/action_get.c	/^static int get_accounts(char **ret_f_content)$/;"	f	file:
 get_array_item	src/cJSON.c	/^static cJSON* get_array_item(const cJSON *array, size_t index)$/;"	f	file:
 get_bitlen	src/mbedtls/mbedtls.h	/^    size_t (*get_bitlen)( const void * );$/;"	m	struct:mbedtls_pk_info_t
 get_complete_file_content	src/robot/tools.c	/^char *get_complete_file_content(const char *file_path)$/;"	f
 get_decimal_point	src/cJSON.c	/^static unsigned char get_decimal_point(void)$/;"	f	file:
 get_dir_content	src/robot/tools.c	/^char *get_dir_content(const char *dir_path)$/;"	f
+get_dir_filename	src/robot/tools.c	/^char *get_dir_filename(const char *dir_path)$/;"	f
+get_dir_filename_txt	src/robot/tools.c	/^char *get_dir_filename_txt(const char *dir_path)$/;"	f
+get_ex_tool_cdsystem	src/robot/action_get.c	/^static int get_ex_tool_cdsystem(char **ret_f_content)$/;"	f	file:
 get_file_content	src/robot/tools.c	/^char *get_file_content(const char *file_path)$/;"	f
+get_log_data	src/robot/action_get.c	/^static int get_log_data(char **ret_f_content, const cJSON *data_json)$/;"	f	file:
+get_log_name	src/robot/action_get.c	/^static int get_log_name(char **ret_f_content)$/;"	f	file:
 get_lua_content_size	src/robot/action_set.c	/^static int get_lua_content_size(const cJSON *data_json)$/;"	f	file:
 get_n_len	src/robot/tools.c	/^int get_n_len(const int n)$/;"	f
 get_no_padding	src/mbedtls/mbedtls.c	/^static int get_no_padding( unsigned char *input, size_t input_len,$/;"	f	file:
@@ -5763,9 +5824,14 @@ get_object_item	src/cJSON.c	/^static cJSON *get_object_item(const cJSON * const 
 get_one_and_zeros_padding	src/mbedtls/mbedtls.c	/^static int get_one_and_zeros_padding( unsigned char *input, size_t input_len,$/;"	f	file:
 get_padding	src/mbedtls/mbedtls.h	/^    int (*get_padding)( unsigned char *input, size_t ilen, size_t *data_len );$/;"	m	struct:__anon38
 get_pkcs_padding	src/mbedtls/mbedtls.c	/^static int get_pkcs_padding( unsigned char *input, size_t input_len,$/;"	f	file:
-get_points_data	src/robot/action_get.c	/^static int get_points_data(char **ret_f_content)$/;"	f	file:
-get_template_data	src/robot/action_get.c	/^static int get_template_data(char **ret_f_content)$/;"	f	file:
-get_user_data	src/robot/action_get.c	/^static int get_user_data(char **ret_f_content)$/;"	f	file:
+get_points	src/robot/action_get.c	/^static int get_points(char **ret_f_content)$/;"	f	file:
+get_robot_cfg	src/robot/action_get.c	/^static int get_robot_cfg(char **ret_f_content)$/;"	f	file:
+get_syscfg	src/robot/action_get.c	/^static int get_syscfg(char **ret_f_content)$/;"	f	file:
+get_template	src/robot/action_get.c	/^static int get_template(char **ret_f_content)$/;"	f	file:
+get_tool_cdsystem	src/robot/action_get.c	/^static int get_tool_cdsystem(char **ret_f_content)$/;"	f	file:
+get_tpd_name	src/robot/action_get.c	/^static int get_tpd_name(char **ret_f_content)$/;"	f	file:
+get_user	src/robot/action_get.c	/^static int get_user(char **ret_f_content)$/;"	f	file:
+get_username_auth	src/auth.c	/^static void get_username_auth(char *username)$/;"	f	file:
 get_zeros_and_len_padding	src/mbedtls/mbedtls.c	/^static int get_zeros_and_len_padding( unsigned char *input, size_t input_len,$/;"	f	file:
 get_zeros_padding	src/mbedtls/mbedtls.c	/^static int get_zeros_padding( unsigned char *input, size_t input_len,$/;"	f	file:
 getcwd	src/osdep/osdep.h	1172;"	d
@@ -5776,39 +5842,45 @@ getpass	src/utils/gopass.c	/^static char *getpass(char *prompt)$/;"	f	file:
 getpid	src/osdep/osdep.h	1173;"	d
 getrandom_wrapper	src/mbedtls/mbedtls.c	/^static int getrandom_wrapper( void *buf, size_t buflen, unsigned int flags )$/;"	f	file:
 gettimezone	src/osdep/osdep.h	1174;"	d
-gexecvp	src/goahead.h	4018;"	d
-gfgets	src/goahead.h	4019;"	d
-gfindclose	src/goahead.h	4020;"	d
-gfinddata_t	src/goahead.h	4021;"	d
-gfindfirst	src/goahead.h	4022;"	d
-gfindnext	src/goahead.h	4023;"	d
-gfopen	src/goahead.h	4024;"	d
-gfprintf	src/goahead.h	4025;"	d
-gfputs	src/goahead.h	4026;"	d
-gfree	src/goahead.h	4007;"	d
-gfscanf	src/goahead.h	4027;"	d
-ggetcwd	src/goahead.h	4028;"	d
-ggetenv	src/goahead.h	4029;"	d
-ggets	src/goahead.h	4030;"	d
+gexecvp	src/goahead.h	4032;"	d
+gfgets	src/goahead.h	4033;"	d
+gfindclose	src/goahead.h	4034;"	d
+gfinddata_t	src/goahead.h	4035;"	d
+gfindfirst	src/goahead.h	4036;"	d
+gfindnext	src/goahead.h	4037;"	d
+gfopen	src/goahead.h	4038;"	d
+gfprintf	src/goahead.h	4039;"	d
+gfputs	src/goahead.h	4040;"	d
+gfree	src/goahead.h	4021;"	d
+gfscanf	src/goahead.h	4041;"	d
+ggetcwd	src/goahead.h	4042;"	d
+ggetenv	src/goahead.h	4043;"	d
+ggets	src/goahead.h	4044;"	d
 gid_t	src/osdep/osdep.h	/^    typedef int     gid_t;$/;"	t
-gisalnum	src/goahead.h	4031;"	d
-gisalpha	src/goahead.h	4032;"	d
-gisdigit	src/goahead.h	4033;"	d
-gislower	src/goahead.h	4034;"	d
-gisspace	src/goahead.h	4035;"	d
-gisupper	src/goahead.h	4036;"	d
-gisxdigit	src/goahead.h	4037;"	d
-gloadModule	src/goahead.h	4038;"	d
+gisalnum	src/goahead.h	4045;"	d
+gisalpha	src/goahead.h	4046;"	d
+gisdigit	src/goahead.h	4047;"	d
+gislower	src/goahead.h	4048;"	d
+gisspace	src/goahead.h	4049;"	d
+gisupper	src/goahead.h	4050;"	d
+gisxdigit	src/goahead.h	4051;"	d
+gloadModule	src/goahead.h	4052;"	d
 global_error	src/cJSON.c	/^static error global_error = { NULL, 0 };$/;"	v	file:
 global_hooks	src/cJSON.c	/^static internal_hooks global_hooks = { internal_malloc, internal_free, internal_realloc };$/;"	v	file:
-glseek	src/goahead.h	4039;"	d
-gopendir	src/goahead.h	4040;"	d
-gprintf	src/goahead.h	4041;"	d
-gread	src/goahead.h	4042;"	d
-greaddir	src/goahead.h	4043;"	d
-grealloc	src/goahead.h	4009;"	d
-gremove	src/goahead.h	4044;"	d
-grename	src/goahead.h	4045;"	d
+glseek	src/goahead.h	4053;"	d
+gopendir	src/goahead.h	4054;"	d
+gprintf	src/goahead.h	4055;"	d
+gread	src/goahead.h	4056;"	d
+greaddir	src/goahead.h	4057;"	d
+grealloc	src/goahead.h	4023;"	d
+gremove	src/goahead.h	4058;"	d
+grename	src/goahead.h	4059;"	d
+gripperActStatus	src/robot/robot_socket.h	/^	uint16_t   gripperActStatus;		\/** 夹爪激活状态 *\/$/;"	m	struct:_CTRL_STATE
+gripperConfigStatus	src/robot/robot_socket.h	/^	uint16_t   gripperConfigStatus;     \/** 夹爪配置状态 *\/$/;"	m	struct:_CTRL_STATE
+gripperError	src/robot/robot_socket.h	/^	uint8_t    gripperError;            \/** 夹爪错误 *\/$/;"	m	struct:_CTRL_STATE
+gripperFaultId	src/robot/robot_socket.h	/^	uint8_t    gripperFaultId;          \/** 错误夹爪号 *\/$/;"	m	struct:_CTRL_STATE
+gripperFaultNum	src/robot/robot_socket.h	/^	uint8_t    gripperFaultNum;         \/** 夹爪错误编号 *\/$/;"	m	struct:_CTRL_STATE
+grippers_config_info	src/robot/robot_socket.c	/^GRIPPERS_CONFIG_INFO grippers_config_info;$/;"	v
 growBuf	src/runtime.c	/^static int growBuf(Format *fmt)$/;"	f	file:
 growBy	src/runtime.c	/^    ssize   growBy;$/;"	m	struct:Format	file:
 growRoutes	src/route.c	/^static void growRoutes(void)$/;"	f	file:
@@ -5817,40 +5889,40 @@ grp	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_group grp;      \/*!<  Elliptic curv
 grp	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_group grp;   \/*!< The elliptic curve used. *\/$/;"	m	struct:__anon42
 grp_id	src/mbedtls/mbedtls.c	/^    mbedtls_ecp_group_id        grp_id;$/;"	m	struct:__anon75	file:
 grp_id	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_group_id grp_id;    \/*!< Internal identifier        *\/$/;"	m	struct:__anon18
-gsprintf	src/goahead.h	4046;"	d
-gsscanf	src/goahead.h	4047;"	d
-gstat	src/goahead.h	4048;"	d
+gsprintf	src/goahead.h	4060;"	d
+gsscanf	src/goahead.h	4061;"	d
+gstat	src/goahead.h	4062;"	d
 gstat_t	src/goahead.h	/^    typedef WebsStat gstat_t;$/;"	t
-gstrcat	src/goahead.h	4049;"	d
-gstrchr	src/goahead.h	4050;"	d
-gstrcmp	src/goahead.h	4051;"	d
-gstrcpy	src/goahead.h	4052;"	d
-gstrcspn	src/goahead.h	4053;"	d
-gstricmp	src/goahead.h	4054;"	d
-gstritoa	src/goahead.h	4055;"	d
-gstrlen	src/goahead.h	4056;"	d
-gstrlower	src/goahead.h	4057;"	d
-gstrncat	src/goahead.h	4058;"	d
-gstrncmp	src/goahead.h	4059;"	d
-gstrncpy	src/goahead.h	4060;"	d
-gstrnlen	src/goahead.h	4061;"	d
-gstrnset	src/goahead.h	4062;"	d
-gstrrchr	src/goahead.h	4063;"	d
-gstrspn	src/goahead.h	4064;"	d
-gstrstr	src/goahead.h	4065;"	d
-gstrtok	src/goahead.h	4066;"	d
-gstrtol	src/goahead.h	4067;"	d
-gstrupper	src/goahead.h	4068;"	d
-gtempnam	src/goahead.h	4069;"	d
-gtolower	src/goahead.h	4070;"	d
-gtoupper	src/goahead.h	4071;"	d
-gunlink	src/goahead.h	4072;"	d
-gvsprintf	src/goahead.h	4073;"	d
-gwrite	src/goahead.h	4074;"	d
+gstrcat	src/goahead.h	4063;"	d
+gstrchr	src/goahead.h	4064;"	d
+gstrcmp	src/goahead.h	4065;"	d
+gstrcpy	src/goahead.h	4066;"	d
+gstrcspn	src/goahead.h	4067;"	d
+gstricmp	src/goahead.h	4068;"	d
+gstritoa	src/goahead.h	4069;"	d
+gstrlen	src/goahead.h	4070;"	d
+gstrlower	src/goahead.h	4071;"	d
+gstrncat	src/goahead.h	4072;"	d
+gstrncmp	src/goahead.h	4073;"	d
+gstrncpy	src/goahead.h	4074;"	d
+gstrnlen	src/goahead.h	4075;"	d
+gstrnset	src/goahead.h	4076;"	d
+gstrrchr	src/goahead.h	4077;"	d
+gstrspn	src/goahead.h	4078;"	d
+gstrstr	src/goahead.h	4079;"	d
+gstrtok	src/goahead.h	4080;"	d
+gstrtol	src/goahead.h	4081;"	d
+gstrupper	src/goahead.h	4082;"	d
+gtempnam	src/goahead.h	4083;"	d
+gtolower	src/goahead.h	4084;"	d
+gtoupper	src/goahead.h	4085;"	d
+gunlink	src/goahead.h	4086;"	d
+gvsprintf	src/goahead.h	4087;"	d
+gwrite	src/goahead.h	4088;"	d
 h	src/mbedtls/mbedtls.h	/^    unsigned int h;     \/*!<  internal: 1 if the constants are static       *\/$/;"	m	struct:__anon20
-hAlloc	src/goahead.h	4075;"	d
-hAllocEntry	src/goahead.h	4076;"	d
-hFree	src/goahead.h	4077;"	d
+hAlloc	src/goahead.h	4089;"	d
+hAllocEntry	src/goahead.h	4090;"	d
+hFree	src/goahead.h	4091;"	d
 handle	src/cgi.c	/^    CgiPid  handle;             \/* Process handle of the task *\/$/;"	m	struct:Cgi	file:
 handle	src/osdep/osdep.h	/^    typedef void    *handle;$/;"	t
 handler	src/goahead.h	/^    SocketHandler   handler;            \/**< User I\/O handler *\/$/;"	m	struct:WebsSocket
@@ -5898,13 +5970,21 @@ hour	src/mbedtls/mbedtls.h	/^    int hour, min, sec;         \/**< Time. *\/$/;"
 hs_msg	src/mbedtls/mbedtls.h	/^    unsigned char *hs_msg;              \/*!<  Reassembled handshake message  *\/$/;"	m	struct:mbedtls_ssl_handshake_params
 hs_timeout_max	src/mbedtls/mbedtls.h	/^    uint32_t hs_timeout_max;        \/*!< maximum value of the handshake$/;"	m	struct:mbedtls_ssl_config
 hs_timeout_min	src/mbedtls/mbedtls.h	/^    uint32_t hs_timeout_min;        \/*!< initial value of the handshake$/;"	m	struct:mbedtls_ssl_config
+icount	src/robot/robot_socket.h	/^	int icount;			\/\/ state feedback icount$/;"	m	struct:_STATE_FEEDBACK
 id	src/goahead.h	/^    char            *id;                    \/**< Session ID key *\/$/;"	m	struct:WebsSession
 id	src/mbedtls/mbedtls.h	/^    int id;$/;"	m	struct:mbedtls_ssl_ciphersuite_t
 id	src/mbedtls/mbedtls.h	/^    mbedtls_ecp_group_id id;    \/*!<  internal group identifier                     *\/$/;"	m	struct:__anon20
 id	src/mbedtls/mbedtls.h	/^    unsigned char id[32];       \/*!< session identifier *\/$/;"	m	struct:mbedtls_ssl_session
+id	src/robot/robot_socket.h	/^	int id[10];			\/\/ state feedback id$/;"	m	struct:_STATE_FEEDBACK
 id	src/runtime.c	/^    int         id;$/;"	m	struct:Callback	file:
+id_bus	src/robot/robot_socket.h	/^	uint8_t id_bus[MAXGRIPPER];$/;"	m	struct:_GRIPPERS_CONFIG_INFO
+id_company	src/robot/robot_socket.h	/^	uint8_t id_company[MAXGRIPPER];$/;"	m	struct:_GRIPPERS_CONFIG_INFO
+id_device	src/robot/robot_socket.h	/^	uint8_t id_device[MAXGRIPPER];$/;"	m	struct:_GRIPPERS_CONFIG_INFO
 id_len	src/mbedtls/mbedtls.h	/^    size_t id_len;              \/*!< session id length  *\/$/;"	m	struct:mbedtls_ssl_session
+id_softversion	src/robot/robot_socket.h	/^	uint8_t id_softversion [MAXGRIPPER];$/;"	m	struct:_GRIPPERS_CONFIG_INFO
 ifaddr	src/goahead.h	/^    char            ifaddr[ME_MAX_IP];  \/**< Local interface ipaddress *\/$/;"	m	struct:Webs
+im_mute	src/robot/robot_socket.h	/^	pthread_mutex_t im_mute;\/\/即时指令队列锁$/;"	m	struct:_SOCKET_INFO
+im_quene	src/robot/robot_socket.h	/^	LinkQuene im_quene; \/\/即时指令队列$/;"	m	struct:_SOCKET_INFO
 in_buf	src/mbedtls/mbedtls.h	/^    unsigned char *in_buf;      \/*!< input buffer                     *\/$/;"	m	struct:mbedtls_ssl_context
 in_ctr	src/mbedtls/mbedtls.h	/^    unsigned char *in_ctr;      \/*!< 64-bit incoming message counter$/;"	m	struct:mbedtls_ssl_context
 in_epoch	src/mbedtls/mbedtls.h	/^    uint16_t in_epoch;          \/*!< DTLS epoch for incoming records  *\/$/;"	m	struct:mbedtls_ssl_context
@@ -5965,6 +6045,7 @@ internal_malloc	src/cJSON.c	149;"	d	file:
 internal_realloc	src/cJSON.c	/^static void * CJSON_CDECL internal_realloc(void *pointer, size_t size)$/;"	f	file:
 internal_realloc	src/cJSON.c	151;"	d	file:
 inuse	src/runtime.c	/^    int         inuse;                  \/* Is this entry in use *\/$/;"	m	struct:HashTable	file:
+ioError	src/robot/robot_socket.h	/^	uint8_t    ioError;                 \/** IO错误 *\/$/;"	m	struct:_CTRL_STATE
 ip	src/goahead.h	/^    char            *ip;                \/**< Server listen address or remote client address *\/$/;"	m	struct:WebsSocket
 ipaddr	src/goahead.h	/^    char            ipaddr[ME_MAX_IP];  \/**< Connecting ipaddress *\/$/;"	m	struct:Webs
 ipv6	src/socket.c	/^static int ipv6(cchar *ip)$/;"	f	file:
@@ -6018,6 +6099,7 @@ iv_size	src/mbedtls/mbedtls.h	/^    unsigned int iv_size;$/;"	m	struct:__anon37
 ivlen	src/mbedtls/mbedtls.h	/^    size_t ivlen;                       \/*!<  IV length               *\/$/;"	m	struct:mbedtls_ssl_transform
 jid	src/js.h	/^    int         jid;                            \/* Halloc handle *\/$/;"	m	struct:Js
 joint_mode	src/robot/robot_socket.h	/^	double     joint_mode[6];  			\/**< 关节模式					    *\/$/;"	m	struct:_CTRL_STATE
+jointtotcf	src/robot/action_set.c	/^static int jointtotcf(const cJSON *data_json, char *content)$/;"	f	file:
 jsArgs	src/js.c	/^PUBLIC int jsArgs(int argc, char **argv, cchar *fmt, ...)$/;"	f
 jsCan	src/auth.c	/^static int jsCan(int jsid, Webs *wp, int argc, char **argv)$/;"	f	file:
 jsCloseBlock	src/js.c	/^PUBLIC int jsCloseBlock(int jid, int vid)$/;"	f
@@ -6137,6 +6219,7 @@ logRequest	src/http.c	/^static void logRequest(Webs *wp, int code)$/;"	f	file:
 logSetHandler	src/runtime.c	/^WebsLogHandler logSetHandler(WebsLogHandler handler)$/;"	f
 logSetPath	src/goahead.h	323;"	d
 logSetPath	src/runtime.c	/^PUBLIC void logSetPath(cchar *path)$/;"	f
+log_management	src/robot/action_act.c	/^static int log_management(const cJSON *data_json)$/;"	f	file:
 loginServiceProc	src/auth.c	/^static void loginServiceProc(Webs *wp)$/;"	f	file:
 logmsg	src/goahead.h	/^        inline void logmsg(int level, cchar *fmt, ...) {$/;"	f
 logmsg	src/goahead.h	188;"	d
@@ -7414,7 +7497,6 @@ md_info	src/mbedtls/mbedtls.h	/^    const mbedtls_md_info_t *md_info;   \/**< Ha
 md_info	src/mbedtls/mbedtls.h	/^    const mbedtls_md_info_t *md_info;$/;"	m	struct:__anon12
 memNotifier	src/alloc.c	/^static WebsMemNotifier memNotifier;$/;"	v	file:
 memory_header	src/mbedtls/mbedtls.c	/^typedef struct _memory_header memory_header;$/;"	t	typeref:struct:_memory_header	file:
-menu	src/robot/action_sta.c	/^static int menu(char *ret_status)$/;"	f	file:
 merror	src/goahead-mbedtls/goahead-mbedtls.c	/^static void merror(int rc, char *fmt, ...)$/;"	f	file:
 method	src/goahead.h	/^    char            *method;            \/**< HTTP request method *\/$/;"	m	struct:Webs
 methods	src/goahead.h	/^    WebsHash        methods;                \/**< Supported HTTP methods *\/$/;"	m	struct:WebsRoute
@@ -7438,6 +7520,8 @@ mode	src/mbedtls/mbedtls.h	/^    int mode;                             \/*!< The
 mode	src/mbedtls/mbedtls.h	/^    mbedtls_cipher_mode_t mode;$/;"	m	struct:__anon37
 mode	src/robot/action_set.c	/^static int mode(const cJSON *data_json, char *content)$/;"	f	file:
 mode_t	src/osdep/osdep.h	/^    typedef ushort  mode_t;$/;"	t
+modify_ex_tool_cdsystem	src/robot/action_act.c	/^static int modify_ex_tool_cdsystem(const cJSON *data_json)$/;"	f	file:
+modify_tool_cdsystem	src/robot/action_act.c	/^static int modify_tool_cdsystem(const cJSON *data_json)$/;"	f	file:
 modp	src/mbedtls/mbedtls.h	/^    int (*modp)(mbedtls_mpi *); \/*!<  function for fast reduction mod P             *\/$/;"	m	struct:__anon20
 mon	src/mbedtls/mbedtls.h	/^    int year, mon, day;         \/**< Date. *\/$/;"	m	struct:mbedtls_x509_time
 months	src/time.c	/^static TimeToken months[] = {$/;"	v	file:
@@ -7454,15 +7538,15 @@ mpi_write_hlp	src/mbedtls/mbedtls.c	/^static int mpi_write_hlp( mbedtls_mpi *X, 
 msg	src/goahead.h	/^    char    *msg;                           \/**< HTTP error message *\/$/;"	m	struct:WebsError
 msg	src/mbedtls/mbedtls.c	/^static const unsigned char msg[] = {$/;"	v	file:
 msg_len	src/mbedtls/mbedtls.c	/^static const size_t msg_len[NB_TESTS] = { 4, 16, 24 };$/;"	v	file:
-msgcontent	src/robot/robot_quene.h	/^	char	*msgcontent;     				\/\/ 消息内容$/;"	m	struct:COMMAND_INTERACTION
-msghead	src/robot/robot_quene.h	/^	int 	msghead;                  		\/\/ 指令信息头，唯一标识$/;"	m	struct:COMMAND_INTERACTION
+msgcontent	src/robot/robot_quene.h	/^	char	msgcontent[MAX_BUFFSIZE];     	\/\/ 消息内容$/;"	m	struct:_COMMAND_INTERACTION
+msghead	src/robot/robot_quene.h	/^	int 	msghead;                  		\/\/ 指令信息头，唯一标识$/;"	m	struct:_COMMAND_INTERACTION
 msghead	src/robot/robot_socket.h	/^	int msghead; \/\/ 当前有记录的消息头$/;"	m	struct:_SOCKET_INFO
-msglen	src/robot/robot_quene.h	/^	int		msglen;                     	\/\/ 消息内容长度$/;"	m	struct:COMMAND_INTERACTION
+msglen	src/robot/robot_quene.h	/^	int		msglen;                     	\/\/ 消息内容长度$/;"	m	struct:_COMMAND_INTERACTION
 mtime	src/goahead.h	/^    WebsTime        mtime;                  \/**< Modified time *\/$/;"	m	struct:WebsFileInfo
 mtow	src/runtime.c	/^PUBLIC ssize mtow(wchar *dest, ssize destCount, char *src, ssize count)$/;"	f
 mul_count	src/mbedtls/mbedtls.c	/^static unsigned long add_count, dbl_count, mul_count;$/;"	v	file:
-mute_cmd	src/robot/robot_socket.c	/^pthread_mutex_t mute_cmd;$/;"	v
-mute_file	src/robot/robot_socket.c	/^pthread_mutex_t mute_file;$/;"	v
+mut	src/robot/robot_socket.h	/^	pthread_mutex_t mut; \/\/ socket 锁$/;"	m	struct:_SOCKET_INFO
+mute	src/robot/robot_socket.h	/^	pthread_mutex_t mute;\/\/非即时指令队列锁$/;"	m	struct:_SOCKET_INFO
 mutex	src/mbedtls/mbedtls.c	/^    mbedtls_threading_mutex_t   mutex;$/;"	m	struct:__anon70	file:
 mutex	src/mbedtls/mbedtls.h	/^    mbedtls_threading_mutex_t mutex;    \/*!<  Thread-safety mutex. *\/$/;"	m	struct:__anon16
 mutex	src/mbedtls/mbedtls.h	/^    mbedtls_threading_mutex_t mutex;    \/*!< mutex                  *\/$/;"	m	struct:__anon53
@@ -7472,6 +7556,8 @@ mutex	src/mbedtls/mbedtls.h	/^    mbedtls_threading_mutex_t mutex;$/;"	m	struct:
 mutex	src/mbedtls/mbedtls.h	/^    mbedtls_threading_mutex_t mutex;$/;"	m	struct:__anon60
 mutex	src/mbedtls/mbedtls.h	/^    mbedtls_threading_mutex_t mutex;$/;"	m	struct:__anon65
 mutex	src/mbedtls/mbedtls.h	/^    pthread_mutex_t mutex;$/;"	m	struct:__anon7
+my_syslog	src/robot/tools.c	/^int my_syslog(const char *class, const char *content, const char *user)$/;"	f
+myfreeSessions	src/http.c	/^PUBLIC void myfreeSessions(void)$/;"	f
 myrand	src/mbedtls/mbedtls.c	/^static int myrand( void *rng_state, unsigned char *output, size_t len )$/;"	f	file:
 n	src/mbedtls/mbedtls.h	/^    size_t n;           \/*!<  total # of limbs  *\/$/;"	m	struct:__anon8
 nArgs	src/js.h	/^    int         nArgs;                          \/* Number of args *\/$/;"	m	struct:JsFun
@@ -7510,6 +7596,7 @@ next	src/mbedtls/mbedtls.h	/^    struct mbedtls_x509_crl *next;$/;"	m	struct:mbe
 next	src/mbedtls/mbedtls.h	/^    struct mbedtls_x509_crl_entry *next;$/;"	m	struct:mbedtls_x509_crl_entry	typeref:struct:mbedtls_x509_crl_entry::mbedtls_x509_crl_entry
 next	src/mbedtls/mbedtls.h	/^    struct mbedtls_x509_crt *next;     \/**< Next certificate in the CA-chain. *\/$/;"	m	struct:mbedtls_x509_crt	typeref:struct:mbedtls_x509_crt::mbedtls_x509_crt
 next	src/robot/robot_quene.h	/^	struct QNode *next;$/;"	m	struct:QNode	typeref:struct:QNode::QNode
+next	src/robot/statefb_quene.h	/^	struct FB_QNode *next;$/;"	m	struct:FB_QNode	typeref:struct:FB_QNode::FB_QNode
 next_free	src/mbedtls/mbedtls.c	/^    memory_header   *next_free;$/;"	m	struct:_memory_header	file:
 next_merged	src/mbedtls/mbedtls.h	/^    unsigned char next_merged;      \/**< Merge next item into the current one? *\/$/;"	m	struct:mbedtls_asn1_named_data
 next_record_offset	src/mbedtls/mbedtls.h	/^    size_t next_record_offset;  \/*!< offset of the next record in datagram$/;"	m	struct:mbedtls_ssl_context
@@ -7611,6 +7698,7 @@ pad	src/osdep/osdep.h	/^    struct sockaddr_storage { char pad[1024]; };$/;"	m	s
 padding	src/mbedtls/mbedtls.h	/^    int padding;                \/*!< Selects padding mode:$/;"	m	struct:__anon16
 page	src/goahead.h	/^    uchar           *page;                  \/**< Web page data *\/$/;"	m	struct:WebsRomIndex
 pamChat	src/auth.c	/^static int pamChat(int msgCount, const struct pam_message **msg, struct pam_response **resp, void *data)$/;"	f	file:
+paraError	src/robot/robot_socket.h	/^	uint8_t    paraError;               \/** 参数错误 *\/$/;"	m	struct:_CTRL_STATE
 parse	src/js.c	/^static int parse(Js *ep, int state, int flags)$/;"	f	file:
 parseAuth	src/goahead.h	/^    WebsParseAuth   parseAuth;              \/**< Parse authentication details callback*\/$/;"	m	struct:WebsRoute
 parseBasicDetails	src/auth.c	/^static bool parseBasicDetails(Webs *wp)$/;"	f	file:
@@ -7731,7 +7819,7 @@ program_resume	src/robot/action_set.c	/^static int program_resume(const cJSON *d
 program_start	src/robot/action_set.c	/^static int program_start(const cJSON *data_json, char *content)$/;"	f	file:
 program_state	src/robot/robot_socket.h	/^	uint8_t     program_state;           \/**< 程序状态1:停止,2:运行,3：暂停,4：拖动                       *\/$/;"	m	struct:_CTRL_STATE
 program_stop	src/robot/action_set.c	/^static int program_stop(const cJSON *data_json, char *content)$/;"	f	file:
-program_teach	src/robot/action_sta.c	/^static int program_teach(char *ret_status)$/;"	f	file:
+program_teach	src/robot/action_sta.c	/^static int program_teach(char *ret_status, CTRL_STATE *state)$/;"	f	file:
 protoVersion	src/goahead.h	/^    char            *protoVersion;      \/**< Protocol version (HTTP\/1.1)*\/$/;"	m	struct:Webs
 protocol	src/goahead.h	/^    char            *protocol;              \/**< HTTP protocol to use for this route *\/$/;"	m	struct:WebsRoute
 protocol	src/goahead.h	/^    char            *protocol;          \/**< Protocol scheme (normally http|https) *\/$/;"	m	struct:Webs
@@ -7754,8 +7842,8 @@ putfd	src/goahead.h	/^    int             putfd;              \/**< File handle 
 putname	src/goahead.h	/^    char            *putname;           \/**< PUT temporary filename *\/$/;"	m	struct:Webs
 qhead	src/alloc.c	/^static WebsAlloc    *qhead[WEBS_MAX_CLASS];             \/* Per class block q head *\/$/;"	v	file:
 qop	src/goahead.h	/^    char            *qop;               \/**< quality operator *\/$/;"	m	struct:Webs
-quene	src/robot/robot_socket.h	/^	LinkQuene quene;$/;"	m	struct:_SOCKET_INFO
-quene_recv_result	src/robot/robot_quene.c	/^int quene_recv_result(const QElemType node, const LinkQuene q)$/;"	f
+quene	src/robot/robot_socket.h	/^	LinkQuene quene; \/\/非即时指令队列$/;"	m	struct:_SOCKET_INFO
+quene_recv_result	src/robot/robot_quene.c	/^int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_content)$/;"	f
 queneempty	src/robot/robot_quene.c	/^int queneempty(LinkQuene *q)$/;"	f
 query	src/goahead.h	/^    char            *query;             \/**< Request query. This is decoded. *\/$/;"	m	struct:Webs
 radix	src/runtime.c	/^    int     radix;$/;"	m	struct:Format	file:
@@ -7843,11 +7931,13 @@ read_timeout	src/mbedtls/mbedtls.h	/^    uint32_t read_timeout;          \/*!< t
 reallocate	src/cJSON.c	/^    void *(CJSON_CDECL *reallocate)(void *pointer, size_t size);$/;"	m	struct:internal_hooks	file:
 realm	src/goahead.h	/^    char            *realm;             \/**< Realm field supplied in auth header *\/$/;"	m	struct:Webs
 rear	src/robot/robot_quene.h	/^	Qnode *rear;$/;"	m	struct:LINKQuene
+rear	src/robot/statefb_quene.h	/^	FB_Qnode *rear;$/;"	m	struct:FB_LINKQuene
 recv	src/osdep.c	/^PUBLIC int recv(int s, void *buf, size_t len, int flags)$/;"	f
 redirectHandler	src/route.c	/^static bool redirectHandler(Webs *wp)$/;"	f	file:
 redirects	src/goahead.h	/^    WebsHash        redirects;              \/**< Response redirections *\/$/;"	m	struct:WebsRoute
 referrer	src/goahead.h	/^    char            *referrer;          \/**< The referring page *\/$/;"	m	struct:Webs
 remove_lua_file	src/robot/action_act.c	/^static int remove_lua_file(const cJSON *data_json)$/;"	f	file:
+remove_points	src/robot/action_act.c	/^static int remove_points(const cJSON *data_json)$/;"	f	file:
 rename_lua_file	src/robot/action_act.c	/^static int rename_lua_file(const cJSON *data_json)$/;"	f	file:
 renego_max_records	src/mbedtls/mbedtls.h	/^    int renego_max_records;         \/*!< grace period for renegotiation     *\/$/;"	m	struct:mbedtls_ssl_config
 renego_period	src/mbedtls/mbedtls.h	/^    unsigned char renego_period[8]; \/*!< value of the record counters$/;"	m	struct:mbedtls_ssl_config
@@ -7868,29 +7958,31 @@ result_nopr	src/mbedtls/mbedtls.c	/^static const unsigned char result_nopr[OUTPU
 result_pr	src/mbedtls/mbedtls.c	/^static const unsigned char result_pr[16] =$/;"	v	file:
 result_pr	src/mbedtls/mbedtls.c	/^static const unsigned char result_pr[OUTPUT_LEN] = {$/;"	v	file:
 resume	src/mbedtls/mbedtls.h	/^    int resume;                         \/*!<  session resume indicator*\/$/;"	m	struct:mbedtls_ssl_handshake_params
+ret_mute	src/robot/robot_socket.h	/^	pthread_mutex_t ret_mute;\/\/指令执行结果反馈队列锁$/;"	m	struct:_SOCKET_INFO
+ret_quene	src/robot/robot_socket.h	/^	LinkQuene ret_quene; \/\/指令执行结果反馈队列$/;"	m	struct:_SOCKET_INFO
 retransmit_state	src/mbedtls/mbedtls.h	/^    unsigned char retransmit_state;     \/*!<  Retransmission state           *\/$/;"	m	struct:mbedtls_ssl_handshake_params
 retransmit_timeout	src/mbedtls/mbedtls.h	/^    uint32_t retransmit_timeout;        \/*!<  Current value of timeout       *\/$/;"	m	struct:mbedtls_ssl_handshake_params
 reuseConn	src/http.c	/^static void reuseConn(Webs *wp)$/;"	f	file:
 revocation_date	src/mbedtls/mbedtls.h	/^    mbedtls_x509_time revocation_date;$/;"	m	struct:mbedtls_x509_crl_entry
 revoke	src/goahead-mbedtls/goahead-mbedtls.c	/^    mbedtls_x509_crl            revoke;         \/* Certificate authority bundle to verify peer *\/$/;"	m	struct:MbedConfig	file:
-ringqAddNull	src/goahead.h	4122;"	d
-ringqClose	src/goahead.h	4106;"	d
-ringqCompact	src/goahead.h	4120;"	d
-ringqFlush	src/goahead.h	4119;"	d
-ringqGetBlk	src/goahead.h	4116;"	d
-ringqGetBlkAdj	src/goahead.h	4118;"	d
-ringqGetBlkMax	src/goahead.h	4117;"	d
-ringqGetc	src/goahead.h	4111;"	d
-ringqGrow	src/goahead.h	4112;"	d
-ringqInsertc	src/goahead.h	4109;"	d
-ringqLen	src/goahead.h	4107;"	d
-ringqOpen	src/goahead.h	4105;"	d
-ringqPutBlk	src/goahead.h	4113;"	d
-ringqPutBlkAdj	src/goahead.h	4115;"	d
-ringqPutBlkMax	src/goahead.h	4114;"	d
-ringqPutStr	src/goahead.h	4110;"	d
-ringqPutc	src/goahead.h	4108;"	d
-ringqReset	src/goahead.h	4121;"	d
+ringqAddNull	src/goahead.h	4136;"	d
+ringqClose	src/goahead.h	4120;"	d
+ringqCompact	src/goahead.h	4134;"	d
+ringqFlush	src/goahead.h	4133;"	d
+ringqGetBlk	src/goahead.h	4130;"	d
+ringqGetBlkAdj	src/goahead.h	4132;"	d
+ringqGetBlkMax	src/goahead.h	4131;"	d
+ringqGetc	src/goahead.h	4125;"	d
+ringqGrow	src/goahead.h	4126;"	d
+ringqInsertc	src/goahead.h	4123;"	d
+ringqLen	src/goahead.h	4121;"	d
+ringqOpen	src/goahead.h	4119;"	d
+ringqPutBlk	src/goahead.h	4127;"	d
+ringqPutBlkAdj	src/goahead.h	4129;"	d
+ringqPutBlkMax	src/goahead.h	4128;"	d
+ringqPutStr	src/goahead.h	4124;"	d
+ringqPutc	src/goahead.h	4122;"	d
+ringqReset	src/goahead.h	4135;"	d
 ringq_t	src/goahead.h	/^    typedef WebsBuf ringq_t;$/;"	t
 ripemd160_clone_wrap	src/mbedtls/mbedtls.c	/^static void ripemd160_clone_wrap( void *dst, const void *src )$/;"	f	file:
 ripemd160_ctx_alloc	src/mbedtls/mbedtls.c	/^static void *ripemd160_ctx_alloc( void )$/;"	f	file:
@@ -7906,8 +7998,9 @@ ripemd160_update_wrap	src/mbedtls/mbedtls.c	/^static int ripemd160_update_wrap( 
 rk	src/mbedtls/mbedtls.h	/^    uint32_t *rk;               \/*!< AES round keys. *\/$/;"	m	struct:__anon46
 rk	src/mbedtls/mbedtls.h	/^    uint32_t rk[68];            \/*!<  CAMELLIA round keys    *\/$/;"	m	struct:__anon48
 rmdir	src/osdep/osdep.h	1180;"	d
-robot_mode	src/robot/robot_socket.h	/^	uint8_t        robot_mode;              \/**< 机器人模式                     *\/$/;"	m	struct:_CTRL_STATE
+robot_mode	src/robot/robot_socket.h	/^	uint8_t        robot_mode;              \/**< 机器人模式  0:自动 1:手动                    *\/$/;"	m	struct:_CTRL_STATE
 robot_socket_h	src/robot/robot_socket.h	2;"	d
+robot_type	src/goahead.c	/^int robot_type = 1;\/\/ 默认实体机器人$/;"	v
 role	src/mbedtls/mbedtls.h	/^    mbedtls_ecjpake_role role;          \/**< Are we client or server?       *\/$/;"	m	struct:__anon23
 roles	src/auth.c	/^static WebsHash roles = -1;$/;"	v	file:
 roles	src/goahead.h	/^    char    *roles;                         \/**< User roles *\/$/;"	m	struct:WebsUser
@@ -7952,7 +8045,9 @@ s	src/mbedtls/mbedtls.h	/^    mbedtls_mpi s;                      \/**< Pre-shar
 safe_mode	src/robot/robot_socket.h	/^	double     safe_mode;               \/**< 安全模式                       *\/$/;"	m	struct:_CTRL_STATE
 salt	src/mbedtls/mbedtls.c	/^static const unsigned char salt[MAX_TESTS][40] =$/;"	v	file:
 saveMask	src/goahead.h	/^    int             saveMask;           \/**< saved Mask for socketFlush *\/$/;"	m	struct:WebsSocket
+save_accounts	src/robot/action_act.c	/^static int save_accounts(const cJSON *data_json)$/;"	f	file:
 save_lua_file	src/robot/action_act.c	/^static int save_lua_file(const cJSON *data_json)$/;"	f	file:
+save_point	src/robot/action_act.c	/^static int save_point(const cJSON *data_json)$/;"	f	file:
 scaselesscmp	src/runtime.c	/^PUBLIC int scaselesscmp(cchar *s1, cchar *s2)$/;"	f
 scaselessmatch	src/runtime.c	/^PUBLIC bool scaselessmatch(cchar *s1, cchar *s2)$/;"	f
 schar	src/osdep/osdep.h	/^    typedef signed char schar;$/;"	t
@@ -8035,7 +8130,9 @@ set	src/robot/action_set.c	/^void set(Webs *wp)$/;"	f
 setFileLimits	src/http.c	/^static void setFileLimits(void)$/;"	f	file:
 setLocalHost	src/http.c	/^static int setLocalHost(void)$/;"	f	file:
 setString	src/js.c	/^static void setString(char **ptr, cchar *s)$/;"	f	file:
-setbit	src/robot/tools.h	14;"	d
+set_state	src/robot/action_set.c	/^static int set_state(const cJSON *data_json, char *content)$/;"	f	file:
+set_state_id	src/robot/action_set.c	/^static int set_state_id(const cJSON *data_json, char *content)$/;"	f	file:
+setbit	src/robot/tools.h	27;"	d
 setkey_dec_func	src/mbedtls/mbedtls.h	/^    int (*setkey_dec_func)( void *ctx, const unsigned char *key,$/;"	m	struct:mbedtls_cipher_base_t
 setkey_enc_func	src/mbedtls/mbedtls.h	/^    int (*setkey_enc_func)( void *ctx, const unsigned char *key,$/;"	m	struct:mbedtls_cipher_base_t
 sfmt	src/runtime.c	/^PUBLIC char *sfmt(cchar *format, ...)$/;"	f
@@ -8089,6 +8186,7 @@ sig	src/mbedtls/mbedtls.h	/^    mbedtls_x509_buf sig;               \/**< Signat
 sig	src/mbedtls/mbedtls.h	/^    mbedtls_x509_buf sig;$/;"	m	struct:mbedtls_x509_crl
 sig	src/mbedtls/mbedtls.h	/^    mbedtls_x509_buf sig;$/;"	m	struct:mbedtls_x509_csr
 sigHandler	src/goahead.c	/^static void sigHandler(int signo)$/;"	f	file:
+sig_handler	src/robot/action_sta.c	/^void sig_handler(int signo)$/;"	f
 sig_hashes	src/mbedtls/mbedtls.h	/^    const int *sig_hashes;          \/*!< allowed signature hashes           *\/$/;"	m	struct:mbedtls_ssl_config
 sig_md	src/mbedtls/mbedtls.h	/^    mbedtls_md_type_t sig_md;           \/**< Internal representation of the MD algorithm of the signature algorithm, e.g. MBEDTLS_MD_SHA256 *\/$/;"	m	struct:mbedtls_x509_crl
 sig_md	src/mbedtls/mbedtls.h	/^    mbedtls_md_type_t sig_md;           \/**< Internal representation of the MD algorithm of the signature algorithm, e.g. MBEDTLS_MD_SHA256 *\/$/;"	m	struct:mbedtls_x509_crt
@@ -8189,30 +8287,31 @@ socketSetNoDelay	src/socket.c	/^PUBLIC int socketSetNoDelay(int sid, bool on)$/;
 socketWaitForEvent	src/socket.c	/^PUBLIC int socketWaitForEvent(WebsSocket *sp, int handlerMask)$/;"	f
 socketWrite	src/socket.c	/^PUBLIC ssize socketWrite(int sid, void *buf, ssize bufsize)$/;"	f
 socket_cmd	src/robot/robot_socket.c	/^SOCKET_INFO socket_cmd;$/;"	v
-socket_cmd_recv_thread	src/robot/robot_socket.c	/^static void *socket_cmd_recv_thread(void *arg)$/;"	f	file:
-socket_cmd_send_thread	src/robot/robot_socket.c	/^static void *socket_cmd_send_thread(void *arg)$/;"	f	file:
-socket_cmd_thread	src/robot/robot_socket.c	/^void *socket_cmd_thread(void *arg)$/;"	f
 socket_connect	src/robot/robot_socket.c	/^static int socket_connect(SOCKET_INFO *sock)$/;"	f	file:
 socket_create	src/robot/robot_socket.c	/^static int socket_create(SOCKET_INFO *sock)$/;"	f	file:
 socket_file	src/robot/robot_socket.c	/^SOCKET_INFO socket_file;$/;"	v
-socket_file_recv_thread	src/robot/robot_socket.c	/^static void *socket_file_recv_thread(void *arg)$/;"	f	file:
-socket_file_send_thread	src/robot/robot_socket.c	/^static void *socket_file_send_thread(void *arg)$/;"	f	file:
-socket_file_thread	src/robot/robot_socket.c	/^void *socket_file_thread(void *arg)$/;"	f
 socket_init	src/robot/robot_socket.c	/^static void socket_init(SOCKET_INFO *sock, const int port)$/;"	f	file:
 socket_quene_h	src/robot/robot_quene.h	2;"	d
 socket_recv	src/robot/robot_socket.c	/^static int socket_recv(SOCKET_INFO *sock, char *buf_memory)$/;"	f	file:
-socket_send	src/robot/robot_socket.c	/^static int socket_send(SOCKET_INFO *sock)$/;"	f	file:
+socket_recv_thread	src/robot/robot_socket.c	/^static void *socket_recv_thread(void *arg)$/;"	f	file:
+socket_send	src/robot/robot_socket.c	/^static int socket_send(SOCKET_INFO *sock, QElemType *node)$/;"	f	file:
+socket_send_thread	src/robot/robot_socket.c	/^static void *socket_send_thread(void *arg)$/;"	f	file:
+socket_state	src/robot/robot_socket.c	/^SOCKET_INFO socket_state;$/;"	v
+socket_state_feedback_thread	src/robot/robot_socket.c	/^void *socket_state_feedback_thread(void *arg)$/;"	f
 socket_status	src/robot/robot_socket.c	/^SOCKET_INFO socket_status;$/;"	v
 socket_status_thread	src/robot/robot_socket.c	/^void *socket_status_thread(void *arg)$/;"	f
 socket_t	src/goahead.h	/^    typedef WebsSocket socket_t;$/;"	t
+socket_thread	src/robot/robot_socket.c	/^void *socket_thread(void *arg)$/;"	f
 socket_timeout	src/robot/robot_socket.c	/^static int socket_timeout(SOCKET_INFO *sock)$/;"	f	file:
+socket_vir_cmd	src/robot/robot_socket.c	/^SOCKET_INFO socket_vir_cmd;$/;"	v
+socket_vir_file	src/robot/robot_socket.c	/^SOCKET_INFO socket_vir_file;$/;"	v
+socket_vir_status	src/robot/robot_socket.c	/^SOCKET_INFO socket_vir_status;$/;"	v
 socklen_t	src/osdep/osdep.h	/^        typedef int     socklen_t;$/;"	t
 socklen_t	src/osdep/osdep.h	/^    typedef int     socklen_t;$/;"	t
 source	src/mbedtls/mbedtls.h	/^    mbedtls_entropy_source_state    source[MBEDTLS_ENTROPY_MAX_SOURCES];$/;"	m	struct:__anon53
 source_count	src/mbedtls/mbedtls.h	/^    int             source_count;$/;"	m	struct:__anon53
 split_done	src/mbedtls/mbedtls.h	/^    signed char split_done;     \/*!< current record already splitted? *\/$/;"	m	struct:mbedtls_ssl_context
 sprintfCore	src/runtime.c	/^static char *sprintfCore(char *buf, ssize maxsize, cchar *spec, va_list args)$/;"	f	file:
-sql_index	src/goahead.c	/^int sql_index = 0;$/;"	v
 ssize	src/osdep/osdep.h	/^        typedef SSIZE_T ssize;$/;"	t
 ssize	src/osdep/osdep.h	/^        typedef ssize_t ssize;$/;"	t
 ssize_t	src/osdep/osdep.h	/^        typedef int ssize_t;$/;"	t
@@ -8382,8 +8481,10 @@ state	src/mbedtls/mbedtls.h	/^    uint32_t state[5];          \/*!< intermediate
 state	src/mbedtls/mbedtls.h	/^    uint32_t state[8];          \/*!< The intermediate digest state.  *\/$/;"	m	struct:__anon44
 state	src/mbedtls/mbedtls.h	/^    uint64_t state[8];          \/*!< The intermediate digest state. *\/$/;"	m	struct:__anon45
 state	src/mbedtls/mbedtls.h	/^    unsigned char state[48];    \/*!< intermediate digest state  *\/$/;"	m	struct:__anon14
-state	src/robot/robot_quene.h	/^	int		state;                      	\/\/ 处理状态, 0:init, 1:send to server, 2:recv data $/;"	m	struct:COMMAND_INTERACTION
 stateMap	src/runtime.c	/^PUBLIC char stateMap[] = {$/;"	v
+state_fb	src/robot/robot_socket.c	/^STATE_FEEDBACK state_fb;$/;"	v
+state_feedback_init	src/robot/robot_socket.c	/^static void state_feedback_init(STATE_FEEDBACK *fb)$/;"	f	file:
+statefb_quene_h	src/robot/statefb_quene.h	2;"	d
 static_strlen	src/cJSON.c	155;"	d	file:
 stdIn	src/cgi.c	/^    char    *stdIn;             \/* File desc. for task's temp input fd *\/$/;"	m	struct:Cgi	file:
 stdOut	src/cgi.c	/^    char    *stdOut;            \/* File desc. for task's temp output fd *\/$/;"	m	struct:Cgi	file:
@@ -8399,8 +8500,8 @@ string	src/cJSON.h	/^    char *string;$/;"	m	struct:cJSON
 string	src/goahead.h	/^        char    *string;$/;"	m	union:WebsValue::__anon4
 string	src/goahead.h	/^    string      = 10,$/;"	e	enum:WebsType
 string	src/mbedtls/mbedtls.c	/^    const char *string;$/;"	m	struct:x509_crt_verify_string	file:
-stritoa	src/goahead.h	4078;"	d
-strlower	src/goahead.h	4079;"	d
+stritoa	src/goahead.h	4092;"	d
+strlower	src/goahead.h	4093;"	d
 strncasecmp	src/osdep/osdep.h	1081;"	d
 strncasecmp	src/osdep/osdep.h	1190;"	d
 strnlen	src/runtime.c	/^PUBLIC ssize strnlen(cchar *s, ssize n)$/;"	f
@@ -8408,7 +8509,7 @@ strong	src/mbedtls/mbedtls.h	/^    int             strong;     \/**< Is the sour
 strrpc	src/robot/tools.c	/^char *strrpc(char *str, const char *oldstr, const char *newstr)$/;"	f
 strtoi	src/runtime.c	/^uint strtoi(char *s)$/;"	f
 strtokcmp	src/jst.c	/^static char *strtokcmp(char *s1, char *s2)$/;"	f	file:
-strupper	src/goahead.h	4080;"	d
+strupper	src/goahead.h	4094;"	d
 sub32	src/mbedtls/mbedtls.c	/^static inline void sub32( uint32_t *dst, uint32_t src, signed char *carry )$/;"	f	file:
 subject	src/mbedtls/mbedtls.h	/^    mbedtls_asn1_named_data *subject;$/;"	m	struct:mbedtls_x509write_cert
 subject	src/mbedtls/mbedtls.h	/^    mbedtls_asn1_named_data *subject;$/;"	m	struct:mbedtls_x509write_csr
@@ -8498,15 +8599,15 @@ supported_init	src/mbedtls/mbedtls.c	8730;"	d	file:
 supported_init	src/mbedtls/mbedtls.c	9682;"	d	file:
 swapDayMonth	src/time.c	/^static void swapDayMonth(struct tm *tp)$/;"	f	file:
 sym	src/runtime.c	/^static HashTable **sym;             \/* List of symbol tables *\/$/;"	v	file:
-symClose	src/goahead.h	4125;"	d
-symCreate	src/goahead.h	4124;"	d
-symDelete	src/goahead.h	4128;"	d
-symEnter	src/goahead.h	4127;"	d
-symFirst	src/goahead.h	4130;"	d
-symLookup	src/goahead.h	4126;"	d
+symClose	src/goahead.h	4139;"	d
+symCreate	src/goahead.h	4138;"	d
+symDelete	src/goahead.h	4142;"	d
+symEnter	src/goahead.h	4141;"	d
+symFirst	src/goahead.h	4144;"	d
+symLookup	src/goahead.h	4140;"	d
 symMax	src/runtime.c	/^static int       symMax;            \/* One past the max symbol table *\/$/;"	v	file:
-symNext	src/goahead.h	4131;"	d
-symWalk	src/goahead.h	4129;"	d
+symNext	src/goahead.h	4145;"	d
+symWalk	src/goahead.h	4143;"	d
 sym_fd_t	src/goahead.h	/^    typedef WebsHash sym_fd_t;$/;"	t
 sym_t	src/goahead.h	/^    typedef WebsKey sym_t;$/;"	t
 symbol	src/goahead.h	/^        void    *symbol;$/;"	m	union:WebsValue::__anon4
@@ -8515,6 +8616,8 @@ syslog	src/osdep.c	/^PUBLIC void syslog(int priority, char *fmt, ...)$/;"	f
 t_data	src/mbedtls/mbedtls.h	/^    void *t_data;                       \/*!< unused                         *\/$/;"	m	struct:__anon20
 t_post	src/mbedtls/mbedtls.h	/^    int (*t_post)(mbedtls_ecp_point *, void *); \/*!< unused                         *\/$/;"	m	struct:__anon20
 t_pre	src/mbedtls/mbedtls.h	/^    int (*t_pre)(mbedtls_ecp_point *, void *);  \/*!< unused                         *\/$/;"	m	struct:__anon20
+t_socket_recv	src/robot/robot_socket.h	/^	pthread_t t_socket_recv;$/;"	m	struct:_SOCKET_INFO
+t_socket_send	src/robot/robot_socket.h	/^	pthread_t t_socket_send;$/;"	m	struct:_SOCKET_INFO
 tableToBlock	src/cgi.c	/^static uchar *tableToBlock(char **table)$/;"	f	file:
 tag	src/mbedtls/mbedtls.c	/^static const unsigned char tag[MAX_TESTS * 3][16] =$/;"	v	file:
 tag	src/mbedtls/mbedtls.h	/^    int tag;                \/**< ASN1 type, e.g. MBEDTLS_ASN1_UTF8_STRING. *\/$/;"	m	struct:mbedtls_asn1_buf
@@ -8526,9 +8629,10 @@ termWebs	src/http.c	/^static void termWebs(Webs *wp, int reuse)$/;"	f	file:
 test_aes128_cmac_prf	src/mbedtls/mbedtls.c	/^static int test_aes128_cmac_prf( int verbose )$/;"	f	file:
 test_data	src/robot/robot_socket.h	/^	double     test_data;               \/**< 测试数据ur机器人软件使用       *\/$/;"	m	struct:_CTRL_STATE
 test_data1	src/robot/robot_socket.h	/^	double     test_data1;  			\/**< 测试数据ur机器人软件使用       *\/$/;"	m	struct:_CTRL_STATE
+test_index	src/robot/action_sta.c	/^static int test_index = 0;$/;"	v	file:
 test_message	src/mbedtls/mbedtls.c	/^static const unsigned char test_message[] = {$/;"	v	file:
 test_offset	src/mbedtls/mbedtls.c	/^static size_t test_offset;$/;"	v	file:
-test_package	src/robot/tools.h	7;"	d
+test_package	src/robot/tools.h	8;"	d
 this_update	src/mbedtls/mbedtls.h	/^    mbedtls_x509_time this_update;$/;"	m	struct:mbedtls_x509_crl
 threading_mutex_dummy	src/mbedtls/mbedtls.c	/^static void threading_mutex_dummy( mbedtls_threading_mutex_t *mutex )$/;"	f	file:
 threading_mutex_fail	src/mbedtls/mbedtls.c	/^static int threading_mutex_fail( mbedtls_threading_mutex_t *mutex )$/;"	f	file:
@@ -8549,6 +8653,7 @@ timeout	src/goahead.h	/^    int             timeout;            \/**< Timeout ha
 timeout	src/mbedtls/mbedtls.h	/^    int timeout;                \/*!< cache entry timeout    *\/$/;"	m	struct:mbedtls_ssl_cache_context
 timeout	src/mbedtls/mbedtls.h	/^    unsigned long   timeout;    \/*!< timeout delay, in seconds if HAVE_TIME,$/;"	m	struct:__anon58
 timer	src/mbedtls/mbedtls.h	/^    struct mbedtls_timing_hr_time   timer;$/;"	m	struct:__anon55	typeref:struct:__anon55::mbedtls_timing_hr_time
+timerid	src/robot/action_sta.c	/^timer_t timerid;$/;"	v
 timestamp	src/goahead.h	/^    WebsTime        timestamp;          \/**< Last transaction with browser *\/$/;"	m	struct:Webs
 timestamp	src/mbedtls/mbedtls.h	/^    mbedtls_time_t timestamp;           \/*!< entry timestamp    *\/$/;"	m	struct:mbedtls_ssl_cache_entry
 timezone	src/osdep/osdep.h	/^    struct timezone {$/;"	s
@@ -8579,7 +8684,7 @@ tmp_dgt_output6	src/robot/robot_socket.h	/^	uint8_t     tmp_dgt_output6;			\/**<
 tokbuf	src/js.h	/^    WebsBuf     tokbuf;                         \/* Current token *\/$/;"	m	struct:JsInput
 token	src/js.h	/^    char        *token;                         \/* Pointer to token string *\/$/;"	m	struct:Js
 tokenAddChar	src/js.c	/^static int tokenAddChar(Js *ep, int c)$/;"	f	file:
-tool_pos_att	src/robot/robot_socket.h	/^	double     tool_pos_att[6];         \/**< 工具坐标中心相对于末端的位置及姿态 *\/$/;"	m	struct:_CTRL_STATE
+toolNum	src/robot/robot_socket.h	/^	int        toolNum;                 \/** 工具号 *\/$/;"	m	struct:_CTRL_STATE
 tools_h	src/robot/tools.h	2;"	d
 total	src/mbedtls/mbedtls.h	/^    uint32_t total[2];          \/*!< The number of Bytes processed.  *\/$/;"	m	struct:__anon43
 total	src/mbedtls/mbedtls.h	/^    uint32_t total[2];          \/*!< The number of Bytes processed.  *\/$/;"	m	struct:__anon44
@@ -8588,7 +8693,6 @@ total	src/mbedtls/mbedtls.h	/^    uint32_t total[2];          \/*!< number of by
 total	src/mbedtls/mbedtls.h	/^    uint32_t total[2];          \/*!< number of bytes processed  *\/$/;"	m	struct:__anon68
 total	src/mbedtls/mbedtls.h	/^    uint64_t total[2];          \/*!< The number of Bytes processed. *\/$/;"	m	struct:__anon45
 total_used	src/mbedtls/mbedtls.c	/^    size_t          total_used;$/;"	m	struct:__anon70	file:
-tpd_state	src/robot/robot_socket.h	/^	uint8_t    tpd_state;               \/**< TPD状态,低位->高位,bit0-允许轨迹记录，bit1-点数超限,bit2-文件保存完成,1为真,0为非 *\/$/;"	m	struct:_CTRL_STATE
 trace	src/goahead.h	/^        inline void trace(int level, cchar *fmt, ...) {$/;"	f
 trace	src/goahead.h	169;"	d
 trace	src/goahead.h	183;"	d
@@ -8626,7 +8730,7 @@ type	src/mbedtls/mbedtls.h	/^    mbedtls_md_type_t type;$/;"	m	struct:mbedtls_md
 type	src/mbedtls/mbedtls.h	/^    mbedtls_pk_debug_type type;$/;"	m	struct:__anon27
 type	src/mbedtls/mbedtls.h	/^    mbedtls_pk_type_t type;$/;"	m	struct:mbedtls_pk_info_t
 type	src/mbedtls/mbedtls.h	/^    unsigned char type;     \/*!< type of the message: handshake or CCS  *\/$/;"	m	struct:mbedtls_ssl_flight_item
-type	src/robot/robot_quene.h	/^	int		type;                       	\/\/ 指令标签,具体参照指令字典位$/;"	m	struct:COMMAND_INTERACTION
+type	src/robot/robot_quene.h	/^	int		type;                       	\/\/ 指令标签,具体参照指令字典位$/;"	m	struct:_COMMAND_INTERACTION
 type	src/time.c	/^    int     type;$/;"	m	struct:TimeToken	file:
 tz_dsttime	src/osdep/osdep.h	/^      int  tz_dsttime;          \/* type of dst correction *\/$/;"	m	struct:timezone
 tz_minuteswest	src/osdep/osdep.h	/^      int  tz_minuteswest;      \/* minutes W of Greenwich *\/$/;"	m	struct:timezone
@@ -8635,11 +8739,13 @@ uchar	src/osdep/osdep.h	/^    typedef unsigned char uchar;$/;"	t
 uid_t	src/osdep/osdep.h	/^    typedef int     uid_t;$/;"	t
 uint	src/osdep/osdep.h	/^    typedef unsigned int uint;$/;"	t
 uint16	src/osdep/osdep.h	/^    typedef unsigned short uint16;$/;"	t
+uint16_to_array	src/robot/tools.c	/^void uint16_to_array(int n, int *array)$/;"	f
 uint32	src/osdep/osdep.h	/^    typedef unsigned int uint32;$/;"	t
 uint64	src/osdep/osdep.h	/^        __extension__ typedef unsigned long long int uint64;$/;"	t
 uint64	src/osdep/osdep.h	/^        typedef unsigned __int64 uint64;$/;"	t
 uint64	src/osdep/osdep.h	/^        typedef unsigned long long int uint64;$/;"	t
 uint8	src/osdep/osdep.h	/^    typedef unsigned char uint8;$/;"	t
+uint8_to_array	src/robot/tools.c	/^void uint8_to_array(int n1, int n2, int *array)$/;"	f
 ulong	src/osdep/osdep.h	/^    typedef unsigned long ulong;$/;"	t
 umask	src/osdep/osdep.h	1184;"	d
 undefined	src/goahead.h	/^    undefined   = 0,$/;"	e	enum:WebsType
@@ -8668,6 +8774,7 @@ user	src/goahead.h	/^    struct WebsUser *user;              \/**< User auth rec
 userAgent	src/goahead.h	/^    char            *userAgent;         \/**< User agent (browser) *\/$/;"	m	struct:Webs
 userHandle	src/js.h	/^    void        *userHandle;                    \/* User defined handle *\/$/;"	m	struct:Js
 username	src/goahead.h	/^    char            *username;          \/**< Authorization username *\/$/;"	m	struct:Webs
+username	src/robot/tools.h	/^	char username[100];$/;"	m	struct:_ACCOUNT_INFO
 users	src/auth.c	/^static WebsHash users = -1;$/;"	v	file:
 ushort	src/osdep/osdep.h	/^    typedef unsigned short ushort;$/;"	t
 utf16_literal_to_utf8	src/cJSON.c	/^static unsigned char utf16_literal_to_utf8(const unsigned char * const input_pointer, const unsigned char * const input_end, unsigned char **output_pointer)$/;"	f	file:
@@ -8694,6 +8801,7 @@ value_t	src/goahead.h	/^    typedef WebsValue value_t;$/;"	t
 valuedouble	src/cJSON.h	/^    double valuedouble;$/;"	m	struct:cJSON
 valueint	src/cJSON.h	/^    int valueint;$/;"	m	struct:cJSON
 valuestring	src/cJSON.h	/^    char *valuestring;$/;"	m	struct:cJSON
+vardata_feedback	src/robot/action_sta.c	/^static int vardata_feedback(char *ret_status)$/;"	f	file:
 variableMax	src/js.h	/^    int         variableMax;                    \/* Number of entries *\/$/;"	m	struct:Js
 variables	src/js.h	/^    WebsHash    *variables;                     \/* hAlloc list of variables *\/$/;"	m	struct:Js
 vars	src/goahead.h	/^    WebsHash        vars;               \/**< CGI standard variables *\/$/;"	m	struct:Webs
@@ -8714,6 +8822,8 @@ version	src/mbedtls/mbedtls.h	/^    int version;                \/**< The X.509 
 version	src/mbedtls/mbedtls.h	/^    int version;            \/**< CRL version (1=v1, 2=v2) *\/$/;"	m	struct:mbedtls_x509_crl
 version	src/mbedtls/mbedtls.h	/^    int version;            \/**< CSR version (1=v1). *\/$/;"	m	struct:mbedtls_x509_csr
 version	src/mbedtls/mbedtls.h	/^    int version;$/;"	m	struct:mbedtls_x509write_cert
+vir_ctrl_state	src/robot/robot_socket.c	/^CTRL_STATE vir_ctrl_state;$/;"	v
+virtual_robot	src/robot/tools.h	7;"	d
 vtype_t	src/goahead.h	/^    typedef WebsType vtype_t;$/;"	t
 vxWebsCgiEntry	src/cgi.c	/^static void vxWebsCgiEntry(void *entryAddr(int argc, char **argv), char **argp, char **envp, char *stdIn, char *stdOut)$/;"	f	file:
 vxchdir	src/osdep.c	/^PUBLIC int vxchdir(char *dirname)$/;"	f
@@ -8725,9 +8835,9 @@ wallocObject	src/runtime.c	/^PUBLIC int wallocObject(void *listArg, int *max, in
 wchar	src/osdep/osdep.h	/^    typedef char wchar;$/;"	t
 wchar	src/osdep/osdep.h	/^    typedef int wchar;$/;"	t
 wchar	src/osdep/osdep.h	/^    typedef short wchar;$/;"	t
-wclose	src/goahead.h	4014;"	d
+wclose	src/goahead.h	4028;"	d
 wcloseAlloc	src/alloc.c	/^PUBLIC void wcloseAlloc(void)$/;"	f
-wclosedir	src/goahead.h	4015;"	d
+wclosedir	src/goahead.h	4029;"	d
 wdup	src/alloc.c	/^PUBLIC void *wdup(cvoid *ptr, size_t usize)$/;"	f
 weak_key_table	src/mbedtls/mbedtls.c	/^static const unsigned char weak_key_table[WEAK_KEY_COUNT][MBEDTLS_DES_KEY_SIZE] =$/;"	v	file:
 webs	src/http.c	/^static Webs         **webs;                     \/* Open connection list head *\/$/;"	v	file:
@@ -8739,9 +8849,9 @@ websAddRoute	src/route.c	/^PUBLIC WebsRoute *websAddRoute(cchar *uri, cchar *han
 websAddUser	src/auth.c	/^WebsUser *websAddUser(cchar *username, cchar *password, cchar *roles)$/;"	f
 websAlloc	src/http.c	/^PUBLIC int websAlloc(int sid)$/;"	f
 websAllocSession	src/http.c	/^WebsSession *websAllocSession(Webs *wp, cchar *id, int lifespan)$/;"	f
-websAspDefine	src/goahead.h	4081;"	d
-websAspOpen	src/goahead.h	4082;"	d
-websAspRequest	src/goahead.h	4083;"	d
+websAspDefine	src/goahead.h	4095;"	d
+websAspOpen	src/goahead.h	4096;"	d
+websAspRequest	src/goahead.h	4097;"	d
 websAuthenticate	src/auth.c	/^PUBLIC bool websAuthenticate(Webs *wp)$/;"	f
 websBackground	src/http.c	/^static int          websBackground;             \/* Run as a daemon *\/$/;"	v	file:
 websCan	src/route.c	/^PUBLIC bool websCan(Webs *wp, WebsHash abilities)$/;"	f
@@ -8780,7 +8890,7 @@ websEscapeHtml	src/http.c	/^PUBLIC char *websEscapeHtml(cchar *html)$/;"	f
 websFileOpen	src/file.c	/^PUBLIC void websFileOpen(void)$/;"	f
 websFlush	src/http.c	/^PUBLIC int websFlush(Webs *wp, bool block)$/;"	f
 websFooter	src/action.c	/^PUBLIC void websFooter(Webs *wp)$/;"	f
-websFormDefine	src/goahead.h	4084;"	d
+websFormDefine	src/goahead.h	4098;"	d
 websFree	src/http.c	/^PUBLIC void websFree(Webs *wp)$/;"	f
 websFreeUpload	src/upload.c	/^PUBLIC void websFreeUpload(Webs *wp)$/;"	f
 websFsClose	src/fs.c	/^PUBLIC void websFsClose(void)$/;"	f
@@ -8790,8 +8900,8 @@ websGetCgiCommName	src/cgi.c	/^PUBLIC char *websGetCgiCommName(void)$/;"	f
 websGetCookie	src/http.c	/^PUBLIC cchar *websGetCookie(Webs *wp) { return wp->cookie; }$/;"	f
 websGetDateString	src/http.c	/^PUBLIC char *websGetDateString(WebsFileInfo *sbuf)$/;"	f
 websGetDebug	src/http.c	/^PUBLIC int websGetDebug(void)$/;"	f
-websGetDefaultDir	src/goahead.h	4085;"	d
-websGetDefaultPage	src/goahead.h	4086;"	d
+websGetDefaultDir	src/goahead.h	4099;"	d
+websGetDefaultPage	src/goahead.h	4100;"	d
 websGetDir	src/http.c	/^PUBLIC cchar *websGetDir(Webs *wp) { return wp->route && wp->route->dir ? wp->route->dir : websGetDocuments(); }$/;"	f
 websGetDocuments	src/file.c	/^PUBLIC char *websGetDocuments(void)$/;"	f
 websGetEof	src/http.c	/^PUBLIC int  websGetEof(Webs *wp) { return wp->eof; }$/;"	f
@@ -8812,21 +8922,22 @@ websGetPort	src/http.c	/^PUBLIC int   websGetPort(Webs *wp) { return wp->port; }
 websGetProtocol	src/http.c	/^PUBLIC cchar *websGetProtocol(Webs *wp) { return wp->protocol; }$/;"	f
 websGetQuery	src/http.c	/^PUBLIC cchar *websGetQuery(Webs *wp) { return wp->query; }$/;"	f
 websGetRandomBytes	src/crypt.c	/^PUBLIC int websGetRandomBytes(char *buf, ssize length, bool block)$/;"	f
-websGetRequestDir	src/goahead.h	4088;"	d
-websGetRequestFilename	src/goahead.h	4090;"	d
-websGetRequestFlags	src/goahead.h	4091;"	d
-websGetRequestIpAddr	src/goahead.h	4089;"	d
-websGetRequestLpath	src/goahead.h	4092;"	d
-websGetRequestPassword	src/goahead.h	4094;"	d
-websGetRequestPath	src/goahead.h	4093;"	d
-websGetRequestUserName	src/goahead.h	4095;"	d
-websGetRequestWritten	src/goahead.h	4096;"	d
+websGetRequestDir	src/goahead.h	4102;"	d
+websGetRequestFilename	src/goahead.h	4104;"	d
+websGetRequestFlags	src/goahead.h	4105;"	d
+websGetRequestIpAddr	src/goahead.h	4103;"	d
+websGetRequestLpath	src/goahead.h	4106;"	d
+websGetRequestPassword	src/goahead.h	4108;"	d
+websGetRequestPath	src/goahead.h	4107;"	d
+websGetRequestUserName	src/goahead.h	4109;"	d
+websGetRequestWritten	src/goahead.h	4110;"	d
 websGetRoles	src/auth.c	/^PUBLIC WebsHash websGetRoles(void)$/;"	f
 websGetServer	src/http.c	/^PUBLIC cchar *websGetServer(void) { return websHost; }$/;"	f
 websGetServerAddress	src/http.c	/^PUBLIC cchar *websGetServerAddress(void) { return websIpAddr; }$/;"	f
 websGetServerAddressUrl	src/http.c	/^PUBLIC cchar *websGetServerAddressUrl(void) { return websIpAddrUrl; }$/;"	f
 websGetServerUrl	src/http.c	/^PUBLIC cchar *websGetServerUrl(void) { return websHostUrl; }$/;"	f
 websGetSession	src/http.c	/^WebsSession *websGetSession(Webs *wp, int create)$/;"	f
+websGetSessionCount	src/http.c	/^PUBLIC int websGetSessionCount()$/;"	f
 websGetSessionID	src/http.c	/^PUBLIC char *websGetSessionID(Webs *wp)$/;"	f
 websGetSessionVar	src/http.c	/^PUBLIC cchar *websGetSessionVar(Webs *wp, cchar *key, cchar *defaultValue)$/;"	f
 websGetUpload	src/upload.c	/^WebsHash websGetUpload(Webs *wp)$/;"	f
@@ -8909,8 +9020,8 @@ websSetBackground	src/http.c	/^PUBLIC void websSetBackground(int on)$/;"	f
 websSetBackgroundWriter	src/http.c	/^PUBLIC void websSetBackgroundWriter(Webs *wp, WebsWriteProc proc)$/;"	f
 websSetCookie	src/http.c	/^PUBLIC void websSetCookie(Webs *wp, cchar *name, cchar *value, cchar *path, cchar *cookieDomain, int lifespan, int flags)$/;"	f
 websSetDebug	src/http.c	/^PUBLIC void websSetDebug(int on)$/;"	f
-websSetDefaultDir	src/goahead.h	4098;"	d
-websSetDefaultPage	src/goahead.h	4099;"	d
+websSetDefaultDir	src/goahead.h	4112;"	d
+websSetDefaultPage	src/goahead.h	4113;"	d
 websSetDocuments	src/file.c	/^PUBLIC void websSetDocuments(cchar *dir)$/;"	f
 websSetEnv	src/http.c	/^PUBLIC void websSetEnv(Webs *wp)$/;"	f
 websSetFormVars	src/http.c	/^PUBLIC void websSetFormVars(Webs *wp)$/;"	f
@@ -8924,8 +9035,8 @@ websSetMemNotifier	src/alloc.c	/^PUBLIC void websSetMemNotifier(WebsMemNotifier 
 websSetPasswordStoreVerify	src/auth.c	/^void websSetPasswordStoreVerify(WebsVerify verify)$/;"	f
 websSetQueryVars	src/http.c	/^PUBLIC void websSetQueryVars(Webs *wp)$/;"	f
 websSetRequestFilename	src/http.c	/^PUBLIC void websSetRequestFilename(Webs *wp, cchar *filename)$/;"	f
-websSetRequestLpath	src/goahead.h	4100;"	d
-websSetRequestWritten	src/goahead.h	4101;"	d
+websSetRequestLpath	src/goahead.h	4114;"	d
+websSetRequestWritten	src/goahead.h	4115;"	d
 websSetRouteAuth	src/auth.c	/^PUBLIC int websSetRouteAuth(WebsRoute *route, cchar *auth)$/;"	f
 websSetRouteMatch	src/route.c	/^PUBLIC int websSetRouteMatch(WebsRoute *route, cchar *dir, cchar *protocol, WebsHash methods, WebsHash extensions,$/;"	f
 websSetSessionVar	src/http.c	/^PUBLIC int websSetSessionVar(Webs *wp, cchar *key, cchar *value)$/;"	f
@@ -8942,7 +9053,7 @@ websTempFile	src/osdep.c	/^PUBLIC char *websTempFile(cchar *dir, cchar *prefix)$
 websTestVar	src/http.c	/^PUBLIC bool websTestVar(Webs *wp, cchar *var)$/;"	f
 websTimeClose	src/time.c	/^PUBLIC void websTimeClose(void)$/;"	f
 websTimeOpen	src/time.c	/^PUBLIC int websTimeOpen(void)$/;"	f
-websTimeoutCancel	src/goahead.h	4102;"	d
+websTimeoutCancel	src/goahead.h	4116;"	d
 websType	src/goahead.h	/^    typedef Webs websType;$/;"	t
 websUploadOpen	src/upload.c	/^PUBLIC void websUploadOpen(void)$/;"	f
 websUrlHandlerDefine	src/route.c	/^PUBLIC int websUrlHandlerDefine(cchar *prefix, cchar *dir, int arg, WebsLegacyHandlerProc handler, int flags)$/;"	f
@@ -8956,7 +9067,7 @@ websWindProc	src/goahead.c	/^static LRESULT CALLBACK websWindProc(HWND hwnd, UIN
 websWrite	src/http.c	/^PUBLIC ssize websWrite(Webs *wp, cchar *fmt, ...)$/;"	f
 websWriteAuthFile	src/auth.c	/^PUBLIC int websWriteAuthFile(char *path)$/;"	f
 websWriteBlock	src/http.c	/^PUBLIC ssize websWriteBlock(Webs *wp, cchar *buf, ssize size)$/;"	f
-websWriteDataNonBlock	src/goahead.h	4103;"	d
+websWriteDataNonBlock	src/goahead.h	4117;"	d
 websWriteEndHeaders	src/http.c	/^PUBLIC void websWriteEndHeaders(Webs *wp)$/;"	f
 websWriteFile	src/fs.c	/^PUBLIC ssize websWriteFile(int fd, cchar *buf, ssize size)$/;"	f
 websWriteHeader	src/http.c	/^PUBLIC int websWriteHeader(Webs *wp, cchar *key, cchar *fmt, ...)$/;"	f
