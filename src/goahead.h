@@ -3938,6 +3938,13 @@ PUBLIC void websDestroySession(Webs *wp);
 PUBLIC char *websGetSessionID(Webs *wp);
 
 /**
+	sql:
+    Get the sessioncount
+    @return The sessionCount.
+*/
+PUBLIC int websGetSessionCount();
+
+/**
     Get the session state object for the current request
     @param wp Webs request object
     @param create Set to true to create a new session if one does not already exist.
@@ -3945,6 +3952,7 @@ PUBLIC char *websGetSessionID(Webs *wp);
     @ingroup WebsSession
     @stability Stable
  */
+
 PUBLIC WebsSession *websGetSession(Webs *wp, int create);
 
 /**
@@ -3977,6 +3985,12 @@ PUBLIC void websRemoveSessionVar(Webs *wp, cchar *name);
     @stability Stable
  */
 PUBLIC int websSetSessionVar(Webs *wp, cchar *name, cchar *value);
+
+/**
+	sql:
+    free all exist Sessions
+ */
+PUBLIC void myfreeSessions(void);
 
 /************************************ Legacy **********************************/
 /*

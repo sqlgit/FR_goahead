@@ -1094,6 +1094,7 @@ void set(Webs *wp)
 	cJSON *recv_json = NULL;
 
 	cJSON *data_json = NULL;
+	cJSON *post_type = NULL;
 	cJSON *command = NULL;
 	cJSON *port_n = NULL;
 	cJSON *data = NULL;
@@ -1116,6 +1117,7 @@ void set(Webs *wp)
 	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
 	buf = NULL;
+
 	/* get data json */
 	data_json = cJSON_GetObjectItem(data, "data");
 	if (data_json == NULL || data_json->type != cJSON_Object) {
@@ -1135,6 +1137,19 @@ void set(Webs *wp)
 		goto end;
 	}
 	cmd = command->valueint;
+	// cmd_auth "1"
+	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312) {
+		if (!authority_management("1")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	// cmd_auth "2"
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 330 || cmd == 235) {
+		if (!authority_management("2")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	}
 	switch(cmd) {
 		case 100:// test
 			port = fileport;
@@ -1293,6 +1308,12 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "基坐标单轴点动-点按结束", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 235:
+			port = cmdport;
+			cmd_type = 0;
+			my_syslog("机器人操作", "外部工具坐标单轴点动-长按结束", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 302:
 			port = cmdport;
 			my_syslog("机器人操作", "机器手急停后电机使能", "admin");
@@ -1379,6 +1400,31 @@ void set(Webs *wp)
 			my_syslog("机器人操作", "设置 IO 配置", "admin");
 			ret = copy_content(data_json, content);
 			break;
+		case 326:
+			port = cmdport;
+			my_syslog("机器人操作", "设定外部TCP参考点", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 327:
+			port = cmdport;
+			my_syslog("机器人操作", "计算外部TCF", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 328:
+			port = cmdport;
+			my_syslog("机器人操作", "设定外部TCP工具参考点", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 329:
+			port = cmdport;
+			my_syslog("机器人操作", "计算工具TCF", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 330:
+			port = cmdport;
+			my_syslog("机器人操作", "应用当前显示的外部和工具坐标系", "admin");
+			ret = copy_content(data_json, content);
+			break;
 		case 400:
 			port = cmdport;
 			my_syslog("机器人操作", "获取控制器软件版本", "admin");
@@ -1455,7 +1501,21 @@ void set(Webs *wp)
 	websDone(wp);
 
 	return;
-	
+
+auth_end:
+	/* free content */
+	free(content);
+	content = NULL;
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 400);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "fail");
+	websDone(wp);
+	return;
+
 end:
 	/* free content */
 	free(content);

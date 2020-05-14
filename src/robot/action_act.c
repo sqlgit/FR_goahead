@@ -19,10 +19,12 @@ static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
 static int modify_tool_cdsystem(const cJSON *data_json);
+static int modify_ex_tool_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int log_management(const cJSON *data_json);
+static int save_accounts(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -165,6 +167,104 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	return ret;
 }
 
+/* modify ex && tool cdsystem */
+static int modify_ex_tool_cdsystem(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	cJSON *f_json = NULL;
+	char *f_content = NULL;
+	cJSON *newitem = NULL;
+	cJSON *cd_name = NULL;
+	cJSON *value = NULL;
+	cJSON *name = NULL;
+	cJSON *user_name = NULL;
+	cJSON *id = NULL;
+	cJSON *ex = NULL;
+	cJSON *ey = NULL;
+	cJSON *ez = NULL;
+	cJSON *erx = NULL;
+	cJSON *ery = NULL;
+	cJSON *erz = NULL;
+	cJSON *tx = NULL;
+	cJSON *ty = NULL;
+	cJSON *tz = NULL;
+	cJSON *trx = NULL;
+	cJSON *try = NULL;
+	cJSON *trz = NULL;
+
+	newitem = cJSON_CreateObject();
+	cd_name = cJSON_GetObjectItem(data_json, "name");
+	value = cJSON_GetObjectItem(data_json, "value");
+	if (cd_name == NULL || cd_name->valuestring == NULL || value == NULL || value->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	name = cJSON_GetObjectItem(value, "name");
+	user_name = cJSON_GetObjectItem(value, "user_name");
+	id = cJSON_GetObjectItem(value, "id");
+	ex = cJSON_GetObjectItem(value, "ex");
+	ey = cJSON_GetObjectItem(value, "ey");
+	ez = cJSON_GetObjectItem(value, "ez");
+	erx = cJSON_GetObjectItem(value, "erx");
+	ery = cJSON_GetObjectItem(value, "ery");
+	erz = cJSON_GetObjectItem(value, "erz");
+	tx = cJSON_GetObjectItem(value, "tx");
+	ty = cJSON_GetObjectItem(value, "ty");
+	tz = cJSON_GetObjectItem(value, "tz");
+	trx = cJSON_GetObjectItem(value, "trx");
+	try = cJSON_GetObjectItem(value, "try");
+	trz = cJSON_GetObjectItem(value, "trz");
+	if(name == NULL || user_name == NULL || id == NULL || ex == NULL || ey == NULL || ez == NULL || erx == NULL || ery == NULL|| erz == NULL || tx == NULL || ty == NULL || tz == NULL || trx == NULL || try == NULL|| trz == NULL || name->valuestring == NULL || user_name->valuestring == NULL || id->valuestring == NULL || ex->valuestring == NULL || ey->valuestring == NULL || ez->valuestring == NULL || erx->valuestring == NULL || ery->valuestring == NULL || erz->valuestring == NULL || tx->valuestring == NULL || ty->valuestring == NULL || tz->valuestring == NULL || trx->valuestring == NULL || try->valuestring == NULL || trz->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cJSON_AddStringToObject(newitem, "name", name->valuestring);
+	cJSON_AddStringToObject(newitem, "user_name", user_name->valuestring);
+	cJSON_AddStringToObject(newitem, "id", id->valuestring);
+	cJSON_AddStringToObject(newitem, "ex", ex->valuestring);
+	cJSON_AddStringToObject(newitem, "ey", ey->valuestring);
+	cJSON_AddStringToObject(newitem, "ez", ez->valuestring);
+	cJSON_AddStringToObject(newitem, "erx", erx->valuestring);
+	cJSON_AddStringToObject(newitem, "ery", ery->valuestring);
+	cJSON_AddStringToObject(newitem, "erz", erz->valuestring);
+	cJSON_AddStringToObject(newitem, "tx", tx->valuestring);
+	cJSON_AddStringToObject(newitem, "ty", ty->valuestring);
+	cJSON_AddStringToObject(newitem, "tz", tz->valuestring);
+	cJSON_AddStringToObject(newitem, "trx", trx->valuestring);
+	cJSON_AddStringToObject(newitem, "try", try->valuestring);
+	cJSON_AddStringToObject(newitem, "trz", trz->valuestring);
+	f_content = get_file_content(FILE_ET_CDSYSTEM);
+	/* file is NULL */
+	if (f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	//printf("f_content = %s\n", f_content);
+	f_json = cJSON_Parse(f_content);
+	/* replace exist object */
+	cJSON_ReplaceItemInObject(f_json, cd_name->valuestring, newitem);
+	buf = cJSON_Print(f_json);
+	//printf("buf = %s\n", buf);
+
+	ret = write_file(FILE_ET_CDSYSTEM, buf);
+
+	//printf("ret = %d\n", ret);
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(f_json);
+	f_json = NULL;
+	free(f_content);
+	f_content = NULL;
+
+	return ret;
+}
+
 /* save point */
 static int save_point(const cJSON *data_json)
 {
@@ -255,7 +355,7 @@ static int save_point(const cJSON *data_json)
 		/* add new object to file */
 		cJSON_AddItemToObject(f_json, name->valuestring, newitem);
 	} else {
-		/* replace exist object with new onject */
+		/* replace exist object with new object */
 		cJSON_ReplaceItemInObject(f_json, name->valuestring, newitem);
 	}
 	buf = cJSON_Print(f_json);
@@ -359,6 +459,67 @@ static int log_management(const cJSON *data_json)
 	return ret;
 }
 
+/* save accounts */
+static int save_accounts(const cJSON *data_json)
+{
+    char passbuf[ME_GOAHEAD_LIMIT_PASSWORD * 3 + 3];
+	char content[MAX_BUF] = "";
+	int i = 0;
+	int ret = FAIL;
+	char *buf = NULL;
+	int array_size = 0;
+	cJSON *item = NULL;
+	cJSON *username = NULL;
+	cJSON *password = NULL;
+	cJSON *account_array = cJSON_GetObjectItem(data_json, "accounts");
+	if (account_array == NULL || account_array->type != cJSON_Array) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	array_size = cJSON_GetArraySize(account_array); //获取数组长度
+	if (array_size > 10) { // 超过10个账号不予保存
+		return FAIL;
+	}
+	for (i = 0; i < array_size; i++) {
+		item = cJSON_GetArrayItem(account_array, i);
+		username = cJSON_GetObjectItem(item, "username");
+		password = cJSON_GetObjectItem(item, "password");
+		if (username == NULL || username->valuestring == NULL || password == NULL || password->valuestring == NULL ) {
+			perror("json");
+
+			return FAIL;
+		}
+        fmt(passbuf, sizeof(passbuf), "%s:%s:%s", username->valuestring, ME_GOAHEAD_REALM, password->valuestring);
+		sprintf(content, "%suser name=%s password=%s\n", content, username->valuestring, websMD5(passbuf));
+	}
+	printf("content = %s\n", content);
+	if (write_file(FILE_AUTH, content) == FAIL) {//save to file auth.txt, 更新账号密码到auth.txt文件中
+		return FAIL;
+	}
+#if ME_GOAHEAD_AUTH
+	websCloseAuth();
+	websOpenAuth(0);
+    if (websLoad("auth.txt") < 0) {
+        perror("Cannot load auth.txt");
+
+        return FAIL;
+    }
+#endif
+
+	buf = cJSON_Print(account_array);
+	//save to file account.json, 保存到账户文件 account.json 中
+	ret = write_file(FILE_ACCOUNT, buf);
+	free(buf);
+	buf = NULL;
+	if (ret == FAIL) {
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* do some user actions on webserver */
 void act(Webs *wp)
 {
@@ -368,6 +529,7 @@ void act(Webs *wp)
 	cJSON *command = NULL;
 	cJSON *data = NULL;
 	cJSON *data_json = NULL;
+	cJSON *post_type = NULL;
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -390,23 +552,45 @@ void act(Webs *wp)
 		goto end;
 	}
 	cmd = command->valuestring;
-	my_syslog("普通操作", cmd, "admin");
-	if(!strcmp(cmd, "save_lua_file")) {
+	// cmd_auth "1"
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management")) {
+		if (!authority_management("1")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	// cmd_auth "2"
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem")) {
+		if (!authority_management("2")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	// cmd_auth "0"
+	} else if (!strcmp(cmd, "save_accounts")) {
+		if (!authority_management("0")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	}
+	if (!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
-	} else if(!strcmp(cmd, "remove_lua_file")) {
+	} else if (!strcmp(cmd, "remove_lua_file")) {
 		ret = remove_lua_file(data_json);
-	} else if(!strcmp(cmd, "rename_lua_file")) {
+	} else if (!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
-	} else if(!strcmp(cmd, "modify_tool_cdsystem")) {
+	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
 		ret = modify_tool_cdsystem(data_json);
-	} else if(!strcmp(cmd, "save_point")) {
+	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
+		ret = modify_ex_tool_cdsystem(data_json);
+	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
-	} else if(!strcmp(cmd, "remove_points")) {
+	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
-	} else if(!strcmp(cmd, "change_type")) {
+	} else if (!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
-	} else if(!strcmp(cmd, "log_management")) {
+	} else if (!strcmp(cmd, "log_management")) {
 		ret = log_management(data_json);
+	} else if (!strcmp(cmd, "save_accounts")) {
+		ret = save_accounts(data_json);
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -415,6 +599,7 @@ void act(Webs *wp)
 		perror("ret fail");
 		goto end;
 	}
+	my_syslog("普通操作", cmd, "admin");
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -424,6 +609,17 @@ void act(Webs *wp)
 	websWrite(wp, "success");
 	websDone(wp);
 
+	return;
+
+auth_end:
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 400);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "fail");
+	websDone(wp);
 	return;
 
 end:

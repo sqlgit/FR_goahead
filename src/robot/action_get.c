@@ -9,22 +9,21 @@
 
 /********************************* Defines ************************************/
 
-extern int robot_type;
 extern STATE_FEEDBACK state_fb;
-extern CTRL_STATE ctrl_state;
-extern CTRL_STATE vir_ctrl_state;
+extern ACCOUNT_INFO cur_account;
 
 /********************************* Function declaration ***********************/
 
 static int get_points(char **ret_f_content);
 static int get_tool_cdsystem(char **ret_f_content);
-static int get_com_cdsystem(char **ret_f_content);
+static int get_ex_tool_cdsystem(char **ret_f_content);
 static int get_user(char **ret_f_content);
 static int get_template(char **ret_f_content);
 static int get_tpd_name(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_syscfg(char **ret_f_content);
+static int get_accounts(char **ret_f_content);
 static int get_robot_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
@@ -57,45 +56,16 @@ static int get_tool_cdsystem(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get com coordinate system data */
-static int get_com_cdsystem(char **ret_f_content)
+/* get exter && tool coordinate system data */
+static int get_ex_tool_cdsystem(char **ret_f_content)
 {
-	CTRL_STATE *state = NULL;
-	cJSON *root_json = NULL;
-	char *buf = NULL;
-	root_json = cJSON_CreateObject();
-	char key[6][10] = {{0}};
-	int i = 0;
-
-	if (robot_type == 1) { // "1" 代表实体机器人
-		state = &ctrl_state;
-	} else { // "0" 代表虚拟机器人
-		state = &vir_ctrl_state;
-	}
-	for(i = 0; i < 6; i++) {
-		sprintf(key[i], "%.3lf", state->tool_pos_att[i]);
-	}
-	cJSON_AddStringToObject(root_json, "x", key[0]);
-	cJSON_AddStringToObject(root_json, "y", key[1]);
-	cJSON_AddStringToObject(root_json, "z", key[2]);
-	cJSON_AddStringToObject(root_json, "rx", key[3]);
-	cJSON_AddStringToObject(root_json, "ry", key[4]);
-	cJSON_AddStringToObject(root_json, "rz", key[5]);
-	buf = cJSON_Print(root_json);
-	//printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-	} else {
-		perror("calloc");
+	*ret_f_content = get_file_content(FILE_ET_CDSYSTEM);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
 
 		return FAIL;
 	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
 
 	return SUCCESS;
 }
@@ -189,6 +159,48 @@ static int get_syscfg(char **ret_f_content)
 
 		return FAIL;
 	}
+
+	return SUCCESS;
+}
+
+/* get account file and return to page */
+static int get_accounts(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(FILE_ACCOUNT);
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get account info */
+static int get_account_info(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+	char *buf = NULL;
+
+	root_json = cJSON_CreateObject();
+	cJSON_AddStringToObject(root_json, "username", cur_account.username);
+	cJSON_AddStringToObject(root_json, "auth", cur_account.auth);
+	buf = cJSON_Print(root_json);
+	//printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+	} else {
+		perror("calloc");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
 
 	return SUCCESS;
 }
@@ -380,13 +392,26 @@ static int get_robot_cfg(char **ret_f_content)
 /* get webserver data and return to page */
 void get(Webs *wp)
 {
+	/*
+	if (wp->user) {
+		printf("__LINE__ = %d\n", __LINE__);
+		printf("wp->user->name = %s\n", wp->user->name);
+	} else {
+		printf("__LINE__ = %d\n", __LINE__);
+	}
+	if (wp->username) {
+		printf("wp->username = %s\n", wp->username);
+	} else {
+		printf("__LINE__ = %d\n", __LINE__);
+	}
+	*/
 	int ret = FAIL;
 	char *buf = NULL;
 	char *cmd = NULL;
+	char *ret_f_content = NULL;
 	cJSON *data_json = NULL;
 	cJSON *command = NULL;
 	cJSON *data = NULL;
-	char *ret_f_content = NULL;
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -403,12 +428,21 @@ void get(Webs *wp)
 		goto end;
 	}
 	cmd = command->valuestring;
+
+	// cmd_auth "0"
+	if (!strcmp(cmd, "get_accounts")) {
+		if (!authority_management("0")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	}
+
 	if(!strcmp(cmd, "get_points")) {
 		ret = get_points(&ret_f_content);
 	} else if(!strcmp(cmd, "get_tool_cdsystem")) {
 		ret = get_tool_cdsystem(&ret_f_content);
-	} else if(!strcmp(cmd, "get_com_cdsystem")) {
-		ret = get_com_cdsystem(&ret_f_content);
+	} else if(!strcmp(cmd, "get_ex_tool_cdsystem")) {
+		ret = get_ex_tool_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_user_data")) {
 		ret = get_user(&ret_f_content);
 	} else if(!strcmp(cmd, "get_template_data")) {
@@ -427,6 +461,10 @@ void get(Webs *wp)
 		ret = get_log_data(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_syscfg")) {
 		ret = get_syscfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_accounts")) {
+		ret = get_accounts(&ret_f_content);
+	} else if(!strcmp(cmd, "get_account_info")) {
+		ret = get_account_info(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
 	} else {
@@ -450,6 +488,17 @@ void get(Webs *wp)
 	free(ret_f_content);
 	ret_f_content = NULL;
 
+	return;
+
+auth_end:
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 400);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "fail");
+	websDone(wp);
 	return;
 
 end:

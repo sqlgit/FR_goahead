@@ -31,6 +31,7 @@
 
 static int finished = 0;
 int robot_type = 1;// 默认实体机器人
+ACCOUNT_INFO cur_account;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);

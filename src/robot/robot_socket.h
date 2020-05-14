@@ -58,7 +58,7 @@ typedef struct _CTRL_STATE
 	uint16_t     analog_input[6];         /**< 模拟输入,四个控制箱,2个工具    */
 	double     ctrl_time;               /**< 控制器实时线程执行时间         */
 	double     test_data;               /**< 测试数据ur机器人软件使用       */
-	uint8_t        robot_mode;              /**< 机器人模式                     */
+	uint8_t        robot_mode;              /**< 机器人模式  0:自动 1:手动                    */
 	double     joint_mode[6];  			/**< 关节模式					    */
 	double     safe_mode;               /**< 安全模式                       */
 	int        collision_level;         /**< 碰撞等级,一级敏感,三级不敏感   */
@@ -90,7 +90,6 @@ typedef struct _CTRL_STATE
 	uint8_t     program_state;           /**< 程序状态1:停止,2:运行,3：暂停,4：拖动                       */
 	int        line_number;             /**< 自动运行程序执行到某一指令行号 */
 	double     elbow_vel[5];            /**< 肘速度                         */
-	double     tool_pos_att[6];         /**< 工具坐标中心相对于末端的位置及姿态 */
 	uint8_t    strangePosFlag;          /**< 当前处于奇异位姿标志 */
 	int        configStatus;            /**< 机器人关节配置状态  */
 	uint8_t    aliveSlaveNumError;    /**< 活动从站数量错误，1：数量错误；0：正常  */

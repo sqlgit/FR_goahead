@@ -9,6 +9,7 @@
 
 /********************************* Defines ************************************/
 
+timer_t timerid;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
@@ -191,8 +192,49 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	}
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
+	if (state->strangePosFlag == 1) {
+		cJSON_AddStringToObject(error_json, "key", "当前处于奇异位姿");
+	}
 	if (state->aliveSlaveNumError == 1) {
 		cJSON_AddStringToObject(error_json, "key", "活动从站数量错误");
+	}
+	switch(state->gripperFaultNum) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "夹爪485超时");
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "夹爪指令格式错误");
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "夹爪动作延迟，须先激活");
+			break;
+		case 7:
+			cJSON_AddStringToObject(error_json, "key", "夹爪未激活");
+			break;
+		case 8:
+			cJSON_AddStringToObject(error_json, "key", "夹爪温度过高");
+			break;
+		case 10:
+			cJSON_AddStringToObject(error_json, "key", "夹爪电压过低");
+			break;
+		case 11:
+			cJSON_AddStringToObject(error_json, "key", "夹爪正在自动释放");
+			break;
+		case 12:
+			cJSON_AddStringToObject(error_json, "key", "夹爪内部故障");
+			break;
+		case 13:
+			cJSON_AddStringToObject(error_json, "key", "夹爪激活失败");
+			break;
+		case 14:
+			cJSON_AddStringToObject(error_json, "key", "夹爪电流过大");
+			break;
+		case 15:
+			cJSON_AddStringToObject(error_json, "key", "夹爪自动释放结束");
+			break;
+	}
+	if (state->robot_mode == 0 && state->program_state == 4) {
+		cJSON_AddStringToObject(error_json, "key", "切换拖动状态失败");
 	}
 	switch(state->slaveComError) {
 		case 1:
@@ -248,19 +290,37 @@ static int basic(char *ret_status, CTRL_STATE *state)
 			cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限");
 			break;
 		case 11:
-			cJSON_AddStringToObject(error_json, "key", "关节空间内指令速度超限");
-			break;
-		case 12:
 			cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速");
 			break;
-		case 13:
+		case 12:
 			cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限");
 			break;
-		case 14:
+		case 13:
 			cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化");
+			break;
+		case 14:
+			cJSON_AddStringToObject(error_json, "key", "当前指令关节配置发生变化");
 			break;
 		case 15:
 			cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限");
+			break;
+		case 16:
+			cJSON_AddStringToObject(error_json, "key", "轴1关节空间内指令速度超限");
+			break;
+		case 17:
+			cJSON_AddStringToObject(error_json, "key", "轴2关节空间内指令速度超限");
+			break;
+		case 18:
+			cJSON_AddStringToObject(error_json, "key", "轴3关节空间内指令速度超限");
+			break;
+		case 19:
+			cJSON_AddStringToObject(error_json, "key", "轴4关节空间内指令速度超限");
+			break;
+		case 20:
+			cJSON_AddStringToObject(error_json, "key", "轴5关节空间内指令速度超限");
+			break;
+		case 21:
+			cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限");
 			break;
 		default:
 			break;
@@ -284,11 +344,14 @@ static int basic(char *ret_status, CTRL_STATE *state)
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "WaitAxleAI等待超时");
 			break;
+		case 7:
+			cJSON_AddStringToObject(error_json, "key", "通道已配置功能错误");
+			break;
 		default:
 			break;
 	}
 	if (state->gripperError == 1) {
-		cJSON_AddStringToObject(error_json, "key", "指令顺序错误");
+		cJSON_AddStringToObject(error_json, "key", "夹爪运动超时错误");
 	}
 	switch(state->fileError) {
 		case 1:
@@ -298,6 +361,9 @@ static int basic(char *ret_status, CTRL_STATE *state)
 			cJSON_AddStringToObject(error_json, "key", "zbt配置文件加载失败");
 			break;
 		case 3:
+			cJSON_AddStringToObject(error_json, "key", "user配置文件版本错误");
+			break;
+		case 4:
 			cJSON_AddStringToObject(error_json, "key", "user配置文件加载失败");
 			break;
 		default:
@@ -325,24 +391,31 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	if (state->dr_com_err == 1) {
 		cJSON_AddStringToObject(error_json, "key", "通信故障:控制器与驱动器心跳检测故障");
 	}
+	memset(content, 0, sizeof(content));
 	switch ((int)state->dr_err) {
 		case 1:
-			cJSON_AddStringToObject(error_json, "key", "1轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 1, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		case 2:
-			cJSON_AddStringToObject(error_json, "key", "2轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 2, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		case 3:
-			cJSON_AddStringToObject(error_json, "key", "3轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 3, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		case 4:
-			cJSON_AddStringToObject(error_json, "key", "4轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 4, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		case 5:
-			cJSON_AddStringToObject(error_json, "key", "5轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 5, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		case 6:
-			cJSON_AddStringToObject(error_json, "key", "6轴驱动器故障");
+			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 6, (int)state->dr_err_code);
+			cJSON_AddStringToObject(error_json, "key", content);
 			break;
 		default:
 			break;
@@ -480,9 +553,47 @@ static int vardata_feedback(char *ret_status)
 	return SUCCESS;
 }
 
+void sig_handler(int signo)
+{
+	//printf("enter timer_signal function! %d\n", signo);
+	printf("Will free Sessions!\n");
+	myfreeSessions();
+}
+
 /* get motion controller data and return to page */
 void sta(Webs *wp)
 {
+	// 添加定时器，5秒后触发，清空 session
+	if (timer_delete(timerid) == -1) {
+		perror("fail to timer_delete");
+	}
+
+	struct sigevent evp;
+	struct sigaction act;
+	memset(&act, 0, sizeof(act));
+	act.sa_handler = sig_handler;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	if (sigaction(SIGUSR1, &act, NULL) == -1) {
+		perror("fail to sigaction");
+	}
+
+	memset(&evp, 0, sizeof(struct sigevent));
+	evp.sigev_signo = SIGUSR1;
+	evp.sigev_notify = SIGEV_SIGNAL;
+	if (timer_create(CLOCK_REALTIME, &evp, &timerid) == -1) {
+		perror("fail to timer_create");
+	}
+
+	struct itimerspec it;
+	it.it_interval.tv_sec = 0;
+	it.it_interval.tv_nsec = 0;
+	it.it_value.tv_sec = 5;
+	it.it_value.tv_nsec = 0;
+	if (timer_settime(timerid, 0, &it, 0) == -1) {
+		perror("fail to timer_settime");
+	}
+
 	char *ret_status = NULL;
 	int ret = FAIL;
 	//char *buf = NULL;

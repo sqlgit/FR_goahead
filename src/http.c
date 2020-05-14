@@ -1715,6 +1715,7 @@ PUBLIC int websRedirectByStatus(Webs *wp, int status)
         } else {
             return -1;
         }
+		//printf("uri = %s\n", uri);
         websRedirect(wp, uri);
     } else {
         if (status == HTTP_CODE_UNAUTHORIZED) {
@@ -3157,6 +3158,11 @@ static void freeSession(WebsSession *sp)
 }
 
 
+PUBLIC int websGetSessionCount()
+{
+	return sessionCount;
+}
+
 WebsSession *websGetSession(Webs *wp, int create)
 {
     WebsKey     *sym;
@@ -3167,6 +3173,8 @@ WebsSession *websGetSession(Webs *wp, int create)
 
     if (!wp->session) {
         id = websGetSessionID(wp);
+		//printf("id = %s\n", id);
+		//printf("sessions = %d\n", sessions);
         if ((sym = hashLookup(sessions, id)) == 0) {
             if (!create) {
                 wfree(id);
@@ -3178,6 +3186,7 @@ WebsSession *websGetSession(Webs *wp, int create)
                 return 0;
             }
             sessionCount++;
+            //printf("sessionCount = %d\n", sessionCount);
             if ((wp->session = websAllocSession(wp, id, ME_GOAHEAD_LIMIT_SESSION_LIFE)) == 0) {
                 wfree(id);
                 return 0;
@@ -3193,7 +3202,13 @@ WebsSession *websGetSession(Webs *wp, int create)
         wfree(id);
     }
     if (wp->session) {
-        wp->session->expires = time(0) + wp->session->lifespan;
+		/**
+			sql:
+			action/sta is not user behavior, don't update session expires
+		*/
+		if (strcmp(wp->path, "/action/sta")) {
+			wp->session->expires = time(0) + wp->session->lifespan;
+		}
     }
     return wp->session;
 }
@@ -3303,6 +3318,21 @@ PUBLIC int websSetSessionVar(Webs *wp, cchar *key, cchar *value)
         return -1;
     }
     return 0;
+}
+
+
+PUBLIC void myfreeSessions(void)
+{
+    WebsSession     *sp;
+    WebsKey         *sym, *next;
+
+	for (sym = hashFirst(sessions); sym; sym = next) {
+		next = hashNext(sessions, sym);
+		sp = (WebsSession*) sym->content.value.symbol;
+		hashDelete(sessions, sp->id);
+		freeSession(sp);
+	}
+	sessionCount = 0;
 }
 
 

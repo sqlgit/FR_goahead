@@ -3,7 +3,7 @@
 
 /********************************* Defines ************************************/
 
-#define local 0
+#define local 1
 #define virtual_robot 0
 #define test_package 0
 #define SUCCESS 1
@@ -12,7 +12,10 @@
 #define FILE_POINTS "/root/webserver/points/points.json"
 #define FILE_CFG "/root/webserver/cfg/system.json"
 #define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"
+#define FILE_ET_CDSYSTEM "/root/webserver/cdsystem/et_coordinate_system.json"
 #define FILE_GRIPPER "/root/webserver/gripper/gripper.json"
+#define FILE_ACCOUNT "/root/webserver/account/account.json"
+#define FILE_AUTH "/root/webserver/auth.txt"
 #define DIR_USER "/root/webserver/user/"
 #define DIR_LOG "/root/webserver/log/"
 #define DIR_TEMPLATE "/root/webserver/template/"
@@ -20,13 +23,19 @@
 #define DIR_POINTS "/root/webserver/points/"
 #define DIR_SHELL "/root/webserver/shell/"
 #define DIR_CFG "/root/webserver/cfg/"
-#define DIR_GRIPPER "/root/webserver/gripper/"
+//#define DIR_GRIPPER "/root/webserver/gripper/"
 #define DIR_FRUSER "/fruser/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
 
 typedef unsigned char BYTE;
 
+/* ACCOUNT 相关信息结构体 */
+typedef struct _ACCOUNT_INFO
+{
+	char auth[10];
+	char username[100];
+} ACCOUNT_INFO;
 /********************************* Function declaration ***********************/
 
 int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out);
@@ -48,5 +57,6 @@ int StringToBytes(char *pSrc, BYTE *pDst, int nSrcLength);
 int my_syslog(const char *class, const char *content, const char *user);
 int delete_log_file(int flag);
 void *create_dir(const char *dir_path);
+int authority_management(const char *cmd_type);
 
 #endif

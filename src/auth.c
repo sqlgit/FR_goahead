@@ -24,6 +24,8 @@
 /********************************* Includes ***********************************/
 
 #include    "goahead.h"
+#include	"tools.h"
+#include	"cJSON.h"
 
 #if ME_GOAHEAD_AUTH
 
@@ -38,7 +40,7 @@ static WebsHash roles = -1;
 static char *masterSecret;
 static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;
 static WebsVerify verifyPassword = websVerifyPasswordFromFile;
-
+extern ACCOUNT_INFO cur_account;
 #if ME_COMPILER_HAS_PAM
 typedef struct {
     char    *name;
@@ -60,6 +62,7 @@ static WebsUser *createUser(cchar *username, cchar *password, cchar *roles);
 static void freeRole(WebsRole *rp);
 static void freeUser(WebsUser *up);
 static void logoutServiceProc(Webs *wp);
+static void get_username_auth(char *username);
 static void loginServiceProc(Webs *wp);
 
 #if ME_GOAHEAD_JAVASCRIPT && FUTURE
@@ -116,14 +119,14 @@ PUBLIC bool websAuthenticate(Webs *wp)
             if (route->askLogin) {
                 (route->askLogin)(wp);
             }
-            websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
+			websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
             return 0;
         }
         if (!(route->verify)(wp)) {
             if (route->askLogin) {
                 (route->askLogin)(wp);
             }
-            websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
+			websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
             return 0;
         }
         /*
@@ -191,7 +194,6 @@ PUBLIC void websCloseAuth(void)
         roles = -1;
     }
 }
-
 
 #if KEEP
 PUBLIC int websWriteAuthFile(char *path)
@@ -495,8 +497,22 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
     wfree(wp->password);
     wp->password = sclone(password);
 
+	//printf("wp->username = %s\n", wp->username);
+	//printf("wp->password = %s\n", wp->password);
+
     if (!(wp->route->verify)(wp)) {
         trace(2, "Password does not match");
+        return 0;
+    }
+	/**
+		sql:
+		增加判断SessionCount计数是否大于0，
+		如果大于0，证明之前已经有用户登录过了，
+		禁止其他用户再次登录，返回登录出错提示
+	*/
+    if (websGetSessionCount() > 0) {
+		printf("exist webs login user before\n");
+        trace(2, "exist sessiond id, forbid login");
         return 0;
     }
     trace(2, "Login successful for %s", username);
@@ -520,6 +536,44 @@ PUBLIC bool websLogoutUser(Webs *wp)
 }
 
 
+/**
+	sql:
+	根据用户名匹配账户信息表 account.json，
+	获取当前用户的权限类型，保存用户名和权限类型在全局变量中。
+*/
+static void get_username_auth(char *username)
+{
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	cJSON *item = NULL;
+	cJSON *username_json = NULL;
+	cJSON *auth_json = NULL;
+	int array_size = 0;
+	int i = 0;
+
+	f_content = get_file_content(FILE_ACCOUNT);
+	/* file is not NULL */
+	if (f_content != NULL) {
+		root_json = cJSON_Parse(f_content);
+		if (root_json != NULL) {
+			array_size = cJSON_GetArraySize(root_json); //获取数组长度
+			for (i = 0; i < array_size; i++) {
+				item = cJSON_GetArrayItem(root_json, i);
+				username_json = cJSON_GetObjectItem(item, "username");
+				if (!strcmp(username_json->valuestring, username)) {
+					auth_json = cJSON_GetObjectItem(item, "auth");
+					strcpy(cur_account.auth, auth_json->valuestring);
+					strcpy(cur_account.username, username);
+
+					return;
+				}
+			}
+		}
+	}
+
+	return;
+}
+
 /*
     Internal login service routine for Form-based auth
  */
@@ -531,25 +585,35 @@ static void loginServiceProc(Webs *wp)
     route = wp->route;
     assert(route);
 
-    if (websLoginUser(wp, websGetVar(wp, "username", ""), websGetVar(wp, "password", ""))) {
-        /* If the application defines a referrer session var, redirect to that */
-        cchar *referrer;
-        if ((referrer = websGetSessionVar(wp, "referrer", 0)) != 0) {
-            websRedirect(wp, referrer);
-        } else {
-            websRedirectByStatus(wp, HTTP_CODE_OK);
-        }
-        websSetSessionVar(wp, "loginStatus", "ok");
-    } else {
-        if (route->askLogin) {
-            (route->askLogin)(wp);
-        }
-        //websSetSessionVar(wp, "loginStatus", "failed");
-		websWrite(wp,(char *)"I am test");
+	if (websLoginUser(wp, websGetVar(wp, "username", ""), websGetVar(wp, "password", ""))) {
+		/* If the application defines a referrer session var, redirect to that */
+		cchar *referrer;
+		if ((referrer = websGetSessionVar(wp, "referrer", 0)) != 0) {
+			websRedirect(wp, referrer);
+		} else {
+			websRedirectByStatus(wp, HTTP_CODE_OK);
+		}
+
+		websSetSessionVar(wp, "loginStatus", "ok");
+		/**
+			sql:
+			用户提交用户名密码进行认证成功后，
+			根据用户名获取用户权限
+		*/
+		get_username_auth(wp->username);
+	} else {
+		if (route->askLogin) {
+			(route->askLogin)(wp);
+		}
+		//websSetSessionVar(wp, "loginStatus", "failed");
+		websSetStatus(wp, HTTP_CODE_UNAUTHORIZED);
+		websWriteHeaders(wp, -1, 0);
+		websWriteEndHeaders(wp);
+		websWrite(wp,(char *)"Fail");
 		websDone(wp);
 
-        //websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
-    }
+		//websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
+	}
 }
 
 
@@ -603,6 +667,8 @@ PUBLIC bool websVerifyPasswordFromFile(Webs *wp)
     if (wp->digest) {
         success = smatch(wp->password, wp->digest);
     } else {
+        //printf("wp->password = %s\n", wp->password);
+        //printf("wp->user->password = %s\n", wp->user->password);
         success = smatch(wp->password, wp->user->password);
     }
     if (success) {

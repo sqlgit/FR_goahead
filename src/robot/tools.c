@@ -7,6 +7,8 @@
 
 /********************************* Defines ************************************/
 
+extern ACCOUNT_INFO cur_account;
+
 /*********************************** Code *************************************/
 
 /*
@@ -528,4 +530,38 @@ void *create_dir(const char *dir_path)
 			printf("mkdir DIR SUCCESS!\n");
 		}
 	}
+}
+
+/**
+  当Web前端发起http请求时，根据cmd类型获取权限类型，
+  如果cmd权限类型不在当前用户权限范围内，返回权限出错给Web前端，
+  如果权限匹配通过，继续正常的业务逻辑处理流程。
+*/
+int authority_management(const char *cmd_type)
+{
+	if (!strcmp(cur_account.auth, "0")) { //管理员
+		if (!strcmp(cmd_type, "0")) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else if (!strcmp(cur_account.auth, "1")) { //程序员
+		if (!strcmp(cmd_type, "1") || !strcmp(cmd_type, "2")) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else if (!strcmp(cur_account.auth, "2")) { //操作员
+		if (!strcmp(cmd_type, "2")) {
+			return 1;
+		} else {
+			return 0;
+		}
+	} else {
+		perror("authority_management");
+
+		return 0;
+	}
+
+	return 0;
 }
