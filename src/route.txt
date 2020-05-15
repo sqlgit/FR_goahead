@@ -31,9 +31,15 @@
 #
 #   Standard routes
 #
+route uri=/action/login methods=POST handler=action redirect=200@/ redirect=401@/login.html
+route uri=/action/logout methods=POST handler=action redirect=200@/login.html
+
+route uri=/index.html auth=basic redirect=401@/login.html
 route uri=/cgi-bin dir=cgi-bin handler=cgi
-route uri=/action handler=action
-route uri=/ extensions=jst handler=jst
+#route uri=/action handler=action
+route uri=/action methods=GET|POST handler=action auth=basic redirect=401@/login.html
+#route uri=/ extensions=jst handler=jst
+route uri=/ extensions=jst,asp,html handler=jst
 route uri=/ methods=OPTIONS|TRACE handler=options
 
 #   For legacy GoAhead applications using /goform

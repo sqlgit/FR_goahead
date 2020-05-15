@@ -563,7 +563,7 @@ void sig_handler(int signo)
 /* get motion controller data and return to page */
 void sta(Webs *wp)
 {
-	// 添加定时器，5秒后触发，清空 session
+	// delete 定时器
 	if (timer_delete(timerid) == -1) {
 		perror("fail to timer_delete");
 	}
@@ -585,6 +585,7 @@ void sta(Webs *wp)
 		perror("fail to timer_create");
 	}
 
+	// 添加定时器，5秒后触发，清空 session
 	struct itimerspec it;
 	it.it_interval.tv_sec = 0;
 	it.it_interval.tv_nsec = 0;

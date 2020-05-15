@@ -15,3 +15,6 @@
 #   Define a user
 #       user name=joshua password=2fd6e47ff9bb70c0465fd2f5c8e5305e roles=manager,purchaser
 #
+user name=admin password=521b1615546a7f6395dbd89fb50ac1e8
+user name=sql password=bf0d1af621b41b6951b5dc6d3676c6fa
+user name=test password=04cdd1b114f0ba8a7490f764becda7df
