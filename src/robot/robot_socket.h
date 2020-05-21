@@ -103,7 +103,6 @@ typedef struct _CTRL_STATE
 	int        toolNum;                 /** 工具号 */
 	uint8_t    gripperFaultId;          /** 错误夹爪号 */
 	uint8_t    gripperFaultNum;         /** 夹爪错误编号 */
-	uint16_t   gripperConfigStatus;     /** 夹爪配置状态 */
 	uint16_t   gripperActStatus;		/** 夹爪激活状态 */
 	int 	   aliveSlaveNumFeedback;   /** 活动从站数量反馈 */
 	uint8_t	   ctrl_query_state;		/** 控制器查询状态 0-未查询，1-查询中 */

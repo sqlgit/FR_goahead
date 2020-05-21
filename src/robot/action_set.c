@@ -113,6 +113,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	char cmd_array[10][20] = {{0}};
 	memset(tmp_content, 0, len);
 
+	cJSON *id = NULL;
 	cJSON *j1 = NULL;
 	cJSON *j2 = NULL;
 	cJSON *j3 = NULL;
@@ -125,6 +126,18 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *rx = NULL;
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
+	cJSON *ex = NULL;
+	cJSON *ey = NULL;
+	cJSON *ez = NULL;
+	cJSON *erx = NULL;
+	cJSON *ery = NULL;
+	cJSON *erz = NULL;
+	cJSON *tx = NULL;
+	cJSON *ty = NULL;
+	cJSON *tz = NULL;
+	cJSON *trx = NULL;
+	cJSON *try = NULL;
+	cJSON *trz = NULL;
 	cJSON *speed = NULL;
 	cJSON *acc = NULL;
 	cJSON *toolnum = NULL;
@@ -545,6 +558,90 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		*/
 		sprintf(tmp_content, "%sMoveGripper(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		strcpy(file_content, tmp_content);
+	/* SetToolCoord */
+	} else if(!strncmp(lua_cmd, "SetToolList:", 12)) {
+		strrpc(lua_cmd, "SetToolList:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		/* open and get cdsystem file content */
+		f_content = get_file_content(FILE_CDSYSTEM);
+		/* file is NULL */
+		if (f_content == NULL) {
+			perror("get file content");
+
+			return FAIL;
+		}
+		f_json = cJSON_Parse(f_content);
+		if (f_json == NULL) {
+			goto end;
+		}
+		cJSON *cd = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		if (cd == NULL || cd->type != cJSON_Object) {
+			goto end;
+		}
+		id = cJSON_GetObjectItem(cd, "id");
+		x = cJSON_GetObjectItem(cd, "x");
+		y = cJSON_GetObjectItem(cd, "y");
+		z = cJSON_GetObjectItem(cd, "z");
+		rx = cJSON_GetObjectItem(cd, "rx");
+		ry = cJSON_GetObjectItem(cd, "ry");
+		rz = cJSON_GetObjectItem(cd, "rz");
+		if(id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+			goto end;
+		}
+		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+		strcpy(file_content, tmp_content);
+	/* SetExToolCoord */
+	} else if(!strncmp(lua_cmd, "SetExToolList:", 14)) {
+		strrpc(lua_cmd, "SetExToolList:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		/*
+		printf("cmd_array[0] = %s", cmd_array[0]);
+		*/
+		/* open and get ET_cdsystem file content */
+		f_content = get_file_content(FILE_ET_CDSYSTEM);
+		/* file is NULL */
+		if (f_content == NULL) {
+			perror("get file content");
+
+			return FAIL;
+		}
+		f_json = cJSON_Parse(f_content);
+		if (f_json == NULL) {
+			goto end;
+		}
+		cJSON *et_cd = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		if (et_cd == NULL || et_cd->type != cJSON_Object) {
+			goto end;
+		}
+		id = cJSON_GetObjectItem(et_cd, "id");
+		ex = cJSON_GetObjectItem(et_cd, "ex");
+		ey = cJSON_GetObjectItem(et_cd, "ey");
+		ez = cJSON_GetObjectItem(et_cd, "ez");
+		erx = cJSON_GetObjectItem(et_cd, "erx");
+		ery = cJSON_GetObjectItem(et_cd, "ery");
+		erz = cJSON_GetObjectItem(et_cd, "erz");
+		tx = cJSON_GetObjectItem(et_cd, "tx");
+		ty = cJSON_GetObjectItem(et_cd, "ty");
+		tz = cJSON_GetObjectItem(et_cd, "tz");
+		trx = cJSON_GetObjectItem(et_cd, "trx");
+		try = cJSON_GetObjectItem(et_cd, "try");
+		trz = cJSON_GetObjectItem(et_cd, "trz");
+		if(id->valuestring == NULL || ex->valuestring == NULL || ey->valuestring == NULL || ez->valuestring == NULL || erx->valuestring == NULL || ery->valuestring == NULL || erz->valuestring == NULL|| tx->valuestring == NULL || ty->valuestring == NULL || tz->valuestring == NULL || trx->valuestring == NULL || try->valuestring == NULL || trz->valuestring == NULL) {
+			goto end;
+		}
+		sprintf(tmp_content, "%sSetExToolList(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -660,6 +757,12 @@ static int step_over(const cJSON *data_json, char *content)
 	/* MoveGripper */
 	} else if (!strncmp(pgvalue->valuestring, "MoveGripper:", 12)) {
 		cmd = 228;
+	/* SetToolList */
+	} else if (!strncmp(pgvalue->valuestring, "SetToolList:", 12)) {
+		cmd = 319;
+	/* SetExToolCoord */
+	} else if (!strncmp(pgvalue->valuestring, "SetExToolList:", 14)) {
+		cmd = 331;
 	/* error */
 	} else {
 		return FAIL;
@@ -953,13 +1056,13 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "1"
-	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312) {
+	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 ) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 330 || cmd == 235) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;

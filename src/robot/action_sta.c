@@ -51,7 +51,7 @@ static int connect_status(char *ret_status)
 		}
 	} else { // "0" 代表虚拟机器人
 		/* cmd file status state all connect */
-		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status) {
+		if (socket_vir_status.connect_status && socket_vir_cmd.connect_status && socket_vir_file.connect_status) {
 			ret_connect_status = 1;
 		} else {
 			ret_connect_status = 0;
@@ -86,6 +86,8 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON *array_json = NULL;
 	int array[16] = {0};
 	Qnode *p = NULL;
+	SOCKET_INFO *sock_cmd = NULL;
+	SOCKET_INFO *sock_file = NULL;
 
 	//printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
 	//printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
@@ -161,7 +163,15 @@ static int basic(char *ret_status, CTRL_STATE *state)
 	cJSON_AddNumberToObject(tcp_json, "ry", tcp_value[4]);
 	cJSON_AddNumberToObject(tcp_json, "rz", tcp_value[5]);
 
-	p = socket_cmd.ret_quene.front->next;
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+		sock_file = &socket_file;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+		sock_file = &socket_vir_file;
+	}
+
+	p = sock_cmd->ret_quene.front->next;
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
 		sprintf(content, "%d", p->data.type);
@@ -169,13 +179,13 @@ static int basic(char *ret_status, CTRL_STATE *state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content,  p->data.msgcontent);
 		/* 删除结点信息 */
-		pthread_mutex_lock(&socket_cmd.ret_mute);
-		dequene(&socket_cmd.ret_quene, p->data);
-		pthread_mutex_unlock(&socket_cmd.ret_mute);
+		pthread_mutex_lock(&sock_cmd->ret_mute);
+		dequene(&sock_cmd->ret_quene, p->data);
+		pthread_mutex_unlock(&sock_cmd->ret_mute);
 		p = p->next;
 	}
 
-	p = socket_file.ret_quene.front->next;
+	p = sock_file->ret_quene.front->next;
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
 		//sprintf(content, "%d%s", p->data.type, p->data.msgcontent);
@@ -185,9 +195,9 @@ static int basic(char *ret_status, CTRL_STATE *state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
-		pthread_mutex_lock(&socket_file.ret_mute);
-		dequene(&socket_file.ret_quene, p->data);
-		pthread_mutex_unlock(&socket_file.ret_mute);
+		pthread_mutex_lock(&sock_file->ret_mute);
+		dequene(&sock_file->ret_quene, p->data);
+		pthread_mutex_unlock(&sock_file->ret_mute);
 		p = p->next;
 	}
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
@@ -321,6 +331,9 @@ static int basic(char *ret_status, CTRL_STATE *state)
 			break;
 		case 21:
 			cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限");
+			break;
+		case 22:
+			cJSON_AddStringToObject(error_json, "key", "内外部工具切换错误");
 			break;
 		default:
 			break;
