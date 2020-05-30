@@ -1062,7 +1062,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1228,6 +1228,26 @@ void set(Webs *wp)
 			port = cmdport;
 			cmd_type = 0;
 			my_syslog("机器人操作", "外部工具坐标单轴点动-长按结束", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 236:
+			port = cmdport;
+			my_syslog("机器人操作", "开始喷涂", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 237:
+			port = cmdport;
+			my_syslog("机器人操作", "停止喷涂", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 238:
+			port = cmdport;
+			my_syslog("机器人操作", "开始清枪", "admin");
+			ret = copy_content(data_json, content);
+			break;
+		case 239:
+			port = cmdport;
+			my_syslog("机器人操作", "停止清枪", "admin");
 			ret = copy_content(data_json, content);
 			break;
 		case 302:

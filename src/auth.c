@@ -532,6 +532,7 @@ PUBLIC bool websLogoutUser(Webs *wp)
         return 0;
     }
     websRedirectByStatus(wp, HTTP_CODE_OK);
+	delete_timer();
     return 1;
 }
 

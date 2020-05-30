@@ -520,7 +520,7 @@ static int save_accounts(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* do some user actions on webserver */
+/* do some user actions basic on web */
 void act(Webs *wp)
 {
 	int ret = FAIL;
@@ -552,6 +552,7 @@ void act(Webs *wp)
 		goto end;
 	}
 	cmd = command->valuestring;
+	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
 	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		if (!authority_management("1")) {

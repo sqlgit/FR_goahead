@@ -2,12 +2,13 @@
 /********************************* Includes ***********************************/
 
 #include 	"goahead.h"
-#include 	"tools.h"
 #include	"cJSON.h"
+#include 	"tools.h"
 
 /********************************* Defines ************************************/
 
 extern ACCOUNT_INFO cur_account;
+extern timer_t timerid;
 
 /*********************************** Code *************************************/
 
@@ -487,7 +488,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	return SUCCESS;
 }
 
-/* delete log file: 删除旧的 log 文件, 只保留 webserver 系统配置文件中的 log_count 个 log 文件 */
+/* delete log file: 删除旧的 log 文件, 只保留 web 系统配置文件中的 log_count 个 log 文件 */
 int delete_log_file(int flag)
 {
 	char cmd[128] = {0};
@@ -509,7 +510,7 @@ int delete_log_file(int flag)
 				} else {
 					log_count = atoi(count->valuestring);
 				}
-				sprintf(cmd, "sh /root/webserver/shell/delete_file.sh %d", log_count);
+				sprintf(cmd, "sh %s %d", SHELL_DELETELOG, log_count);
 				system(cmd);
 			}
 		}
@@ -564,4 +565,18 @@ int authority_management(const char *cmd_type)
 	}
 
 	return 0;
+}
+
+/* delete timer */
+void delete_timer()
+{
+	// delete 定时器
+	if (timer_delete(timerid) == -1) {
+		perror("fail to timer_delete");
+
+		return FAIL;
+	}
+
+	//printf("delete timer success \n");
+	return SUCCESS;
 }

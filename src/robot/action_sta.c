@@ -570,19 +570,17 @@ void sig_handler(int signo)
 {
 	//printf("enter timer_signal function! %d\n", signo);
 	printf("Will free Sessions!\n");
+	//清空 session
 	myfreeSessions();
 }
 
-/* get motion controller data and return to page */
-void sta(Webs *wp)
+/* set timer */
+void set_timer()
 {
-	// delete 定时器
-	if (timer_delete(timerid) == -1) {
-		perror("fail to timer_delete");
-	}
-
 	struct sigevent evp;
 	struct sigaction act;
+	struct itimerspec it;
+
 	memset(&act, 0, sizeof(act));
 	act.sa_handler = sig_handler;
 	act.sa_flags = 0;
@@ -598,8 +596,7 @@ void sta(Webs *wp)
 		perror("fail to timer_create");
 	}
 
-	// 添加定时器，5秒后触发，清空 session
-	struct itimerspec it;
+	// 添加定时器，5秒后触发
 	it.it_interval.tv_sec = 0;
 	it.it_interval.tv_nsec = 0;
 	it.it_value.tv_sec = 5;
@@ -607,6 +604,12 @@ void sta(Webs *wp)
 	if (timer_settime(timerid, 0, &it, 0) == -1) {
 		perror("fail to timer_settime");
 	}
+	//printf("set timer success \n");
+}
+
+/* get motion controller data and return to page */
+void sta(Webs *wp)
+{
 
 	char *ret_status = NULL;
 	int ret = FAIL;
@@ -646,12 +649,18 @@ void sta(Webs *wp)
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "cons")) {
 		ret = connect_status(ret_status);
+		delete_timer();
+		set_timer();
 	} else if(!strcmp(cmd, "basic")) {
 		ret = basic(ret_status, state);
 	} else if(!strcmp(cmd, "program_teach")) {
 		ret = program_teach(ret_status, state);
 	} else if(!strcmp(cmd, "vardata_feedback")) {
 		ret = vardata_feedback(ret_status);
+	} else if(!strcmp(cmd, "refresh")) {
+		delete_timer();
+		ret = SUCCESS;
+		strcpy(ret_status, "refresh!");
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -4,28 +4,41 @@
 /********************************* Defines ************************************/
 
 #define local 0
-#define virtual_robot 0
+#define virtual_robot 1
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
 #define ROBOT_CFG "/root/robot/user.config"
-#define FILE_POINTS "/root/webserver/points/points.json"
-#define FILE_CFG "/root/webserver/cfg/system.json"
-#define FILE_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.json"
-#define FILE_ET_CDSYSTEM "/root/webserver/cdsystem/et_coordinate_system.json"
-#define FILE_GRIPPER "/root/webserver/gripper/gripper.json"
-#define FILE_ACCOUNT "/root/webserver/account/account.json"
-#define FILE_AUTH "/root/webserver/auth.txt"
-#define DIR_USER "/root/webserver/user/"
-#define DIR_LOG "/root/webserver/log/"
-#define DIR_TEMPLATE "/root/webserver/template/"
-#define DIR_CDSYSTEM "/root/webserver/cdsystem/"
-#define DIR_POINTS "/root/webserver/points/"
-#define DIR_SHELL "/root/webserver/shell/"
-#define DIR_CFG "/root/webserver/cfg/"
+#define README_WEB_NOW "/root/README/README_WEB.txt"
+#define README_WEB_UP "/tmp/webapp/README_WEB.txt"
+#define README_CTL_NOW "/root/README/README_CTL.txt"
+#define README_CTL_UP "/tmp/control/README_CTL.txt"
+#define UPGRADE_WEBAPP "/tmp/webapp.tar.gz"
+#define UPGRADE_WEB "/tmp/webapp/web.tar.gz"
+#define UPGRADE_CONTROL "/tmp/control.tar.gz"
+#define UPGRADE_FR_CONTROL "/tmp/control/fr_control.tar.gz"
+#define SHELL_DELETELOG "/root/web/shell/delete_file.sh"
+#define FILE_POINTS "/root/web/points/points.json"
+#define FILE_CFG "/root/web/cfg/system.json"
+#define FILE_CDSYSTEM "/root/web/cdsystem/coordinate_system.json"
+#define FILE_ET_CDSYSTEM "/root/web/cdsystem/et_coordinate_system.json"
+#define FILE_GRIPPER "/root/web/gripper/gripper.json"
+#define FILE_ACCOUNT "/root/web/account/account.json"
+#define FILE_AUTH "/root/web/auth.txt"
+#define DIR_USER "/root/web/user/"
+#define DIR_LOG "/root/web/log/"
+#define DIR_TEMPLATE "/root/web/template/"
+#define DIR_CDSYSTEM "/root/web/cdsystem/"
+#define DIR_POINTS "/root/web/points/"
+#define DIR_SHELL "/root/web/shell/"
+#define DIR_CFG "/root/web/cfg/"
 #define DIR_FRUSER "/fruser/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
+#define MD5_READ_DATA_SIZE	1024
+#define MD5_SIZE		16
+#define MD5_STR_LEN		(MD5_SIZE * 2)
+#define LINE_LEN	1024
 
 typedef unsigned char BYTE;
 
@@ -57,5 +70,6 @@ int my_syslog(const char *class, const char *content, const char *user);
 int delete_log_file(int flag);
 void *create_dir(const char *dir_path);
 int authority_management(const char *cmd_type);
+void delete_timer();
 
 #endif

@@ -1,10 +1,134 @@
 #include    "goahead.h"
 #include	"cJSON.h"
+#include    "md5.h"
 #include 	"tools.h"
+#include 	"robot_socket.h"
 #include	"filehandler.h"
 
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
+static int compute_file_md5(const char *file_path, char *md5_str);
+static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path);
+
+/**
+	计算 MD5 值：
+	file_path (文件路径)
+	md5_str (md5值)
+*/
+int compute_file_md5(const char *file_path, char *md5_str)
+{
+	int i;
+	int fd;
+	int ret;
+	unsigned char data[MD5_READ_DATA_SIZE];
+	unsigned char md5_value[MD5_SIZE];
+	MD5_CTX md5;
+
+	fd = open(file_path, O_RDONLY);
+	if (-1 == fd)
+	{
+		perror("open");
+		return -1;
+	}
+
+	// init md5
+	MD5Init(&md5);
+
+	while (1)
+	{
+		ret = read(fd, data, MD5_READ_DATA_SIZE);
+		if (-1 == ret)
+		{
+			perror("read");
+			return -1;
+		}
+
+		MD5Update(&md5, data, ret);
+
+		if (0 == ret || ret < MD5_READ_DATA_SIZE)
+		{
+			break;
+		}
+	}
+
+	close(fd);
+
+	MD5Final(&md5, md5_value);
+
+	for(i = 0; i < MD5_SIZE; i++)
+	{
+		snprintf(md5_str + i*2, 2+1, "%02x", md5_value[i]);
+	}
+	md5_str[MD5_STR_LEN] = '\0'; // add end
+
+	return 0;
+}
+
+/**
+	do md5 check and version check
+*/
+int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path)
+{
+	FILE *fp;
+	char strline[LINE_LEN] = {};
+	char md5sum_up[MD5_STR_LEN + 1] = "";
+	char md5sum_com[MD5_STR_LEN + 1] = "";
+	char version_now[20] = "";
+	char version_up[20] = "";
+
+	if (compute_file_md5(upgrade_path, md5sum_com) == -1) {
+		perror("md5 compute");
+
+		return FAIL;
+	}
+
+	if ((fp = fopen(readme_up_path, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if (!strncmp(strline, "MD5SUM=", 7)) {
+			strrpc(strline, "MD5SUM=", "");
+			strcpy(md5sum_up, strline);
+		} else if (!strncmp(strline, "VERSION=", 8)) {
+			strrpc(strline, "VERSION=", "");
+			strcpy(version_up, strline);
+		}
+	}
+	fclose(fp);
+
+	if ((fp = fopen(readme_now_path, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if (!strncmp(strline, "VERSION=", 8)) {
+			strrpc(strline, "VERSION=", "");
+			strcpy(version_now, strline);
+		}
+	}
+	fclose(fp);
+
+	printf("md5sum_com = %s\n", md5sum_com);
+	printf("md5sum_up = %s\n", md5sum_up);
+	printf("version_now = %s\n", version_now);
+	printf("version_up = %s\n", version_up);
+	printf("strcmp(md5sum_com, md5sum_up) = %d\n", strcmp(md5sum_com, md5sum_up));
+	printf("strcmp(version_up, version_now) = %d\n", strcmp(version_up, version_now));
+
+	if (strcmp(md5sum_com, md5sum_up) != 0 || strcmp(version_up, version_now) <= 0) {
+		perror("upgrade fail");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 
 void upload(Webs *wp)
 {
@@ -12,8 +136,7 @@ void upload(Webs *wp)
 	WebsUpload      *up;
 	char            *upfile;
 	char filename[128] = {0};
-
-	int flag = 0;
+	char cmd[128] = {0};
 
 	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
@@ -39,14 +162,19 @@ void upload(Webs *wp)
 			} else if (strcmp(up->clientFilename, "system.json") == 0) {
 				upfile = sfmt("%s", FILE_CFG);
 				strcpy(filename, upfile);
-				flag = 1;
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {
 				upfile = sfmt("%s", ROBOT_CFG);
-				//system("shoutdown now");
+				//system("shutdown now");
+			} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
+				upfile = sfmt("%s", UPGRADE_WEBAPP);
+				strcpy(filename, upfile);
+			} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
+				upfile = sfmt("%s", UPGRADE_CONTROL);
+				strcpy(filename, upfile);
 			} else {
 				goto end;
 			}
-			printf("upfile = %s\n", upfile);
+			//printf("upfile = %s\n", upfile);
 			if (rename(up->filename, upfile) < 0) {
 				error("Cannot rename uploaded file: %s to %s, errno %d", up->filename, upfile, errno);
 			}
@@ -57,9 +185,30 @@ void upload(Webs *wp)
 			websWrite(wp, "%s=%s\r\n", s->name.value.string, s->content.value.string);
 		}*/
 	}
-	printf("filename = %s\n", filename);
-	if (flag == 1) {
+	//printf("filename = %s\n", filename);
+	if (strcmp(filename, FILE_CFG) == 0) {
 		delete_log_file(0);
+	} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
+		system("cd /tmp && tar -zxvf webapp.tar.gz");
+		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL) {
+			perror("md5 & version check fail!");
+			goto end;
+		}
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "openssl des3 -d -k frweb -salt -in %s | tar xzvf - -C /tmp/", UPGRADE_WEB);
+		if (system(cmd) != 0) {
+			perror("uncompress fail!");
+			goto end;
+		}
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "sh /root/web/shell/web_upgrade.sh %s", CLIENT_IP);
+		system(cmd);
+	} else if (strcmp(filename, UPGRADE_CONTROL) == 0) {
+		system("cd /tmp && tar -zxvf control.tar.gz");
+		if (check_upfile(UPGRADE_FR_CONTROL, README_CTL_NOW, README_CTL_UP) == FAIL) {
+			goto end;
+		}
+		system("sh /root/web/shell/fr_control_upgrade.sh");
 	}
 
 	websSetStatus(wp, 204);
@@ -73,7 +222,7 @@ void upload(Webs *wp)
 	return;
 
 end:
-	websSetStatus(wp, 404);
+	websSetStatus(wp, 403);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
 	websWrite(wp, "fail");

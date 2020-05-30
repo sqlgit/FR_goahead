@@ -1,6 +1,6 @@
 #!/bin/bash
 #项目的主干目录是相同的
-RELEASE="/root/webserver/log"
+RELEASE="/root/web/log"
 
 #for i in "$*"; do
 #	echo $i
