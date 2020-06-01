@@ -1,0 +1,17 @@
+/****************************************************
+ > File Name:mysqlite3.h
+ > Author: 
+ > Mail: 
+ > Create Time:2020年05月21日 星期四 10时11分18秒
+***************************************************/
+
+#ifndef __MYSQLITE3_
+#define __MYSQLITE3_
+
+cJSON *json_construction(char **resultp, int nrow, int ncloumn); //查询的数据转换成cJSON格式
+int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nrow, int *ncloumn);		//查询数据
+int select_info_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_Data);						       //查询数据，转换成JSON格式
+int change_info_sqlite3(char *db_name, const char *table, const char *name, const char *sql);		//增加、删除和更改数据
+int delete_all_info_sqlite3(char *db_name, const char *sql);				//清空整个表中的内容
+
+#endif 

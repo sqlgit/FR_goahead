@@ -6,6 +6,7 @@
 #include 	"tools.h"
 #include 	"robot_socket.h"
 #include    "action_act.h"
+#include 	"mysqlite3.h"
 
 /********************************* Defines ************************************/
 
@@ -93,13 +94,14 @@ static int rename_lua_file(const cJSON *data_json)
 /* modify tool cdsystem */
 static int modify_tool_cdsystem(const cJSON *data_json)
 {
-	int ret = FAIL;
+	char sql[1204] = {0};
+	/*int ret = FAIL;
 	char *buf = NULL;
 	cJSON *f_json = NULL;
 	char *f_content = NULL;
 	cJSON *newitem = NULL;
 	cJSON *cd_name = NULL;
-	cJSON *value = NULL;
+	cJSON *value = NULL;*/
 	cJSON *name = NULL;
 	cJSON *id = NULL;
 	cJSON *x = NULL;
@@ -109,28 +111,28 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
 
-	newitem = cJSON_CreateObject();
+	/*newitem = cJSON_CreateObject();
 	cd_name = cJSON_GetObjectItem(data_json, "name");
 	value = cJSON_GetObjectItem(data_json, "value");
 	if (cd_name == NULL || cd_name->valuestring == NULL || value == NULL || value->type != cJSON_Object) {
 		perror("json");
 
 		return FAIL;
-	}
-	name = cJSON_GetObjectItem(value, "name");
-	id = cJSON_GetObjectItem(value, "id");
-	x = cJSON_GetObjectItem(value, "x");
-	y = cJSON_GetObjectItem(value, "y");
-	z = cJSON_GetObjectItem(value, "z");
-	rx = cJSON_GetObjectItem(value, "rx");
-	ry = cJSON_GetObjectItem(value, "ry");
-	rz = cJSON_GetObjectItem(value, "rz");
+	}*/
+	name = cJSON_GetObjectItem(data_json, "name");
+	id = cJSON_GetObjectItem(data_json, "id");
+	x = cJSON_GetObjectItem(data_json, "x");
+	y = cJSON_GetObjectItem(data_json, "y");
+	z = cJSON_GetObjectItem(data_json, "z");
+	rx = cJSON_GetObjectItem(data_json, "rx");
+	ry = cJSON_GetObjectItem(data_json, "ry");
+	rz = cJSON_GetObjectItem(data_json, "rz");
 	if(name == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-
+/*
 	cJSON_AddStringToObject(newitem, "name", name->valuestring);
 	cJSON_AddStringToObject(newitem, "id", id->valuestring);
 	cJSON_AddStringToObject(newitem, "x", x->valuestring);
@@ -140,7 +142,6 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	cJSON_AddStringToObject(newitem, "ry", ry->valuestring);
 	cJSON_AddStringToObject(newitem, "rz", rz->valuestring);
 	f_content = get_file_content(FILE_CDSYSTEM);
-	/* file is NULL */
 	if (f_content == NULL) {
 		perror("get file content");
 
@@ -148,15 +149,23 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	}
 	//printf("f_content = %s\n", f_content);
 	f_json = cJSON_Parse(f_content);
-	/* replace exist object */
+	// replace exist object
 	cJSON_ReplaceItemInObject(f_json, cd_name->valuestring, newitem);
 	buf = cJSON_Print(f_json);
 	//printf("buf = %s\n", buf);
 
 	ret = write_file(FILE_CDSYSTEM, buf);
+*/
+	sprintf(sql, "insert into coordinate_system(name,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s');"\
+					, name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 
+	if (change_info_sqlite3(DB_CDSYSTEM, "coordinate_system", name->valuestring, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
 	//printf("ret = %d\n", ret);
-
+/*	memset(sql, 0, sizeof(sql));
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(f_json);
@@ -164,19 +173,21 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	free(f_content);
 	f_content = NULL;
 
-	return ret;
+	return ret;*/
+	return SUCCESS;
 }
 
 /* modify ex && tool cdsystem */
 static int modify_ex_tool_cdsystem(const cJSON *data_json)
 {
-	int ret = FAIL;
+	/*int ret = FAIL;
 	char *buf = NULL;
 	cJSON *f_json = NULL;
-	char *f_content = NULL;
-	cJSON *newitem = NULL;
-	cJSON *cd_name = NULL;
-	cJSON *value = NULL;
+	char *f_content = NULL;*/
+	char sql[1024] = {0};
+	//cJSON *newitem = NULL;
+	//cJSON *cd_name = NULL;
+	//cJSON *value = NULL;
 	cJSON *name = NULL;
 	cJSON *user_name = NULL;
 	cJSON *id = NULL;
@@ -193,36 +204,37 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	cJSON *try = NULL;
 	cJSON *trz = NULL;
 
-	newitem = cJSON_CreateObject();
-	cd_name = cJSON_GetObjectItem(data_json, "name");
-	value = cJSON_GetObjectItem(data_json, "value");
-	if (cd_name == NULL || cd_name->valuestring == NULL || value == NULL || value->type != cJSON_Object) {
-		perror("json");
+	//newitem = cJSON_CreateObject();
+	//cd_name = cJSON_GetObjectItem(data_json, "name");
+	//value = cJSON_GetObjectItem(data_json, "value");
+	//if (cd_name == NULL || cd_name->valuestring == NULL || value == NULL || value->type != cJSON_Object) {
+	//if (value == NULL || value->type != cJSON_Object) {
+	//	perror("json");
 
-		return FAIL;
-	}
-	name = cJSON_GetObjectItem(value, "name");
-	user_name = cJSON_GetObjectItem(value, "user_name");
-	id = cJSON_GetObjectItem(value, "id");
-	ex = cJSON_GetObjectItem(value, "ex");
-	ey = cJSON_GetObjectItem(value, "ey");
-	ez = cJSON_GetObjectItem(value, "ez");
-	erx = cJSON_GetObjectItem(value, "erx");
-	ery = cJSON_GetObjectItem(value, "ery");
-	erz = cJSON_GetObjectItem(value, "erz");
-	tx = cJSON_GetObjectItem(value, "tx");
-	ty = cJSON_GetObjectItem(value, "ty");
-	tz = cJSON_GetObjectItem(value, "tz");
-	trx = cJSON_GetObjectItem(value, "trx");
-	try = cJSON_GetObjectItem(value, "try");
-	trz = cJSON_GetObjectItem(value, "trz");
+	//	return FAIL;
+	//}
+	name = cJSON_GetObjectItem(data_json, "name");
+	user_name = cJSON_GetObjectItem(data_json, "user_name");
+	id = cJSON_GetObjectItem(data_json, "id");
+	ex = cJSON_GetObjectItem(data_json, "ex");
+	ey = cJSON_GetObjectItem(data_json, "ey");
+	ez = cJSON_GetObjectItem(data_json, "ez");
+	erx = cJSON_GetObjectItem(data_json, "erx");
+	ery = cJSON_GetObjectItem(data_json, "ery");
+	erz = cJSON_GetObjectItem(data_json, "erz");
+	tx = cJSON_GetObjectItem(data_json, "tx");
+	ty = cJSON_GetObjectItem(data_json, "ty");
+	tz = cJSON_GetObjectItem(data_json, "tz");
+	trx = cJSON_GetObjectItem(data_json, "trx");
+	try = cJSON_GetObjectItem(data_json, "try");
+	trz = cJSON_GetObjectItem(data_json, "trz");
 	if(name == NULL || user_name == NULL || id == NULL || ex == NULL || ey == NULL || ez == NULL || erx == NULL || ery == NULL|| erz == NULL || tx == NULL || ty == NULL || tz == NULL || trx == NULL || try == NULL|| trz == NULL || name->valuestring == NULL || user_name->valuestring == NULL || id->valuestring == NULL || ex->valuestring == NULL || ey->valuestring == NULL || ez->valuestring == NULL || erx->valuestring == NULL || ery->valuestring == NULL || erz->valuestring == NULL || tx->valuestring == NULL || ty->valuestring == NULL || tz->valuestring == NULL || trx->valuestring == NULL || try->valuestring == NULL || trz->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
 
-	cJSON_AddStringToObject(newitem, "name", name->valuestring);
+/*	cJSON_AddStringToObject(newitem, "name", name->valuestring);
 	cJSON_AddStringToObject(newitem, "user_name", user_name->valuestring);
 	cJSON_AddStringToObject(newitem, "id", id->valuestring);
 	cJSON_AddStringToObject(newitem, "ex", ex->valuestring);
@@ -238,7 +250,6 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	cJSON_AddStringToObject(newitem, "try", try->valuestring);
 	cJSON_AddStringToObject(newitem, "trz", trz->valuestring);
 	f_content = get_file_content(FILE_ET_CDSYSTEM);
-	/* file is NULL */
 	if (f_content == NULL) {
 		perror("get file content");
 
@@ -246,7 +257,7 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	}
 	//printf("f_content = %s\n", f_content);
 	f_json = cJSON_Parse(f_content);
-	/* replace exist object */
+	// replace exist object
 	cJSON_ReplaceItemInObject(f_json, cd_name->valuestring, newitem);
 	buf = cJSON_Print(f_json);
 	//printf("buf = %s\n", buf);
@@ -254,7 +265,18 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	ret = write_file(FILE_ET_CDSYSTEM, buf);
 
 	//printf("ret = %d\n", ret);
+*/
+	sprintf(sql,"insert into et_coordinate_system(name,user_name,id,ex,ey,ez,erx,ery,erz,tx,ty,tz,trx,try,trz) "\
+						"values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+						,name->valuestring, user_name->valuestring, id->valuestring, ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring,\
+						tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
 
+	if (change_info_sqlite3(DB_ET_CDSYSTEM, "et_coordinate_system", name->valuestring, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+/*	memset(sql, 0, sizeof(sql));
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(f_json);
@@ -263,24 +285,27 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	f_content = NULL;
 
 	return ret;
+	*/
+	return SUCCESS;
 }
 
 /* save point */
 static int save_point(const cJSON *data_json)
 {
 	CTRL_STATE *state = NULL;
-	cJSON *f_json = NULL;
+	/*cJSON *f_json = NULL;
 	cJSON *newitem = NULL;
 	cJSON *joints_json = NULL;
-	cJSON *tcp_json = NULL;
+	cJSON *tcp_json = NULL;*/
+	char sql[1024] = {0};
 	int i = 0;
-	int ret = FAIL;
+	/*int ret = FAIL;
 	char *buf = NULL;
 	char *f_content = NULL;
 	char joint[10] = {0};
-	char joint_value_string[10] = {0};
-	double tcp_value[6] = {0};
+	char joint_value_string[10] = {0};*/
 	char tcp_value_string[6][10] = {0};
+	char joint_value_string[6][10] = {0};
 	cJSON *name = NULL;
 	cJSON *speed = NULL;
 	cJSON *elbow_speed = NULL;
@@ -305,7 +330,7 @@ static int save_point(const cJSON *data_json)
 	} else { // "0" 代表虚拟机器人
 		state = &vir_ctrl_state;
 	}
-	newitem = cJSON_CreateObject();
+	//newitem = cJSON_CreateObject();
 	name = cJSON_GetObjectItem(data_json, "name");
 	speed = cJSON_GetObjectItem(data_json, "speed");
 	acc = cJSON_GetObjectItem(data_json, "acc");
@@ -317,17 +342,18 @@ static int save_point(const cJSON *data_json)
 
 		return FAIL;
 	}
-	joints_json = cJSON_CreateObject();
+	//joints_json = cJSON_CreateObject();
 	for (i = 0; i < 6; i++) {
-		sprintf(joint, "j%d", (i+1));
-		sprintf(joint_value_string, "%.3lf", state->jt_cur_pos[i]);
-		cJSON_AddStringToObject(joints_json, joint, joint_value_string);
+	//	sprintf(joint, "j%d", (i+1));
+	//	sprintf(joint_value_string, "%.3lf", state->jt_cur_pos[i]);
+		sprintf(joint_value_string[i], "%.3lf", state->jt_cur_pos[i]); //数据库存储
+	//	cJSON_AddStringToObject(joints_json, joint, joint_value_string);
 	}
-	tcp_json = cJSON_CreateObject();
+	//tcp_json = cJSON_CreateObject();
 	for (i = 0; i < 6; i++) {
 		sprintf(tcp_value_string[i], "%.3lf", state->tl_cur_pos[i]);
 	}
-	cJSON_AddStringToObject(tcp_json, "x", tcp_value_string[0]);
+	/*cJSON_AddStringToObject(tcp_json, "x", tcp_value_string[0]);
 	cJSON_AddStringToObject(tcp_json, "y", tcp_value_string[1]);
 	cJSON_AddStringToObject(tcp_json, "z", tcp_value_string[2]);
 	cJSON_AddStringToObject(tcp_json, "rx", tcp_value_string[3]);
@@ -341,10 +367,21 @@ static int save_point(const cJSON *data_json)
 	cJSON_AddStringToObject(newitem, "elbow_acc", elbow_acc->valuestring);
 	cJSON_AddStringToObject(newitem, "toolnum", toolnum->valuestring);
 	cJSON_AddItemToObject(newitem, "joints", joints_json);
-	cJSON_AddItemToObject(newitem, "tcp", tcp_json);
+	cJSON_AddItemToObject(newitem, "tcp", tcp_json);*/
 
-	f_content = get_file_content(FILE_POINTS);
-	/* file is NULL */
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,x,y,z,rx,ry,rz) "\
+				"values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
+				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring,\
+				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5],\
+				tcp_value_string[0], tcp_value_string[1], tcp_value_string[2], tcp_value_string[3], tcp_value_string[4], tcp_value_string[5]);
+	if (change_info_sqlite3(DB_POINTS, "points", name->valuestring, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	/*f_content = get_file_content(FILE_POINTS);
 	if (f_content == NULL) {
 		perror("get file content");
 
@@ -352,10 +389,10 @@ static int save_point(const cJSON *data_json)
 	}
 	f_json = cJSON_Parse(f_content);
 	if(cJSON_GetObjectItem(f_json, name->valuestring) == NULL) {
-		/* add new object to file */
+		// add new object to file
 		cJSON_AddItemToObject(f_json, name->valuestring, newitem);
 	} else {
-		/* replace exist object with new object */
+		// replace exist object with new object
 		cJSON_ReplaceItemInObject(f_json, name->valuestring, newitem);
 	}
 	buf = cJSON_Print(f_json);
@@ -368,6 +405,8 @@ static int save_point(const cJSON *data_json)
 	f_content = NULL;
 
 	return ret;
+	*/
+	return SUCCESS;
 }
 
 /* remove points info */
@@ -376,9 +415,10 @@ static int remove_points(const cJSON *data_json)
 	int ret = FAIL;
 	int num = 0;
 	int i = 0;
-	char *f_content = NULL;
-	cJSON *f_json = NULL;
+	//char *f_content = NULL;
+	//cJSON *f_json = NULL;
 	char *buf = NULL;
+	char sql[1024] = {0};
 	//char points_name[100][10] = {{0}};
 	cJSON *name_index = NULL;
 	cJSON *name = cJSON_GetObjectItem(data_json, "name");
@@ -390,21 +430,27 @@ static int remove_points(const cJSON *data_json)
 	printf("name = %s\n", cJSON_Print(name));
 	num = cJSON_GetArraySize(name);
 
-	f_content = get_file_content(FILE_POINTS);
-	/* file is NULL */
+	/*f_content = get_file_content(FILE_POINTS);
 	if (f_content == NULL) {
 		perror("get file content");
 
 		return FAIL;
 	}
-	f_json = cJSON_Parse(f_content);
+	f_json = cJSON_Parse(f_content);*/
 	printf("num = %d\n", num);
 	for (i = 0; i < num; i++) {
 		name_index = cJSON_GetArrayItem(name, i);
 		printf("name_index->valuestring = %s\n", name_index->valuestring);
-		cJSON_DeleteItemFromObject(f_json, name_index->valuestring);
+		//cJSON_DeleteItemFromObject(f_json, name_index->valuestring);
+		memset(sql,0,sizeof(sql));
+		sprintf(sql, "delete from points where name = \'%s\'", name_index->valuestring);
+		if (change_info_sqlite3(DB_POINTS, "points", name_index->valuestring, sql) == -1) {
+			perror("database");
+
+			return FAIL;
+		}
 	}
-	buf = cJSON_Print(f_json);
+	/*buf = cJSON_Print(f_json);
 	ret = write_file(FILE_POINTS, buf);
 
 	free(buf);
@@ -413,8 +459,10 @@ static int remove_points(const cJSON *data_json)
 	f_json = NULL;
 	free(f_content);
 	f_content = NULL;
+	
 
-	return ret;
+	return ret;*/
+	return SUCCESS;
 }
 
 /* change type */
@@ -464,13 +512,16 @@ static int save_accounts(const cJSON *data_json)
 {
     char passbuf[ME_GOAHEAD_LIMIT_PASSWORD * 3 + 3];
 	char content[MAX_BUF] = "";
+	char sql[2048] = {0};
 	int i = 0;
-	int ret = FAIL;
-	char *buf = NULL;
+	int len = 0;
+	//int ret = FAIL;
+	//char *buf = NULL;
 	int array_size = 0;
 	cJSON *item = NULL;
 	cJSON *username = NULL;
 	cJSON *password = NULL;
+	cJSON *auth = NULL;
 	cJSON *account_array = cJSON_GetObjectItem(data_json, "accounts");
 	if (account_array == NULL || account_array->type != cJSON_Array) {
 		perror("json");
@@ -479,22 +530,36 @@ static int save_accounts(const cJSON *data_json)
 	}
 
 	array_size = cJSON_GetArraySize(account_array); //获取数组长度
-	if (array_size > 10) { // 超过10个账号不予保存
-		return FAIL;
+//	if (array_size > 10) { // 超过10个账号不予保存
+//		return FAIL;
+//	}
+	sprintf(sql, "delete from account;");
+	if (delete_all_info_sqlite3(DB_ACCOUNT, sql) == -1) {
+		perror("delete all");
 	}
+	memset(sql,0,sizeof(sql));
+
+	sprintf(sql,"insert into account(name,password,auth) Values");        //拼接 insert语句
 	for (i = 0; i < array_size; i++) {
 		item = cJSON_GetArrayItem(account_array, i);
 		username = cJSON_GetObjectItem(item, "username");
 		password = cJSON_GetObjectItem(item, "password");
-		if (username == NULL || username->valuestring == NULL || password == NULL || password->valuestring == NULL ) {
+		auth = cJSON_GetObjectItem(item, "auth");
+		if (username == NULL || username->valuestring == NULL || password == NULL || password->valuestring == NULL || auth == NULL || auth->valuestring == NULL ) {
 			perror("json");
 
 			return FAIL;
 		}
         fmt(passbuf, sizeof(passbuf), "%s:%s:%s", username->valuestring, ME_GOAHEAD_REALM, password->valuestring);
 		sprintf(content, "%suser name=%s password=%s\n", content, username->valuestring, websMD5(passbuf));
+		sprintf(sql,"%s('%s','%s','%s'),",sql,username->valuestring,password->valuestring,auth->valuestring);
 	}
+	len = strlen(sql);
+	sql[len -1] = '\0';   //去掉sql最后一个字符 ‘，’
+	sprintf(sql,"%s;",sql);
+	printf("sql = %s\n",sql);
 	printf("content = %s\n", content);
+
 	if (write_file(FILE_AUTH, content) == FAIL) {//save to file auth.txt, 更新账号密码到auth.txt文件中
 		return FAIL;
 	}
@@ -507,7 +572,12 @@ static int save_accounts(const cJSON *data_json)
         return FAIL;
     }
 #endif
+    if (change_info_sqlite3(DB_ACCOUNT, "account", NULL, sql) == -1) {
+    	perror("insert");
 
+		return FAIL;
+    }
+/*  memset(sql,0,sizeof(sql));
 	buf = cJSON_Print(account_array);
 	//save to file account.json, 保存到账户文件 account.json 中
 	ret = write_file(FILE_ACCOUNT, buf);
@@ -515,7 +585,7 @@ static int save_accounts(const cJSON *data_json)
 	buf = NULL;
 	if (ret == FAIL) {
 		return FAIL;
-	}
+	}*/
 
 	return SUCCESS;
 }

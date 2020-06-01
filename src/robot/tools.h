@@ -33,6 +33,10 @@
 #define DIR_SHELL "/root/web/shell/"
 #define DIR_CFG "/root/web/cfg/"
 #define DIR_FRUSER "/fruser/"
+#define DB_POINTS "/root/webserver/points/web_point.db"
+#define DB_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.db"
+#define DB_ET_CDSYSTEM "/root/webserver/cdsystem/et_coordinate_system.db"
+#define DB_ACCOUNT "/root/webserver/account/account.db"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
 #define MD5_READ_DATA_SIZE	1024

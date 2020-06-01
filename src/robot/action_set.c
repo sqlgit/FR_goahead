@@ -170,50 +170,92 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		printf("cmd_array[0] = %s", cmd_array[0]);
 		printf("cmd_array[1] = %s", cmd_array[1]);
 		*/
-		/* open and get points file content */
-		f_content = get_file_content(FILE_POINTS);
-		/* file is NULL */
-		if (f_content == NULL) {
-			perror("get file content");
+		/* select points from sqlite */
+		char sql[1024] = { 0 };
+			cJSON *JSON_Data = NULL;
+			char *sqlite_select_data = NULL;
+			sprintf(sql, "select * from points where name = \'%s\'';", cmd_array[0]);
+			if (select_info_json_sqlite3(DB_POINTS, sql, &JSON_Data) == -1) {
+				memset(sql, 0, sizeof(sql));
+				perror("select points\n");
+				return FAIL;
+			}
+			memset(sql, 0, sizeof(sql));
 
-			return FAIL;
-		}
-		f_json = cJSON_Parse(f_content);
-		if (f_json == NULL) {
-			goto end;
-		}
-		cJSON *ptp = cJSON_GetObjectItem(f_json, cmd_array[0]);
-		if (ptp == NULL || ptp->type != cJSON_Object) {
-			goto end;
-		}
-		cJSON *joints = cJSON_GetObjectItem(ptp, "joints");
-		if (joints == NULL || joints->type != cJSON_Object) {
-			goto end;
-		}
-		j1 = cJSON_GetObjectItem(joints, "j1");
-		j2 = cJSON_GetObjectItem(joints, "j2");
-		j3 = cJSON_GetObjectItem(joints, "j3");
-		j4 = cJSON_GetObjectItem(joints, "j4");
-		j5 = cJSON_GetObjectItem(joints, "j5");
-		j6 = cJSON_GetObjectItem(joints, "j6");
-		cJSON *tcp = cJSON_GetObjectItem(ptp, "tcp");
-		if (tcp == NULL || tcp->type != cJSON_Object) {
-			goto end;
-		}
-		x = cJSON_GetObjectItem(tcp, "x");
-		y = cJSON_GetObjectItem(tcp, "y");
-		z = cJSON_GetObjectItem(tcp, "z");
-		rx = cJSON_GetObjectItem(tcp, "rx");
-		ry = cJSON_GetObjectItem(tcp, "ry");
-		rz = cJSON_GetObjectItem(tcp, "rz");
-		toolnum = cJSON_GetObjectItem(ptp, "toolnum");
-		speed = cJSON_GetObjectItem(ptp, "speed");
-		acc = cJSON_GetObjectItem(ptp, "acc");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
-			goto end;
-		}
-		sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
-		strcpy(file_content, tmp_content);
+			cJSON *ptp= cJSON_GetObjectItem(JSON_Data, cmd_array[0]);
+			if (ptp == NULL || ptp->type != cJSON_Object) {
+				goto end;
+			}
+			j1 = cJSON_GetObjectItem(ptp, "j1");
+			j2 = cJSON_GetObjectItem(ptp, "j2");
+			j3 = cJSON_GetObjectItem(ptp, "j3");
+			j4 = cJSON_GetObjectItem(ptp, "j4");
+			j5 = cJSON_GetObjectItem(ptp, "j5");
+			j6 = cJSON_GetObjectItem(ptp, "j6");
+			x = cJSON_GetObjectItem(ptp, "x");
+			y = cJSON_GetObjectItem(ptp, "y");
+			z = cJSON_GetObjectItem(ptp, "z");
+			rx = cJSON_GetObjectItem(ptp, "rx");
+			ry = cJSON_GetObjectItem(ptp, "ry");
+			rz = cJSON_GetObjectItem(ptp, "rz");
+			toolnum = cJSON_GetObjectItem(ptp, "toolnum");
+			speed = cJSON_GetObjectItem(ptp, "speed");
+			acc = cJSON_GetObjectItem(ptp, "acc");
+
+			if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+				goto end;
+			}
+			sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+			strcpy(file_content, tmp_content);
+			printf("ptp cmd  is %s \n",tmp_content);
+			/* open and get points file content */
+//		f_content = get_file_content(FILE_POINTS);
+//		/* file is NULL */
+//		if (f_content == NULL) {
+//			perror("get file content");
+//
+//			return FAIL;
+//		}
+//
+//
+//
+//		f_json = cJSON_Parse(f_content);
+//		if (f_json == NULL) {
+//			goto end;
+//		}
+//		ptp = cJSON_GetObjectItem(f_json, cmd_array[0]);
+//		if (ptp == NULL || ptp->type != cJSON_Object) {
+//			goto end;
+//		}
+//		cJSON *joints = cJSON_GetObjectItem(ptp, "joints");
+//		if (joints == NULL || joints->type != cJSON_Object) {
+//			goto end;
+//		}
+//		j1 = cJSON_GetObjectItem(joints, "j1");
+//		j2 = cJSON_GetObjectItem(joints, "j2");
+//		j3 = cJSON_GetObjectItem(joints, "j3");
+//		j4 = cJSON_GetObjectItem(joints, "j4");
+//		j5 = cJSON_GetObjectItem(joints, "j5");
+//		j6 = cJSON_GetObjectItem(joints, "j6");
+//		cJSON *tcp = cJSON_GetObjectItem(ptp, "tcp");
+//		if (tcp == NULL || tcp->type != cJSON_Object) {
+//			goto end;
+//		}
+//		x = cJSON_GetObjectItem(tcp, "x");
+//		y = cJSON_GetObjectItem(tcp, "y");
+//		z = cJSON_GetObjectItem(tcp, "z");
+//		rx = cJSON_GetObjectItem(tcp, "rx");
+//		ry = cJSON_GetObjectItem(tcp, "ry");
+//		rz = cJSON_GetObjectItem(tcp, "rz");
+//		toolnum = cJSON_GetObjectItem(ptp, "toolnum");
+//		speed = cJSON_GetObjectItem(ptp, "speed");
+//		acc = cJSON_GetObjectItem(ptp, "acc");
+//		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+//			goto end;
+//		}
+//		sprintf(tmp_content, "%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+//		strcpy(file_content, tmp_content);
+
 	/* ARC */
 	} else if(!strncmp(lua_cmd, "ARC:", 4)) {
 		strrpc(lua_cmd, "ARC:", "");

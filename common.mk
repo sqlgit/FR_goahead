@@ -22,6 +22,9 @@ EXTRA_SRCVPATH+=$(PROJECT_ROOT)/src  \
 LIBS+=m socks socket
 
 include $(MKFILES_ROOT)/qmacros.mk
+#===== EXTRA_OBJS - object files and libraries contributed additionaly on link/archive step
+EXTRA_OBJS+=$(PROJECT_ROOT)/src/sqlite3_so/libsqlite3.so
+
 ifndef QNX_INTERNAL
 QNX_INTERNAL=$(PROJECT_ROOT)/.qnx_internal.mk
 endif

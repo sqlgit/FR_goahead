@@ -31,6 +31,24 @@ static int get_robot_cfg(char **ret_f_content);
 /* get points file content */
 static int get_points(char **ret_f_content)
 {
+	char sql[1024] = { 0 };
+	cJSON *JSON_Data = NULL;
+	char *sqlite_select_data = NULL;
+	sprintf(sql, "select * from points");
+	if (select_info_json_sqlite3(DB_POINTS, sql, &JSON_Data) == -1) {
+		memset(sql, 0, sizeof(sql));
+		perror("select points\n");
+	}
+
+	sqlite_select_data = cJSON_Print(JSON_Data);
+	cJSON_Delete(JSON_Data);
+	printf("get_points: sqlite_select_data_json is \n %s\n", sqlite_select_data);
+
+	free(sqlite_select_data);
+	sqlite_select_data = NULL;
+	JSON_Data = NULL;
+	memset(sql, 0, sizeof(sql));
+
 	*ret_f_content = get_file_content(FILE_POINTS);
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
@@ -45,6 +63,25 @@ static int get_points(char **ret_f_content)
 /* get tool coordinate system data */
 static int get_tool_cdsystem(char **ret_f_content)
 {
+	char sql[1024] = { 0 };
+	cJSON *JSON_Data = NULL;
+	char *sqlite_select_data = NULL;
+	sprintf(sql, "select * from coordinate_system");
+	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &JSON_Data) == -1) {
+		memset(sql, 0, sizeof(sql));
+		perror("select coordinate_system\n");
+	}
+
+	sqlite_select_data = cJSON_Print(JSON_Data);
+	cJSON_Delete(JSON_Data);
+	JSON_Data = NULL;
+	printf("get_tool_cdsystem: sqlite_select_data_json is \n %s\n",
+			sqlite_select_data);
+
+	free(sqlite_select_data);
+	sqlite_select_data = NULL;
+	memset(sql, 0, sizeof(sql));
+
 	*ret_f_content = get_file_content(FILE_CDSYSTEM);
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
@@ -59,6 +96,26 @@ static int get_tool_cdsystem(char **ret_f_content)
 /* get exter && tool coordinate system data */
 static int get_ex_tool_cdsystem(char **ret_f_content)
 {
+	char sql[1024] = { 0 };
+	cJSON *JSON_Data = NULL;
+	char *sqlite_select_data = NULL;
+
+	sprintf(sql, "select * from et_coordinate_system");
+	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &JSON_Data) == -1) {
+		memset(sql, 0, sizeof(sql));
+		perror("select ex_tool_cdsystem\n");
+	}
+
+	sqlite_select_data = cJSON_Print(JSON_Data);
+	cJSON_Delete(JSON_Data);
+	JSON_Data = NULL;
+	printf("get_ex_tool_cdsystem: sqlite_select_data_json is \n %s\n",
+			sqlite_select_data);
+
+	free(sqlite_select_data);
+	sqlite_select_data = NULL;
+	memset(sql, 0, sizeof(sql));
+
 	*ret_f_content = get_file_content(FILE_ET_CDSYSTEM);
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
