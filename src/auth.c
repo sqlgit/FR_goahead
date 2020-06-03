@@ -26,6 +26,7 @@
 #include    "goahead.h"
 #include	"tools.h"
 #include	"cJSON.h"
+#include "mysqlite3.h"
 
 #if ME_GOAHEAD_AUTH
 
@@ -544,33 +545,20 @@ PUBLIC bool websLogoutUser(Webs *wp)
 */
 static void get_username_auth(char *username)
 {
-	char *f_content = NULL;
-	cJSON *root_json = NULL;
-	cJSON *item = NULL;
-	cJSON *username_json = NULL;
-	cJSON *auth_json = NULL;
-	int array_size = 0;
+	char sql[1024] = {0};
 	int i = 0;
+	int nrow = 0;
+	int ncloumn = 0;
+	char **resultp = NULL;
 
-	f_content = get_file_content(FILE_ACCOUNT);
-	/* file is not NULL */
-	if (f_content != NULL) {
-		root_json = cJSON_Parse(f_content);
-		if (root_json != NULL) {
-			array_size = cJSON_GetArraySize(root_json); //获取数组长度
-			for (i = 0; i < array_size; i++) {
-				item = cJSON_GetArrayItem(root_json, i);
-				username_json = cJSON_GetObjectItem(item, "username");
-				if (!strcmp(username_json->valuestring, username)) {
-					auth_json = cJSON_GetObjectItem(item, "auth");
-					strcpy(cur_account.auth, auth_json->valuestring);
-					strcpy(cur_account.username, username);
-
-					return;
-				}
-			}
-		}
+	sprintf(sql, "select username, auth from account where username = \'%s\';", username);
+	if (select_info_sqlite3(DB_ACCOUNT, sql, &resultp, &nrow, &ncloumn) == -1) {
+		return;
 	}
+
+	strcpy(cur_account.username, resultp[ncloumn]);
+	strcpy(cur_account.auth, resultp[ncloumn + 1]);
+	sqlite3_free_table(resultp);           //释放结果集
 
 	return;
 }

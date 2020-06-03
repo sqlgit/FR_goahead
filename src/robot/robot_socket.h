@@ -10,8 +10,11 @@
 	//#define CLIENT_IP "127.0.0.1"
 	#define SERVER_IP "192.168.152.129" //sql
 	#define CLIENT_IP "192.168.152.129"
-	//#define SERVER_IP "192.168.172.128" //zjq
-	//#define CLIENT_IP "192.168.172.128" //zjq
+//	#define SERVER_IP "192.168.172.128" //zjq
+//	#define CLIENT_IP "192.168.172.128" //zjq
+//	#define SERVER_IP "192.168.121.128" //wsk
+//	#define CLIENT_IP "192.168.121.128"
+
 #else
 	#define SERVER_IP "192.168.58.2"
 	#define CLIENT_IP "192.168.57.2"

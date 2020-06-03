@@ -155,7 +155,7 @@ void upload(Webs *wp)
 
 			/* point json file */
 			if (strcmp(up->clientFilename, "points.json") == 0) {
-				upfile = sfmt("%s", FILE_POINTS);
+				upfile = sfmt("%s", DB_POINTS);
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);

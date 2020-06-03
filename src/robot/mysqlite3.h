@@ -9,9 +9,10 @@
 #define __MYSQLITE3_
 
 cJSON *json_construction(char **resultp, int nrow, int ncloumn); //查询的数据转换成cJSON格式
+cJSON *nokey_json_construction(char **resultp, int nrow, int ncloumn); //查询的数据转换成不带key的cJSON格式
 int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nrow, int *ncloumn);		//查询数据
 int select_info_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_Data);						       //查询数据，转换成JSON格式
-int change_info_sqlite3(char *db_name, const char *table, const char *name, const char *sql);		//增加、删除和更改数据
-int delete_all_info_sqlite3(char *db_name, const char *sql);				//清空整个表中的内容
+int select_info_nokey_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_Data);				//查询数据，转换成不带key的JSON格式
+int change_info_sqlite3(char *db_name, const char *sql);//增加、删除和更改数据,清空整个表中的内容
 
 #endif 

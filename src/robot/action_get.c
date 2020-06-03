@@ -31,28 +31,21 @@ static int get_robot_cfg(char **ret_f_content);
 /* get points file content */
 static int get_points(char **ret_f_content)
 {
-	char sql[1024] = { 0 };
-	cJSON *JSON_Data = NULL;
-	char *sqlite_select_data = NULL;
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
 	sprintf(sql, "select * from points");
-	if (select_info_json_sqlite3(DB_POINTS, sql, &JSON_Data) == -1) {
-		memset(sql, 0, sizeof(sql));
-		perror("select points\n");
+	if (select_info_json_sqlite3(DB_POINTS, sql, &json_data) == -1) {
+		perror("select points");
+
+		return FAIL;
 	}
 
-	sqlite_select_data = cJSON_Print(JSON_Data);
-	cJSON_Delete(JSON_Data);
-	printf("get_points: sqlite_select_data_json is \n %s\n", sqlite_select_data);
-
-	free(sqlite_select_data);
-	sqlite_select_data = NULL;
-	JSON_Data = NULL;
-	memset(sql, 0, sizeof(sql));
-
-	*ret_f_content = get_file_content(FILE_POINTS);
-	/* file is NULL */
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
 	if (*ret_f_content == NULL) {
-		perror("get file content");
+		perror("get  content");
 
 		return FAIL;
 	}
@@ -63,27 +56,19 @@ static int get_points(char **ret_f_content)
 /* get tool coordinate system data */
 static int get_tool_cdsystem(char **ret_f_content)
 {
-	char sql[1024] = { 0 };
-	cJSON *JSON_Data = NULL;
-	char *sqlite_select_data = NULL;
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
 	sprintf(sql, "select * from coordinate_system");
-	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &JSON_Data) == -1) {
-		memset(sql, 0, sizeof(sql));
-		perror("select coordinate_system\n");
+	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
+		perror("select coordinate_system");
+
+		return FAIL;
 	}
 
-	sqlite_select_data = cJSON_Print(JSON_Data);
-	cJSON_Delete(JSON_Data);
-	JSON_Data = NULL;
-	printf("get_tool_cdsystem: sqlite_select_data_json is \n %s\n",
-			sqlite_select_data);
-
-	free(sqlite_select_data);
-	sqlite_select_data = NULL;
-	memset(sql, 0, sizeof(sql));
-
-	*ret_f_content = get_file_content(FILE_CDSYSTEM);
-	/* file is NULL */
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
 
@@ -96,28 +81,19 @@ static int get_tool_cdsystem(char **ret_f_content)
 /* get exter && tool coordinate system data */
 static int get_ex_tool_cdsystem(char **ret_f_content)
 {
-	char sql[1024] = { 0 };
-	cJSON *JSON_Data = NULL;
-	char *sqlite_select_data = NULL;
-
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
 	sprintf(sql, "select * from et_coordinate_system");
-	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &JSON_Data) == -1) {
-		memset(sql, 0, sizeof(sql));
-		perror("select ex_tool_cdsystem\n");
+	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &json_data) == -1) {
+		perror("select ex_tool_cdsystem");
+
+		return FAIL;
 	}
 
-	sqlite_select_data = cJSON_Print(JSON_Data);
-	cJSON_Delete(JSON_Data);
-	JSON_Data = NULL;
-	printf("get_ex_tool_cdsystem: sqlite_select_data_json is \n %s\n",
-			sqlite_select_data);
-
-	free(sqlite_select_data);
-	sqlite_select_data = NULL;
-	memset(sql, 0, sizeof(sql));
-
-	*ret_f_content = get_file_content(FILE_ET_CDSYSTEM);
-	/* file is NULL */
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
 
@@ -223,8 +199,19 @@ static int get_syscfg(char **ret_f_content)
 /* get account file and return to page */
 static int get_accounts(char **ret_f_content)
 {
-	*ret_f_content = get_file_content(FILE_ACCOUNT);
-	/* file is NULL */
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+	sprintf(sql, "select * from account");
+	if (select_info_nokey_json_sqlite3(DB_ACCOUNT, sql, &json_data) == -1) {
+		perror("select account");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
 
@@ -239,7 +226,6 @@ static int get_account_info(char **ret_f_content)
 {
 	cJSON *root_json = NULL;
 	char *buf = NULL;
-
 	root_json = cJSON_CreateObject();
 	cJSON_AddStringToObject(root_json, "username", cur_account.username);
 	cJSON_AddStringToObject(root_json, "auth", cur_account.auth);
@@ -481,8 +467,8 @@ void get(Webs *wp)
 		perror("json");
 		goto end;
 	}
-	cmd = command->valuestring;
 
+	cmd = command->valuestring;
 	// cmd_auth "0"
 	if (!strcmp(cmd, "get_accounts")) {
 		if (!authority_management("0")) {
@@ -490,7 +476,6 @@ void get(Webs *wp)
 			goto auth_end;
 		}
 	}
-
 	if(!strcmp(cmd, "get_points")) {
 		ret = get_points(&ret_f_content);
 	} else if(!strcmp(cmd, "get_tool_cdsystem")) {

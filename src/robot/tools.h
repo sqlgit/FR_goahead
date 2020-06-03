@@ -3,8 +3,8 @@
 
 /********************************* Defines ************************************/
 
-#define local 0
-#define virtual_robot 1
+#define local 1
+#define virtual_robot 0
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
@@ -18,12 +18,7 @@
 #define UPGRADE_CONTROL "/tmp/control.tar.gz"
 #define UPGRADE_FR_CONTROL "/tmp/control/fr_control.tar.gz"
 #define SHELL_DELETELOG "/root/web/shell/delete_file.sh"
-#define FILE_POINTS "/root/web/points/points.json"
 #define FILE_CFG "/root/web/cfg/system.json"
-#define FILE_CDSYSTEM "/root/web/cdsystem/coordinate_system.json"
-#define FILE_ET_CDSYSTEM "/root/web/cdsystem/et_coordinate_system.json"
-#define FILE_GRIPPER "/root/web/gripper/gripper.json"
-#define FILE_ACCOUNT "/root/web/account/account.json"
 #define FILE_AUTH "/root/web/auth.txt"
 #define DIR_USER "/root/web/user/"
 #define DIR_LOG "/root/web/log/"
@@ -33,10 +28,10 @@
 #define DIR_SHELL "/root/web/shell/"
 #define DIR_CFG "/root/web/cfg/"
 #define DIR_FRUSER "/fruser/"
-#define DB_POINTS "/root/webserver/points/web_point.db"
-#define DB_CDSYSTEM "/root/webserver/cdsystem/coordinate_system.db"
-#define DB_ET_CDSYSTEM "/root/webserver/cdsystem/et_coordinate_system.db"
-#define DB_ACCOUNT "/root/webserver/account/account.db"
+#define DB_POINTS "/root/web/points/web_point.db"
+#define DB_CDSYSTEM "/root/web/cdsystem/coordinate_system.db"
+#define DB_ET_CDSYSTEM "/root/web/cdsystem/et_coordinate_system.db"
+#define DB_ACCOUNT "/root/web/account/account.db"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
 #define MD5_READ_DATA_SIZE	1024
