@@ -19,6 +19,8 @@ STATE_FEEDBACK state_fb;
 GRIPPERS_CONFIG_INFO grippers_config_info;
 CTRL_STATE ctrl_state;
 CTRL_STATE vir_ctrl_state;
+CTRL_STATE pre_ctrl_state;
+CTRL_STATE pre_vir_ctrl_state;
 FB_LinkQuene fb_quene;
 extern int robot_type;
 //pthread_cond_t cond_cmd;
@@ -730,6 +732,7 @@ void *socket_status_thread(void *arg)
 {
 	SOCKET_INFO *sock = NULL;
 	CTRL_STATE *state = NULL;
+	CTRL_STATE *pre_state = NULL;
 	int port = (int)arg;
 	printf("port = %d\n", port);
 
@@ -737,10 +740,12 @@ void *socket_status_thread(void *arg)
 		case STATUS_PORT:
 			sock = &socket_status;
 			state = &ctrl_state;
+			pre_state = &pre_ctrl_state;
 			break;
 		case VIR_STATUS_PORT:
 			sock = &socket_vir_status;
 			state = &vir_ctrl_state;
+			pre_state = &pre_vir_ctrl_state;
 			break;
 		default:
 			pthread_exit(NULL);
@@ -749,6 +754,7 @@ void *socket_status_thread(void *arg)
 
 	while(1) {
 		bzero(state, sizeof(CTRL_STATE));
+		bzero(pre_state, sizeof(CTRL_STATE));
 		/* do socket connect */
 		/* create socket */
 		if (socket_create(sock) == FAIL) {

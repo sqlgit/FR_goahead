@@ -17,6 +17,7 @@ extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern int robot_type;
 extern STATE_FEEDBACK state_fb;
+extern ACCOUNT_INFO cur_account;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -1058,35 +1059,35 @@ void set(Webs *wp)
 	case 101:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "开始程序示教", "admin");
+		my_syslog("机器人操作", "开始程序示教", cur_account.username);
 		ret = program_start(data_json, content);
 		break;
 	case 102:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "停止程序示教", "admin");
+		my_syslog("机器人操作", "停止程序示教", cur_account.username);
 		ret = program_stop(data_json, content);
 		break;
 	case 103:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "暂停程序示教", "admin");
+		my_syslog("机器人操作", "暂停程序示教", cur_account.username);
 		ret = program_pause(data_json, content);
 		break;
 	case 104:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "恢复程序示教", "admin");
+		my_syslog("机器人操作", "恢复程序示教", cur_account.username);
 		ret = program_resume(data_json, content);
 		break;
 	case 105:/* 8082 */
 		port = fileport;
-		my_syslog("机器人操作", "下发程序示教名称", "admin");
+		my_syslog("机器人操作", "下发程序示教名称", cur_account.username);
 		ret = sendfilename(data_json, content);
 		break;
 	case 106:/* 8082 */
 		port = fileport;
-		my_syslog("机器人操作", "下发程序示教文件内容", "admin");
+		my_syslog("机器人操作", "下发程序示教文件内容", cur_account.username);
 		content_len = get_lua_content_size(data_json);
 		//printf("content_len = %d\n", content_len);
 		if (content_len == FAIL) {
@@ -1106,232 +1107,232 @@ void set(Webs *wp)
 		break;
 	case 201:
 		port = cmdport;
-		my_syslog("机器人操作", "下发关节数据", "admin");
+		my_syslog("机器人操作", "下发关节数据", cur_account.username);
 		ret = movej(data_json, content);
 		break;
 	case 203:
 		port = cmdport;
-		my_syslog("机器人操作", "基坐标单轴点动-点按开始", "admin");
+		my_syslog("机器人操作", "基坐标单轴点动-点按开始", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 206:
 		port = cmdport;
-		my_syslog("机器人操作", "设置速度百分比", "admin");
+		my_syslog("机器人操作", "设置速度百分比", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 208:
 		port = cmdport;
-		my_syslog("机器人操作", "关节坐标单轴点动-点按开始", "admin");
+		my_syslog("机器人操作", "关节坐标单轴点动-点按开始", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 216:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "关节坐标单轴点动-点按结束", "admin");
+		my_syslog("机器人操作", "关节坐标单轴点动-点按结束", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 222:
 		port = cmdport;
-		my_syslog("机器人操作", "控制箱DI滤波", "admin");
+		my_syslog("机器人操作", "控制箱DI滤波", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 223:
 		port = cmdport;
-		my_syslog("机器人操作", "工具DI滤波", "admin");
+		my_syslog("机器人操作", "工具DI滤波", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 224:
 		port = cmdport;
-		my_syslog("机器人操作", "控制箱AI滤波", "admin");
+		my_syslog("机器人操作", "控制箱AI滤波", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 225:
 		port = cmdport;
-		my_syslog("机器人操作", "工具AI0滤波", "admin");
+		my_syslog("机器人操作", "工具AI0滤波", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 226:
 		port = cmdport;
-		my_syslog("机器人操作", "配置夹爪", "admin");
+		my_syslog("机器人操作", "配置夹爪", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 227:
 		port = cmdport;
-		my_syslog("机器人操作", "激活和复位夹爪", "admin");
+		my_syslog("机器人操作", "激活和复位夹爪", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 229:
 		port = cmdport;
-		my_syslog("机器人操作", "读取夹爪配置信息", "admin");
+		my_syslog("机器人操作", "读取夹爪配置信息", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 230:
 		port = cmdport;
-		my_syslog("机器人操作", "设置查询图表id号", "admin");
+		my_syslog("机器人操作", "设置查询图表id号", cur_account.username);
 		ret = set_state_id(data_json, content);
 		break;
 	case 231:
 		port = cmdport;
-		my_syslog("机器人操作", "状态查询开始/结束", "admin");
+		my_syslog("机器人操作", "状态查询开始/结束", cur_account.username);
 		ret = set_state(data_json, content);
 		break;
 	case 232:
 		port = cmdport;
-		my_syslog("机器人操作", "单轴点动-长按开始", "admin");
+		my_syslog("机器人操作", "单轴点动-长按开始", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 233:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "单轴点动-长按结束", "admin");
+		my_syslog("机器人操作", "单轴点动-长按结束", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 234:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "基坐标单轴点动-点按结束", "admin");
+		my_syslog("机器人操作", "基坐标单轴点动-点按结束", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 235:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "外部工具坐标单轴点动-长按结束", "admin");
+		my_syslog("机器人操作", "外部工具坐标单轴点动-长按结束", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 236:
 		port = cmdport;
-		my_syslog("机器人操作", "开始喷涂", "admin");
+		my_syslog("机器人操作", "开始喷涂", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 237:
 		port = cmdport;
-		my_syslog("机器人操作", "停止喷涂", "admin");
+		my_syslog("机器人操作", "停止喷涂", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 238:
 		port = cmdport;
-		my_syslog("机器人操作", "开始清枪", "admin");
+		my_syslog("机器人操作", "开始清枪", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 239:
 		port = cmdport;
-		my_syslog("机器人操作", "停止清枪", "admin");
+		my_syslog("机器人操作", "停止清枪", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 302:
 		port = cmdport;
-		my_syslog("机器人操作", "机器手急停后电机使能", "admin");
+		my_syslog("机器人操作", "机器手急停后电机使能", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 303:
 		port = cmdport;
-		my_syslog("机器人操作", "更改机器人模式", "admin");
+		my_syslog("机器人操作", "更改机器人模式", cur_account.username);
 		ret = mode(data_json, content);
 		break;
 	case 305:
 		port = cmdport;
-		my_syslog("机器人操作", "设置碰撞等级", "admin");
+		my_syslog("机器人操作", "设置碰撞等级", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 306:
 		port = cmdport;
-		my_syslog("机器人操作", "设置负载重量", "admin");
+		my_syslog("机器人操作", "设置负载重量", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 307:
 		port = cmdport;
-		my_syslog("机器人操作", "设置负载质心", "admin");
+		my_syslog("机器人操作", "设置负载质心", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 308:
 		port = cmdport;
-		my_syslog("机器人操作", "设置机器人正限位角度", "admin");
+		my_syslog("机器人操作", "设置机器人正限位角度", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 309:
 		port = cmdport;
-		my_syslog("机器人操作", "设置机器人负限位角度", "admin");
+		my_syslog("机器人操作", "设置机器人负限位角度", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 312:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "零点设定", "admin");
+		my_syslog("机器人操作", "零点设定", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 313:
 		port = cmdport;
-		my_syslog("机器人操作", "新建工具坐标系下发点", "admin");
+		my_syslog("机器人操作", "新建工具坐标系下发点", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 314:
 		port = cmdport;
-		my_syslog("机器人操作", "计算工具坐标系", "admin");
+		my_syslog("机器人操作", "计算工具坐标系", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 315:
 		port = cmdport;
-		my_syslog("机器人操作", "开始记录TPD轨迹", "admin");
+		my_syslog("机器人操作", "开始记录TPD轨迹", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 316:
 		port = cmdport;
-		my_syslog("机器人操作", "应用当前显示的工具坐标系", "admin");
+		my_syslog("机器人操作", "应用当前显示的工具坐标系", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 317:
 		port = cmdport;
-		my_syslog("机器人操作", "停止记录TPD轨迹", "admin");
+		my_syslog("机器人操作", "停止记录TPD轨迹", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 318:
 		port = cmdport;
-		my_syslog("机器人操作", "删除TPD轨迹", "admin");
+		my_syslog("机器人操作", "删除TPD轨迹", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 320:
 		port = cmdport;
-		my_syslog("机器人操作", "计算TCF", "admin");
+		my_syslog("机器人操作", "计算TCF", cur_account.username);
 		ret = jointtotcf(data_json, content);
 		break;
 	case 321:
 		port = cmdport;
-		my_syslog("机器人操作", "机器人配置文件生效", "admin");
+		my_syslog("机器人操作", "机器人配置文件生效", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 324:
 		port = cmdport;
-		my_syslog("机器人操作", "设置 IO 配置", "admin");
+		my_syslog("机器人操作", "设置 IO 配置", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 326:
 		port = cmdport;
-		my_syslog("机器人操作", "设定外部TCP参考点", "admin");
+		my_syslog("机器人操作", "设定外部TCP参考点", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 327:
 		port = cmdport;
-		my_syslog("机器人操作", "计算外部TCF", "admin");
+		my_syslog("机器人操作", "计算外部TCF", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 328:
 		port = cmdport;
-		my_syslog("机器人操作", "设定外部TCP工具参考点", "admin");
+		my_syslog("机器人操作", "设定外部TCP工具参考点", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 329:
 		port = cmdport;
-		my_syslog("机器人操作", "计算工具TCF", "admin");
+		my_syslog("机器人操作", "计算工具TCF", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 330:
 		port = cmdport;
-		my_syslog("机器人操作", "应用当前显示的外部和工具坐标系", "admin");
+		my_syslog("机器人操作", "应用当前显示的外部和工具坐标系", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 400:
 		port = cmdport;
-		my_syslog("机器人操作", "获取控制器软件版本", "admin");
+		my_syslog("机器人操作", "获取控制器软件版本", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */

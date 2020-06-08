@@ -530,10 +530,13 @@ PUBLIC bool websLogoutUser(Webs *wp)
     websDestroySession(wp);
     if (smatch(wp->authType, "basic") || smatch(wp->authType, "digest")) {
         websError(wp, HTTP_CODE_UNAUTHORIZED, "Logged out.");
+
         return 0;
     }
     websRedirectByStatus(wp, HTTP_CODE_OK);
 	delete_timer();
+	my_syslog("普通操作", "用户登出成功", cur_account.username);
+
     return 1;
 }
 
@@ -590,6 +593,7 @@ static void loginServiceProc(Webs *wp)
 			根据用户名获取用户权限
 		*/
 		get_username_auth(wp->username);
+		my_syslog("普通操作", "用户登录成功", wp->username);
 	} else {
 		if (route->askLogin) {
 			(route->askLogin)(wp);

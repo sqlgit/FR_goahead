@@ -66,7 +66,6 @@ int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nr
 
 	//查询数据库，nrow为行数（不包含表头），ncloumn为列数，resultp顺序放着表头和数据
 	if (sqlite3_get_table(db, sql, resultp, nrow, ncloumn, &errmsg) != SQLITE_OK) {
-		printf("__LINE__ %d\n", __LINE__);
 		fprintf(stderr, "SQL error: %s\n", errmsg);
 		sqlite3_free(errmsg);
 		sqlite3_close(db);
@@ -81,7 +80,7 @@ int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nr
 		return -1; //没有此数据，返回
 	}
 
-	printf("nrow = %d,ncloumn = %d\n", (*nrow), (*ncloumn));
+	//printf("nrow = %d,ncloumn = %d\n", (*nrow), (*ncloumn));
 	for (i = 0; i < (*nrow) + 1; i++) {
 		for (j = 0; j < (*ncloumn); j++) {
 			printf("%s\t", (*resultp)[index++]);
@@ -90,7 +89,7 @@ int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nr
 	}
 
 	sqlite3_close(db);
-	printf("Select_info_sqlite3_over \n");
+	//printf("Select_info_sqlite3_over \n");
 
 	return 0;
 }
@@ -108,7 +107,6 @@ int select_info_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_Data)
 	(*JSON_Data) = json_construction(resultp, nrow, ncloumn);
 
 	sqlite3_free_table(resultp); //释放结果集
-	printf("Select_info_JSON_sqlite3  over \n");
 
 	return 0;
 }
@@ -126,7 +124,6 @@ int select_info_nokey_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_
 	(*JSON_Data) = nokey_json_construction(resultp, nrow, ncloumn);
 
 	sqlite3_free_table(resultp); //释放结果集
-	printf("Select_info_JSON_sqlite3  over \n");
 
 	return 0;
 }

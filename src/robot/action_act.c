@@ -13,6 +13,7 @@
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
+extern ACCOUNT_INFO cur_account;
 
 /********************************* Function declaration ***********************/
 
@@ -477,7 +478,7 @@ void act(Webs *wp)
 		perror("ret fail");
 		goto end;
 	}
-	my_syslog("普通操作", cmd, "admin");
+	my_syslog("普通操作", cmd, cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

@@ -5,6 +5,7 @@
 #include 	"robot_socket.h"
 #include	"filehandler.h"
 
+extern ACCOUNT_INFO cur_account;
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
 static int compute_file_md5(const char *file_path, char *md5_str);
@@ -15,7 +16,7 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 	file_path (文件路径)
 	md5_str (md5值)
 */
-int compute_file_md5(const char *file_path, char *md5_str)
+static int compute_file_md5(const char *file_path, char *md5_str)
 {
 	int i;
 	int fd;
@@ -67,7 +68,7 @@ int compute_file_md5(const char *file_path, char *md5_str)
 /**
 	do md5 check and version check
 */
-int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path)
+static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path)
 {
 	FILE *fp;
 	char strline[LINE_LEN] = {};
@@ -153,21 +154,33 @@ void upload(Webs *wp)
 			printf("TYPE=%s\r\n", up->contentType);
 			printf("SIZE=%d\r\n", up->size);*/
 
-			/* point json file */
-			if (strcmp(up->clientFilename, "points.json") == 0) {
+			/* web_point.db file */
+			if (strcmp(up->clientFilename, "web_point.db") == 0) {
 				upfile = sfmt("%s", DB_POINTS);
+				my_syslog("普通操作", "导入示教点文件成功", cur_account.username);
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
-			} else if (strcmp(up->clientFilename, "system.json") == 0) {
+				my_syslog("普通操作", "导入用户程序文件成功", cur_account.username);
+			/* web system config file */
+			} else if (strcmp(up->clientFilename, "system.txt") == 0) {
 				upfile = sfmt("%s", FILE_CFG);
+				my_syslog("普通操作", "导入 web 端系统配置文件成功", cur_account.username);
 				strcpy(filename, upfile);
+			/* web user data file */
+			} else if (strcmp(up->clientFilename, "fr_user_data.tar.gz") == 0) {
+				upfile = sfmt("%s", FILE_USERDATA);
+				my_syslog("普通操作", "导入用户数据文件成功", cur_account.username);
+				strcpy(filename, upfile);
+			/* control user file */
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {
 				upfile = sfmt("%s", ROBOT_CFG);
-				//system("shutdown now");
+				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
+			/* webapp upgrade file */
 			} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_WEBAPP);
 				strcpy(filename, upfile);
+			/* control upgrade file */
 			} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_CONTROL);
 				strcpy(filename, upfile);
@@ -188,27 +201,39 @@ void upload(Webs *wp)
 	//printf("filename = %s\n", filename);
 	if (strcmp(filename, FILE_CFG) == 0) {
 		delete_log_file(0);
+	} else if (strcmp(filename, FILE_USERDATA) == 0) {
+		system("rm -rf /root/web/file");
+		system("rm -f /root/robot/user.config");
+		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
+		system("rm -f /root/fr_user_data.tar.gz");
 	} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
 		system("cd /tmp && tar -zxvf webapp.tar.gz");
 		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL) {
 			perror("md5 & version check fail!");
+			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
 			goto end;
 		}
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "openssl des3 -d -k frweb -salt -in %s | tar xzvf - -C /tmp/", UPGRADE_WEB);
 		if (system(cmd) != 0) {
+			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
 			perror("uncompress fail!");
 			goto end;
 		}
 		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "sh /root/web/shell/web_upgrade.sh %s", CLIENT_IP);
+		sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
 		system(cmd);
+		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 	} else if (strcmp(filename, UPGRADE_CONTROL) == 0) {
 		system("cd /tmp && tar -zxvf control.tar.gz");
 		if (check_upfile(UPGRADE_FR_CONTROL, README_CTL_NOW, README_CTL_UP) == FAIL) {
+			my_syslog("普通操作", "升级控制器软件失败", cur_account.username);
 			goto end;
 		}
-		system("sh /root/web/shell/fr_control_upgrade.sh");
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
+		system(cmd);
+		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 	}
 
 	websSetStatus(wp, 204);
@@ -281,6 +306,21 @@ static int avolfileHandler(Webs *wp)
 	printf("pathfilename = %s\n", pathfilename);
 	if (pathfilename == NULL)
 		return 1;
+	if (strcmp(pathfilename, FILE_USERDATA) == 0) {
+		system("rm -f /root/fr_user_data.tar.gz");
+		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/user.config");
+		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
+	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
+		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);
+	} else if (strcmp(pathfilename, FILE_CFG) == 0) {
+		my_syslog("普通操作", "导出 web 端系统配置文件成功", cur_account.username);
+	} else if (strcmp(pathfilename, ROBOT_CFG) == 0) {
+		my_syslog("普通操作", "导出控制器端用户配置文件成功", cur_account.username);
+	} else if (is_in(pathfilename, DIR_USER) == 1) {
+		my_syslog("普通操作", "导出用户程序文件成功", cur_account.username);
+	} else if (is_in(pathfilename, DIR_LOG) == 1) {
+		my_syslog("普通操作", "导出 log 文件成功", cur_account.username);
+	}
 
 	//取文件名和扩展名
 	//filename =sclone(getUrlLastSplit(sclone(pathfilename),"\\"));

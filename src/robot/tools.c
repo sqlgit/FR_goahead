@@ -213,6 +213,7 @@ char *get_dir_content(const char *dir_path)
 
 /* open dir and return dir's file name */
 // Ext:["2020-03-15.json","2020-03-14.json","2020-03-13.json","2020-03-12.json","2020-03-11.json","2020-03-10.json"]
+// Ext:["2020-03-15.txt", "2020-03-14.txt", "2020-03-13.txt"]
 char *get_dir_filename(const char *dir_path)
 {
 	DIR *dir = NULL;
@@ -456,7 +457,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	//printf("filename = %s\n", filename);
 	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
 
-	sprintf(dir_filename, "%s%s.json", DIR_LOG, filename);
+	sprintf(dir_filename, "%s%s.txt", DIR_LOG, filename);
 	//printf("dir_filename = %s\n", dir_filename);
 
 	f_content = get_file_content(dir_filename);

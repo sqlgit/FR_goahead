@@ -24,6 +24,8 @@ static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_syscfg(char **ret_f_content);
 static int get_accounts(char **ret_f_content);
+static int get_webversion(char **ret_f_content);
+static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
@@ -248,13 +250,102 @@ static int get_account_info(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get web version */
+static int get_webversion(char **ret_f_content)
+{
+	char strline[LINE_LEN] = {0};
+	char *buf = NULL;
+	FILE *fp;
+	int ret = FAIL;
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateObject();
+	if ((fp = fopen(README_WEB_NOW, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if(!strncmp(strline, "VERSION=", 8)) {
+			strrpc(strline, "VERSION=", "");
+			cJSON_AddStringToObject(root_json, "version", strline);
+
+			break;
+		}
+	}
+
+	buf = cJSON_Print(root_json);
+	//printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+		ret = SUCCESS;
+	} else {
+		perror("calloc");
+		ret = FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return ret;
+}
+
+/* check point result */
+static int get_checkpoint(char **ret_f_content, const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	int ret = FAIL;
+	char *buf = NULL;
+	cJSON *name = NULL;
+	cJSON *root_json = NULL;
+	cJSON *json_data = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	root_json = cJSON_CreateObject();
+	sprintf(sql, "select * from points where name = \'%s\';", name->valuestring);
+	if (select_info_json_sqlite3(DB_POINTS, sql, &json_data) == -1) {
+		printf("check point result : not exist!");
+		cJSON_AddStringToObject(root_json, "result", "0");
+	} else {
+		printf("check point result : exist!");
+		cJSON_AddStringToObject(root_json, "result", "1");
+	}
+	cJSON_Delete(json_data);
+	json_data = NULL;
+
+	buf = cJSON_Print(root_json);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+		ret = SUCCESS;
+	} else {
+		perror("calloc");
+		ret = FAIL;
+	}
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return ret;
+}
+
 /* get robot cfg and return to page */
 static int get_robot_cfg(char **ret_f_content)
 {
-	char strline[LINE_LEN] = {};
+	char strline[LINE_LEN] = {0};
 	char *buf = NULL;
 	FILE *fp;
-
+	int ret = FAIL;
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateObject();
@@ -411,14 +502,10 @@ static int get_robot_cfg(char **ret_f_content)
 	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
 	if(*ret_f_content != NULL) {
 		strcpy((*ret_f_content), buf);
+		ret = SUCCESS;
 	} else {
 		perror("calloc");
-		free(buf);
-		buf = NULL;
-		cJSON_Delete(root_json);
-		root_json = NULL;
-
-		return FAIL;
+		ret = FAIL;
 	}
 	//printf("*ret_f_content = %s\n", (*ret_f_content));
 	free(buf);
@@ -426,7 +513,7 @@ static int get_robot_cfg(char **ret_f_content)
 	cJSON_Delete(root_json);
 	root_json = NULL;
 
-	return SUCCESS;
+	return ret;
 }
 
 /* get web data and return to page */
@@ -504,6 +591,16 @@ void get(Webs *wp)
 		ret = get_accounts(&ret_f_content);
 	} else if(!strcmp(cmd, "get_account_info")) {
 		ret = get_account_info(&ret_f_content);
+	} else if(!strcmp(cmd, "get_webversion")) {
+		ret = get_webversion(&ret_f_content);
+	} else if(!strcmp(cmd, "get_checkpoint")) {
+		/* get data json */
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = get_checkpoint(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
 	} else {

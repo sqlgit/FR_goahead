@@ -12,6 +12,8 @@
 timer_t timerid;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
+extern CTRL_STATE pre_ctrl_state;
+extern CTRL_STATE pre_vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
 //extern STATE_FB state_fb;
 //extern float state_ret[100][10];
@@ -24,12 +26,13 @@ extern SOCKET_INFO socket_vir_file;
 extern SOCKET_INFO socket_vir_status;
 extern STATE_FEEDBACK state_fb;
 extern int robot_type;
+extern ACCOUNT_INFO cur_account;
 static int test_index = 0;
 
 /********************************* Function declaration ***********************/
 
 static int connect_status(char *ret_status);
-static int basic(char *ret_status, CTRL_STATE *state);
+static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state);
 static int program_teach(char *ret_status, CTRL_STATE *state);
 static int vardata_feedback(char *ret_status);
 
@@ -70,7 +73,7 @@ static int connect_status(char *ret_status)
 }
 
 /* basic */
-static int basic(char *ret_status, CTRL_STATE *state)
+static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 {
 	int i = 0;
 	char *buf = NULL;
@@ -204,277 +207,612 @@ static int basic(char *ret_status, CTRL_STATE *state)
 
 	if (state->strangePosFlag == 1) {
 		cJSON_AddStringToObject(error_json, "key", "当前处于奇异位姿");
+		if (pre_state->strangePosFlag != 1) {
+			my_syslog("错误", "当前处于奇异位姿", cur_account.username);
+			pre_state->strangePosFlag = 1;
+		}
+	} else {
+		pre_state->strangePosFlag = 0;
 	}
 	if (state->aliveSlaveNumError == 1) {
 		cJSON_AddStringToObject(error_json, "key", "活动从站数量错误");
+		if (pre_state->aliveSlaveNumError != 1) {
+			my_syslog("错误", "活动从站数量错误", cur_account.username);
+			pre_state->aliveSlaveNumError = 1;
+		}
+	} else {
+		pre_state->aliveSlaveNumError = 0;
 	}
 	switch(state->gripperFaultNum) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "夹爪485超时");
+			if (pre_state->gripperFaultNum != 1) {
+				my_syslog("错误", "夹爪485超时", cur_account.username);
+				pre_state->gripperFaultNum = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "夹爪指令格式错误");
+			if (pre_state->gripperFaultNum != 2) {
+				my_syslog("错误", "夹爪指令格式错误", cur_account.username);
+				pre_state->gripperFaultNum = 2;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "夹爪动作延迟，须先激活");
+			if (pre_state->gripperFaultNum != 5) {
+				my_syslog("错误", "夹爪动作延迟，须先激活", cur_account.username);
+				pre_state->gripperFaultNum = 5;
+			}
 			break;
 		case 7:
 			cJSON_AddStringToObject(error_json, "key", "夹爪未激活");
+			if (pre_state->gripperFaultNum != 7) {
+				my_syslog("错误", "夹爪未激活", cur_account.username);
+				pre_state->gripperFaultNum = 7;
+			}
 			break;
 		case 8:
 			cJSON_AddStringToObject(error_json, "key", "夹爪温度过高");
+			if (pre_state->gripperFaultNum != 8) {
+				my_syslog("错误", "夹爪温度过高", cur_account.username);
+				pre_state->gripperFaultNum = 8;
+			}
 			break;
 		case 10:
 			cJSON_AddStringToObject(error_json, "key", "夹爪电压过低");
+			if (pre_state->gripperFaultNum != 10) {
+				my_syslog("错误", "夹爪电压过低", cur_account.username);
+				pre_state->gripperFaultNum = 10;
+			}
 			break;
 		case 11:
 			cJSON_AddStringToObject(error_json, "key", "夹爪正在自动释放");
+			if (pre_state->gripperFaultNum != 11) {
+				my_syslog("错误", "夹爪正在自动释放", cur_account.username);
+				pre_state->gripperFaultNum = 11;
+			}
 			break;
 		case 12:
 			cJSON_AddStringToObject(error_json, "key", "夹爪内部故障");
+			if (pre_state->gripperFaultNum != 12) {
+				my_syslog("错误", "夹爪内部故障", cur_account.username);
+				pre_state->gripperFaultNum = 12;
+			}
 			break;
 		case 13:
 			cJSON_AddStringToObject(error_json, "key", "夹爪激活失败");
+			if (pre_state->gripperFaultNum != 13) {
+				my_syslog("错误", "夹爪激活失败", cur_account.username);
+				pre_state->gripperFaultNum = 13;
+			}
 			break;
 		case 14:
 			cJSON_AddStringToObject(error_json, "key", "夹爪电流过大");
+			if (pre_state->gripperFaultNum != 14) {
+				my_syslog("错误", "夹爪电流过大", cur_account.username);
+				pre_state->gripperFaultNum = 14;
+			}
 			break;
 		case 15:
 			cJSON_AddStringToObject(error_json, "key", "夹爪自动释放结束");
+			if (pre_state->gripperFaultNum != 15) {
+				my_syslog("错误", "夹爪自动释放结束", cur_account.username);
+				pre_state->gripperFaultNum = 15;
+			}
+			break;
+		default:
+			pre_state->gripperFaultNum = 0;
 			break;
 	}
 	if (state->robot_mode == 0 && state->program_state == 4) {
 		cJSON_AddStringToObject(error_json, "key", "切换拖动状态失败");
+		if (pre_state->robot_mode != 1) {
+			my_syslog("错误", "切换拖动状态失败", cur_account.username);
+			pre_state->robot_mode = 1;
+		}
+	} else {
+		pre_state->robot_mode = 0;
 	}
 	switch(state->slaveComError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "从站掉线");
+			if (pre_state->slaveComError != 1) {
+				my_syslog("错误", "从站掉线", cur_account.username);
+				pre_state->slaveComError = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "从站状态与设置值不一致");
+			if (pre_state->slaveComError != 2) {
+				my_syslog("错误", "从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "从站未配置");
+			if (pre_state->slaveComError != 3) {
+				my_syslog("错误", "从站未配置", cur_account.username);
+				pre_state->slaveComError = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "从站配置错误");
+			if (pre_state->slaveComError != 4) {
+				my_syslog("错误", "从站配置错误", cur_account.username);
+				pre_state->slaveComError = 4;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "从站初始化错误");
+			if (pre_state->slaveComError != 5) {
+				my_syslog("错误", "从站初始化错误", cur_account.username);
+				pre_state->slaveComError = 5;
+			}
 			break;
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "从站邮箱通信初始化错误");
+			if (pre_state->slaveComError != 6) {
+				my_syslog("错误", "从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError = 6;
+			}
 			break;
 		default:
+			pre_state->slaveComError = 0;
 			break;
 	}
 	switch(state->cmdPointError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "关节指令点错误");
+			if (pre_state->cmdPointError != 1) {
+				my_syslog("错误", "关节指令点错误", cur_account.username);
+				pre_state->cmdPointError = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "直线目标点错误（包括工具不符）");
+			if (pre_state->cmdPointError != 2) {
+				my_syslog("错误", "直线目标点错误（包括工具不符）", cur_account.username);
+				pre_state->cmdPointError = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "圆弧中间点错误（包括工具不符）");
+			if (pre_state->cmdPointError != 3) {
+				my_syslog("错误", "圆弧中间点错误（包括工具不符）", cur_account.username);
+				pre_state->cmdPointError = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "圆弧目标点错误（包括工具不符）");
+			if (pre_state->cmdPointError != 4) {
+				my_syslog("错误", "圆弧目标点错误（包括工具不符）", cur_account.username);
+				pre_state->cmdPointError = 4;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "TPD指令点错误");
+			if (pre_state->cmdPointError != 5) {
+				my_syslog("错误", "TPD指令点错误", cur_account.username);
+				pre_state->cmdPointError = 5;
+			}
 			break;
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "TPD指令工具与当前工具不符");
+			if (pre_state->cmdPointError != 6) {
+				my_syslog("错误", "TPD指令工具与当前工具不符", cur_account.username);
+				pre_state->cmdPointError = 6;
+			}
 			break;
 		case 7:
 			cJSON_AddStringToObject(error_json, "key", "TPD当前指令与下一指令起始点偏差过大");
+			if (pre_state->cmdPointError != 7) {
+				my_syslog("错误", "TPD当前指令与下一指令起始点偏差过大", cur_account.username);
+				pre_state->cmdPointError = 7;
+			}
 			break;
 		case 8:
 			cJSON_AddStringToObject(error_json, "key", "PTP关节指令超限");
+			if (pre_state->cmdPointError != 8) {
+				my_syslog("错误", "PTP关节指令超限", cur_account.username);
+				pre_state->cmdPointError = 8;
+			}
 			break;
 		case 9:
 			cJSON_AddStringToObject(error_json, "key", "TPD关节指令超限");
+			if (pre_state->cmdPointError != 9) {
+				my_syslog("错误", "TPD关节指令超限", cur_account.username);
+				pre_state->cmdPointError = 9;
+			}
 			break;
 		case 10:
 			cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限");
+			if (pre_state->cmdPointError != 10) {
+				my_syslog("错误", "LIN/ARC下发关节指令超限", cur_account.username);
+				pre_state->cmdPointError = 10;
+			}
 			break;
 		case 11:
 			cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速");
+			if (pre_state->cmdPointError != 11) {
+				my_syslog("错误", "笛卡尔空间内指令超速", cur_account.username);
+				pre_state->cmdPointError = 11;
+			}
 			break;
 		case 12:
 			cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限");
+			if (pre_state->cmdPointError != 12) {
+				my_syslog("错误", "关节空间内扭矩指令超限", cur_account.username);
+				pre_state->cmdPointError = 12;
+			}
 			break;
 		case 13:
 			cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化");
+			if (pre_state->cmdPointError != 13) {
+				my_syslog("错误", "下一指令关节配置发生变化", cur_account.username);
+				pre_state->cmdPointError = 13;
+			}
 			break;
 		case 14:
 			cJSON_AddStringToObject(error_json, "key", "当前指令关节配置发生变化");
+			if (pre_state->cmdPointError != 14) {
+				my_syslog("错误", "当前指令关节配置发生变化", cur_account.username);
+				pre_state->cmdPointError = 14;
+			}
 			break;
 		case 15:
 			cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限");
+			if (pre_state->cmdPointError != 15) {
+				my_syslog("错误", "JOG关节指令超限", cur_account.username);
+				pre_state->cmdPointError = 15;
+			}
 			break;
 		case 16:
 			cJSON_AddStringToObject(error_json, "key", "轴1关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 16) {
+				my_syslog("错误", "轴1关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 16;
+			}
 			break;
 		case 17:
 			cJSON_AddStringToObject(error_json, "key", "轴2关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 17) {
+				my_syslog("错误", "轴2关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 17;
+			}
 			break;
 		case 18:
 			cJSON_AddStringToObject(error_json, "key", "轴3关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 18) {
+				my_syslog("错误", "轴3关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 18;
+			}
 			break;
 		case 19:
 			cJSON_AddStringToObject(error_json, "key", "轴4关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 19) {
+				my_syslog("错误", "轴4关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 19;
+			}
 			break;
 		case 20:
 			cJSON_AddStringToObject(error_json, "key", "轴5关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 20) {
+				my_syslog("错误", "轴5关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 20;
+			}
 			break;
 		case 21:
 			cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限");
+			if (pre_state->cmdPointError != 21) {
+				my_syslog("错误", "轴6关节空间内指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 21;
+			}
 			break;
 		case 22:
 			cJSON_AddStringToObject(error_json, "key", "内外部工具切换错误");
+			if (pre_state->cmdPointError != 22) {
+				my_syslog("错误", "内外部工具切换错误", cur_account.username);
+				pre_state->cmdPointError = 22;
+			}
 			break;
 		default:
+			pre_state->cmdPointError = 0;
 			break;
 	}
 	switch(state->ioError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "通道错误");
+			if (pre_state->ioError != 1) {
+				my_syslog("错误", "通道错误", cur_account.username);
+				pre_state->ioError = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "数值错误");
+			if (pre_state->ioError != 2) {
+				my_syslog("错误", "数值错误", cur_account.username);
+				pre_state->ioError = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "WaitDI等待超时");
+			if (pre_state->ioError != 3) {
+				my_syslog("错误", "WaitDI等待超时", cur_account.username);
+				pre_state->ioError = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "WaitAI等待超时");
+			if (pre_state->ioError != 4) {
+				my_syslog("错误", "WaitAI等待超时", cur_account.username);
+				pre_state->ioError = 4;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "WaitAxleDI等待超时");
+			if (pre_state->ioError != 5) {
+				my_syslog("错误", "WaitAxleDI等待超时", cur_account.username);
+				pre_state->ioError = 5;
+			}
 			break;
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "WaitAxleAI等待超时");
+			if (pre_state->ioError != 6) {
+				my_syslog("错误", "WaitAxleAI等待超时", cur_account.username);
+				pre_state->ioError = 6;
+			}
 			break;
 		case 7:
 			cJSON_AddStringToObject(error_json, "key", "通道已配置功能错误");
+			if (pre_state->ioError != 7) {
+				my_syslog("错误", "通道已配置功能错误", cur_account.username);
+				pre_state->ioError = 7;
+			}
 			break;
 		default:
+			pre_state->ioError = 0;
 			break;
 	}
 	if (state->gripperError == 1) {
 		cJSON_AddStringToObject(error_json, "key", "夹爪运动超时错误");
+		if (pre_state->gripperError != 1) {
+			my_syslog("错误", "夹爪运动超时错误", cur_account.username);
+			pre_state->gripperError = 1;
+		}
+	} else {
+		pre_state->gripperError = 0;
 	}
 	switch(state->fileError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "zbt配置文件版本错误");
+			if (pre_state->fileError != 1) {
+				my_syslog("错误", "zbt配置文件版本错误", cur_account.username);
+				pre_state->fileError = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "zbt配置文件加载失败");
+			if (pre_state->fileError != 2) {
+				my_syslog("错误", "zbt配置文件加载失败", cur_account.username);
+				pre_state->fileError = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "user配置文件版本错误");
+			if (pre_state->fileError != 3) {
+				my_syslog("错误", "user配置文件版本错误", cur_account.username);
+				pre_state->fileError = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "user配置文件加载失败");
+			if (pre_state->fileError != 4) {
+				my_syslog("错误", "user配置文件加载失败", cur_account.username);
+				pre_state->fileError = 4;
+			}
 			break;
 		default:
+			pre_state->fileError = 0;
 			break;
 	}
 	if (state->paraError == 1) {
 		cJSON_AddStringToObject(error_json, "key", "工具号超限错误");
+		if (pre_state->paraError != 1) {
+			my_syslog("错误", "工具号超限错误", cur_account.username);
+			pre_state->paraError = 1;
+		}
+	} else {
+		pre_state->paraError = 0;
 	}
 	switch(state->alarm) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "肩关节配置变化");
+			if (pre_state->alarm != 1) {
+				my_syslog("错误", "肩关节配置变化", cur_account.username);
+				pre_state->alarm = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "肘关节配置变化");
+			if (pre_state->alarm != 2) {
+				my_syslog("错误", "肘关节配置变化", cur_account.username);
+				pre_state->alarm = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "腕关节配置变化");
+			if (pre_state->alarm != 3) {
+				my_syslog("错误", "腕关节配置变化", cur_account.username);
+				pre_state->alarm = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "RPY初始化失败");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "RPY初始化失败", cur_account.username);
+				pre_state->alarm = 4;
+			}
 			break;
 		default:
+			pre_state->alarm = 0;
 			break;
 	}
 	if (state->dr_com_err == 1) {
 		cJSON_AddStringToObject(error_json, "key", "通信故障:控制器与驱动器心跳检测故障");
+		if (pre_state->dr_com_err != 1) {
+			my_syslog("错误", "通信故障:控制器与驱动器心跳检测故障", cur_account.username);
+			pre_state->dr_com_err = 1;
+		}
+	} else {
+		pre_state->dr_com_err = 0;
 	}
 	memset(content, 0, sizeof(content));
 	switch ((int)state->dr_err) {
 		case 1:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 1, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 1;
+			}
 			break;
 		case 2:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 2, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 2) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 2;
+			}
 			break;
 		case 3:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 3, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 3) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 3;
+			}
 			break;
 		case 4:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 4, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 4) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 4;
+			}
 			break;
 		case 5:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 5, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 5) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 5;
+			}
 			break;
 		case 6:
 			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 6, (int)state->dr_err_code);
 			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->dr_err != 6) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->dr_err = 6;
+			}
 			break;
 		default:
+			pre_state->dr_err = 0;
 			break;
 	}
 	switch ((int)state->out_sflimit_err) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "1轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 1) {
+				my_syslog("错误", "1轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "2轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 2) {
+				my_syslog("错误", "2轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "3轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 3) {
+				my_syslog("错误", "3轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "4轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 4) {
+				my_syslog("错误", "4轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 4;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "5轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 5) {
+				my_syslog("错误", "5轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 5;
+			}
 			break;
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "6轴超出软限位故障");
+			if (pre_state->out_sflimit_err != 6) {
+				my_syslog("错误", "6轴超出软限位故障", cur_account.username);
+				pre_state->out_sflimit_err = 6;
+			}
 			break;
 		default:
+			pre_state->out_sflimit_err = 0;
 			break;
 	}
 	switch((int)state->collision_err) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "1轴碰撞故障");
+			if (pre_state->collision_err != 1) {
+				my_syslog("错误", "1轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 1;
+			}
 			break;
 		case 2:
 			cJSON_AddStringToObject(error_json, "key", "2轴碰撞故障");
+			if (pre_state->collision_err != 2) {
+				my_syslog("错误", "2轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 2;
+			}
 			break;
 		case 3:
 			cJSON_AddStringToObject(error_json, "key", "3轴碰撞故障");
+			if (pre_state->collision_err != 3) {
+				my_syslog("错误", "3轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 3;
+			}
 			break;
 		case 4:
 			cJSON_AddStringToObject(error_json, "key", "4轴碰撞故障");
+			if (pre_state->collision_err != 4) {
+				my_syslog("错误", "4轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 4;
+			}
 			break;
 		case 5:
 			cJSON_AddStringToObject(error_json, "key", "5轴碰撞故障");
+			if (pre_state->collision_err != 5) {
+				my_syslog("错误", "5轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 5;
+			}
 			break;
 		case 6:
 			cJSON_AddStringToObject(error_json, "key", "6轴碰撞故障");
+			if (pre_state->collision_err != 6) {
+				my_syslog("错误", "6轴碰撞故障", cur_account.username);
+				pre_state->collision_err = 6;
+			}
 			break;
 		default:
+			pre_state->collision_err = 0;
 			break;
 	}
 	buf = cJSON_Print(root_json);
@@ -640,10 +978,13 @@ void sta(Webs *wp)
 		goto end;
 	}
 	CTRL_STATE *state = NULL;
+	CTRL_STATE *pre_state = NULL;
 	if (robot_type == 1) { // "1" 代表实体机器人
 		state = &ctrl_state;
+		pre_state = &pre_ctrl_state;
 	} else { // "0" 代表虚拟机器人
 		state = &vir_ctrl_state;
+		pre_state = &pre_vir_ctrl_state;
 	}
 
 	cmd = command->valuestring;
@@ -652,7 +993,7 @@ void sta(Webs *wp)
 		delete_timer();
 		set_timer();
 	} else if(!strcmp(cmd, "basic")) {
-		ret = basic(ret_status, state);
+		ret = basic(ret_status, state, pre_state);
 	} else if(!strcmp(cmd, "program_teach")) {
 		ret = program_teach(ret_status, state);
 	} else if(!strcmp(cmd, "vardata_feedback")) {
