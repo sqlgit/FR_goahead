@@ -171,7 +171,7 @@ char *get_dir_content(const char *dir_path)
 
 	root_json = cJSON_CreateObject();
 	dir = opendir(dir_path);
-	while ((ptr=readdir(dir)) != NULL) {
+	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
@@ -220,12 +220,11 @@ char *get_dir_filename(const char *dir_path)
 	struct dirent *ptr = NULL;
 	char *content = NULL;
 	char *buf = NULL;
-	char dir_filename[100] = {0};
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateArray();
 	dir = opendir(dir_path);
-	while ((ptr=readdir(dir)) != NULL) {
+	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
@@ -251,6 +250,28 @@ char *get_dir_filename(const char *dir_path)
 	return content;
 }
 
+/*
+	open dir and judge dir's file name existed or not
+	return "1" exist, "0" not exist
+ */
+int check_dir_filename(const char *dir_path, const char *filename)
+{
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
+
+	dir = opendir(dir_path);
+	while ((ptr = readdir(dir)) != NULL) {
+		/* current dir OR parrent dir */
+		if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
+			continue;
+		if (strcmp(ptr->d_name, filename) == 0) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 /* open dir and return dir's file name only .txt file without name suffix*/
 // Ext:["test.txt","test2.txt"]
 char *get_dir_filename_txt(const char *dir_path)
@@ -259,7 +280,6 @@ char *get_dir_filename_txt(const char *dir_path)
 	struct dirent *ptr = NULL;
 	char *content = NULL;
 	char *buf = NULL;
-	char dir_filename[100] = {0};
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateArray();

@@ -516,6 +516,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->cmdPointError = 22;
 			}
 			break;
+		case 23:
+			cJSON_AddStringToObject(error_json, "key", "焊接指令错误，起收弧间只允许LIN和ARC指令");
+			if (pre_state->cmdPointError != 23) {
+				my_syslog("错误", "焊接指令错误，起收弧间只允许LIN和ARC指令", cur_account.username);
+				pre_state->cmdPointError = 23;
+			}
+			break;
 		default:
 			pre_state->cmdPointError = 0;
 			break;
@@ -568,6 +575,27 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (pre_state->ioError != 7) {
 				my_syslog("错误", "通道已配置功能错误", cur_account.username);
 				pre_state->ioError = 7;
+			}
+			break;
+		case 8:
+			cJSON_AddStringToObject(error_json, "key", "起弧超时");
+			if (pre_state->ioError != 8) {
+				my_syslog("错误", "起弧超时", cur_account.username);
+				pre_state->ioError = 8;
+			}
+			break;
+		case 9:
+			cJSON_AddStringToObject(error_json, "key", "收弧超时");
+			if (pre_state->ioError != 9) {
+				my_syslog("错误", "收弧超时", cur_account.username);
+				pre_state->ioError = 9;
+			}
+			break;
+		case 10:
+			cJSON_AddStringToObject(error_json, "key", "寻位超时");
+			if (pre_state->ioError != 10) {
+				my_syslog("错误", "寻位超时", cur_account.username);
+				pre_state->ioError = 10;
 			}
 			break;
 		default:

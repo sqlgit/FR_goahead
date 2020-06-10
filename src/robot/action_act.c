@@ -19,6 +19,8 @@ extern ACCOUNT_INFO cur_account;
 
 static int save_lua_file(const cJSON *data_json);
 static int remove_lua_file(const cJSON *data_json);
+static int save_template_file(const cJSON *data_json);
+static int remove_template_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
 static int modify_tool_cdsystem(const cJSON *data_json);
 static int modify_ex_tool_cdsystem(const cJSON *data_json);
@@ -27,6 +29,7 @@ static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int log_management(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
+static int shutdown_system(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -59,6 +62,44 @@ static int remove_lua_file(const cJSON *data_json)
 		return FAIL;
 	}
 	sprintf(dir_filename, "%s%s", DIR_USER, name->valuestring);
+	if (remove(dir_filename) == -1) {
+		perror("remove");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* save template file */
+static int save_template_file(const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+
+	cJSON *file_name = cJSON_GetObjectItem(data_json, "name");
+	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
+	if (file_name == NULL || pgvalue == NULL || file_name->valuestring == NULL || pgvalue->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s%s", DIR_TEMPLATE, file_name->valuestring);
+
+	return write_file(dir_filename, pgvalue->valuestring);
+}
+
+/* remove template file */
+static int remove_template_file(const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+
+	cJSON *name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s%s", DIR_TEMPLATE, name->valuestring);
 	if (remove(dir_filename) == -1) {
 		perror("remove");
 
@@ -398,6 +439,14 @@ static int save_accounts(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/** shutdown system */
+static int shutdown_system(const cJSON *data_json)
+{
+	system("shutdown -b");
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -432,7 +481,7 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "shutdown")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
@@ -454,6 +503,10 @@ void act(Webs *wp)
 		ret = save_lua_file(data_json);
 	} else if (!strcmp(cmd, "remove_lua_file")) {
 		ret = remove_lua_file(data_json);
+	} else if (!strcmp(cmd, "save_template_file")) {
+		ret = save_template_file(data_json);
+	} else if (!strcmp(cmd, "remove_template_file")) {
+		ret = remove_template_file(data_json);
 	} else if (!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
 	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
@@ -470,6 +523,8 @@ void act(Webs *wp)
 		ret = log_management(data_json);
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
+	} else if (!strcmp(cmd, "shutdown")) {
+		ret = shutdown_system(data_json);
 	} else {
 		perror("cmd not found");
 		goto end;

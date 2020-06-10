@@ -27,6 +27,7 @@ static int get_accounts(char **ret_f_content);
 static int get_webversion(char **ret_f_content);
 static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
+static int get_weave(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -383,6 +384,42 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "TOOL_C = ", 9)) {
 			strrpc(strline, "TOOL_C = ", "");
 			cJSON_AddStringToObject(root_json, "tool_c", strline);
+		} else if(!strncmp(strline, "ETCP_X = ", 9)) {
+			strrpc(strline, "ETCP_X = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_x", strline);
+		} else if(!strncmp(strline, "ETCP_Y = ", 9)) {
+			strrpc(strline, "ETCP_Y = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_y", strline);
+		} else if(!strncmp(strline, "ETCP_Z = ", 9)) {
+			strrpc(strline, "ETCP_Z = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_z", strline);
+		} else if(!strncmp(strline, "ETCP_A = ", 9)) {
+			strrpc(strline, "ETCP_A = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_a", strline);
+		} else if(!strncmp(strline, "ETCP_B = ", 9)) {
+			strrpc(strline, "ETCP_B = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_b", strline);
+		} else if(!strncmp(strline, "ETCP_C = ", 9)) {
+			strrpc(strline, "ETCP_C = ", "");
+			cJSON_AddStringToObject(root_json, "etcp_c", strline);
+		} else if(!strncmp(strline, "ETOOL_X = ", 10)) {
+			strrpc(strline, "ETOOL_X = ", "");
+			cJSON_AddStringToObject(root_json, "etool_x", strline);
+		} else if(!strncmp(strline, "ETOOL_Y = ", 10)) {
+			strrpc(strline, "ETOOL_Y = ", "");
+			cJSON_AddStringToObject(root_json, "etool_y", strline);
+		} else if(!strncmp(strline, "ETOOL_Z = ", 10)) {
+			strrpc(strline, "ETOOL_Z = ", "");
+			cJSON_AddStringToObject(root_json, "etool_z", strline);
+		} else if(!strncmp(strline, "ETOOL_A = ", 10)) {
+			strrpc(strline, "ETOOL_A = ", "");
+			cJSON_AddStringToObject(root_json, "etool_a", strline);
+		} else if(!strncmp(strline, "ETOOL_B = ", 10)) {
+			strrpc(strline, "ETOOL_B = ", "");
+			cJSON_AddStringToObject(root_json, "etool_b", strline);
+		} else if(!strncmp(strline, "ETOOL_C = ", 10)) {
+			strrpc(strline, "ETOOL_C = ", "");
+			cJSON_AddStringToObject(root_json, "etool_c", strline);
 		} else if(!strncmp(strline, "COLLISION_LEVEL = ", 18)) {
 			strrpc(strline, "COLLISION_LEVEL = ", "");
 			cJSON_AddStringToObject(root_json, "collision_level", strline);
@@ -470,6 +507,30 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "AXLE_AI0_FILTERTIME = ", 22)) {
 			strrpc(strline, "AXLE_AI0_FILTERTIME = ", "");
 			cJSON_AddStringToObject(root_json, "axle_ai0_filtertime", strline);
+		} else if(!strncmp(strline, "CTL_DI8_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DI8_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di8_config", strline);
+		} else if(!strncmp(strline, "CTL_DI9_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DI9_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di9_config", strline);
+		} else if(!strncmp(strline, "CTL_DI10_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI10_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di10_config", strline);
+		} else if(!strncmp(strline, "CTL_DI11_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI11_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di11_config", strline);
+		} else if(!strncmp(strline, "CTL_DI12_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI12_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di12_config", strline);
+		} else if(!strncmp(strline, "CTL_DI13_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI13_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di13_config", strline);
+		} else if(!strncmp(strline, "CTL_DI14_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI14_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di14_config", strline);
+		} else if(!strncmp(strline, "CTL_DI15_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI15_CONFIG = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di15_config", strline);
 		} else if(!strncmp(strline, "CTL_DO8_CONFIG = ", 17)) {
 			strrpc(strline, "CTL_DO8_CONFIG = ", "");
 			cJSON_AddStringToObject(root_json, "ctl_do8_config", strline);
@@ -499,6 +560,198 @@ static int get_robot_cfg(char **ret_f_content)
 
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+		ret = SUCCESS;
+	} else {
+		perror("calloc");
+		ret = FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return ret;
+}
+
+/** get weave param */
+static int get_weave(char **ret_f_content)
+{
+	char strline[LINE_LEN] = {0};
+	char *buf = NULL;
+	FILE *fp;
+	int ret = FAIL;
+	cJSON *root_json = NULL;
+	cJSON *item0 = NULL;
+	cJSON *item1 = NULL;
+	cJSON *item2 = NULL;
+	cJSON *item3 = NULL;
+	cJSON *item4 = NULL;
+	cJSON *item5 = NULL;
+	cJSON *item6 = NULL;
+	cJSON *item7 = NULL;
+
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	root_json = cJSON_CreateArray();
+	item0 = cJSON_CreateObject();
+	item1 = cJSON_CreateObject();
+	item2 = cJSON_CreateObject();
+	item3 = cJSON_CreateObject();
+	item4 = cJSON_CreateObject();
+	item5 = cJSON_CreateObject();
+	item6 = cJSON_CreateObject();
+	item7 = cJSON_CreateObject();
+	cJSON_AddItemToArray(root_json, item0);
+	cJSON_AddItemToArray(root_json, item1);
+	cJSON_AddItemToArray(root_json, item2);
+	cJSON_AddItemToArray(root_json, item3);
+	cJSON_AddItemToArray(root_json, item4);
+	cJSON_AddItemToArray(root_json, item5);
+	cJSON_AddItemToArray(root_json, item6);
+	cJSON_AddItemToArray(root_json, item7);
+	cJSON_AddStringToObject(item0, "id", "0");
+	cJSON_AddStringToObject(item1, "id", "1");
+	cJSON_AddStringToObject(item2, "id", "2");
+	cJSON_AddStringToObject(item3, "id", "3");
+	cJSON_AddStringToObject(item4, "id", "4");
+	cJSON_AddStringToObject(item5, "id", "5");
+	cJSON_AddStringToObject(item6, "id", "6");
+	cJSON_AddStringToObject(item7, "id", "7");
+
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if(!strncmp(strline, "WEAVE0_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE0_TYPE = ", "");
+			cJSON_AddStringToObject(item0, "type", strline);
+		} else if(!strncmp(strline, "WEAVE0_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE0_FREQ = ", "");
+			cJSON_AddStringToObject(item0, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE0_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE0_RANGE = ", "");
+			cJSON_AddStringToObject(item0, "range", strline);
+		} else if(!strncmp(strline, "WEAVE0_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE0_LTIME = ", "");
+			cJSON_AddStringToObject(item0, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE0_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE0_RTIME = ", "");
+			cJSON_AddStringToObject(item0, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE1_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE1_TYPE = ", "");
+			cJSON_AddStringToObject(item1, "type", strline);
+		} else if(!strncmp(strline, "WEAVE1_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE1_FREQ = ", "");
+			cJSON_AddStringToObject(item1, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE1_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE1_RANGE = ", "");
+			cJSON_AddStringToObject(item1, "range", strline);
+		} else if(!strncmp(strline, "WEAVE1_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE1_LTIME = ", "");
+			cJSON_AddStringToObject(item1, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE1_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE1_RTIME = ", "");
+			cJSON_AddStringToObject(item1, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE2_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE2_TYPE = ", "");
+			cJSON_AddStringToObject(item2, "type", strline);
+		} else if(!strncmp(strline, "WEAVE2_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE2_FREQ = ", "");
+			cJSON_AddStringToObject(item2, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE2_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE2_RANGE = ", "");
+			cJSON_AddStringToObject(item2, "range", strline);
+		} else if(!strncmp(strline, "WEAVE2_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE2_LTIME = ", "");
+			cJSON_AddStringToObject(item2, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE2_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE2_RTIME = ", "");
+			cJSON_AddStringToObject(item2, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE3_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE3_TYPE = ", "");
+			cJSON_AddStringToObject(item3, "type", strline);
+		} else if(!strncmp(strline, "WEAVE3_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE3_FREQ = ", "");
+			cJSON_AddStringToObject(item3, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE3_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE3_RANGE = ", "");
+			cJSON_AddStringToObject(item3, "range", strline);
+		} else if(!strncmp(strline, "WEAVE3_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE3_LTIME = ", "");
+			cJSON_AddStringToObject(item3, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE3_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE3_RTIME = ", "");
+			cJSON_AddStringToObject(item3, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE4_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE4_TYPE = ", "");
+			cJSON_AddStringToObject(item4, "type", strline);
+		} else if(!strncmp(strline, "WEAVE4_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE4_FREQ = ", "");
+			cJSON_AddStringToObject(item4, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE4_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE4_RANGE = ", "");
+			cJSON_AddStringToObject(item4, "range", strline);
+		} else if(!strncmp(strline, "WEAVE4_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE4_LTIME = ", "");
+			cJSON_AddStringToObject(item4, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE4_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE4_RTIME = ", "");
+			cJSON_AddStringToObject(item4, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE5_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE5_TYPE = ", "");
+			cJSON_AddStringToObject(item5, "type", strline);
+		} else if(!strncmp(strline, "WEAVE5_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE5_FREQ = ", "");
+			cJSON_AddStringToObject(item5, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE5_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE5_RANGE = ", "");
+			cJSON_AddStringToObject(item5, "range", strline);
+		} else if(!strncmp(strline, "WEAVE5_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE5_LTIME = ", "");
+			cJSON_AddStringToObject(item5, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE5_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE5_RTIME = ", "");
+			cJSON_AddStringToObject(item5, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE6_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE6_TYPE = ", "");
+			cJSON_AddStringToObject(item6, "type", strline);
+		} else if(!strncmp(strline, "WEAVE6_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE6_FREQ = ", "");
+			cJSON_AddStringToObject(item6, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE6_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE6_RANGE = ", "");
+			cJSON_AddStringToObject(item6, "range", strline);
+		} else if(!strncmp(strline, "WEAVE6_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE6_LTIME = ", "");
+			cJSON_AddStringToObject(item6, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE6_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE6_RTIME = ", "");
+			cJSON_AddStringToObject(item6, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE7_TYPE = ", 14)) {
+			strrpc(strline, "WEAVE7_TYPE = ", "");
+			cJSON_AddStringToObject(item7, "type", strline);
+		} else if(!strncmp(strline, "WEAVE7_FREQ = ", 14)) {
+			strrpc(strline, "WEAVE7_FREQ = ", "");
+			cJSON_AddStringToObject(item7, "freq", strline);
+		} else if(!strncmp(strline, "WEAVE7_RANGE = ", 15)) {
+			strrpc(strline, "WEAVE7_RANGE = ", "");
+			cJSON_AddStringToObject(item7, "range", strline);
+		} else if(!strncmp(strline, "WEAVE7_LTIME = ", 15)) {
+			strrpc(strline, "WEAVE7_LTIME = ", "");
+			cJSON_AddStringToObject(item7, "ltime", strline);
+		} else if(!strncmp(strline, "WEAVE7_RTIME = ", 15)) {
+			strrpc(strline, "WEAVE7_RTIME = ", "");
+			cJSON_AddStringToObject(item7, "rtime", strline);
+		}
+	}
+
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
 	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
 	if(*ret_f_content != NULL) {
 		strcpy((*ret_f_content), buf);
@@ -578,7 +831,6 @@ void get(Webs *wp)
 	} else if(!strcmp(cmd, "get_log_name")) {
 		ret = get_log_name(&ret_f_content);
 	} else if(!strcmp(cmd, "get_log_data")) {
-		/* get data json */
 		data_json = cJSON_GetObjectItem(data, "data");
 		if (data_json == NULL || data_json->type != cJSON_Object) {
 			perror("json");
@@ -594,7 +846,6 @@ void get(Webs *wp)
 	} else if(!strcmp(cmd, "get_webversion")) {
 		ret = get_webversion(&ret_f_content);
 	} else if(!strcmp(cmd, "get_checkpoint")) {
-		/* get data json */
 		data_json = cJSON_GetObjectItem(data, "data");
 		if (data_json == NULL || data_json->type != cJSON_Object) {
 			perror("json");
@@ -603,6 +854,8 @@ void get(Webs *wp)
 		ret = get_checkpoint(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_weave")) {
+		ret = get_weave(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

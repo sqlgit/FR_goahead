@@ -107,7 +107,6 @@ static int sendfilename(const cJSON *data_json, char *content)
 static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 {
 	//printf("lua cmd = %s\n", lua_cmd);
-	char *f_content = NULL;
 	char tmp_content[len];
 	char sql[1024] = {0};
 	char cmd_array[10][20] = {{0}};
@@ -179,7 +178,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		 */
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "select * from points where name = \'%s\';", cmd_array[0]);
+		sprintf(sql, "select * from points;");
 		if(select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
 			perror("select ptp points");
 
@@ -226,7 +225,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "select * from points;", cmd_array[0]);
+		sprintf(sql, "select * from points;");
 		if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
 			perror("select arc1 points");
 
@@ -607,6 +606,66 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		sprintf(tmp_content, "%sSetExToolList(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
 		strcpy(file_content, tmp_content);
+	/* WeaveStart */
+	} else if(!strncmp(lua_cmd, "WeaveStart:", 11)) {
+		strrpc(lua_cmd, "WeaveStart:", "");
+		if(separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sWeaveStart(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* WeaveEnd */
+	} else if(!strncmp(lua_cmd, "WeaveEnd:", 9)) {
+		strrpc(lua_cmd, "WeaveEnd:", "");
+		if(separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sWeaveEnd(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* ARCStart */
+	} else if(!strncmp(lua_cmd, "ARCStart:", 9)) {
+		strrpc(lua_cmd, "ARCStart:", "");
+		if (separate_string_to_array(lua_cmd, ",", 2, 20, (char *)&cmd_array) != 2) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sARCStart(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* ARCEnd */
+	} else if(!strncmp(lua_cmd, "ARCEnd:", 7)) {
+		strrpc(lua_cmd, "ARCEnd:", "");
+		if (separate_string_to_array(lua_cmd, ",", 2, 20, (char *)&cmd_array) != 2) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sARCEnd(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* LTLaserOn */
+	} else if(!strncmp(lua_cmd, "LTLaserOn:", 10)) {
+		strrpc(lua_cmd, "LTLaserOn:", "");
+		if(separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sLTLaserOn(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* LTSearchStart */
+	} else if(!strncmp(lua_cmd, "LTSearchStart:", 14)) {
+		strrpc(lua_cmd, "LTSearchStart:", "");
+		if (separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sLTSearchStart(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -615,16 +674,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	//printf("file_content = %s\n", file_content);
 	cJSON_Delete(f_json);
 	f_json = NULL;
-	free(f_content);
-	f_content = NULL;
 
 	return SUCCESS;
 
 end:
 	cJSON_Delete(f_json);
 	f_json = NULL;
-	free(f_content);
-	f_content = NULL;
 	return FAIL;
 }
 
@@ -719,16 +774,58 @@ static int step_over(const cJSON *data_json, char *content)
 		/* waitToolDI */
 	} else if (!strncmp(pgvalue->valuestring, "WaitToolAI:", 11)) {
 		cmd = 221;
-		/* MoveGripper */
+	/* MoveGripper */
 	} else if (!strncmp(pgvalue->valuestring, "MoveGripper:", 12)) {
 		cmd = 228;
-		/* SetToolList */
+	/* SprayStart */
+	} else if (!strncmp(pgvalue->valuestring, "SprayStart", 10)) {
+		cmd = 236;
+	/* SprayStop */
+	} else if (!strncmp(pgvalue->valuestring, "SprayStop", 9)) {
+		cmd = 237;
+	/* PowerCleanStart */
+	} else if (!strncmp(pgvalue->valuestring, "PowerCleanStart", 15)) {
+		cmd = 238;
+	/* PowerCleanStop */
+	} else if (!strncmp(pgvalue->valuestring, "PowerCleanStop", 14)) {
+		cmd = 239;
+	/* ARCStart */
+	} else if (!strncmp(pgvalue->valuestring, "ARCStart", 8)) {
+		cmd = 247;
+	/* ARCEnd */
+	} else if (!strncmp(pgvalue->valuestring, "ARCEnd", 6)) {
+		cmd = 248;
+	/* WeaveStart */
+	} else if (!strncmp(pgvalue->valuestring, "WeaveStart", 10)) {
+		cmd = 253;
+	/* WeaveEnd */
+	} else if (!strncmp(pgvalue->valuestring, "WeaveEnd", 8)) {
+		cmd = 254;
+	/* LTLaserOn */
+	} else if (!strncmp(pgvalue->valuestring, "LTLaserOn", 9)) {
+		cmd = 255;
+	/* LTLaserOff */
+	} else if (!strncmp(pgvalue->valuestring, "LTLaserOff", 10)) {
+		cmd = 256;
+	/* LTTrackOn */
+	} else if (!strncmp(pgvalue->valuestring, "LTTrackOn", 9)) {
+		cmd = 257;
+	/* LTTrackOff */
+	} else if (!strncmp(pgvalue->valuestring, "LTTrackOff", 10)) {
+		cmd = 258;
+	/* LTSearchStart */
+	} else if (!strncmp(pgvalue->valuestring, "LTSearchStart", 13)) {
+		cmd = 259;
+	/* LTSearchStop */
+	} else if (!strncmp(pgvalue->valuestring, "LTSearchStop", 12)) {
+		cmd = 260;
+	/* SetToolList */
 	} else if (!strncmp(pgvalue->valuestring, "SetToolList:", 12)) {
 		cmd = 319;
-		/* SetExToolCoord */
+	/* SetExToolCoord */
 	} else if (!strncmp(pgvalue->valuestring, "SetExToolList:", 14)) {
 		cmd = 331;
-		/* error */
+	/* error */
 	} else {
 		return FAIL;
 	}
@@ -975,7 +1072,6 @@ void set(Webs *wp)
 	//char recv_content[100] = {0};
 	char recv_array[6][10] = { { 0 } };
 	cJSON *recv_json = NULL;
-
 	cJSON *data_json = NULL;
 	cJSON *post_type = NULL;
 	cJSON *command = NULL;
@@ -1031,7 +1127,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1219,6 +1315,91 @@ void set(Webs *wp)
 		my_syslog("机器人操作", "停止清枪", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
+	case 247:
+		port = cmdport;
+		my_syslog("机器人操作", "起弧", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 248:
+		port = cmdport;
+		my_syslog("机器人操作", "收弧", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 252:
+		port = cmdport;
+		my_syslog("机器人操作", "摆焊参数设置", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 253:
+		port = cmdport;
+		my_syslog("机器人操作", "开始摆焊", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 254:
+		port = cmdport;
+		my_syslog("机器人操作", "停止摆焊", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 255:
+		port = cmdport;
+		my_syslog("机器人操作", "激光打开", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 256:
+		port = cmdport;
+		my_syslog("机器人操作", "激光关闭", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 257:
+		port = cmdport;
+		my_syslog("机器人操作", "开始跟踪", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 258:
+		port = cmdport;
+		my_syslog("机器人操作", "停止跟踪", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 259:
+		port = cmdport;
+		my_syslog("机器人操作", "寻位开始,设置寻位参数", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 261:
+		port = cmdport;
+		my_syslog("机器人操作", "寻位结束", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 262:
+		port = cmdport;
+		my_syslog("机器人操作", "设定传感器参考点", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 263:
+		port = cmdport;
+		my_syslog("机器人操作", "计算传感器位姿", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 264:
+		port = cmdport;
+		my_syslog("机器人操作", "配置机器人IP", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 265:
+		port = cmdport;
+		my_syslog("机器人操作", "配置激光跟踪传感器IP和端口", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 266:
+		port = cmdport;
+		my_syslog("机器人操作", "加载传感器通信协议", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 267:
+		port = cmdport;
+		my_syslog("机器人操作", "卸载传感器通信协议", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
 	case 302:
 		port = cmdport;
 		my_syslog("机器人操作", "机器手急停后电机使能", cur_account.username);
@@ -1300,9 +1481,14 @@ void set(Webs *wp)
 		my_syslog("机器人操作", "机器人配置文件生效", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
+	case 323:
+		port = cmdport;
+		my_syslog("机器人操作", "设置 DI 配置", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
 	case 324:
 		port = cmdport;
-		my_syslog("机器人操作", "设置 IO 配置", cur_account.username);
+		my_syslog("机器人操作", "设置 DO 配置", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 326:

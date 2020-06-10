@@ -3,8 +3,8 @@
 
 /********************************* Defines ************************************/
 
-#define local 1
-#define virtual_robot 0
+#define local 0
+#define virtual_robot 1
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
@@ -59,6 +59,7 @@ char *get_file_content(const char *file_path);
 char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);
 char *get_dir_filename(const char *dir_path);
+int check_dir_filename(const char *dir_path, const char *filename);
 char *get_dir_filename_txt(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);
 int is_in(char *s, char *c);

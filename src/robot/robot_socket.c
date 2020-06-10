@@ -390,67 +390,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 						createnode(&node, atoi(array[2]), msg_content);
 						free(msg_content);
 						msg_content = NULL;
-					} else if (atoi(array[2]) == 320) {// 计算TCF
-						char *msg_content = NULL;
-						cJSON *root_json = cJSON_CreateObject();
-						char msg_array[6][20] = {{0}};
-
-						if (separate_string_to_array(array[4], ",", 6, 20, (char *)&msg_array) != 6) {
-							perror("separate recv");
-						}
-
-						cJSON_AddStringToObject(root_json, "x", msg_array[0]);
-						cJSON_AddStringToObject(root_json, "y", msg_array[1]);
-						cJSON_AddStringToObject(root_json, "z", msg_array[2]);
-						cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
-						cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
-						cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
-						msg_content = cJSON_Print(root_json);
-						//printf("msg_content = %s\n", msg_content);
-						createnode(&node, atoi(array[2]), msg_content);
-						free(msg_content);
-						msg_content = NULL;
-					} else if (atoi(array[2]) == 314) { // 计算工具坐标系
-						char *msg_content = NULL;
-						cJSON *root_json = cJSON_CreateObject();
-						char msg_array[6][20] = {{0}};
-
-						if (separate_string_to_array(array[4], ",", 6, 20, (char *)&msg_array) != 6) {
-							perror("separate recv");
-						}
-
-						cJSON_AddStringToObject(root_json, "x", msg_array[0]);
-						cJSON_AddStringToObject(root_json, "y", msg_array[1]);
-						cJSON_AddStringToObject(root_json, "z", msg_array[2]);
-						cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
-						cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
-						cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
-						msg_content = cJSON_Print(root_json);
-						//printf("msg_content = %s\n", msg_content);
-						createnode(&node, atoi(array[2]), msg_content);
-						free(msg_content);
-						msg_content = NULL;
-					} else if (atoi(array[2]) == 327) { // 计算外部TCF
-						char *msg_content = NULL;
-						cJSON *root_json = cJSON_CreateObject();
-						char msg_array[6][20] = {{0}};
-
-						if (separate_string_to_array(array[4], ",", 6, 20, (char *)&msg_array) != 6) {
-							perror("separate recv");
-						}
-
-						cJSON_AddStringToObject(root_json, "x", msg_array[0]);
-						cJSON_AddStringToObject(root_json, "y", msg_array[1]);
-						cJSON_AddStringToObject(root_json, "z", msg_array[2]);
-						cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
-						cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
-						cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
-						msg_content = cJSON_Print(root_json);
-						//printf("msg_content = %s\n", msg_content);
-						createnode(&node, atoi(array[2]), msg_content);
-						free(msg_content);
-						msg_content = NULL;
-					} else if (atoi(array[2]) == 329) { // 计算工具TCF
+					} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 263) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿
 						char *msg_content = NULL;
 						cJSON *root_json = cJSON_CreateObject();
 						char msg_array[6][20] = {{0}};
