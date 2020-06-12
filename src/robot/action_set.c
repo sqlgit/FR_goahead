@@ -309,27 +309,37 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		if (strcmp(cmd_array[0], "seamPos") == 0) {
+			speed = cJSON_GetObjectItem(lin, "speed");
+			acc = cJSON_GetObjectItem(lin, "acc");
+			toolnum = cJSON_GetObjectItem(lin, "toolnum");
+			if(toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) {
 
-		j1 = cJSON_GetObjectItem(lin, "j1");
-		j2 = cJSON_GetObjectItem(lin, "j2");
-		j3 = cJSON_GetObjectItem(lin, "j3");
-		j4 = cJSON_GetObjectItem(lin, "j4");
-		j5 = cJSON_GetObjectItem(lin, "j5");
-		j6 = cJSON_GetObjectItem(lin, "j6");
-		x = cJSON_GetObjectItem(lin, "x");
-		y = cJSON_GetObjectItem(lin, "y");
-		z = cJSON_GetObjectItem(lin, "z");
-		rx = cJSON_GetObjectItem(lin, "rx");
-		ry = cJSON_GetObjectItem(lin, "ry");
-		rz = cJSON_GetObjectItem(lin, "rz");
-		speed = cJSON_GetObjectItem(lin, "speed");
-		acc = cJSON_GetObjectItem(lin, "acc");
-		toolnum = cJSON_GetObjectItem(lin, "toolnum");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) {
+				goto end;
+			}
+			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
+		} else {
+			j1 = cJSON_GetObjectItem(lin, "j1");
+			j2 = cJSON_GetObjectItem(lin, "j2");
+			j3 = cJSON_GetObjectItem(lin, "j3");
+			j4 = cJSON_GetObjectItem(lin, "j4");
+			j5 = cJSON_GetObjectItem(lin, "j5");
+			j6 = cJSON_GetObjectItem(lin, "j6");
+			x = cJSON_GetObjectItem(lin, "x");
+			y = cJSON_GetObjectItem(lin, "y");
+			z = cJSON_GetObjectItem(lin, "z");
+			rx = cJSON_GetObjectItem(lin, "rx");
+			ry = cJSON_GetObjectItem(lin, "ry");
+			rz = cJSON_GetObjectItem(lin, "rz");
+			speed = cJSON_GetObjectItem(lin, "speed");
+			acc = cJSON_GetObjectItem(lin, "acc");
+			toolnum = cJSON_GetObjectItem(lin, "toolnum");
+			if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) {
 
-			goto end;
+				goto end;
+			}
+			sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
 		}
-		sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* set DO */
 	} else if(!strncmp(lua_cmd, "SetDO:", 6)) {
@@ -399,7 +409,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 printf("cmd_array[1] = %s", cmd_array[1]);
 		 */
-		sprintf(tmp_content, "%sSetAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		sprintf(tmp_content, "%sSetAO(%s,%f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolAO */
 	} else if(!strncmp(lua_cmd, "SetToolAO:", 10)) {
@@ -413,7 +423,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 printf("cmd_array[1] = %s", cmd_array[1]);
 		 */
-		sprintf(tmp_content, "%sSetToolAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		sprintf(tmp_content, "%sSetToolAO(%s,%f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* get AI */
 	} else if(!strncmp(lua_cmd, "GetAI:", 6)) {
@@ -726,49 +736,49 @@ static int step_over(const cJSON *data_json, char *content)
 	/* PTP */
 	if (!strncmp(pgvalue->valuestring, "PTP:", 4)) {
 		cmd = 201;
-		/* ARC */
+	/* ARC */
 	} else if (!strncmp(pgvalue->valuestring, "ARC:", 4)) {
 		cmd = 202;
-		/* Lin */
+	/* Lin */
 	} else if (!strncmp(pgvalue->valuestring, "Lin:", 4)) {
 		cmd = 203;
-		/* set DO */
+	/* set DO */
 	} else if (!strncmp(pgvalue->valuestring, "SetDO:", 6)) {
 		cmd = 204;
-		/* wait time*/
+	/* wait time*/
 	} else if (!strncmp(pgvalue->valuestring, "WaitTime:", 9)) {
 		cmd = 207;
-		/* set AO */
+	/* set AO */
 	} else if (!strncmp(pgvalue->valuestring, "SetAO:", 6)) {
 		cmd = 209;
-		/* set ToolDO */
+	/* set ToolDO */
 	} else if (!strncmp(pgvalue->valuestring, "SetToolDO:", 10)) {
 		cmd = 210;
-		/* set ToolAO */
+	/* set ToolAO */
 	} else if (!strncmp(pgvalue->valuestring, "SetToolAO:", 10)) {
 		cmd = 211;
-		/* get DI */
+	/* get DI */
 	} else if (!strncmp(pgvalue->valuestring, "GetDI:", 6)) {
 		cmd = 212;
-		/* get ToolDI */
+	/* get ToolDI */
 	} else if (!strncmp(pgvalue->valuestring, "GetToolDI:", 10)) {
 		cmd = 213;
-		/* get AI */
+	/* get AI */
 	} else if (!strncmp(pgvalue->valuestring, "GetAI:", 6)) {
 		cmd = 214;
-		/* get ToolAI */
+	/* get ToolAI */
 	} else if (!strncmp(pgvalue->valuestring, "GetToolAI:", 10)) {
 		cmd = 215;
-		/* moveTPD */
+	/* moveTPD */
 	} else if (!strncmp(pgvalue->valuestring, "MoveTPD:", 8)) {
 		cmd = 217;
-		/* waitDI */
+	/* waitDI */
 	} else if (!strncmp(pgvalue->valuestring, "WaitDI:", 7)) {
 		cmd = 218;
-		/* waitToolDI */
+	/* waitToolDI */
 	} else if (!strncmp(pgvalue->valuestring, "WaitToolDI:", 11)) {
 		cmd = 219;
-		/* waitAI */
+	/* waitAI */
 	} else if (!strncmp(pgvalue->valuestring, "WaitAI:", 7)) {
 		cmd = 220;
 		/* waitToolDI */
@@ -1127,7 +1137,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1211,6 +1221,11 @@ void set(Webs *wp)
 		my_syslog("机器人操作", "基坐标单轴点动-点按开始", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
+	case 204:
+		port = cmdport;
+		my_syslog("机器人操作", "设置控制箱DO", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
 	case 206:
 		port = cmdport;
 		my_syslog("机器人操作", "设置速度百分比", cur_account.username);
@@ -1219,6 +1234,21 @@ void set(Webs *wp)
 	case 208:
 		port = cmdport;
 		my_syslog("机器人操作", "关节坐标单轴点动-点按开始", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 209:
+		port = cmdport;
+		my_syslog("机器人操作", "设置控制箱AO", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 210:
+		port = cmdport;
+		my_syslog("机器人操作", "设置末端工具DO", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 211:
+		port = cmdport;
+		my_syslog("机器人操作", "设置末端工具AO", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 216:
@@ -1325,6 +1355,21 @@ void set(Webs *wp)
 		my_syslog("机器人操作", "收弧", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
+	case 249:
+		port = cmdport;
+		my_syslog("机器人操作", "设定摆焊坐标系参考点", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 250:
+		port = cmdport;
+		my_syslog("机器人操作", "计算摆焊坐标系", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 251:
+		port = cmdport;
+		my_syslog("机器人操作", "应用摆焊坐标系", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
 	case 252:
 		port = cmdport;
 		my_syslog("机器人操作", "摆焊参数设置", cur_account.username);
@@ -1365,37 +1410,37 @@ void set(Webs *wp)
 		my_syslog("机器人操作", "寻位开始,设置寻位参数", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 261:
+	case 260:
 		port = cmdport;
 		my_syslog("机器人操作", "寻位结束", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 262:
+	case 261:
 		port = cmdport;
 		my_syslog("机器人操作", "设定传感器参考点", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 263:
+	case 262:
 		port = cmdport;
 		my_syslog("机器人操作", "计算传感器位姿", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 264:
+	case 263:
 		port = cmdport;
 		my_syslog("机器人操作", "配置机器人IP", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 265:
+	case 264:
 		port = cmdport;
 		my_syslog("机器人操作", "配置激光跟踪传感器IP和端口", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 266:
+	case 265:
 		port = cmdport;
 		my_syslog("机器人操作", "加载传感器通信协议", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
-	case 267:
+	case 266:
 		port = cmdport;
 		my_syslog("机器人操作", "卸载传感器通信协议", cur_account.username);
 		ret = copy_content(data_json, content);

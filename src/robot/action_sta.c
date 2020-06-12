@@ -136,14 +136,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddItemToObject(root_json, "ai", array_json);
 	for (i = 0; i < 6; i++) {
 		//printf("state->analog_input[%d] = %d\n", i, state->analog_input[i]);
-		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_input[i]/4095, 3));
+		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_input[i]/40.95, 3));
 	}
 
 	array_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "ao", array_json);
 	for (i = 0; i < 6; i++) {
 		//printf("state->analog_output[%d] = %d\n", i, state->analog_output[i]);
-		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_output[i]/4095, 3));
+		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_output[i]/40.95, 3));
 	}
 
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);

@@ -555,6 +555,24 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "CTL_DO15_CONFIG = ", 18)) {
 			strrpc(strline, "CTL_DO15_CONFIG = ", "");
 			cJSON_AddStringToObject(root_json, "ctl_do15_config", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_X = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_X = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_x", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_Y = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_Y = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_y", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_Z = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_Z = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_z", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_A = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_A = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_a", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_B = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_B = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_b", strline);
+		} else if(!strncmp(strline, "WEAVE_COORD_C = ", 16)) {
+			strrpc(strline, "WEAVE_COORD_C = ", "");
+			cJSON_AddStringToObject(root_json, "weave_coord_c", strline);
 		}
 	}
 

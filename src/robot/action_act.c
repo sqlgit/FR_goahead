@@ -307,13 +307,16 @@ static int remove_points(const cJSON *data_json)
 
 		return FAIL;
 	}
-	printf("name = %s\n", cJSON_Print(name));
+	//printf("name = %s\n", cJSON_Print(name));
 	num = cJSON_GetArraySize(name);
 
-	printf("num = %d\n", num);
+	//printf("num = %d\n", num);
 	for (i = 0; i < num; i++) {
 		name_index = cJSON_GetArrayItem(name, i);
 		printf("name_index->valuestring = %s\n", name_index->valuestring);
+		if (strcmp(name_index->valuestring, "seamPos") == 0) {
+			continue;
+		}
 		memset(sql,0,sizeof(sql));
 		sprintf(sql, "delete from points where name = \'%s\'", name_index->valuestring);
 		if (change_info_sqlite3(DB_POINTS, sql) == -1) {
