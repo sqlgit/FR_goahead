@@ -409,7 +409,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 printf("cmd_array[1] = %s", cmd_array[1]);
 		 */
-		sprintf(tmp_content, "%sSetAO(%s,%f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
+		sprintf(tmp_content, "%sSetAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolAO */
 	} else if(!strncmp(lua_cmd, "SetToolAO:", 10)) {
@@ -423,7 +423,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 printf("cmd_array[1] = %s", cmd_array[1]);
 		 */
-		sprintf(tmp_content, "%sSetToolAO(%s,%f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
+		sprintf(tmp_content, "%sSetToolAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* get AI */
 	} else if(!strncmp(lua_cmd, "GetAI:", 6)) {
@@ -485,7 +485,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* WaitAI */
 	} else if(!strncmp(lua_cmd, "WaitAI:", 7)) {
 		strrpc(lua_cmd, "WaitAI:", "");
-		if(separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
+		if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
 			perror("separate recv");
 
 			return FAIL;
@@ -493,12 +493,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		/*
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 */
-		sprintf(tmp_content, "%sWaitAI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		sprintf(tmp_content, "%sWaitAI(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
 	/* WaitToolAI */
 	} else if(!strncmp(lua_cmd, "WaitToolAI:", 11)) {
 		strrpc(lua_cmd, "WaitToolAI:", "");
-		if(separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
+		if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
 			perror("separate recv");
 
 			return FAIL;
@@ -506,7 +506,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		/*
 		 printf("cmd_array[0] = %s", cmd_array[0]);
 		 */
-		sprintf(tmp_content, "%sWaitToolAI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		sprintf(tmp_content, "%sWaitToolAI(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
 	/* set MoveTPD */
 	} else if(!strncmp(lua_cmd, "MoveTPD:", 8)) {
@@ -1131,13 +1131,13 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "1"
-	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 ) {
+	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd==333 || cmd == 334) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1559,6 +1559,21 @@ void set(Webs *wp)
 	case 330:
 		port = cmdport;
 		my_syslog("机器人操作", "应用当前显示的外部和工具坐标系", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 332:
+		port = cmdport;
+		my_syslog("机器人操作", "进入 boot 模式", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 333:
+		port = cmdport;
+		my_syslog("机器人操作", "切换拖动示教模式", cur_account.username);
+		ret = copy_content(data_json, content);
+		break;
+	case 334:
+		port = cmdport;
+		my_syslog("机器人操作", "定位完成预值", cur_account.username);
 		ret = copy_content(data_json, content);
 		break;
 	case 400:

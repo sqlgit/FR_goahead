@@ -377,8 +377,9 @@ static int save_accounts(const cJSON *data_json)
     char passbuf[ME_GOAHEAD_LIMIT_PASSWORD * 3 + 3];
 	char content[MAX_BUF] = "";
 	char sql[2048] = {0};
+	char del_sql[1024] = {0};
+	char temp[2048] = {0};
 	int i = 0;
-	int len = 0;
 	int array_size = 0;
 	cJSON *item = NULL;
 	cJSON *username = NULL;
@@ -392,15 +393,6 @@ static int save_accounts(const cJSON *data_json)
 	}
 
 	array_size = cJSON_GetArraySize(account_array); //获取数组长度
-	sprintf(sql, "delete from account;");
-	if (change_info_sqlite3(DB_ACCOUNT, sql) == -1) {
-		perror("delete all");
-
-		return FAIL;
-	}
-	memset(sql,0,sizeof(sql));
-
-	sprintf(sql,"insert into account(username,password,auth) Values");        //拼接 insert语句
 	for (i = 0; i < array_size; i++) {
 		item = cJSON_GetArrayItem(account_array, i);
 		username = cJSON_GetObjectItem(item, "username");
@@ -413,12 +405,24 @@ static int save_accounts(const cJSON *data_json)
 		}
         fmt(passbuf, sizeof(passbuf), "%s:%s:%s", username->valuestring, ME_GOAHEAD_REALM, password->valuestring);
 		sprintf(content, "%suser name=%s password=%s\n", content, username->valuestring, websMD5(passbuf));
-		sprintf(sql,"%s('%s','%s','%s'),",sql,username->valuestring,password->valuestring,auth->valuestring);
+		sprintf(temp, "%sinsert into account (username, password, auth) values (\'%s\', \'%s\', \'%s\'); ", sql, username->valuestring, password->valuestring, auth->valuestring);
+		strcpy(sql, temp);
+		memset(temp, 0, sizeof(temp));
 	}
-	len = strlen(sql);
-	sql[len -1] = '\0';   //去掉sql最后一个字符 ‘，’
-	sprintf(sql,"%s;",sql);
 	printf("sql = %s\n",sql);
+
+    sprintf(del_sql, "delete from account;");       //清空account表
+    if (change_info_sqlite3(DB_ACCOUNT, del_sql) == -1) {
+		perror("delete all");
+
+		return FAIL;
+    }
+    if (change_info_sqlite3(DB_ACCOUNT, sql) == -1) {
+		perror("insert");
+
+		return FAIL;
+    }
+
 	printf("content = %s\n", content);
 
 	if (write_file(FILE_AUTH, content) == FAIL) {//save to file auth.txt, 更新账号密码到auth.txt文件中
@@ -433,11 +437,6 @@ static int save_accounts(const cJSON *data_json)
         return FAIL;
     }
 #endif
-    if (change_info_sqlite3(DB_ACCOUNT, sql) == -1) {
-    	perror("insert");
-
-		return FAIL;
-    }
 
 	return SUCCESS;
 }
@@ -536,7 +535,7 @@ void act(Webs *wp)
 		perror("ret fail");
 		goto end;
 	}
-	my_syslog("普通操作", cmd, cur_account.username);
+	my_syslog("应用操作", cmd, cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

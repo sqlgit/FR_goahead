@@ -61,7 +61,7 @@ static int get_tool_cdsystem(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
-	sprintf(sql, "select * from coordinate_system");
+	sprintf(sql, "select * from coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");
 
@@ -86,7 +86,7 @@ static int get_ex_tool_cdsystem(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
-	sprintf(sql, "select * from et_coordinate_system");
+	sprintf(sql, "select * from et_coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select ex_tool_cdsystem");
 
@@ -435,6 +435,9 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "LOAD_Coord_Z = ", 15)) {
 			strrpc(strline, "LOAD_Coord_Z = ", "");
 			cJSON_AddStringToObject(root_json, "load_coord_z", strline);
+		} else if(!strncmp(strline, "POSCMD_DONERANGE = ", 19)) {
+			strrpc(strline, "POSCMD_DONERANGE = ", "");
+			cJSON_AddStringToObject(root_json, "poscmd_donerange", strline);
 		} else if(!strncmp(strline, "J1_MAX_JOINT_LIMIT = ", 21)) {
 			strrpc(strline, "J1_MAX_JOINT_LIMIT = ", "");
 			cJSON_AddStringToObject(root_json, "j1_max_joint_limit", strline);
