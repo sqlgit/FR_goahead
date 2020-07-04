@@ -185,7 +185,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			return FAIL;
 		}
 
-		ptp = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		ptp = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
 		if(ptp == NULL || ptp->type != cJSON_Object) {
 
 			goto end;
@@ -231,7 +231,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			return FAIL;
 		}
-		point_1 = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		point_1 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
 		if(point_1 == NULL || point_1->type != cJSON_Object) {
 
 			goto end;
@@ -257,7 +257,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 
-		point_2 = cJSON_GetObjectItem(f_json, cmd_array[1]);
+		point_2 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
 
 			goto end;
@@ -304,7 +304,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			return FAIL;
 		}
 
-		lin = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		lin = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
 		if(lin == NULL || lin->type != cJSON_Object) {
 
 			goto end;
@@ -558,7 +558,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			return FAIL;
 		}
 
-		cd = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		cd = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
 		if(cd == NULL || cd->type != cJSON_Object) {
 
 			goto end;
@@ -592,7 +592,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			return FAIL;
 		}
-		et_cd = cJSON_GetObjectItem(f_json, cmd_array[0]);
+		et_cd = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
 		if(et_cd == NULL || et_cd->type != cJSON_Object) {
 
 			goto end;
@@ -1087,6 +1087,7 @@ void set(Webs *wp)
 	cJSON *command = NULL;
 	cJSON *port_n = NULL;
 	cJSON *data = NULL;
+	char log_content[1024] = {0};
 
 	/** virtual robot */
 	if (robot_type == 0) {
@@ -1137,7 +1138,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd==333 || cmd == 334) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1165,35 +1166,35 @@ void set(Webs *wp)
 	case 101:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "开始程序示教", cur_account.username);
+		strcpy(log_content, "开始程序示教");
 		ret = program_start(data_json, content);
 		break;
 	case 102:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "停止程序示教", cur_account.username);
+		strcpy(log_content, "停止程序示教");
 		ret = program_stop(data_json, content);
 		break;
 	case 103:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "暂停程序示教", cur_account.username);
+		strcpy(log_content, "暂停程序示教");
 		ret = program_pause(data_json, content);
 		break;
 	case 104:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "恢复程序示教", cur_account.username);
+		strcpy(log_content, "恢复程序示教");
 		ret = program_resume(data_json, content);
 		break;
 	case 105:/* 8082 */
 		port = fileport;
-		my_syslog("机器人操作", "下发程序示教名称", cur_account.username);
+		strcpy(log_content, "下发程序示教名称");
 		ret = sendfilename(data_json, content);
 		break;
 	case 106:/* 8082 */
 		port = fileport;
-		my_syslog("机器人操作", "下发程序示教文件内容", cur_account.username);
+		strcpy(log_content, "下发程序示教文件内容");
 		content_len = get_lua_content_size(data_json);
 		//printf("content_len = %d\n", content_len);
 		if (content_len == FAIL) {
@@ -1213,376 +1214,407 @@ void set(Webs *wp)
 		break;
 	case 201:
 		port = cmdport;
-		my_syslog("机器人操作", "下发关节数据", cur_account.username);
+		strcpy(log_content, "下发关节数据");
 		ret = movej(data_json, content);
 		break;
 	case 203:
 		port = cmdport;
-		my_syslog("机器人操作", "基坐标单轴点动-点按开始", cur_account.username);
+		strcpy(log_content, "基坐标单轴点动-点按开始");
 		ret = copy_content(data_json, content);
 		break;
 	case 204:
 		port = cmdport;
-		my_syslog("机器人操作", "设置控制箱DO", cur_account.username);
+		strcpy(log_content, "设置控制箱DO");
 		ret = copy_content(data_json, content);
 		break;
 	case 206:
 		port = cmdport;
-		my_syslog("机器人操作", "设置速度百分比", cur_account.username);
+		strcpy(log_content, "设置速度百分比");
 		ret = copy_content(data_json, content);
 		break;
 	case 208:
 		port = cmdport;
-		my_syslog("机器人操作", "关节坐标单轴点动-点按开始", cur_account.username);
+		strcpy(log_content, "关节坐标单轴点动-点按开始");
 		ret = copy_content(data_json, content);
 		break;
 	case 209:
 		port = cmdport;
-		my_syslog("机器人操作", "设置控制箱AO", cur_account.username);
+		strcpy(log_content, "设置控制箱AO");
 		ret = copy_content(data_json, content);
 		break;
 	case 210:
 		port = cmdport;
-		my_syslog("机器人操作", "设置末端工具DO", cur_account.username);
+		strcpy(log_content, "设置末端工具DO");
 		ret = copy_content(data_json, content);
 		break;
 	case 211:
 		port = cmdport;
-		my_syslog("机器人操作", "设置末端工具AO", cur_account.username);
+		strcpy(log_content, "设置末端工具AO");
 		ret = copy_content(data_json, content);
 		break;
 	case 216:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "关节坐标单轴点动-点按结束", cur_account.username);
+		strcpy(log_content, "关节坐标单轴点动-点按结束");
 		ret = copy_content(data_json, content);
 		break;
 	case 222:
 		port = cmdport;
-		my_syslog("机器人操作", "控制箱DI滤波", cur_account.username);
+		strcpy(log_content, "控制箱DI滤波");
 		ret = copy_content(data_json, content);
 		break;
 	case 223:
 		port = cmdport;
-		my_syslog("机器人操作", "工具DI滤波", cur_account.username);
+		strcpy(log_content, "工具DI滤波");
 		ret = copy_content(data_json, content);
 		break;
 	case 224:
 		port = cmdport;
-		my_syslog("机器人操作", "控制箱AI滤波", cur_account.username);
+		strcpy(log_content, "控制箱AI滤波");
 		ret = copy_content(data_json, content);
 		break;
 	case 225:
 		port = cmdport;
-		my_syslog("机器人操作", "工具AI0滤波", cur_account.username);
+		strcpy(log_content, "工具AI0滤波");
 		ret = copy_content(data_json, content);
 		break;
 	case 226:
 		port = cmdport;
-		my_syslog("机器人操作", "配置夹爪", cur_account.username);
+		strcpy(log_content, "配置夹爪");
 		ret = copy_content(data_json, content);
 		break;
 	case 227:
 		port = cmdport;
-		my_syslog("机器人操作", "激活和复位夹爪", cur_account.username);
+		strcpy(log_content, "激活和复位夹爪");
 		ret = copy_content(data_json, content);
 		break;
 	case 229:
 		port = cmdport;
-		my_syslog("机器人操作", "读取夹爪配置信息", cur_account.username);
+		strcpy(log_content, "读取夹爪配置信息");
 		ret = copy_content(data_json, content);
 		break;
 	case 230:
 		port = cmdport;
-		my_syslog("机器人操作", "设置查询图表id号", cur_account.username);
+		strcpy(log_content, "设置查询图表id号");
 		ret = set_state_id(data_json, content);
 		break;
 	case 231:
 		port = cmdport;
-		my_syslog("机器人操作", "状态查询开始/结束", cur_account.username);
+		strcpy(log_content, "状态查询开始/结束");
 		ret = set_state(data_json, content);
 		break;
 	case 232:
 		port = cmdport;
-		my_syslog("机器人操作", "单轴点动-长按开始", cur_account.username);
+		strcpy(log_content, "单轴点动-长按开始");
 		ret = copy_content(data_json, content);
 		break;
 	case 233:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "单轴点动-长按结束", cur_account.username);
+		strcpy(log_content, "单轴点动-长按结束");
 		ret = copy_content(data_json, content);
 		break;
 	case 234:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "基坐标单轴点动-点按结束", cur_account.username);
+		strcpy(log_content, "基坐标单轴点动-点按结束");
 		ret = copy_content(data_json, content);
 		break;
 	case 235:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "外部工具坐标单轴点动-长按结束", cur_account.username);
+		strcpy(log_content, "外部工具坐标单轴点动-长按结束");
 		ret = copy_content(data_json, content);
 		break;
 	case 236:
 		port = cmdport;
-		my_syslog("机器人操作", "开始喷涂", cur_account.username);
+		strcpy(log_content, "开始喷涂");
 		ret = copy_content(data_json, content);
 		break;
 	case 237:
 		port = cmdport;
-		my_syslog("机器人操作", "停止喷涂", cur_account.username);
+		strcpy(log_content, "停止喷涂");
 		ret = copy_content(data_json, content);
 		break;
 	case 238:
 		port = cmdport;
-		my_syslog("机器人操作", "开始清枪", cur_account.username);
+		strcpy(log_content, "开始清枪");
 		ret = copy_content(data_json, content);
 		break;
 	case 239:
 		port = cmdport;
-		my_syslog("机器人操作", "停止清枪", cur_account.username);
+		strcpy(log_content, "停止清枪");
 		ret = copy_content(data_json, content);
 		break;
 	case 247:
 		port = cmdport;
-		my_syslog("机器人操作", "起弧", cur_account.username);
+		strcpy(log_content, "起弧");
 		ret = copy_content(data_json, content);
 		break;
 	case 248:
 		port = cmdport;
-		my_syslog("机器人操作", "收弧", cur_account.username);
+		strcpy(log_content, "收弧");
 		ret = copy_content(data_json, content);
 		break;
 	case 249:
 		port = cmdport;
-		my_syslog("机器人操作", "设定摆焊坐标系参考点", cur_account.username);
+		strcpy(log_content, "设定摆焊坐标系参考点");
 		ret = copy_content(data_json, content);
 		break;
 	case 250:
 		port = cmdport;
-		my_syslog("机器人操作", "计算摆焊坐标系", cur_account.username);
+		strcpy(log_content, "计算摆焊坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 251:
 		port = cmdport;
-		my_syslog("机器人操作", "应用摆焊坐标系", cur_account.username);
+		strcpy(log_content, "应用摆焊坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 252:
 		port = cmdport;
-		my_syslog("机器人操作", "摆焊参数设置", cur_account.username);
+		strcpy(log_content, "摆焊参数设置");
 		ret = copy_content(data_json, content);
 		break;
 	case 253:
 		port = cmdport;
-		my_syslog("机器人操作", "开始摆焊", cur_account.username);
+		strcpy(log_content, "开始摆焊");
 		ret = copy_content(data_json, content);
 		break;
 	case 254:
 		port = cmdport;
-		my_syslog("机器人操作", "停止摆焊", cur_account.username);
+		strcpy(log_content, "停止摆焊");
 		ret = copy_content(data_json, content);
 		break;
 	case 255:
 		port = cmdport;
-		my_syslog("机器人操作", "激光打开", cur_account.username);
+		strcpy(log_content, "激光打开");
 		ret = copy_content(data_json, content);
 		break;
 	case 256:
 		port = cmdport;
-		my_syslog("机器人操作", "激光关闭", cur_account.username);
+		strcpy(log_content, "激光关闭");
 		ret = copy_content(data_json, content);
 		break;
 	case 257:
 		port = cmdport;
-		my_syslog("机器人操作", "开始跟踪", cur_account.username);
+		strcpy(log_content, "开始跟踪");
 		ret = copy_content(data_json, content);
 		break;
 	case 258:
 		port = cmdport;
-		my_syslog("机器人操作", "停止跟踪", cur_account.username);
+		strcpy(log_content, "停止跟踪");
 		ret = copy_content(data_json, content);
 		break;
 	case 259:
 		port = cmdport;
-		my_syslog("机器人操作", "寻位开始,设置寻位参数", cur_account.username);
+		strcpy(log_content, "寻位开始,设置寻位参数");
 		ret = copy_content(data_json, content);
 		break;
 	case 260:
 		port = cmdport;
-		my_syslog("机器人操作", "寻位结束", cur_account.username);
+		strcpy(log_content, "寻位结束");
 		ret = copy_content(data_json, content);
 		break;
 	case 261:
 		port = cmdport;
-		my_syslog("机器人操作", "设定传感器参考点", cur_account.username);
+		strcpy(log_content, "设定传感器参考点");
 		ret = copy_content(data_json, content);
 		break;
 	case 262:
 		port = cmdport;
-		my_syslog("机器人操作", "计算传感器位姿", cur_account.username);
+		strcpy(log_content, "计算传感器位姿");
 		ret = copy_content(data_json, content);
 		break;
 	case 263:
 		port = cmdport;
-		my_syslog("机器人操作", "配置机器人IP", cur_account.username);
+		strcpy(log_content, "配置机器人IP");
 		ret = copy_content(data_json, content);
 		break;
 	case 264:
 		port = cmdport;
-		my_syslog("机器人操作", "配置激光跟踪传感器IP和端口", cur_account.username);
+		strcpy(log_content, "配置激光跟踪传感器IP和端口");
 		ret = copy_content(data_json, content);
 		break;
 	case 265:
 		port = cmdport;
-		my_syslog("机器人操作", "加载传感器通信协议", cur_account.username);
+		strcpy(log_content, "加载传感器通信协议");
 		ret = copy_content(data_json, content);
 		break;
 	case 266:
 		port = cmdport;
-		my_syslog("机器人操作", "卸载传感器通信协议", cur_account.username);
+		strcpy(log_content, "卸载传感器通信协议");
+		ret = copy_content(data_json, content);
+		break;
+	case 267:
+		port = cmdport;
+		strcpy(log_content, "配置传感器采样周期");
+		ret = copy_content(data_json, content);
+		break;
+	case 268:
+		port = cmdport;
+		strcpy(log_content, "开始/停止正向送丝");
+		ret = copy_content(data_json, content);
+		break;
+	case 269:
+		port = cmdport;
+		strcpy(log_content, "开始/停止反向送丝");
+		ret = copy_content(data_json, content);
+		break;
+	case 270:
+		port = cmdport;
+		strcpy(log_content, "开始/停止送气");
 		ret = copy_content(data_json, content);
 		break;
 	case 302:
 		port = cmdport;
-		my_syslog("机器人操作", "机器手急停后电机使能", cur_account.username);
+		strcpy(log_content, "机器手急停后电机使能");
 		ret = copy_content(data_json, content);
 		break;
 	case 303:
 		port = cmdport;
-		my_syslog("机器人操作", "更改机器人模式", cur_account.username);
+		strcpy(log_content, "更改机器人模式");
 		ret = mode(data_json, content);
 		break;
 	case 305:
 		port = cmdport;
-		my_syslog("机器人操作", "设置碰撞等级", cur_account.username);
+		strcpy(log_content, "设置碰撞等级");
 		ret = copy_content(data_json, content);
 		break;
 	case 306:
 		port = cmdport;
-		my_syslog("机器人操作", "设置负载重量", cur_account.username);
+		strcpy(log_content, "设置负载重量");
 		ret = copy_content(data_json, content);
 		break;
 	case 307:
 		port = cmdport;
-		my_syslog("机器人操作", "设置负载质心", cur_account.username);
+		strcpy(log_content, "设置负载质心");
 		ret = copy_content(data_json, content);
 		break;
 	case 308:
 		port = cmdport;
-		my_syslog("机器人操作", "设置机器人正限位角度", cur_account.username);
+		strcpy(log_content, "设置机器人正限位角度");
 		ret = copy_content(data_json, content);
 		break;
 	case 309:
 		port = cmdport;
-		my_syslog("机器人操作", "设置机器人负限位角度", cur_account.username);
+		strcpy(log_content, "设置机器人负限位角度");
 		ret = copy_content(data_json, content);
 		break;
 	case 312:
 		port = cmdport;
 		cmd_type = 0;
-		my_syslog("机器人操作", "零点设定", cur_account.username);
+		strcpy(log_content, "零点设定");
 		ret = copy_content(data_json, content);
 		break;
 	case 313:
 		port = cmdport;
-		my_syslog("机器人操作", "新建工具坐标系下发点", cur_account.username);
+		strcpy(log_content, "新建工具坐标系下发点");
 		ret = copy_content(data_json, content);
 		break;
 	case 314:
 		port = cmdport;
-		my_syslog("机器人操作", "计算工具坐标系", cur_account.username);
+		strcpy(log_content, "计算工具坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 315:
 		port = cmdport;
-		my_syslog("机器人操作", "开始记录TPD轨迹", cur_account.username);
+		strcpy(log_content, "开始记录TPD轨迹");
 		ret = copy_content(data_json, content);
 		break;
 	case 316:
 		port = cmdport;
-		my_syslog("机器人操作", "应用当前显示的工具坐标系", cur_account.username);
+		strcpy(log_content, "应用当前显示的工具坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 317:
 		port = cmdport;
-		my_syslog("机器人操作", "停止记录TPD轨迹", cur_account.username);
+		strcpy(log_content, "停止记录TPD轨迹");
 		ret = copy_content(data_json, content);
 		break;
 	case 318:
 		port = cmdport;
-		my_syslog("机器人操作", "删除TPD轨迹", cur_account.username);
+		strcpy(log_content, "删除TPD轨迹");
 		ret = copy_content(data_json, content);
 		break;
 	case 320:
 		port = cmdport;
-		my_syslog("机器人操作", "计算TCF", cur_account.username);
+		strcpy(log_content, "计算TCF");
 		ret = jointtotcf(data_json, content);
 		break;
 	case 321:
 		port = cmdport;
-		my_syslog("机器人操作", "机器人配置文件生效", cur_account.username);
+		strcpy(log_content, "机器人配置文件生效");
 		ret = copy_content(data_json, content);
 		break;
 	case 323:
 		port = cmdport;
-		my_syslog("机器人操作", "设置 DI 配置", cur_account.username);
+		strcpy(log_content, "设置 DI 配置");
 		ret = copy_content(data_json, content);
 		break;
 	case 324:
 		port = cmdport;
-		my_syslog("机器人操作", "设置 DO 配置", cur_account.username);
+		strcpy(log_content, "设置 DO 配置");
 		ret = copy_content(data_json, content);
 		break;
 	case 326:
 		port = cmdport;
-		my_syslog("机器人操作", "设定外部TCP参考点", cur_account.username);
+		strcpy(log_content, "设定外部TCP参考点");
 		ret = copy_content(data_json, content);
 		break;
 	case 327:
 		port = cmdport;
-		my_syslog("机器人操作", "计算外部TCF", cur_account.username);
+		strcpy(log_content, "计算外部TCF");
 		ret = copy_content(data_json, content);
 		break;
 	case 328:
 		port = cmdport;
-		my_syslog("机器人操作", "设定外部TCP工具参考点", cur_account.username);
+		strcpy(log_content, "设定外部TCP工具参考点");
 		ret = copy_content(data_json, content);
 		break;
 	case 329:
 		port = cmdport;
-		my_syslog("机器人操作", "计算工具TCF", cur_account.username);
+		strcpy(log_content, "计算工具TCF");
 		ret = copy_content(data_json, content);
 		break;
 	case 330:
 		port = cmdport;
-		my_syslog("机器人操作", "应用当前显示的外部和工具坐标系", cur_account.username);
+		strcpy(log_content, "应用当前显示的外部和工具坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 332:
 		port = cmdport;
-		my_syslog("机器人操作", "进入 boot 模式", cur_account.username);
+		strcpy(log_content, "进入 boot 模式");
 		ret = copy_content(data_json, content);
 		break;
 	case 333:
 		port = cmdport;
-		my_syslog("机器人操作", "切换拖动示教模式", cur_account.username);
+		strcpy(log_content, "切换拖动示教模式");
 		ret = copy_content(data_json, content);
 		break;
 	case 334:
 		port = cmdport;
-		my_syslog("机器人操作", "定位完成预值", cur_account.username);
+		strcpy(log_content, "定位完成阈值");
+		ret = copy_content(data_json, content);
+		break;
+	case 335:
+		port = cmdport;
+		strcpy(log_content, "设置 DI 有效电平");
+		ret = copy_content(data_json, content);
+		break;
+	case 336:
+		port = cmdport;
+		strcpy(log_content, "设置 DO 有效电平");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:
 		port = cmdport;
-		my_syslog("机器人操作", "获取控制器软件版本", cur_account.username);
+		strcpy(log_content, "获取控制器软件版本");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */
 		port = cmdport;
+		strcpy(log_content, "单步执行指令");
 		ret = step_over(data_json, content);
 		if (ret == FAIL) {
 			perror("step over");
@@ -1635,6 +1667,7 @@ void set(Webs *wp)
 		goto end;
 	}
 
+	my_syslog("机器人操作", log_content, cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;
@@ -1651,6 +1684,7 @@ void set(Webs *wp)
 	return;
 
 auth_end:
+	my_syslog("机器人操作", "当前用户无相应指令操作权限", cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;
@@ -1665,6 +1699,7 @@ auth_end:
 	return;
 
 end:
+	my_syslog("机器人操作", "机器人操作失败", cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;

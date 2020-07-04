@@ -548,6 +548,7 @@ void act(Webs *wp)
 	return;
 
 auth_end:
+	my_syslog("机器人操作", "当前用户无相应指令操作权限", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -559,6 +560,7 @@ auth_end:
 	return;
 
 end:
+	my_syslog("机器人操作", "普通操作失败", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

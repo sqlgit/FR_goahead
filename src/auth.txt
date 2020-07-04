@@ -1,20 +1,3 @@
-#
-#   auth.txt - Authorization data
-#
-#   Schema
-#       user name=NAME password=PASSWORD roles=ROLES
-#       role name=NAME abilities=ABILITIES
-#
-#   Routes (see route.txt) may require authentication and that users possess certain abilities.
-#
-#   Examples:
-#
-#   Define roles
-#       role name=manager abilities=view,edit,delete
-#
-#   Define a user
-#       user name=joshua password=2fd6e47ff9bb70c0465fd2f5c8e5305e roles=manager,purchaser
-#
 user name=admin password=521b1615546a7f6395dbd89fb50ac1e8
-user name=sql password=bf0d1af621b41b6951b5dc6d3676c6fa
-user name=test password=04cdd1b114f0ba8a7490f764becda7df
+user name=programmer password=740a354210678eab192d13081f06f0e8
+user name=operator password=78317efe83692f1d8184d4851c7cddec

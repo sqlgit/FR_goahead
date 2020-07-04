@@ -171,6 +171,11 @@ char *get_dir_content(const char *dir_path)
 
 	root_json = cJSON_CreateObject();
 	dir = opendir(dir_path);
+	if (dir == NULL) {
+		perror("opendir");
+
+		return NULL;
+	}
 	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -224,6 +229,11 @@ char *get_dir_filename(const char *dir_path)
 
 	root_json = cJSON_CreateArray();
 	dir = opendir(dir_path);
+	if (dir == NULL) {
+		perror("opendir");
+
+		return NULL;
+	}
 	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -260,6 +270,11 @@ int check_dir_filename(const char *dir_path, const char *filename)
 	struct dirent *ptr = NULL;
 
 	dir = opendir(dir_path);
+	if (dir == NULL) {
+		perror("opendir");
+
+		return 0;
+	}
 	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
@@ -284,6 +299,11 @@ char *get_dir_filename_txt(const char *dir_path)
 
 	root_json = cJSON_CreateArray();
 	dir = opendir(dir_path);
+	if (dir == NULL) {
+		perror("opendir");
+
+		return NULL;
+	}
 	while ((ptr=readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
 		if(is_in(ptr->d_name, ".txt") == 1) {
@@ -494,7 +514,9 @@ int my_syslog(const char *class, const char *content, const char *user)
 	cJSON_AddStringToObject(newitem, "class", class);
 	cJSON_AddStringToObject(newitem, "content", content);
 	cJSON_AddStringToObject(newitem, "user", user);
-	cJSON_AddItemToArray(root_json, newitem);
+	//cJSON_AddItemToArray(root_json, newitem);
+	/** 将一个新元素插入数组中的0索引的位置，旧的元素的索引依次加1 */
+	cJSON_InsertItemInArray(root_json, 0, newitem);
 	buf = cJSON_Print(root_json);
 
 	ret = write_file(dir_filename, buf);//write file

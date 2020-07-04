@@ -534,6 +534,30 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "CTL_DI15_CONFIG = ", 18)) {
 			strrpc(strline, "CTL_DI15_CONFIG = ", "");
 			cJSON_AddStringToObject(root_json, "ctl_di15_config", strline);
+		} else if(!strncmp(strline, "CTL_DI8_LEVEL = ", 16)) {
+			strrpc(strline, "CTL_DI8_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di8_level", strline);
+		} else if(!strncmp(strline, "CTL_DI9_LEVEL = ", 16)) {
+			strrpc(strline, "CTL_DI9_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di9_level", strline);
+		} else if(!strncmp(strline, "CTL_DI10_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI10_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di10_level", strline);
+		} else if(!strncmp(strline, "CTL_DI11_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI11_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di11_level", strline);
+		} else if(!strncmp(strline, "CTL_DI12_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI12_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di12_level", strline);
+		} else if(!strncmp(strline, "CTL_DI13_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI13_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di13_level", strline);
+		} else if(!strncmp(strline, "CTL_DI14_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI14_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di14_level", strline);
+		} else if(!strncmp(strline, "CTL_DI15_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DI15_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_di15_level", strline);
 		} else if(!strncmp(strline, "CTL_DO8_CONFIG = ", 17)) {
 			strrpc(strline, "CTL_DO8_CONFIG = ", "");
 			cJSON_AddStringToObject(root_json, "ctl_do8_config", strline);
@@ -558,6 +582,30 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "CTL_DO15_CONFIG = ", 18)) {
 			strrpc(strline, "CTL_DO15_CONFIG = ", "");
 			cJSON_AddStringToObject(root_json, "ctl_do15_config", strline);
+		} else if(!strncmp(strline, "CTL_DO8_LEVEL = ", 16)) {
+			strrpc(strline, "CTL_DO8_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do8_level", strline);
+		} else if(!strncmp(strline, "CTL_DO9_LEVEL = ", 16)) {
+			strrpc(strline, "CTL_DO9_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do9_level", strline);
+		} else if(!strncmp(strline, "CTL_DO10_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO10_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do10_level", strline);
+		} else if(!strncmp(strline, "CTL_DO11_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO11_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do11_level", strline);
+		} else if(!strncmp(strline, "CTL_DO12_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO12_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do12_level", strline);
+		} else if(!strncmp(strline, "CTL_DO13_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO13_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do13_level", strline);
+		} else if(!strncmp(strline, "CTL_DO14_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO14_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do14_level", strline);
+		} else if(!strncmp(strline, "CTL_DO15_LEVEL = ", 17)) {
+			strrpc(strline, "CTL_DO15_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "ctl_do15_level", strline);
 		} else if(!strncmp(strline, "WEAVE_COORD_X = ", 16)) {
 			strrpc(strline, "WEAVE_COORD_X = ", "");
 			cJSON_AddStringToObject(root_json, "weave_coord_x", strline);

@@ -179,12 +179,15 @@ void upload(Webs *wp)
 			/* webapp upgrade file */
 			} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_WEBAPP);
+				my_syslog("普通操作", "导入 webapp 升级文件成功", cur_account.username);
 				strcpy(filename, upfile);
 			/* control upgrade file */
 			} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_CONTROL);
+				my_syslog("普通操作", "导入控制器升级文件成功", cur_account.username);
 				strcpy(filename, upfile);
 			} else {
+				my_syslog("普通操作", "导入文件未匹配", cur_account.username);
 				goto end;
 			}
 			//printf("upfile = %s\n", upfile);
