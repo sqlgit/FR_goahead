@@ -254,7 +254,9 @@ static int get_account_info(char **ret_f_content)
 /* get web version */
 static int get_webversion(char **ret_f_content)
 {
-	char strline[LINE_LEN] = {0};
+	char *strline = NULL;
+	strline = (char *)calloc(1, sizeof(char)*LINE_LEN);
+	char version[LINE_LEN] = {0};
 	char *buf = NULL;
 	FILE *fp;
 	int ret = FAIL;
@@ -267,13 +269,13 @@ static int get_webversion(char **ret_f_content)
 		return FAIL;
 	}
 	while (fgets(strline, LINE_LEN, fp) != NULL) {
-		strrpc(strline, "\n", "");
 		if(!strncmp(strline, "VERSION=", 8)) {
-			strrpc(strline, "VERSION=", "");
-			cJSON_AddStringToObject(root_json, "version", strline);
+			strncpy(version, (strline + 8), (strlen(strline) - 8 - 1));
+			cJSON_AddStringToObject(root_json, "version", version);
 
 			break;
 		}
+		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 
 	buf = cJSON_Print(root_json);
@@ -289,6 +291,8 @@ static int get_webversion(char **ret_f_content)
 	//printf("*ret_f_content = %s\n", (*ret_f_content));
 	free(buf);
 	buf = NULL;
+	free(strline);
+	strline = NULL;
 	cJSON_Delete(root_json);
 	root_json = NULL;
 
@@ -625,6 +629,7 @@ static int get_robot_cfg(char **ret_f_content)
 			strrpc(strline, "WEAVE_COORD_C = ", "");
 			cJSON_AddStringToObject(root_json, "weave_coord_c", strline);
 		}
+		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 
 	buf = cJSON_Print(root_json);
@@ -817,6 +822,7 @@ static int get_weave(char **ret_f_content)
 			strrpc(strline, "WEAVE7_RTIME = ", "");
 			cJSON_AddStringToObject(item7, "rtime", strline);
 		}
+		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 
 	buf = cJSON_Print(root_json);

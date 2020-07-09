@@ -11,16 +11,28 @@ if test -x /tmp/fr_control/frsys*.ifs; then
 	cp  /tmp/fr_control/frsys*.ifs  /.boot/
 fi
 
+# update frapploader.sh
+if test -x /tmp/fr_control/frapploader.sh; then
+	rm  /etc/rc.d/frapploader.sh
+	cp  /tmp/fr_control/frapploader.sh  /etc/rc.d/
+fi
+
+#update ehtercat cobot_v2.xml
+if test -x /tmp/fr_control/cobot_v2.xml; then
+    rm  /root/ethercat/cobot_v2.xml;
+	cp  /tmp/fr_control/cobot_v2.xml  /root/ethercat/
+fi
+
 # update control firmware and config files
 if test -x /tmp/fr_control/zqrobot-v2.0; then
 	rm  /root/robot/zqrobot-v2.0
 	cp  /tmp/fr_control/zqrobot-v2.0  /root/robot/
 fi
 
-if test -x /tmp/fr_control/zqrobotSim-v2.0; then
-	rm  /root/robot/zqrobotSim-v2.0
-	cp  /tmp/fr_control/zqrobotSim-v2.0  /root/robot/
-fi
+#if test -x /tmp/fr_control/zqrobotSim-v2.0; then
+#	rm  /root/robot/zqrobotSim-v2.0
+#	cp  /tmp/fr_control/zqrobotSim-v2.0  /root/robot/
+#fi
 
 if test -x /tmp/fr_control/user.config; then
 	rm  /root/robot/user.config
@@ -32,15 +44,20 @@ if test -x /tmp/fr_control/zbt.config; then
 	cp  /tmp/fr_control/zbt.config  /root/robot/
 fi
 
-if test -x /tmp/fr_control/userSim.config; then
-	rm  /root/robot/userSim.config
-	cp  /tmp/fr_control/userSim.config  /root/robot/
+if test -x /tmp/fr_control/ex_device.config; then
+	rm  /root/robot/ex_device.config
+	cp  /tmp/fr_control/ex_device.config  /root/robot/
 fi
 
-if test -x /tmp/fr_control/zbtSim.config; then
-	rm  /root/robot/zbtSim.config
-	cp  /tmp/fr_control/zbtSim.config  /root/robot/
-fi
+#if test -x /tmp/fr_control/userSim.config; then
+#	rm  /root/robot/userSim.config
+#	cp  /tmp/fr_control/userSim.config  /root/robot/
+#fi
+
+#if test -x /tmp/fr_control/zbtSim.config; then
+#	rm  /root/robot/zbtSim.config
+#	cp  /tmp/fr_control/zbtSim.config  /root/robot/
+#fi
 
 #update lib
 if test -x /tmp/fr_control/liblua.so; then
@@ -68,10 +85,10 @@ if test -x /tmp/fr_control/libqbotmotioncontrol.so; then
 	cp  /tmp/fr_control/libqbotmotioncontrol.so  /lib/
 fi
 
-if test -x /tmp/fr_control/libqbotmotioncontrolSim.so; then
-	rm  /lib/libqbotmotioncontrolSim.so
-	cp  /tmp/fr_control/libqbotmotioncontrolSim.so  /lib/
-fi
+#if test -x /tmp/fr_control/libqbotmotioncontrolSim.so; then
+#	rm  /lib/libqbotmotioncontrolSim.so
+#	cp  /tmp/fr_control/libqbotmotioncontrolSim.so  /lib/
+#fi
 
 if test -x /tmp/fr_control/libqbotsmoothtrajectory.so; then
 	rm  /lib/libqbotsmoothtrajectory.so 

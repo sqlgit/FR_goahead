@@ -109,6 +109,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
+	cJSON_AddNumberToObject(root_json, "flag_zero_set", state->flag_zero_set);
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));

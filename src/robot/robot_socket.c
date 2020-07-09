@@ -333,9 +333,9 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		//printf("buf = %s\n", buf);
 		head = strstr(buf, pack_head);
 		tail = strstr(buf, pack_tail);
-		/* 断包(有头无尾，没头没尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
-		if ((head != NULL && tail == NULL) || (head == NULL && tail == NULL)) {
-			perror("Broken packages");
+		/* 断包(有头无尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
+		if (head != NULL && tail == NULL) {
+			perror("Broken package");
 
 			break;
 		}
@@ -437,12 +437,20 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		//		p = p->next;
 		//	}
 		}
-		/* 残包，即只找到包尾或包头在包尾后面，则扔掉缓冲区中包尾及其之前的多余字节 */
-		if ((head == NULL && tail != NULL) || (head != NULL && tail != NULL && head > tail)) {
-			perror("Incomplete packages!");
-			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
+		/* 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
+		if ((head != NULL && tail == NULL) || (head == NULL && tail == NULL)) {
+			perror("Incomplete package!");
+			/* 清空缓冲区, 直接跳出内圈循环，到外圈循环里 */
 			bzero(buf_memory, BUFFSIZE);
-			strcpy(buf_memory, (tail + strlen(pack_tail)));
+
+			break;
+		}
+		/* 包头在包尾后面，则扔掉缓冲区中包头之前的多余字节, 继续内圈循环 */
+		if (head != NULL && tail != NULL && head > tail) {
+			perror("Error package");
+			/* 清空缓冲区, 并把包头后的内容推入缓冲区 */
+			bzero(buf_memory, BUFFSIZE);
+			strcpy(buf_memory, head);
 		}
 	}
 	free(frame);
@@ -674,8 +682,11 @@ void *socket_status_thread(void *arg)
 	CTRL_STATE *state = NULL;
 	CTRL_STATE *pre_state = NULL;
 	int port = (int)arg;
-	printf("port = %d\n", port);
+	int recv_len = 0;
+	char *recv_buf = NULL;//提取出一帧, 存放buf
+	recv_buf = (char *)calloc(1, sizeof(char)*5000);
 
+	printf("port = %d\n", port);
 	switch(port) {
 		case STATUS_PORT:
 			sock = &socket_status;
@@ -719,21 +730,20 @@ void *socket_status_thread(void *arg)
 
 		/* recv ctrl status */
 		while (1) {
-			char status_buf[5000] = {0}; /* Now recv buf is  bytes*/
-			int recv_len = 0;
-
-			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1122 bytes */
-			recv_len = recv(sock->fd, status_buf, (sizeof(CTRL_STATE)*3+14), 0);
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1081 bytes */
+			bzero(recv_buf, sizeof(char)*5000);
+			recv_len = recv(sock->fd, recv_buf, (sizeof(CTRL_STATE)*3+14), 0);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");
 
 				break;
 			}
+			char status_buf[5000] = {0};
 			//printf("recv len = %d\n", recv_len);
-			//printf("recv status_buf = %s\n", status_buf);
-			strrpc(status_buf, "/f/bIII", "");
-			strrpc(status_buf, "III/b/f", "");
+			strncpy(status_buf, (recv_buf + 7), (strlen(recv_buf) - 14));
+			//strrpc(status_buf, "/f/bIII", "");
+			//strrpc(status_buf, "III/b/f", "");
 			//printf("strlen status_buf = %d\n", strlen(status_buf));
 			//printf("recv status_buf = %s\n", status_buf);
 			//printf("state = %p\n", state);
@@ -756,6 +766,8 @@ void *socket_status_thread(void *arg)
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
 	}
+	free(recv_buf);
+	recv_buf = NULL;
 }
 
 /** 状态查询线程 */
@@ -810,7 +822,7 @@ void *socket_state_feedback_thread(void *arg)
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
 				//printf("__LINE__ = %d\n", __LINE__);
 			recv_len = recv(sock->fd, state_buf, (7+1+3+5+3+sizeof(STATE_FB)*3+7), 0); /* Now recv buf is 1225 bytes*/
-			printf("recv_len = %d\n", recv_len);
+			//printf("recv_len = %d\n", recv_len);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");

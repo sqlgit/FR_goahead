@@ -71,7 +71,7 @@ static int compute_file_md5(const char *file_path, char *md5_str)
 static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path)
 {
 	FILE *fp;
-	char strline[LINE_LEN] = {};
+	char strline[LINE_LEN] = {0};
 	char md5sum_up[MD5_STR_LEN + 1] = "";
 	char md5sum_com[MD5_STR_LEN + 1] = "";
 	char version_now[20] = "";
@@ -97,6 +97,7 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 			strrpc(strline, "VERSION=", "");
 			strcpy(version_up, strline);
 		}
+		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 	fclose(fp);
 
@@ -111,6 +112,7 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 			strrpc(strline, "VERSION=", "");
 			strcpy(version_now, strline);
 		}
+		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 	fclose(fp);
 

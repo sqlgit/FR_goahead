@@ -331,7 +331,12 @@ char *get_dir_filename_txt(const char *dir_path)
 	return content;
 }
 
-/* 实现字符串中指定字符串替换 */
+/**
+   实现字符串中所有旧字符串替换为新的字符串,
+   在 str 长度较长时，例如 1024 字节，
+   谨慎使用，效率较低，会占用大量 cpu 时间
+*/
+
 char *strrpc(char *str, const char *oldstr, const char *newstr)
 {
 	int i;
