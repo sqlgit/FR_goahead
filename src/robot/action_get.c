@@ -873,7 +873,7 @@ void get(Webs *wp)
 		perror("json");
 		goto end;
 	}
-	printf("data:%s\n", buf = cJSON_Print(data));
+	//printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
 	buf = NULL;
 	/* get cmd */
@@ -942,7 +942,7 @@ void get(Webs *wp)
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
-	printf("ret_f_content = %s\n", ret_f_content);
+	//printf("ret_f_content = %s\n", ret_f_content);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);

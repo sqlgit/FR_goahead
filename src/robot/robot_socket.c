@@ -438,7 +438,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		//	}
 		}
 		/* 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
-		if ((head != NULL && tail == NULL) || (head == NULL && tail == NULL)) {
+		if ((head == NULL && tail != NULL) || (head == NULL && tail == NULL)) {
 			perror("Incomplete package!");
 			/* 清空缓冲区, 直接跳出内圈循环，到外圈循环里 */
 			bzero(buf_memory, BUFFSIZE);

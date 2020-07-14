@@ -12,8 +12,8 @@
 	#define CLIENT_IP "192.168.152.129"
 //	#define SERVER_IP "192.168.172.128" //zjq
 //	#define CLIENT_IP "192.168.172.128" //zjq
-//	#define SERVER_IP "192.168.121.128" //wsk
-//	#define CLIENT_IP "192.168.121.128"
+//	#define SERVER_IP "192.168.121.129" //wsk
+//	#define CLIENT_IP "192.168.121.129"
 #else
 	#define SERVER_IP "192.168.58.2"
 	#define CLIENT_IP "192.168.58.2"

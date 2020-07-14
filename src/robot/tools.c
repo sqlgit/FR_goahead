@@ -9,6 +9,7 @@
 
 extern ACCOUNT_INFO cur_account;
 extern timer_t timerid;
+extern print_num;
 
 /*********************************** Code *************************************/
 
@@ -625,6 +626,6 @@ void delete_timer()
 		return FAIL;
 	}
 
-	//printf("delete timer success \n");
+	//printf("%d : delete timer success \n", print_num);
 	return SUCCESS;
 }

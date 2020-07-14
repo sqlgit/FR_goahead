@@ -28,6 +28,7 @@ extern STATE_FEEDBACK state_fb;
 extern int robot_type;
 extern ACCOUNT_INFO cur_account;
 static int test_index = 0;
+//int print_num = 0;
 
 /********************************* Function declaration ***********************/
 
@@ -89,6 +90,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_json = NULL;
 	int array[16] = {0};
 	Qnode *p = NULL;
+	Qnode *tmp = NULL;
 	SOCKET_INFO *sock_cmd = NULL;
 	SOCKET_INFO *sock_file = NULL;
 
@@ -183,10 +185,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content,  p->data.msgcontent);
 		/* 删除结点信息 */
+		tmp = p->next;
 		pthread_mutex_lock(&sock_cmd->ret_mute);
 		dequene(&sock_cmd->ret_quene, p->data);
 		pthread_mutex_unlock(&sock_cmd->ret_mute);
-		p = p->next;
+		p = tmp;
 	}
 
 	p = sock_file->ret_quene.front->next;
@@ -199,10 +202,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
+		tmp = p->next;
 		pthread_mutex_lock(&sock_file->ret_mute);
 		dequene(&sock_file->ret_quene, p->data);
 		pthread_mutex_unlock(&sock_file->ret_mute);
-		p = p->next;
+		p = tmp;
 	}
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
@@ -215,10 +219,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->strangePosFlag = 0;
 	}
+	memset(content, 0, sizeof(content));
 	if (state->aliveSlaveNumError == 1) {
-		cJSON_AddStringToObject(error_json, "key", "活动从站数量错误");
+		sprintf(content, "活动从站数量错误，活动从站数量为:%d", state->aliveSlaveNumFeedback);
+		cJSON_AddStringToObject(error_json, "key", content);
 		if (pre_state->aliveSlaveNumError != 1) {
-			my_syslog("错误", "活动从站数量错误", cur_account.username);
+			my_syslog("错误", content, cur_account.username);
 			pre_state->aliveSlaveNumError = 1;
 		}
 	} else {
@@ -971,7 +977,7 @@ void set_timer()
 	if (timer_settime(timerid, 0, &it, 0) == -1) {
 		perror("fail to timer_settime");
 	}
-	//printf("set timer success \n");
+	//printf("%d : set timer success \n", print_num);
 }
 
 /* get motion controller data and return to page */
@@ -1018,6 +1024,7 @@ void sta(Webs *wp)
 
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "cons")) {
+		//print_num++;
 		ret = connect_status(ret_status);
 		delete_timer();
 		set_timer();
@@ -1028,6 +1035,8 @@ void sta(Webs *wp)
 	} else if(!strcmp(cmd, "vardata_feedback")) {
 		ret = vardata_feedback(ret_status);
 	} else if(!strcmp(cmd, "refresh")) {
+		printf("refresh !\n");
+		//print_num++;
 		delete_timer();
 		ret = SUCCESS;
 		strcpy(ret_status, "refresh!");
