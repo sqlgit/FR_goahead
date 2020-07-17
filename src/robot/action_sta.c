@@ -90,7 +90,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_json = NULL;
 	int array[16] = {0};
 	Qnode *p = NULL;
-	Qnode *tmp = NULL;
 	SOCKET_INFO *sock_cmd = NULL;
 	SOCKET_INFO *sock_file = NULL;
 
@@ -185,11 +184,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content,  p->data.msgcontent);
 		/* 删除结点信息 */
-		tmp = p->next;
 		pthread_mutex_lock(&sock_cmd->ret_mute);
 		dequene(&sock_cmd->ret_quene, p->data);
 		pthread_mutex_unlock(&sock_cmd->ret_mute);
-		p = tmp;
+		p = sock_cmd->ret_quene.front->next;
 	}
 
 	p = sock_file->ret_quene.front->next;
@@ -202,11 +200,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
-		tmp = p->next;
 		pthread_mutex_lock(&sock_file->ret_mute);
 		dequene(&sock_file->ret_quene, p->data);
 		pthread_mutex_unlock(&sock_file->ret_mute);
-		p = tmp;
+		p = sock_file->ret_quene.front->next;
 	}
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
@@ -893,7 +890,7 @@ static int vardata_feedback(char *ret_status)
 	cJSON *root = NULL;
 
 	if (fb_queneempty(&fb_quene)) {
-		//fb_print_node_num(fb_quene);
+		fb_print_node_num(fb_quene);
 		root_json = cJSON_CreateObject();
 		value_json = cJSON_CreateObject();
 

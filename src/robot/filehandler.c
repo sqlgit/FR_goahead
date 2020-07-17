@@ -225,9 +225,17 @@ void upload(Webs *wp)
 			perror("uncompress fail!");
 			goto end;
 		}
+
+	/**	bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "chmod 777 %s", SHELL_WEBUPGRADE);
+		system(cmd);
+	 */
 		bzero(cmd, sizeof(cmd));
+		//sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
+		//sprintf(cmd, "sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
 		sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
 		system(cmd);
+		printf("webapp upgrade success!\n");
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 	} else if (strcmp(filename, UPGRADE_CONTROL) == 0) {
 		system("cd /tmp && tar -zxvf control.tar.gz");

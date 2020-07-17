@@ -51,11 +51,11 @@ void fb_clearquene(FB_LinkQuene *q)
 int fb_queneempty(FB_LinkQuene *q)
 {
 	if (q->rear == q->front) {
-		printf("判空：是\n");
+	//	printf("Is NULL: Yes\n");
 
 		return 0;
 	} else {
-		printf("判空：否\n");
+	//	printf("Is NULL：No\n");
 
 		return 1;
 	}

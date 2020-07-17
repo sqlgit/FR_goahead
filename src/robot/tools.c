@@ -16,8 +16,8 @@ extern print_num;
 /*
 pszInput:输入待分割字符串
 pszDelimiters:分割标识符
-uiAry_num:分割的份数
-uiAry_size:每份的size
+Ary_num:分割的份数
+Ary_size:每份的size
 pszAry_out:分割的子串的输出参数
  */
 int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out)
@@ -239,7 +239,8 @@ char *get_dir_filename(const char *dir_path)
 		/* current dir OR parrent dir */
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
-		cJSON_AddStringToObject(root_json, "key", ptr->d_name);
+		//cJSON_AddStringToObject(root_json, "key", ptr->d_name);
+		cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
 	}
 	buf = cJSON_Print(root_json);
 	printf("buf = %s\n", buf);

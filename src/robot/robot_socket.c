@@ -478,13 +478,14 @@ static void *socket_send_thread(void *arg)
 
 			pthread_exit(NULL);
 		}
-		/* 先遍历即时指令队列 */
+		/* 先遍历即时指令队列,是否有数据需要发送 */
 		p = sock->im_quene.front->next;
 		while (p != NULL) {
 			/* 处于等待发送的初始状态 */
 			//if (p->data.state == 0) {
 				if (socket_send(sock, &p->data) == FAIL) {
 					perror("socket send");
+					break;
 				} else {
 					/* 发送成功后删除结点信息 */
 					pthread_mutex_lock(&sock->im_mute);
@@ -492,9 +493,9 @@ static void *socket_send_thread(void *arg)
 					pthread_mutex_unlock(&sock->im_mute);
 				}
 			//}
-			p = p->next;
+			p = sock->im_quene.front->next;
 		}
-		/* 再遍历非即时指令队列 */
+		/* 再查询非即时指令队列,是否有数据需要发送 */
 		p = sock->quene.front->next;
 		if (p != NULL) {
 			/* 处于等待发送的初始状态 */
@@ -509,7 +510,6 @@ static void *socket_send_thread(void *arg)
 				}
 		//		break; //发送完一个非即时指令后，立刻重新进入 while 循环,看是否有即时指令需要下发
 			//}
-		//	p = p->next;
 		}
 
 		delay(1);
@@ -820,7 +820,6 @@ void *socket_state_feedback_thread(void *arg)
 			int recv_len = 0;
 
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
-				//printf("__LINE__ = %d\n", __LINE__);
 			recv_len = recv(sock->fd, state_buf, (7+1+3+5+3+sizeof(STATE_FB)*3+7), 0); /* Now recv buf is 1225 bytes*/
 			//printf("recv_len = %d\n", recv_len);
 			/* recv timeout or error */
