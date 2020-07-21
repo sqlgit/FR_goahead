@@ -144,3 +144,16 @@ void fb_print_node_num(FB_LinkQuene q)
 	return;
 }
 
+/* get quene node number */
+int fb_get_node_num(FB_LinkQuene q)
+{
+	FB_Qnode *p = q.front->next;
+
+	int len = 0;
+	while (p != NULL) {
+		p = p->next;
+		len++;
+	}
+
+	return len;
+}

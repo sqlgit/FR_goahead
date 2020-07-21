@@ -13,6 +13,7 @@ extern CTRL_STATE vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
+extern SOCKET_INFO socket_state;
 extern SOCKET_INFO socket_vir_cmd;
 extern SOCKET_INFO socket_vir_file;
 extern int robot_type;
@@ -37,7 +38,6 @@ static int set_state_id(const cJSON *data_json, char *content);
 static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
 static int jointtotcf(const cJSON *data_json, char *content);
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -955,7 +955,9 @@ static int set_state(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	/** clear state quene */
+	pthread_mutex_lock(&socket_state.mute);
 	fb_clearquene(&fb_quene);
+	pthread_mutex_unlock(&socket_state.mute);
 	sprintf(content, "SetCTLStateQuery(%s)", flag->valuestring);
 
 	return SUCCESS;
@@ -991,52 +993,6 @@ static int jointtotcf(const cJSON *data_json, char *content)
 	}
 	sprintf(content, "JointToTCF(%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
 
-	return SUCCESS;
-}
-
-static int enquene_result_dequene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
-{
-	//int ret = FAIL;
-	/* socket 连接已经断开 */
-	if (sock->connect_status == 0) {
-
-		return FAIL;
-	}
-
-	/* 创建结点 */
-	QElemType node;
-	createnode(&node, type, send_content);
-	pthread_mutex_lock(&sock->mut);
-	if (sock->msghead >= MAX_MSGHEAD) {
-		sock->msghead = 1;
-	} else {
-		sock->msghead++;
-	}
-	node.msghead = sock->msghead;
-	pthread_mutex_unlock(&sock->mut);
-	/* 创建结点插入队列中 */
-	if (cmd_type == 1) { //非即时指令
-		pthread_mutex_lock(&sock->mute);
-		enquene(&sock->quene, node);
-		pthread_mutex_unlock(&sock->mute);
-	} else { //即时指令
-		pthread_mutex_lock(&sock->im_mute);
-		enquene(&sock->im_quene, node);
-		pthread_mutex_unlock(&sock->im_mute);
-	}
-	//pthread_cond_signal(&cond_cmd);
-
-	//ret = quene_recv_result(node, sock->quene, recv_content);
-
-	/* 把结点从队列中删除 */
-	/*
-	 pthread_mutex_lock(mute);
-	 dequene(&sock->quene, node);
-	 pthread_mutex_unlock(mute);
-	 */
-	// TODO: add signal
-
-	//return ret;
 	return SUCCESS;
 }
 
@@ -1644,19 +1600,19 @@ void set(Webs *wp)
 	switch (port) {
 	/* send cmd to 8080 port */
 	case CMD_PORT:
-		ret = enquene_result_dequene(&socket_cmd, cmd, content, cmd_type);
+		ret = socket_enquene(&socket_cmd, cmd, content, cmd_type);
 		break;
 		/* send file cmd to 8082 port */
 	case FILE_PORT:
-		ret = enquene_result_dequene(&socket_file, cmd, content, cmd_type);
+		ret = socket_enquene(&socket_file, cmd, content, cmd_type);
 		break;
 		/* send cmd to 8070 port */
 	case VIR_CMD_PORT:
-		ret = enquene_result_dequene(&socket_vir_cmd, cmd, content, cmd_type);
+		ret = socket_enquene(&socket_vir_cmd, cmd, content, cmd_type);
 		break;
 		/* send file cmd to 8072 port */
 	case VIR_FILE_PORT:
-		ret = enquene_result_dequene(&socket_vir_file, cmd, content, cmd_type);
+		ret = socket_enquene(&socket_vir_file, cmd, content, cmd_type);
 		break;
 	default:
 		perror("port");

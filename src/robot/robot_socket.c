@@ -58,6 +58,7 @@ static void state_feedback_init(STATE_FEEDBACK *fb)
 		fb->id[i] = 0;
 	}
 	fb->icount = 0;
+	fb->overflow = 0;
 }
 
 /* socket init */
@@ -854,6 +855,16 @@ void *socket_state_feedback_thread(void *arg)
 				fb_createnode(&sta_fb);
 				//bzero(state, sizeof(STATE_FB));
 				StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
+				if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
+					state_fb.overflow = 1;
+					/** clear state quene */
+					pthread_mutex_lock(&sock->mute);
+					fb_clearquene(&fb_quene);
+					pthread_mutex_unlock(&sock->mute);
+				} else {
+					state_fb.overflow = 0;
+				}
+				/** enquene node */
 				pthread_mutex_lock(&sock->mute);
 				fb_enquene(&fb_quene, sta_fb);
 				pthread_mutex_unlock(&sock->mute);
@@ -878,3 +889,50 @@ void *socket_state_feedback_thread(void *arg)
 	free(state_buf);
 	state_buf = NULL;
 }
+
+int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
+{
+	//int ret = FAIL;
+	/* socket 连接已经断开 */
+	if (sock->connect_status == 0) {
+
+		return FAIL;
+	}
+
+	/* 创建结点 */
+	QElemType node;
+	createnode(&node, type, send_content);
+	pthread_mutex_lock(&sock->mut);
+	if (sock->msghead >= MAX_MSGHEAD) {
+		sock->msghead = 1;
+	} else {
+		sock->msghead++;
+	}
+	node.msghead = sock->msghead;
+	pthread_mutex_unlock(&sock->mut);
+	/* 创建结点插入队列中 */
+	if (cmd_type == 1) { //非即时指令
+		pthread_mutex_lock(&sock->mute);
+		enquene(&sock->quene, node);
+		pthread_mutex_unlock(&sock->mute);
+	} else { //即时指令
+		pthread_mutex_lock(&sock->im_mute);
+		enquene(&sock->im_quene, node);
+		pthread_mutex_unlock(&sock->im_mute);
+	}
+	//pthread_cond_signal(&cond_cmd);
+
+	//ret = quene_recv_result(node, sock->quene, recv_content);
+
+	/* 把结点从队列中删除 */
+	/*
+	 pthread_mutex_lock(mute);
+	 dequene(&sock->quene, node);
+	 pthread_mutex_unlock(mute);
+	 */
+	// TODO: add signal
+
+	//return ret;
+	return SUCCESS;
+}
+

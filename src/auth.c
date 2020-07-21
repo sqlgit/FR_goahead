@@ -24,9 +24,10 @@
 /********************************* Includes ***********************************/
 
 #include    "goahead.h"
-#include	"tools.h"
 #include	"cJSON.h"
-#include "mysqlite3.h"
+#include	"tools.h"
+#include 	"robot_socket.h"
+#include 	"mysqlite3.h"
 
 #if ME_GOAHEAD_AUTH
 
@@ -42,6 +43,9 @@ static char *masterSecret;
 static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;
 static WebsVerify verifyPassword = websVerifyPasswordFromFile;
 extern ACCOUNT_INFO cur_account;
+extern FB_LinkQuene fb_quene;
+extern SOCKET_INFO socket_cmd;
+extern SOCKET_INFO socket_state;
 #if ME_COMPILER_HAS_PAM
 typedef struct {
     char    *name;
@@ -534,6 +538,13 @@ PUBLIC bool websLogoutUser(Webs *wp)
         return 0;
     }
     websRedirectByStatus(wp, HTTP_CODE_OK);
+	printf("Will clear state quene!\n");
+	/** clear state quene */
+	pthread_mutex_lock(&socket_state.mute);
+	fb_clearquene(&fb_quene);
+	pthread_mutex_unlock(&socket_state.mute);
+	/** send stop vardata_feedback to TaskManagement */
+	socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
 	delete_timer();
 	my_syslog("普通操作", "用户登出成功", cur_account.username);
 

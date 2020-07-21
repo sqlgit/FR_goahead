@@ -912,6 +912,7 @@ static int vardata_feedback(char *ret_status)
 		cJSON_AddItemToObject(root_json, "value", value_json);
 		test_index++;
 		cJSON_AddNumberToObject(root_json, "index", test_index);
+		cJSON_AddNumberToObject(root_json, "overflow", state_fb.overflow);
 		buf = cJSON_Print(root_json);
 		//printf("send to GUI = %s\n", buf);
 		strcpy(ret_status, buf);
@@ -942,6 +943,14 @@ void sig_handler(int signo)
 	printf("Will free Sessions!\n");
 	//清空 session
 	myfreeSessions();
+
+	printf("Will clear state quene!\n");
+	/** clear state quene */
+	pthread_mutex_lock(&socket_state.mute);
+	fb_clearquene(&fb_quene);
+	pthread_mutex_unlock(&socket_state.mute);
+	/** send stop vardata_feedback to TaskManagement */
+	socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
 }
 
 /* set timer */
@@ -1033,6 +1042,13 @@ void sta(Webs *wp)
 		ret = vardata_feedback(ret_status);
 	} else if(!strcmp(cmd, "refresh")) {
 		printf("refresh !\n");
+		printf("Will clear state quene!\n");
+		/** clear state quene */
+		pthread_mutex_lock(&socket_state.mute);
+		fb_clearquene(&fb_quene);
+		pthread_mutex_unlock(&socket_state.mute);
+		/** send stop vardata_feedback to TaskManagement */
+		socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
 		//print_num++;
 		delete_timer();
 		ret = SUCCESS;

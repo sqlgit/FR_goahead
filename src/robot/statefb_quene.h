@@ -36,5 +36,7 @@ int fb_queneempty(FB_LinkQuene *q);
 void fb_enquene(FB_LinkQuene *q, STATE_FB e);
 void fb_dequene(FB_LinkQuene *q);
 void fb_printquene(FB_LinkQuene q);
+void fb_print_node_num(FB_LinkQuene q);
+int fb_get_node_num(FB_LinkQuene q);
 
 #endif
