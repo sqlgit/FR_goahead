@@ -107,6 +107,7 @@ typedef struct _CTRL_STATE
 	uint8_t    fileError;               /** 文件错误 */
 	uint8_t    paraError;               /** 参数错误 */
 	uint8_t    alarm;                   /** 警告 */
+	uint8_t    safetydoor_alarm;        /** 安全门警告 */
 	int        toolNum;                 /** 工具号 */
 	uint8_t    gripperFaultId;          /** 错误夹爪号 */
 	uint8_t    gripperFaultNum;         /** 夹爪错误编号 */

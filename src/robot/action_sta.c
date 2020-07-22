@@ -657,6 +657,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->paraError = 0;
 	}
+	switch(state->paraError) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "工具号超限错误");
+			if (pre_state->paraError != 1) {
+				my_syslog("错误", "工具号超限错误", cur_account.username);
+				pre_state->paraError = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "定位完成阈值错误");
+			if (pre_state->paraError != 2) {
+				my_syslog("错误", "定位完成阈值错误", cur_account.username);
+				pre_state->paraError = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "碰撞等级错误");
+			if (pre_state->paraError != 3) {
+				my_syslog("错误", "碰撞等级错误", cur_account.username);
+				pre_state->paraError = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "负载重量错误");
+			if (pre_state->paraError != 4) {
+				my_syslog("错误", "负载重量错误", cur_account.username);
+				pre_state->paraError = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "负载质心X错误");
+			if (pre_state->paraError != 5) {
+				my_syslog("错误", "负载质心X错误", cur_account.username);
+				pre_state->paraError = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "负载质心Y错误");
+			if (pre_state->paraError != 6) {
+				my_syslog("错误", "负载质心Y错误", cur_account.username);
+				pre_state->paraError = 6;
+			}
+			break;
+		case 7:
+			cJSON_AddStringToObject(error_json, "key", "负载质心Z错误");
+			if (pre_state->paraError != 7) {
+				my_syslog("错误", "负载质心Z错误", cur_account.username);
+				pre_state->paraError = 7;
+			}
+			break;
+		case 8:
+			cJSON_AddStringToObject(error_json, "key", "DI滤波时间错误");
+			if (pre_state->paraError != 8) {
+				my_syslog("错误", "DI滤波时间错误", cur_account.username);
+				pre_state->paraError = 8;
+			}
+			break;
+		case 9:
+			cJSON_AddStringToObject(error_json, "key", "AxleDI滤波时间错误");
+			if (pre_state->paraError != 9) {
+				my_syslog("错误", "AxleDI滤波时间错误", cur_account.username);
+				pre_state->paraError = 9;
+			}
+			break;
+		case 10:
+			cJSON_AddStringToObject(error_json, "key", "AI滤波时间错误");
+			if (pre_state->paraError != 10) {
+				my_syslog("错误", "AI滤波时间错误", cur_account.username);
+				pre_state->paraError = 10;
+			}
+			break;
+		case 11:
+			cJSON_AddStringToObject(error_json, "key", "AxleAI滤波时间错误");
+			if (pre_state->paraError != 11) {
+				my_syslog("错误", "AxleAI滤波时间错误", cur_account.username);
+				pre_state->paraError = 11;
+			}
+			break;
+		case 12:
+			cJSON_AddStringToObject(error_json, "key", "DI高低电平范围错误");
+			if (pre_state->paraError != 12) {
+				my_syslog("错误", "DI高低电平范围错误", cur_account.username);
+				pre_state->paraError = 12;
+			}
+			break;
+		case 13:
+			cJSON_AddStringToObject(error_json, "key", "DO高低电平范围错误");
+			if (pre_state->paraError != 13) {
+				my_syslog("错误", "DO高低电平范围错误", cur_account.username);
+				pre_state->paraError = 13;
+			}
+			break;
+		default:
+			pre_state->paraError = 0;
+			break;
+	}
 	switch(state->alarm) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "肩关节配置变化");
@@ -846,6 +942,15 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		default:
 			pre_state->collision_err = 0;
 			break;
+	}
+	if (state->safetydoor_alarm == 1) {
+		cJSON_AddStringToObject(error_json, "key", "安全门触发");
+		if (pre_state->safetydoor_alarm != 1) {
+			my_syslog("错误", "安全门触发", cur_account.username);
+			pre_state->safetydoor_alarm = 1;
+		}
+	} else {
+		pre_state->safetydoor_alarm = 0;
 	}
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
