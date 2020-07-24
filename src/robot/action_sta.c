@@ -648,15 +648,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->fileError = 0;
 			break;
 	}
-	if (state->paraError == 1) {
-		cJSON_AddStringToObject(error_json, "key", "工具号超限错误");
-		if (pre_state->paraError != 1) {
-			my_syslog("错误", "工具号超限错误", cur_account.username);
-			pre_state->paraError = 1;
-		}
-	} else {
-		pre_state->paraError = 0;
-	}
+	//printf("state->paraError = %d\n", state->paraError);
 	switch(state->paraError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "工具号超限错误");

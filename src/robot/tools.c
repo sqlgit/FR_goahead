@@ -14,7 +14,7 @@ extern print_num;
 /*********************************** Code *************************************/
 
 /*
-pszInput:输入待分割字符串
+pszInput:输入待分割字符串, MAXSIZE: 20480
 pszDelimiters:分割标识符
 Ary_num:分割的份数
 Ary_size:每份的size
@@ -73,61 +73,60 @@ int write_file(const char *file_name, const char *file_content)
 	return SUCCESS;
 }
 
-/* oepn file and return file content without '\n' '\r' '\t' */
+/**
+  open file and return file content without '\n' '\r' '\t'
+  函数执行效率较高.
+  参考：函数在操作 520000 字节数的文件时，耗时大约 10ms 左右
+  RETURN:
+	malloc fail: NULL
+	empty file: Empty
+	Normal file: file content
+*/
 char *get_file_content(const char *file_path)
 {
 	FILE *fp = NULL;
 	int file_size = 0;
 	int i = 0;
-	char *content = NULL;
-	char *tmp = NULL;
+	int j = 0;
+	char *file_content = NULL;
 
-//	printf("file_path = %s\n", file_path);
+	//clock_t start, finish;
+	//start = clock();
+
+	//printf("file_path = %s\n", file_path);
+
 	if ((fp = fopen(file_path, "r")) == NULL) {
-		perror("open file");
+		perror("File is empty");
 
-		return NULL;
+		return "Empty";
 	}
 	fseek(fp, 0, SEEK_END);
 	file_size = ftell(fp);
-//	printf("file_size = %d\n", file_size);
 	fseek(fp, 0, SEEK_SET);
 
-	tmp = (char *)calloc(1, file_size*sizeof(char)+1);
-	if(tmp == NULL) {
+	file_content = (char *)calloc(1, file_size*sizeof(char)+1);
+	//file_content = (char *)calloc(1, 530000000000000);
+	if (file_content == NULL) {
 		perror("calloc");
 		fclose(fp);
 
 		return NULL;
 	}
-	fread(tmp, sizeof(char), file_size, fp);
-/*
-	printf("tmp = %s\n", tmp);
-	printf("strlen tmp = %d\n", strlen(tmp));
-	printf("sizeof tmp = %d\n", sizeof(tmp));
-*/
-	char file_content[file_size+1];
-	memset(file_content, 0, (file_size+1));
-	char *tmp2 = tmp;
-	while(*tmp2 != '\0') {
-		if(*tmp2 != '\n' && *tmp2 != '\r' && *tmp2 !='\t'){
-			file_content[i] = *tmp2;
-			i++;
-		}
-		tmp2++;
-	}
-	file_content[i] = '\0';
-	content = (char *)calloc(1, strlen(file_content)+1);
-	if(content != NULL) {
-		strcpy(content, file_content);
-	} else {
-		perror("calloc");
-	}
-	free(tmp);
-	tmp = NULL;
-	fclose(fp);
+	fread(file_content, sizeof(char), file_size, fp);
 
-	return content;
+	while (file_content[i] != '\0') {
+		if(file_content[i] != '\n' && file_content[i] != '\r' && file_content[i] !='\t') {
+			file_content[j++] = file_content[i];
+		}
+		i++;
+	}
+	file_content[j] = '\0';
+	//printf("file_content = %s\n", file_content);
+	fclose(fp);
+	//finish = clock();
+	//printf("%lf m seconds\n", (double)(finish-start)/CLOCKS_PER_SEC);
+
+	return file_content;
 }
 
 /* open file and return complete file content */
@@ -243,7 +242,7 @@ char *get_dir_filename(const char *dir_path)
 		cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
 	}
 	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
+	//printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
@@ -282,8 +281,16 @@ int check_dir_filename(const char *dir_path, const char *filename)
 		if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
 		if (strcmp(ptr->d_name, filename) == 0) {
+			if (dir != NULL) {
+				closedir(dir);
+				dir = NULL;
+			}
 			return 1;
 		}
+	}
+	if (dir != NULL) {
+		closedir(dir);
+		dir = NULL;
 	}
 
 	return 0;
@@ -314,7 +321,7 @@ char *get_dir_filename_txt(const char *dir_path)
 		}
 	}
 	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
+	//printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
 	if(content != NULL) {
 		strcpy(content, buf);
@@ -508,10 +515,16 @@ int my_syslog(const char *class, const char *content, const char *user)
 	//printf("dir_filename = %s\n", dir_filename);
 
 	f_content = get_file_content(dir_filename);
-	/* file is NULL */
+	/* f_content is NULL */
 	if (f_content == NULL) {
-		delete_log_file(1);
+		return FAIL;
+	/* f_content is empty */
+	} else if (strcmp(f_content, "Empty") == 0) {
+		if (delete_log_file(1) == FAIL) {
+			return FAIL;
+		}
 		root_json = cJSON_CreateArray();
+	/* f_content exist */
 	} else {
 		root_json = cJSON_Parse(f_content);
 	}
@@ -548,13 +561,14 @@ int delete_log_file(int flag)
 	int log_count = 0;
 
 	f_content = get_file_content(FILE_CFG);
-	/* file is not NULL */
-	if (f_content != NULL) {
+	/* f_content is not NULL and f_content is not empty */
+	if (f_content != NULL && strcmp(f_content, "Empty") != 0) {
+		//printf("f_content = %s\n", f_content);
 		root_json = cJSON_Parse(f_content);
 		if (root_json != NULL) {
 			count = cJSON_GetObjectItem(root_json, "log_count");
 			if (count != NULL) {
-				printf("count = %d\n", count->valuestring);
+				//printf("count = %d\n", count->valuestring);
 				if (flag) {//此时马上需要新增一个 log文件，所以需要多删除一个最旧的 log 文件
 					log_count = atoi(count->valuestring) - 1;
 				} else {
@@ -562,11 +576,13 @@ int delete_log_file(int flag)
 				}
 				sprintf(cmd, "sh %s %d", SHELL_DELETELOG, log_count);
 				system(cmd);
+
+				return SUCCESS;
 			}
 		}
 	}
 
-	return SUCCESS;
+	return FAIL;
 }
 
 void *create_dir(const char *dir_path)

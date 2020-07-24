@@ -175,9 +175,16 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 	}
 	sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
 	*ret_f_content = get_file_content(dir_filename);
-	/* file is NULL */
+	/* ret_f_content is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
+
+		return FAIL;
+	}
+	/* ret_f_content is empty */
+	if (strcmp(*ret_f_content, "Empty") == 0) {
+		perror("get empty file");
+		*ret_f_content = NULL;
 
 		return FAIL;
 	}
@@ -189,9 +196,16 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 static int get_syscfg(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_CFG);
-	/* file is NULL */
+	/* ret_f_content is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get file content");
+
+		return FAIL;
+	}
+	/* ret_f_content is empty */
+	if (strcmp(*ret_f_content, "Empty") == 0) {
+		perror("get empty file");
+		*ret_f_content = NULL;
 
 		return FAIL;
 	}
