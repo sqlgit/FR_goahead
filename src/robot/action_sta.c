@@ -135,6 +135,33 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddItemToObject(root_json, "tl_di", cJSON_CreateIntArray(array, 16));
 
 	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisPos", array_json);
+	for (i = 0; i < 4; i++) {
+		//printf("state->exaxis_status[%d].exAxisPos = %d\n", i, state->exaxis_status[i].exAxisPos);
+		cJSON_AddNumberToObject(array_json, "key", double_round(state->exaxis_status[i].exAxisPos, 3));
+	}
+					
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisRDY", array_json);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisRDY);
+	}
+
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisINPOS", array_json);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisINPOS);
+	}
+	cJSON_AddNumberToObject(root_json, "exAxisActiveFlag", state->exAxisActiveFlag);
+
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisSpeedBack", array_json);
+	for (i = 0; i < 4; i++) {
+		//printf("state->exaxis_status[%d].exAxisSpeedBack = %d\n", i, state->exaxis_status[i].exAxisSpeedBack);
+		cJSON_AddNumberToObject(array_json, "key", double_round(state->exaxis_status[i].exAxisSpeedBack, 3));
+	}
+
+	array_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "ai", array_json);
 	for (i = 0; i < 6; i++) {
 		//printf("state->analog_input[%d] = %d\n", i, state->analog_input[i]);
@@ -644,6 +671,20 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->fileError = 4;
 			}
 			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "exaxis配置文件版本错误");
+			if (pre_state->fileError != 5) {
+				my_syslog("错误", "exaxis配置文件版本错误", cur_account.username);
+				pre_state->fileError = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "exaxis配置文件加载失败");
+			if (pre_state->fileError != 6) {
+				my_syslog("错误", "exaxis配置文件加载失败", cur_account.username);
+				pre_state->fileError = 6;
+			}
+			break;
 		default:
 			pre_state->fileError = 0;
 			break;
@@ -743,6 +784,41 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			break;
 		default:
 			pre_state->paraError = 0;
+			break;
+	}
+//printf("state->exAxisExSoftLimitError = %d\n", state->exAxisExSoftLimitError);
+	switch(state->exAxisExSoftLimitError)
+	{
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "外部轴1轴超出软限位故障");
+			if (pre_state->exAxisExSoftLimitError != 1) {
+				my_syslog("错误", "外部轴1轴超出软限位故障", cur_account.username);
+				pre_state->exAxisExSoftLimitError = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "外部轴2轴超出软限位故障");
+			if (pre_state->exAxisExSoftLimitError != 2) {
+				my_syslog("错误", "外部轴2轴超出软限位故障", cur_account.username);
+				pre_state->exAxisExSoftLimitError = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "外部轴3轴超出软限位故障");
+			if (pre_state->exAxisExSoftLimitError != 3) {
+				my_syslog("错误", "外部轴3轴超出软限位故障", cur_account.username);
+				pre_state->exAxisExSoftLimitError = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "外部轴4轴超出软限位故障");
+			if (pre_state->exAxisExSoftLimitError != 4) {
+				my_syslog("错误", "外部轴4轴超出软限位故障", cur_account.username);
+				pre_state->exAxisExSoftLimitError = 4;
+			}
+			break;
+		default:
+			pre_state->exAxisExSoftLimitError = 0;
 			break;
 	}
 	switch(state->alarm) {

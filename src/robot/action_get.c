@@ -17,6 +17,7 @@ extern ACCOUNT_INFO cur_account;
 static int get_points(char **ret_f_content);
 static int get_tool_cdsystem(char **ret_f_content);
 static int get_ex_tool_cdsystem(char **ret_f_content);
+static int get_exaxis_cdsystem(char **ret_f_content);
 static int get_user(char **ret_f_content);
 static int get_template(char **ret_f_content);
 static int get_tpd_name(char **ret_f_content);
@@ -28,6 +29,7 @@ static int get_webversion(char **ret_f_content);
 static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
 static int get_weave(char **ret_f_content);
+static int get_exaxis_cfg(char **ret_f_content);
 
 /*********************************** Code *************************************/
 
@@ -89,6 +91,31 @@ static int get_ex_tool_cdsystem(char **ret_f_content)
 	sprintf(sql, "select * from et_coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select ex_tool_cdsystem");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get exaxis coordinate system data */
+static int get_exaxis_cdsystem(char **ret_f_content)
+{
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+	sprintf(sql, "select * from exaxis_coordinate_system order by id ASC");
+	if (select_info_json_sqlite3(DB_EXAXIS_CDSYSTEM, sql, &json_data) == -1) {
+		perror("select exaxis_cdsystem");
 
 		return FAIL;
 	}
@@ -175,8 +202,8 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 	}
 	sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
 	*ret_f_content = get_file_content(dir_filename);
-	/* ret_f_content is NULL */
-	if (*ret_f_content == NULL) {
+	/* ret_f_content is NULL or no such file*/
+	if (*ret_f_content == NULL || *ret_f_content == "NO_FILE") {
 		perror("get file content");
 
 		return FAIL;
@@ -196,8 +223,8 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 static int get_syscfg(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_CFG);
-	/* ret_f_content is NULL */
-	if (*ret_f_content == NULL) {
+	/* ret_f_content is NULL or no such file*/
+	if (*ret_f_content == NULL || *ret_f_content == "NO_FILE") {
 		perror("get file content");
 
 		return FAIL;
@@ -665,7 +692,159 @@ static int get_robot_cfg(char **ret_f_content)
 	return ret;
 }
 
-/** get weave param */
+/** get exaxis cfg */
+static int get_exaxis_cfg(char **ret_f_content)
+{
+	char strline[LINE_LEN] = {0};
+	char *buf = NULL;
+	FILE *fp;
+	int ret = FAIL;
+	cJSON *root_json = NULL;
+	cJSON *item1 = NULL;
+	cJSON *item2 = NULL;
+	cJSON *item3 = NULL;
+	cJSON *item4 = NULL;
+
+	if ((fp = fopen(EXAXIS_CFG, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	root_json = cJSON_CreateArray();
+	item1 = cJSON_CreateObject();
+	item2 = cJSON_CreateObject();
+	item3 = cJSON_CreateObject();
+	item4 = cJSON_CreateObject();
+	cJSON_AddItemToArray(root_json, item1);
+	cJSON_AddItemToArray(root_json, item2);
+	cJSON_AddItemToArray(root_json, item3);
+	cJSON_AddItemToArray(root_json, item4);
+	cJSON_AddStringToObject(item1, "axis_id", "1");
+	cJSON_AddStringToObject(item2, "axis_id", "2");
+	cJSON_AddStringToObject(item3, "axis_id", "3");
+	cJSON_AddStringToObject(item4, "axis_id", "4");
+
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if(!strncmp(strline, "EXTERNALAXIS1_TYPE = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS1_TYPE = ", "");
+			cJSON_AddStringToObject(item1, "axis_type", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_DIRECT = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS1_DIRECT = ", "");
+			cJSON_AddStringToObject(item1, "axis_direction", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_VEL = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS1_VEL = ", "");
+			cJSON_AddStringToObject(item1, "axis_speed", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_ACC = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS1_ACC = ", "");
+			cJSON_AddStringToObject(item1, "axis_acc", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_MINPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS1_MINPOS = ", "");
+			cJSON_AddStringToObject(item1, "axis_negsoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_MAXPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS1_MAXPOS = ", "");
+			cJSON_AddStringToObject(item1, "axis_possoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_RESOLUTION = ", 27)) {
+			strrpc(strline, "EXTERNALAXIS1_RESOLUTION = ", "");
+			cJSON_AddStringToObject(item1, "axis_enres", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_GEARRATIO = ", 26)) {
+			strrpc(strline, "EXTERNALAXIS1_GEARRATIO = ", "");
+			cJSON_AddStringToObject(item1, "axis_ratio", strline);
+		}else if(!strncmp(strline, "EXTERNALAXIS2_TYPE = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS2_TYPE = ", "");
+			cJSON_AddStringToObject(item2, "axis_type", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_DIRECT = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS2_DIRECT = ", "");
+			cJSON_AddStringToObject(item2, "axis_direction", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_VEL = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS2_VEL = ", "");
+			cJSON_AddStringToObject(item2, "axis_speed", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_ACC = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS2_ACC = ", "");
+			cJSON_AddStringToObject(item2, "axis_acc", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_MINPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS2_MINPOS = ", "");
+			cJSON_AddStringToObject(item2, "axis_negsoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_MAXPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS2_MAXPOS = ", "");
+			cJSON_AddStringToObject(item2, "axis_possoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_RESOLUTION = ", 27)) {
+			strrpc(strline, "EXTERNALAXIS2_RESOLUTION = ", "");
+			cJSON_AddStringToObject(item2, "axis_enres", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_GEARRATIO = ", 26)) {
+			strrpc(strline, "EXTERNALAXIS2_GEARRATIO = ", "");
+			cJSON_AddStringToObject(item2, "axis_ratio", strline);
+		}else if(!strncmp(strline, "EXTERNALAXIS3_TYPE = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS3_TYPE = ", "");
+			cJSON_AddStringToObject(item3, "axis_type", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_DIRECT = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS3_DIRECT = ", "");
+			cJSON_AddStringToObject(item3, "axis_direction", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_VEL = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS3_VEL = ", "");
+			cJSON_AddStringToObject(item3, "axis_speed", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_ACC = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS3_ACC = ", "");
+			cJSON_AddStringToObject(item3, "axis_acc", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_MINPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS3_MINPOS = ", "");
+			cJSON_AddStringToObject(item3, "axis_negsoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_MAXPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS3_MAXPOS = ", "");
+			cJSON_AddStringToObject(item3, "axis_possoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_RESOLUTION = ", 27)) {
+			strrpc(strline, "EXTERNALAXIS3_RESOLUTION = ", "");
+			cJSON_AddStringToObject(item3, "axis_enres", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_GEARRATIO = ", 26)) {
+			strrpc(strline, "EXTERNALAXIS3_GEARRATIO = ", "");
+			cJSON_AddStringToObject(item3, "axis_ratio", strline);
+		}else if(!strncmp(strline, "EXTERNALAXIS4_TYPE = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS4_TYPE = ", "");
+			cJSON_AddStringToObject(item4, "axis_type", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_DIRECT = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS4_DIRECT = ", "");
+			cJSON_AddStringToObject(item4, "axis_direction", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_VEL = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS4_VEL = ", "");
+			cJSON_AddStringToObject(item4, "axis_speed", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_ACC = ", 20)) {
+			strrpc(strline, "EXTERNALAXIS4_ACC = ", "");
+			cJSON_AddStringToObject(item4, "axis_acc", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_MINPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS4_MINPOS = ", "");
+			cJSON_AddStringToObject(item4, "axis_negsoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_MAXPOS = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS4_MAXPOS = ", "");
+			cJSON_AddStringToObject(item4, "axis_possoftlimit", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_RESOLUTION = ", 27)) {
+			strrpc(strline, "EXTERNALAXIS4_RESOLUTION = ", "");
+			cJSON_AddStringToObject(item4, "axis_enres", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_GEARRATIO = ", 26)) {
+			strrpc(strline, "EXTERNALAXIS4_GEARRATIO = ", "");
+			cJSON_AddStringToObject(item4, "axis_ratio", strline);
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+
+	buf = cJSON_Print(root_json);
+	printf("buf = %s\n", buf);
+	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
+	if(*ret_f_content != NULL) {
+		strcpy((*ret_f_content), buf);
+		ret = SUCCESS;
+	} else {
+		perror("calloc");
+		ret = FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return ret;
+}
+
 static int get_weave(char **ret_f_content)
 {
 	char strline[LINE_LEN] = {0};
@@ -911,6 +1090,8 @@ void get(Webs *wp)
 		ret = get_tool_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_ex_tool_cdsystem")) {
 		ret = get_ex_tool_cdsystem(&ret_f_content);
+	} else if(!strcmp(cmd, "get_exaxis_cdsystem")) {
+		ret = get_exaxis_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_user_data")) {
 		ret = get_user(&ret_f_content);
 	} else if(!strcmp(cmd, "get_template_data")) {
@@ -945,6 +1126,8 @@ void get(Webs *wp)
 		ret = get_robot_cfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_weave")) {
 		ret = get_weave(&ret_f_content);
+	} else if(!strcmp(cmd, "get_exaxis_cfg")) {
+		ret = get_exaxis_cfg(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

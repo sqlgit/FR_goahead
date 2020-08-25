@@ -34,6 +34,22 @@
 #define STATE_FB_ID 3
 #define MAXGRIPPER 8
 
+/** 外部轴状态结构体 */
+typedef struct _EXTERNALAXIS_STATU
+{
+	double exAxisPos;			//外部轴位置
+	double exAxisSpeedBack;		//外部轴速度
+	int exAxisErrorCode;		//外部轴故障码
+	unsigned char exAxisRDY;	//伺服准备好
+	unsigned char exAxisINPOS;	//伺服到位
+	unsigned char exAxisALM;	//伺服报警
+	unsigned char exAxisEMG;	//伺服停止
+	unsigned char exAxisNLMT;	//到负限位
+	unsigned char exAxisPLMT;	//到正限位
+	unsigned char exAxisORG;    //到原点
+	unsigned char exAxisOFLIN;	//通信超时，控制卡与控制箱板485通信超时
+}EXTERNALAXIS_STATUS;
+
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
 typedef struct _CTRL_STATE
@@ -106,6 +122,9 @@ typedef struct _CTRL_STATE
 	uint8_t    gripperError;            /** 夹爪错误 */
 	uint8_t    fileError;               /** 文件错误 */
 	uint8_t    paraError;               /** 参数错误 */
+	uint8_t	   exAxisExSoftLimitError;  /** 外部轴超出软限位错误*/
+	EXTERNALAXIS_STATUS  exaxis_status[4];	/** 外部轴状态反馈结构体*/
+	uint8_t    exAxisActiveFlag;		/** 外部轴激活标志*/
 	uint8_t    alarm;                   /** 警告 */
 	uint8_t    safetydoor_alarm;        /** 安全门警告 */
 	int        toolNum;                 /** 工具号 */

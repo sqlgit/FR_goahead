@@ -24,6 +24,7 @@ static int remove_template_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
 static int modify_tool_cdsystem(const cJSON *data_json);
 static int modify_ex_tool_cdsystem(const cJSON *data_json);
+static int modify_exaxis_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
@@ -227,12 +228,54 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* modify exaxis cdsystem */
+static int modify_exaxis_cdsystem(const cJSON *data_json)
+{
+	char sql[1204] = {0};
+	cJSON *name = NULL;
+	cJSON *exaxisid = NULL;
+	cJSON *id = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	exaxisid = cJSON_GetObjectItem(data_json, "exaxisid");
+	id = cJSON_GetObjectItem(data_json, "id");
+	x = cJSON_GetObjectItem(data_json, "x");
+	y = cJSON_GetObjectItem(data_json, "y");
+	z = cJSON_GetObjectItem(data_json, "z");
+	rx = cJSON_GetObjectItem(data_json, "rx");
+	ry = cJSON_GetObjectItem(data_json, "ry");
+	rz = cJSON_GetObjectItem(data_json, "rz");
+	if(name == NULL || exaxisid == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || exaxisid->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		perror("json");
+ 
+		return FAIL;
+	}
+
+	sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+					, name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+
+	if (change_info_sqlite3( DB_EXAXIS_CDSYSTEM, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* save point */
 static int save_point(const cJSON *data_json)
 {
 	CTRL_STATE *state = NULL;
 	char sql[1024] = {0};
 	int i = 0;
+	char E1[20] = {0};
 	char tcp_value_string[6][10] = {0};
 	char joint_value_string[6][10] = {0};
 	cJSON *name = NULL;
@@ -276,12 +319,11 @@ static int save_point(const cJSON *data_json)
 	for (i = 0; i < 6; i++) {
 		sprintf(tcp_value_string[i], "%.3lf", state->tl_cur_pos[i]);
 	}
-
-	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,x,y,z,rx,ry,rz) "\
-				"values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+	sprintf(E1, "%.3lf", state->exaxis_status[0].exAxisPos);
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,E1,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
 				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
 				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring,\
-				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5],\
+				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5], E1,\
 				tcp_value_string[0], tcp_value_string[1], tcp_value_string[2], tcp_value_string[3], tcp_value_string[4], tcp_value_string[5]);
 	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
 		perror("database");
@@ -483,7 +525,7 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "shutdown")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
@@ -515,6 +557,8 @@ void act(Webs *wp)
 		ret = modify_tool_cdsystem(data_json);
 	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		ret = modify_ex_tool_cdsystem(data_json);
+	} else if (!strcmp(cmd, "modify_exaxis_cdsystem")) {
+		ret = modify_exaxis_cdsystem(data_json);
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 	} else if (!strcmp(cmd, "remove_points")) {

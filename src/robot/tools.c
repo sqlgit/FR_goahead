@@ -88,6 +88,7 @@ char *get_file_content(const char *file_path)
 	int file_size = 0;
 	int i = 0;
 	int j = 0;
+	int errNum = 0;
 	char *file_content = NULL;
 
 	//clock_t start, finish;
@@ -96,12 +97,23 @@ char *get_file_content(const char *file_path)
 	//printf("file_path = %s\n", file_path);
 
 	if ((fp = fopen(file_path, "r")) == NULL) {
-		perror("File is empty");
-
-		return "Empty";
+		//perror("File is empty");
+		perror("file");
+		errNum = errno;   	//先记录错误码，防止全局变量errno改变
+		if(errNum == 2){	//没有此文件
+			
+			return "NO_FILE";
+		}
+		
+		return NULL;
 	}
 	fseek(fp, 0, SEEK_END);
 	file_size = ftell(fp);
+	if(file_size == 0)
+	{
+		fclose(fp);
+		return "Empty";
+	}
 	fseek(fp, 0, SEEK_SET);
 
 	file_content = (char *)calloc(1, file_size*sizeof(char)+1);
@@ -518,15 +530,19 @@ int my_syslog(const char *class, const char *content, const char *user)
 	/* f_content is NULL */
 	if (f_content == NULL) {
 		return FAIL;
-	/* f_content is empty */
-	} else if (strcmp(f_content, "Empty") == 0) {
+	/* no such file */
+	} else if (strcmp(f_content, "NO_FILE") == 0) {
 		if (delete_log_file(1) == FAIL) {
 			return FAIL;
 		}
 		root_json = cJSON_CreateArray();
-	/* f_content exist */
+		/* f_content is empty */
+	} else if (strcmp(f_content, "Empty") == 0) {
+		root_json = cJSON_CreateArray();
+		/* f_content exist */
 	} else {
 		root_json = cJSON_Parse(f_content);
+		free(f_content);
 	}
 
 	newitem = cJSON_CreateObject();
@@ -545,7 +561,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	buf = NULL;
 	cJSON_Delete(root_json);
 	root_json = NULL;
-	free(f_content);
+//	free(f_content);
 	f_content = NULL;
 
 	return SUCCESS;
@@ -562,7 +578,7 @@ int delete_log_file(int flag)
 
 	f_content = get_file_content(FILE_CFG);
 	/* f_content is not NULL and f_content is not empty */
-	if (f_content != NULL && strcmp(f_content, "Empty") != 0) {
+	if (f_content != NULL && strcmp(f_content, "Empty") != 0 && strcmp(f_content, "NO_FILE")!= 0 ) {
 		//printf("f_content = %s\n", f_content);
 		root_json = cJSON_Parse(f_content);
 		if (root_json != NULL) {

@@ -9,6 +9,7 @@
 #define SUCCESS 1
 #define FAIL 0
 #define ROBOT_CFG "/root/robot/user.config"
+#define EXAXIS_CFG "/root/robot/exaxis.config"
 #define README_WEB_NOW "/root/README/README_WEB.txt"
 #define README_WEB_UP "/tmp/webapp/README_WEB.txt"
 #define README_CTL_NOW "/root/README/README_CTL.txt"
@@ -25,6 +26,8 @@
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
 #define DIR_USER "/root/web/file/user/"
 #define DIR_LOG "/root/web/log/"
+#define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
+#define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define DIR_TEMPLATE "/root/web/file/template/"
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"
 #define DIR_POINTS "/root/web/file/points/"
@@ -34,6 +37,7 @@
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"
 #define DB_ET_CDSYSTEM "/root/web/file/cdsystem/et_coordinate_system.db"
+#define DB_EXAXIS_CDSYSTEM "/root/web/file/cdsystem/exaxis_coordinate_system.db"
 #define DB_ACCOUNT "/root/web/account/account.db"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0

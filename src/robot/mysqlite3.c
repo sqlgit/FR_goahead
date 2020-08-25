@@ -81,13 +81,13 @@ int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nr
 	}
 
 	//printf("nrow = %d,ncloumn = %d\n", (*nrow), (*ncloumn));
-	for (i = 0; i < (*nrow) + 1; i++) {
+/*	for (i = 0; i < (*nrow) + 1; i++) {
 		for (j = 0; j < (*ncloumn); j++) {
 			printf("%s\t", (*resultp)[index++]);
 		}
 		printf("\n");
 	}
-
+*/
 	sqlite3_close(db);
 	//printf("Select_info_sqlite3_over \n");
 

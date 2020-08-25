@@ -164,6 +164,10 @@ void upload(Webs *wp)
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
 				my_syslog("普通操作", "导入用户程序文件成功", cur_account.username);
+			} else if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
+				upfile = sfmt("%s%s", UPLOAD_TOOL_MODEL, up->clientFilename);
+				my_syslog("普通操作", "导入工具模型成功", cur_account.username);
+				sprintf(filename, "%s%s", LOAD_TOOL_MODEL, up->clientFilename);
 			/* web system config file */
 			} else if (strcmp(up->clientFilename, "system.txt") == 0) {
 				upfile = sfmt("%s", FILE_CFG);
@@ -249,12 +253,16 @@ void upload(Webs *wp)
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 	}
 
-	websSetStatus(wp, 204);
+	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
-	websWriteHeader(wp, "Content-Type", "text/plain");
+	//websWriteHeader(wp, "Content-Type", "text/plain");
 	websWriteEndHeaders(wp);
 	//websRedirect(wp,"/index.html#/programteach");
-	//websWrite(wp, "success");
+	if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
+		websWrite(wp, filename);
+	} else {
+		websWrite(wp, "success");
+	}
 	websDone(wp);
 
 	return;
