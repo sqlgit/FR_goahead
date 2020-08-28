@@ -722,6 +722,21 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		sprintf(tmp_content, "%sLTSearchStart(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
+	/* LTDataRecord */
+	} else if(!strncmp(lua_cmd, "LTRecord:", 9)) {
+		strrpc(lua_cmd, "LTRecord:", "");
+		if (separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		if (!strcmp(cmd_array[0], "on")) {
+			sprintf(tmp_content, "%sLaserTrackDataRecord(1)\n", file_content);
+		}
+		if (!strcmp(cmd_array[0], "off")) {
+			sprintf(tmp_content, "%sLaserTrackDataRecord(0)\n", file_content);
+		}
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -875,6 +890,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* LTSearchStop */
 	} else if (!strncmp(pgvalue->valuestring, "LTSearchStop", 12)) {
 		cmd = 260;
+	/* LTDataRecord */
+	} else if (!strncmp(pgvalue->valuestring, "LTRecord", 8)) {
+		cmd = 278;
 	/* SetToolList */
 	} else if (!strncmp(pgvalue->valuestring, "SetToolList:", 12)) {
 		cmd = 319;
@@ -963,17 +981,25 @@ static int movej(const cJSON *data_json, char *content)
 /* 230 set_state_id */
 static int set_state_id(const cJSON *data_json, char *content)
 {
+	char cmd[128] = {0};
 	int icount = 0;
 	int i;
 	cJSON *id_num = NULL;
 	cJSON *id = cJSON_GetObjectItem(data_json, "id");
-	if (id == NULL) {
+	cJSON *type = cJSON_GetObjectItem(data_json, "type");
+	if (id == NULL || type == NULL || type->valueint == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-	printf("id = %s\n", cJSON_Print(id));
+	//printf("id = %s\n", cJSON_Print(id));
+	//printf("type = %d\n", type->valueint);
 	state_fb.icount = cJSON_GetArraySize(id); /*获取数组长度*/
+	state_fb.type = type->valueint; /*获取type*/
+	if (state_fb.type == 1) { /* clear statefb.txt */
+		sprintf(cmd, "echo > %s", FILE_STATEFB);
+		system(cmd);
+	}
 	printf("state_fb.iCount= %d\n", state_fb.icount);
 
 	/* empty state_fb id */
@@ -1134,13 +1160,13 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "1"
-	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
+	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 280 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 275 || cmd == 276 || cmd == 277 || cmd == 287 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1508,6 +1534,21 @@ void set(Webs *wp)
 		strcpy(log_content, "三点法计算激光跟踪传感器位姿");
 		ret = copy_content(data_json, content);
 		break;
+	case 278:
+		port = cmdport;
+		strcpy(log_content, "激光跟踪数据记录");
+		ret = copy_content(data_json, content);
+		break;
+	case 279:
+		port = cmdport;
+		strcpy(log_content, "激光跟踪最大差值");
+		ret = copy_content(data_json, content);
+		break;
+	case 280:
+		port = cmdport;
+		strcpy(log_content, "设置激光跟踪传感器位置");
+		ret = copy_content(data_json, content);
+		break;
 	case 287:
 		port = cmdport;
 		strcpy(log_content, "激活/去激活外部轴坐标系");
@@ -1702,6 +1743,11 @@ void set(Webs *wp)
 	case 337:
 		port = cmdport;
 		strcpy(log_content, "机器人安装方式");
+		ret = copy_content(data_json, content);
+		break;
+	case 338:
+		port = cmdport;
+		strcpy(log_content, "拖动示教摩擦力补偿开关");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:

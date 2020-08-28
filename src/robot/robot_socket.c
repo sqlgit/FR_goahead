@@ -776,12 +776,17 @@ void *socket_state_feedback_thread(void *arg)
 {
 	SOCKET_INFO *sock = NULL;
 	char *state_buf = NULL;
+	char *write_content = NULL;
+	char *tmp_content = NULL;
 	int i;
 	int j;
+	int num = 0;
 	int port = (int)arg;
 	printf("port = %d\n", port);
 
 	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+	write_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+	tmp_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
 	sock = &socket_state;
 	/* init socket */
 	socket_init(sock, port);
@@ -855,26 +860,42 @@ void *socket_state_feedback_thread(void *arg)
 				fb_createnode(&sta_fb);
 				//bzero(state, sizeof(STATE_FB));
 				StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
-				if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
-					state_fb.overflow = 1;
-					/** clear state quene */
+				if (state_fb.type == 0) { //"0":图表查询
+					if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
+						state_fb.overflow = 1;
+						/** clear state quene */
+						pthread_mutex_lock(&sock->mute);
+						fb_clearquene(&fb_quene);
+						pthread_mutex_unlock(&sock->mute);
+					} else {
+						state_fb.overflow = 0;
+					}
+					/** enquene node */
 					pthread_mutex_lock(&sock->mute);
-					fb_clearquene(&fb_quene);
+					fb_enquene(&fb_quene, sta_fb);
 					pthread_mutex_unlock(&sock->mute);
-				} else {
-					state_fb.overflow = 0;
+				} else { //"1":轨迹数据查询
+					//printf("state fb = ");
+					bzero(write_content, sizeof(char)*(STATEFB_SIZE+100));
+					/*bzero(tmp_content, sizeof(char)*(STATEFB_SIZE+100));
+					num++;
+					sprintf(tmp_content, "%sNo:%d\n", write_content, num);
+					strcpy(write_content, tmp_content);*/
+					for(i = 0; i < 100; i++) {
+						for(j = 0; j < 7; j++) {
+							bzero(tmp_content, sizeof(char)*(STATEFB_SIZE+100));
+							if (j < 6) {
+								sprintf(tmp_content, "%s%f,", write_content, sta_fb.fb[i][j]);
+							} else {
+								sprintf(tmp_content, "%s%f\n", write_content, sta_fb.fb[i][j]);
+							}
+							strcpy(write_content, tmp_content);
+						}
+					}
+					//printf("write_content = %s\n", write_content);
+					write_file_append(FILE_STATEFB, write_content);
+					//printf("end print state fb\n");
 				}
-				/** enquene node */
-				pthread_mutex_lock(&sock->mute);
-				fb_enquene(&fb_quene, sta_fb);
-				pthread_mutex_unlock(&sock->mute);
-				//printf("state fb = ");
-				//for(i = 0; i < 100; i++) {
-					//for(j = 0; j < 10; j++) {
-						//printf("%f ", sta_fb.fb[i][0]);
-					//}
-				//}
-				//printf("end print state fb\n");
 			}
 			//printf("after StringToBytes\n");
 		}

@@ -50,7 +50,7 @@ int get_n_len(const int n)
 	return strlen(str);
 }
 
-/* write file */
+/* write file : w */
 int write_file(const char *file_name, const char *file_content)
 {
 	//printf("write filename = %s\n", file_name);
@@ -58,6 +58,29 @@ int write_file(const char *file_name, const char *file_content)
 	FILE *fp = NULL;
 
 	if((fp = fopen(file_name, "w")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	if(fputs(file_content, fp) < 0){
+		perror("write file");
+		fclose(fp);
+
+		return FAIL;
+	}
+	fclose(fp);
+
+	return SUCCESS;
+}
+
+/* write file : type a+ */
+int write_file_append(const char *file_name, const char *file_content)
+{
+	//printf("write filename = %s\n", file_name);
+	//printf("write filecontent = %s\n", file_content);
+	FILE *fp = NULL;
+
+	if((fp = fopen(file_name, "a+")) == NULL) {
 		perror("open file");
 
 		return FAIL;

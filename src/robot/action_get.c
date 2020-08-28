@@ -519,6 +519,9 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "J6_MIN_JOINT_LIMIT = ", 21)) {
 			strrpc(strline, "J6_MIN_JOINT_LIMIT = ", "");
 			cJSON_AddStringToObject(root_json, "j6_min_joint_limit", strline);
+		} else if(!strncmp(strline, "FRIC_COMPENSATION = ", 20)) {
+			strrpc(strline, "FRIC_COMPENSATION = ", "");
+			cJSON_AddStringToObject(root_json, "fric_compensation", strline);
 		} else if(!strncmp(strline, "COLLISION_ERROR_TIME = ", 23)) {
 			strrpc(strline, "COLLISION_ERROR_TIME = ", "");
 			cJSON_AddStringToObject(root_json, "collision_error_time", strline);
@@ -669,6 +672,30 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE_COORD_C = ", 16)) {
 			strrpc(strline, "WEAVE_COORD_C = ", "");
 			cJSON_AddStringToObject(root_json, "weave_coord_c", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_INSTALL = ", 22)) {
+			strrpc(strline, "LASERSENSOR_INSTALL = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_install", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_X = ", 16)) {
+			strrpc(strline, "LASERSENSOR_X = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_x", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_Y = ", 16)) {
+			strrpc(strline, "LASERSENSOR_Y = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_y", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_Z = ", 16)) {
+			strrpc(strline, "LASERSENSOR_Z = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_z", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_A = ", 16)) {
+			strrpc(strline, "LASERSENSOR_A = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_a", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_B = ", 16)) {
+			strrpc(strline, "LASERSENSOR_B = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_b", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_C = ", 16)) {
+			strrpc(strline, "LASERSENSOR_C = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_c", strline);
+		} else if(!strncmp(strline, "LASERSENSOR_MAXDIFF = ", 22)) {
+			strrpc(strline, "LASERSENSOR_MAXDIFF = ", "");
+			cJSON_AddStringToObject(root_json, "lasersensor_maxdiff", strline);
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}

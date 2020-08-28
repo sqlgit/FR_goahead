@@ -339,6 +339,8 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出控制器端用户配置文件成功", cur_account.username);
 	} else if (is_in(pathfilename, DIR_USER) == 1) {
 		my_syslog("普通操作", "导出用户程序文件成功", cur_account.username);
+	} else if (strcmp(pathfilename, FILE_STATEFB) == 0) {
+		my_syslog("普通操作", "导出状态查询文件成功", cur_account.username);
 	} else if (is_in(pathfilename, DIR_LOG) == 1) {
 		my_syslog("普通操作", "导出 log 文件成功", cur_account.username);
 	}

@@ -152,6 +152,7 @@ typedef struct _STATE_FEEDBACK
 {
 	int id[10];			// state feedback id
 	int icount;			// state feedback icount
+	int type;			// state feedback type, "0":图表查询，"1":轨迹数据查询
 	int overflow;		// state feedback overflow
 } STATE_FEEDBACK;
 

@@ -21,6 +21,7 @@
 #define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
 #define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
 #define SHELL_CRLUPGRADE "/root/web/webserver/shell/fr_control_upgrade.sh"
+#define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
@@ -59,6 +60,7 @@ typedef struct _ACCOUNT_INFO
 int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out);
 int get_n_len(const int n);
 int write_file(const char *file_name, const char *file_content);
+int write_file_append(const char *file_name, const char *file_content);
 char *get_file_content(const char *file_path);
 char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);
