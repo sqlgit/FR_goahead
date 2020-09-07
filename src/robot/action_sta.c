@@ -160,6 +160,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		//printf("state->exaxis_status[%d].exAxisSpeedBack = %d\n", i, state->exaxis_status[i].exAxisSpeedBack);
 		cJSON_AddNumberToObject(array_json, "key", double_round(state->exaxis_status[i].exAxisSpeedBack, 3));
 	}
+	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisHomeStatus", array_json);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisHomeStatus);
+	}
 
 	array_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "ai", array_json);
@@ -1019,6 +1024,15 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	} else {
 		pre_state->safetydoor_alarm = 0;
+	}
+	if (state->weld_readystate == 0) {
+		cJSON_AddStringToObject(error_json, "key", "焊机未准备好");
+		if (pre_state->weld_readystate != 1) {
+			my_syslog("错误", "焊机未准备好", cur_account.username);
+			pre_state->weld_readystate = 1;
+		}
+	} else {
+		pre_state->weld_readystate = 0;
 	}
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);

@@ -790,6 +790,10 @@ PUBLIC ssize socketWrite(int sid, void *buf, ssize bufsize)
                      */
                     return sofar;
                 }
+				/*
+					If no data was written, we continue send
+				 */
+                continue;
             }
             return -errCode;
         }

@@ -973,7 +973,7 @@ static int movej(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, speed->valuestring, acc->valuestring, ovl->valuestring);
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,0)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, speed->valuestring, acc->valuestring, ovl->valuestring);
 
 	return SUCCESS;
 }
@@ -987,7 +987,7 @@ static int set_state_id(const cJSON *data_json, char *content)
 	cJSON *id_num = NULL;
 	cJSON *id = cJSON_GetObjectItem(data_json, "id");
 	cJSON *type = cJSON_GetObjectItem(data_json, "type");
-	if (id == NULL || type == NULL || type->valueint == NULL) {
+	if (id == NULL || type == NULL) {
 		perror("json");
 
 		return FAIL;
