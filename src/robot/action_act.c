@@ -13,8 +13,6 @@
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
-extern SOCKET_INFO socket_cmd;
-extern SOCKET_INFO socket_vir_cmd;
 extern ACCOUNT_INFO cur_account;
 
 /********************************* Function declaration ***********************/
@@ -34,6 +32,7 @@ static int log_management(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
 static int shutdown_system(const cJSON *data_json);
 static int plugin_enable(const cJSON *data_json);
+static int plugin_remove(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -501,19 +500,9 @@ static int plugin_enable(const cJSON *data_json)
 	char *package_content = NULL;
 	char *buf = NULL;
 	int write_ret = FAIL;
-	char config_path[100] = {0};
-	char *config_content = NULL;
-	int i = 0;
-	char content[100] = {0};
-	SOCKET_INFO *sock_cmd = NULL;
 	cJSON *name = NULL;
 	cJSON *value = NULL;
 	cJSON *package_json = NULL;
-	cJSON *config_json = NULL;
-	cJSON *func_json = NULL;
-	cJSON *dio_json = NULL;
-	cJSON *dio_value_json = NULL;
-	cJSON *dio_level_json = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
 	value = cJSON_GetObjectItem(data_json, "value");
@@ -551,72 +540,38 @@ static int plugin_enable(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, name->valuestring);
 	/** enable plugin */
 	if (value->valueint == 1) {
 
 		return SUCCESS;
 	/** disable plugin */
 	} else {
-		config_content = get_file_content(config_path);
-		if (config_content == NULL || strcmp(config_content, "NO_FILE") == 0 || strcmp(config_content, "Empty") == 0) {
-			perror("get file content");
 
-			return FAIL;
-		}
-		//printf("config_content = %s\n", config_content);
-		config_json = cJSON_Parse(config_content);
-		free(config_content);
-		config_content = NULL;
-		if (config_json == NULL || config_json->type != cJSON_Array) {
-			perror("cJSON_Parse");
-
-			return FAIL;
-		}
-		for (i = 0; i < cJSON_GetArraySize(config_json); i++) {
-			func_json = cJSON_GetArrayItem(config_json, i);
-			dio_json = cJSON_GetObjectItem(func_json, "dio");
-			dio_value_json = cJSON_GetObjectItem(func_json, "dio_value");
-			dio_level_json = cJSON_GetObjectItem(func_json, "dio_level");
-			if (dio_json == NULL || dio_value_json == NULL || dio_level_json == NULL || dio_json->type != cJSON_Number || dio_value_json->type != cJSON_Number || dio_level_json->type != cJSON_Number) {
-				perror("json");
-
-				return FAIL;
-			}
-
-			if (robot_type == 1) { // "1" 代表实体机器人
-				sock_cmd = &socket_cmd;
-			} else { // "0" 代表虚拟机器人
-				sock_cmd = &socket_vir_cmd;
-			}
-			/* clear 外设DO */
-			if (dio_json->valueint == 1) {
-				bzero(content, sizeof(content));
-				sprintf(content, "SetPluginDO(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
-				//printf("content = %s\n", content);
-				socket_enquene(sock_cmd, 339, content, 1);
-			/* clear 外设DI */
-			} else {
-				bzero(content, sizeof(content));
-				sprintf(content, "SetPluginDI(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
-				//printf("content = %s\n", content);
-				socket_enquene(sock_cmd, 340, content, 1);
-			}
-		}
-		cJSON_Delete(config_json);
-		config_json = NULL;
-
-		/* 清空config.json文件 */
-		buf = cJSON_Print(cJSON_CreateArray());
-		write_ret = write_file(config_path, buf);//write file
-		free(buf);
-		buf = NULL;
-		if (write_ret == FAIL) {
-			perror("write file");
-
-			return FAIL;
-		}
+		return clear_plugin_config(name->valuestring);
 	}
+}
+
+/** plugin_remove */
+static int plugin_remove(const cJSON *data_json)
+{
+	char delete_cmd[128] = {0};
+	int write_ret = FAIL;
+	cJSON *name = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	if (clear_plugin_config(name->valuestring) == FAIL) {
+		perror("clear_plugin_config");
+
+		return FAIL;
+	}
+	sprintf(delete_cmd, "rm -rf %s%s", UPLOAD_WEB_PLUGINS, name->valuestring);
+	system(delete_cmd);
 
 	return SUCCESS;
 }
@@ -661,7 +616,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "plugin_enable")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -701,6 +656,8 @@ void act(Webs *wp)
 		ret = save_accounts(data_json);
 	} else if (!strcmp(cmd, "plugin_enable")) {
 		ret = plugin_enable(data_json);
+	} else if (!strcmp(cmd, "plugin_remove")) {
+		ret = plugin_remove(data_json);
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
 	} else {

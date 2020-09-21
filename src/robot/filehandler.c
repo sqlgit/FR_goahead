@@ -138,6 +138,8 @@ void upload(Webs *wp)
 	WebsKey         *s;
 	WebsUpload      *up;
 	char            *upfile;
+	int i = 0;
+	char *dir_list = NULL;
 	char filename[128] = {0};
 	char cmd[128] = {0};
 	char delete_cmd[128] = {0};
@@ -145,13 +147,16 @@ void upload(Webs *wp)
 	char package_path[100] = {0};
 	char *package_content = NULL;
 	char *buf = NULL;
-	cJSON *root_json = NULL;
+	char plugin_name[100] = {0};
 	int write_ret = FAIL;
+	cJSON *root_json = NULL;
 	cJSON *name = NULL;
 	cJSON *nav_name = NULL;
 	cJSON *version = NULL;
 	cJSON *description = NULL;
 	cJSON *author = NULL;
+	cJSON *dir_list_json = NULL;
+	cJSON *dir_plugin_name_json = NULL;
 
 	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
@@ -270,23 +275,54 @@ void upload(Webs *wp)
 		system(cmd);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 	} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
+		strncpy(plugin_name, up->clientFilename, (strlen(up->clientFilename)-7));
+		//printf("plugin_name = %s\n", plugin_name);
+		bzero(delete_cmd, sizeof(delete_cmd));
+		sprintf(delete_cmd, "rm -rf %s%s", UPLOAD_WEB_PLUGINS, plugin_name);
+		//printf("delete_cmd = %s\n", delete_cmd);
+		dir_list = get_dir_filename(UPLOAD_WEB_PLUGINS);
+		if (dir_list == NULL) {
+			perror("get dir filename");
+
+			goto end;
+		}
+		dir_list_json = cJSON_Parse(dir_list);
+		free(dir_list);
+		dir_list = NULL;
+		if (dir_list_json == NULL) {
+			perror("cJSON_Parse");
+
+			goto end;
+		}
+		for (i = 0; i < cJSON_GetArraySize(dir_list_json); i++) {
+			dir_plugin_name_json = cJSON_GetArrayItem(dir_list_json, i);
+			/* 上传外设插件与已有的外设插件同名（外设插件更新）*/
+			if (strcmp(dir_plugin_name_json->valuestring, plugin_name) == 0) {
+				if (clear_plugin_config(plugin_name) == FAIL) {
+					perror("clear_plugin_config");
+					cJSON_Delete(dir_list_json);
+					dir_list_json = NULL;
+
+					goto end;
+				}
+				system(delete_cmd);
+				break;
+			}
+		}
+
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cd %s && tar -zxvf %s", UPLOAD_WEB_PLUGINS, up->clientFilename);
 		system(cmd);
 
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "rm -f %s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
-		printf("cmd = %s\n", cmd);
+		//printf("cmd = %s\n", cmd);
 		system(cmd);
 
-		strrpc(up->clientFilename, ".tar.gz", "");
-		bzero(delete_cmd, sizeof(delete_cmd));
-		sprintf(delete_cmd, "rm -rf %s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
-		printf("delete_cmd = %s\n", delete_cmd);
-
 		/* ADD file validity check */
-		sprintf(package_path, "%s%s/package.json", UPLOAD_WEB_PLUGINS, up->clientFilename);
-		printf("package_path = %s\n", package_path);
+		bzero(package_path, sizeof(package_path));
+		sprintf(package_path, "%s%s/package.json", UPLOAD_WEB_PLUGINS, plugin_name);
+		//printf("package_path = %s\n", package_path);
 		package_content = get_file_content(package_path);
 		if (package_content == NULL || strcmp(package_content, "NO_FILE") == 0 || strcmp(package_content, "Empty") == 0) {
 			perror("get file content");
@@ -295,7 +331,7 @@ void upload(Webs *wp)
 
 			goto end;
 		}
-		printf("package_content = %s\n", package_content);
+		//printf("package_content = %s\n", package_content);
 		root_json = cJSON_Parse(package_content);
 		free(package_content);
 		package_content = NULL;
@@ -322,7 +358,7 @@ void upload(Webs *wp)
 		/* add enable option to package.json file */
 		cJSON_AddNumberToObject(root_json, "enable", 1);
 		buf = cJSON_Print(root_json);
-		printf("buf = %s\n", buf);
+		//printf("buf = %s\n", buf);
 		write_ret = write_file(package_path, buf);//write file
 		free(buf);
 		buf = NULL;
@@ -334,8 +370,8 @@ void upload(Webs *wp)
 		}
 
 		/* init config.json file */
-		sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, up->clientFilename);
-		printf("config_path = %s\n", config_path);
+		sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, plugin_name);
+		//printf("config_path = %s\n", config_path);
 		buf = cJSON_Print(cJSON_CreateArray());
 		write_ret = write_file(config_path, buf);//write file
 		free(buf);
