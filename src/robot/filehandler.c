@@ -140,6 +140,18 @@ void upload(Webs *wp)
 	char            *upfile;
 	char filename[128] = {0};
 	char cmd[128] = {0};
+	char delete_cmd[128] = {0};
+	char config_path[100] = {0};
+	char package_path[100] = {0};
+	char *package_content = NULL;
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+	int write_ret = FAIL;
+	cJSON *name = NULL;
+	cJSON *nav_name = NULL;
+	cJSON *version = NULL;
+	cJSON *description = NULL;
+	cJSON *author = NULL;
 
 	if (scaselessmatch(wp->method, "POST")) {
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
@@ -164,6 +176,7 @@ void upload(Webs *wp)
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
 				my_syslog("普通操作", "导入用户程序文件成功", cur_account.username);
+			/* web Tool model file */
 			} else if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
 				upfile = sfmt("%s%s", UPLOAD_TOOL_MODEL, up->clientFilename);
 				my_syslog("普通操作", "导入工具模型成功", cur_account.username);
@@ -191,6 +204,11 @@ void upload(Webs *wp)
 			} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_CONTROL);
 				my_syslog("普通操作", "导入控制器升级文件成功", cur_account.username);
+				strcpy(filename, upfile);
+			/* peripheral plugin file */
+			} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
+				upfile = sfmt("%s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
+				my_syslog("普通操作", "导入外设插件文件成功", cur_account.username);
 				strcpy(filename, upfile);
 			} else {
 				my_syslog("普通操作", "导入文件未匹配", cur_account.username);
@@ -251,6 +269,81 @@ void upload(Webs *wp)
 		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
 		system(cmd);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
+	} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cd %s && tar -zxvf %s", UPLOAD_WEB_PLUGINS, up->clientFilename);
+		system(cmd);
+
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "rm -f %s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
+		printf("cmd = %s\n", cmd);
+		system(cmd);
+
+		strrpc(up->clientFilename, ".tar.gz", "");
+		bzero(delete_cmd, sizeof(delete_cmd));
+		sprintf(delete_cmd, "rm -rf %s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
+		printf("delete_cmd = %s\n", delete_cmd);
+
+		/* ADD file validity check */
+		sprintf(package_path, "%s%s/package.json", UPLOAD_WEB_PLUGINS, up->clientFilename);
+		printf("package_path = %s\n", package_path);
+		package_content = get_file_content(package_path);
+		if (package_content == NULL || strcmp(package_content, "NO_FILE") == 0 || strcmp(package_content, "Empty") == 0) {
+			perror("get file content");
+			package_content = NULL;
+			system(delete_cmd);
+
+			goto end;
+		}
+		printf("package_content = %s\n", package_content);
+		root_json = cJSON_Parse(package_content);
+		free(package_content);
+		package_content = NULL;
+		if (root_json == NULL || root_json->type != cJSON_Object) {
+			perror("cJSON_Parse");
+			system(delete_cmd);
+
+			goto end;
+		}
+		name = cJSON_GetObjectItem(root_json, "name");
+		nav_name = cJSON_GetObjectItem(root_json, "nav_name");
+		version = cJSON_GetObjectItem(root_json, "version");
+		description = cJSON_GetObjectItem(root_json, "description");
+		author = cJSON_GetObjectItem(root_json, "author");
+		if (name == NULL || nav_name == NULL || version == NULL || description == NULL || author == NULL) {
+			perror("json");
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			system(delete_cmd);
+
+			goto end;
+		}
+
+		/* add enable option to package.json file */
+		cJSON_AddNumberToObject(root_json, "enable", 1);
+		buf = cJSON_Print(root_json);
+		printf("buf = %s\n", buf);
+		write_ret = write_file(package_path, buf);//write file
+		free(buf);
+		buf = NULL;
+		cJSON_Delete(root_json);
+		root_json = NULL;
+		if (write_ret == FAIL) {
+			system(delete_cmd);
+			goto end;
+		}
+
+		/* init config.json file */
+		sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, up->clientFilename);
+		printf("config_path = %s\n", config_path);
+		buf = cJSON_Print(cJSON_CreateArray());
+		write_ret = write_file(config_path, buf);//write file
+		free(buf);
+		buf = NULL;
+		if (write_ret == FAIL) {
+			system(delete_cmd);
+			goto end;
+		}
 	}
 
 	websSetStatus(wp, 200);

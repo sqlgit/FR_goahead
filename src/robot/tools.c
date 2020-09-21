@@ -251,9 +251,10 @@ char *get_dir_content(const char *dir_path)
 	return content;
 }
 
-/* open dir and return dir's file name */
+/* open dir and return dir's file name or dir's dir name */
 // Ext:["2020-03-15.json","2020-03-14.json","2020-03-13.json","2020-03-12.json","2020-03-11.json","2020-03-10.json"]
 // Ext:["2020-03-15.txt", "2020-03-14.txt", "2020-03-13.txt"]
+// Ext:["spary","weld"]
 char *get_dir_filename(const char *dir_path)
 {
 	DIR *dir = NULL;
@@ -358,7 +359,7 @@ char *get_dir_filename_txt(const char *dir_path)
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
-	if(content != NULL) {
+	if (content != NULL) {
 		strcpy(content, buf);
 	} else {
 		perror("calloc");
@@ -559,13 +560,14 @@ int my_syslog(const char *class, const char *content, const char *user)
 			return FAIL;
 		}
 		root_json = cJSON_CreateArray();
-		/* f_content is empty */
+	/* f_content is empty */
 	} else if (strcmp(f_content, "Empty") == 0) {
 		root_json = cJSON_CreateArray();
-		/* f_content exist */
+	/* f_content exist */
 	} else {
 		root_json = cJSON_Parse(f_content);
 		free(f_content);
+		f_content = NULL;
 	}
 
 	newitem = cJSON_CreateObject();
@@ -584,8 +586,6 @@ int my_syslog(const char *class, const char *content, const char *user)
 	buf = NULL;
 	cJSON_Delete(root_json);
 	root_json = NULL;
-//	free(f_content);
-	f_content = NULL;
 
 	return SUCCESS;
 }
@@ -604,6 +604,8 @@ int delete_log_file(int flag)
 	if (f_content != NULL && strcmp(f_content, "Empty") != 0 && strcmp(f_content, "NO_FILE")!= 0 ) {
 		//printf("f_content = %s\n", f_content);
 		root_json = cJSON_Parse(f_content);
+		free(f_content);
+		f_content = NULL;
 		if (root_json != NULL) {
 			count = cJSON_GetObjectItem(root_json, "log_count");
 			if (count != NULL) {

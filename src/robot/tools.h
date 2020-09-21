@@ -28,6 +28,7 @@
 #define DIR_USER "/root/web/file/user/"
 #define DIR_LOG "/root/web/log/"
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
+#define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
 #define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define DIR_TEMPLATE "/root/web/file/template/"
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"

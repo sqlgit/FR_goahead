@@ -38,6 +38,7 @@ static int set_state_id(const cJSON *data_json, char *content);
 static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
 static int jointtotcf(const cJSON *data_json, char *content);
+static int set_plugin_dio(const cJSON *data_json, char *content, int dio);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -1000,7 +1001,7 @@ static int set_state_id(const cJSON *data_json, char *content)
 		sprintf(cmd, "echo > %s", FILE_STATEFB);
 		system(cmd);
 	}
-	printf("state_fb.iCount= %d\n", state_fb.icount);
+	//printf("state_fb.iCount= %d\n", state_fb.icount);
 
 	/* empty state_fb id */
 	for (i = 0; i < 10; i++) {
@@ -1008,9 +1009,9 @@ static int set_state_id(const cJSON *data_json, char *content)
 	}
 	for (i = 0; i < state_fb.icount; i++) {
 		id_num = cJSON_GetArrayItem(id, i); /* 目前按1笔处理, 取出一笔放入 state_fb.id */
-		printf("string, state_fb.id[%d] = %s\n", i, id_num->valuestring);
+		//printf("string, state_fb.id[%d] = %s\n", i, id_num->valuestring);
 		state_fb.id[i] = atoi(id_num->valuestring);
-		printf("array , state_fb.id[%d] = %d\n", i, state_fb.id[i]);
+		//printf("array , state_fb.id[%d] = %d\n", i, state_fb.id[i]);
 	}
 	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_fb.icount, state_fb.id[0], state_fb.id[1], state_fb.id[2], state_fb.id[3], state_fb.id[4], state_fb.id[5], state_fb.id[6], state_fb.id[7], state_fb.id[8], state_fb.id[9]);
 
@@ -1064,6 +1065,140 @@ static int jointtotcf(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	sprintf(content, "JointToTCF(%s,%s,%s,%s,%s,%s)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring);
+
+	return SUCCESS;
+}
+
+/* 339 340 SetPluginDO DI or clear function DI DO config */
+static int set_plugin_dio(const cJSON *data_json, char *content, int dio)
+{
+	cJSON *config_json = NULL;
+	cJSON *plugin_name = NULL;
+	cJSON *func_name = NULL;
+	cJSON *value = NULL;
+	cJSON *enable = NULL;
+	cJSON *level = NULL;
+	cJSON *func_json = NULL;
+	cJSON *func_name_json = NULL;
+	cJSON *dio_json = NULL;
+	cJSON *dio_value_json = NULL;
+	cJSON *dio_level_json = NULL;
+	cJSON *newitem = NULL;
+	SOCKET_INFO *sock_cmd = NULL;
+	char config_path[100] = {0};
+	char *config_content = NULL;
+	char *buf = NULL;
+	int write_ret = FAIL;
+	int i = 0;
+	char socket_send_content[100] = {0};
+
+	plugin_name = cJSON_GetObjectItem(data_json, "plugin_name");
+	func_name = cJSON_GetObjectItem(data_json, "func_name");
+	value = cJSON_GetObjectItem(data_json, "value");
+	enable = cJSON_GetObjectItem(data_json, "enable");
+	level = cJSON_GetObjectItem(data_json, "level");
+
+	if (plugin_name == NULL || func_name == NULL || value == NULL || enable == NULL || level == NULL || plugin_name->type != cJSON_String || func_name->type != cJSON_String || value->type != cJSON_Number || enable->type != cJSON_Number || level->type != cJSON_Number) {
+		perror("json");
+
+		return FAIL;
+	}
+	/* send set plugin DI DO cmd or clear plugin DI DO cmd */
+	if (dio == 1) {
+		sprintf(content, "SetPluginDO(%d,%d,%d)", value->valueint, enable->valueint, level->valueint);
+	} else {
+		sprintf(content, "SetPluginDI(%d,%d,%d)", value->valueint, enable->valueint, level->valueint);
+	}
+
+	sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, plugin_name->valuestring);
+	config_content = get_file_content(config_path);
+	if (config_content == NULL || strcmp(config_content, "NO_FILE") == 0 || strcmp(config_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	//printf("config_content = %s\n", config_content);
+	config_json = cJSON_Parse(config_content);
+	free(config_content);
+	config_content = NULL;
+	if (config_json == NULL || config_json->type != cJSON_Array) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	for (i = 0; i < cJSON_GetArraySize(config_json); i++) {
+		func_json = cJSON_GetArrayItem(config_json, i);
+		func_name_json = cJSON_GetObjectItem(func_json, "func_name");
+		dio_json = cJSON_GetObjectItem(func_json, "dio");
+		dio_value_json = cJSON_GetObjectItem(func_json, "dio_value");
+		dio_level_json = cJSON_GetObjectItem(func_json, "dio_level");
+		if (dio_json == NULL || dio_value_json == NULL || func_name_json == NULL || func_name_json->type != cJSON_String || dio_value_json == NULL || dio_value_json->type != cJSON_Number || dio_level_json == NULL || dio_level_json->type != cJSON_Number ) {
+			perror("json");
+			cJSON_Delete(config_json);
+			config_json = NULL;
+
+			return FAIL;
+		}
+		if (strcmp(func_name_json->valuestring, func_name->valuestring) == 0) {
+			/** 之前已经配置过 DI、DO 的功能, remove 外设插件配置文件 config.json 中的 object */
+			if (enable->valueint == 0) {
+				cJSON_DeleteItemFromArray(config_json, i);
+			} else {
+				if (robot_type == 1) { // "1" 代表实体机器人
+					sock_cmd = &socket_cmd;
+				} else { // "0" 代表虚拟机器人
+					sock_cmd = &socket_vir_cmd;
+				}
+				/* send clear configed plugin DO cmd */
+				if (dio_json->valueint == 1) {
+					sprintf(socket_send_content, "SetPluginDO(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
+					socket_enquene(sock_cmd, 339, socket_send_content, 1);
+				/* send clear configed plugin DI cmd */
+				} else {
+					sprintf(socket_send_content, "SetPluginDI(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
+					socket_enquene(sock_cmd, 340, socket_send_content, 1);
+				}
+				/** 之前已经配置过 DI、DO 的功能, 修改外设插件配置文件 config.json 中的 object */
+				cJSON_ReplaceItemInObject(func_json, "dio", cJSON_CreateNumber(dio));
+				cJSON_ReplaceItemInObject(func_json, "dio_value", cJSON_CreateNumber(value->valueint));
+				cJSON_ReplaceItemInObject(func_json, "dio_level", cJSON_CreateNumber(level->valueint));
+			}
+
+			buf = cJSON_Print(config_json);
+			//printf("buf = %s\n", buf);
+			write_ret = write_file(config_path, buf);//write file
+			free(buf);
+			buf = NULL;
+			cJSON_Delete(config_json);
+			config_json = NULL;
+			if (write_ret == FAIL) {
+				perror("write file");
+
+				return FAIL;
+			}
+
+			return SUCCESS;
+		}
+	}
+	/** 之前没有配置过 DI、DO 的功能, 插入 object 到外设插件配置文件 config.json 中 */
+	newitem = cJSON_CreateObject();
+	cJSON_AddStringToObject(newitem, "func_name", func_name->valuestring);
+	cJSON_AddNumberToObject(newitem, "dio", dio);
+	cJSON_AddNumberToObject(newitem, "dio_value", value->valueint);
+	cJSON_AddNumberToObject(newitem, "dio_level", level->valueint);
+	cJSON_AddItemToArray(config_json, newitem);
+
+	buf = cJSON_Print(config_json);
+	write_ret = write_file(config_path, buf);//write file
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(config_json);
+	config_json = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
 
 	return SUCCESS;
 }
@@ -1166,7 +1301,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1748,6 +1883,21 @@ void set(Webs *wp)
 	case 338:
 		port = cmdport;
 		strcpy(log_content, "拖动示教摩擦力补偿开关");
+		ret = copy_content(data_json, content);
+		break;
+	case 339:
+		port = cmdport;
+		strcpy(log_content, "配置外设DO");
+		ret = set_plugin_dio(data_json, content, 1);
+		break;
+	case 340:
+		port = cmdport;
+		strcpy(log_content, "配置外设DI");
+		ret = set_plugin_dio(data_json, content, 0);
+		break;
+	case 341:
+		port = cmdport;
+		strcpy(log_content, "设置摩擦力补偿系数");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:

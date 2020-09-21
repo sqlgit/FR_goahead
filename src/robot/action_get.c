@@ -30,6 +30,9 @@ static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
 static int get_weave(char **ret_f_content);
 static int get_exaxis_cfg(char **ret_f_content);
+static int get_plugin_info(char **ret_f_content);
+static int get_plugin_nav(char **ret_f_content);
+static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -38,6 +41,7 @@ static int get_points(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
+
 	sprintf(sql, "select * from points");
 	if (select_info_json_sqlite3(DB_POINTS, sql, &json_data) == -1) {
 		perror("select points");
@@ -50,7 +54,7 @@ static int get_points(char **ret_f_content)
 	json_data = NULL;
 	/* content is NULL */
 	if (*ret_f_content == NULL) {
-		perror("get  content");
+		perror("cJSON_Print");
 
 		return FAIL;
 	}
@@ -63,6 +67,7 @@ static int get_tool_cdsystem(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
+
 	sprintf(sql, "select * from coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");
@@ -75,7 +80,7 @@ static int get_tool_cdsystem(char **ret_f_content)
 	json_data = NULL;
 	/* content is NULL */
 	if (*ret_f_content == NULL) {
-		perror("get file content");
+		perror("cJSON_Print");
 
 		return FAIL;
 	}
@@ -88,6 +93,7 @@ static int get_ex_tool_cdsystem(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
+
 	sprintf(sql, "select * from et_coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select ex_tool_cdsystem");
@@ -100,7 +106,7 @@ static int get_ex_tool_cdsystem(char **ret_f_content)
 	json_data = NULL;
 	/* content is NULL */
 	if (*ret_f_content == NULL) {
-		perror("get file content");
+		perror("cJSON_Print");
 
 		return FAIL;
 	}
@@ -113,6 +119,7 @@ static int get_exaxis_cdsystem(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
+
 	sprintf(sql, "select * from exaxis_coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_EXAXIS_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select exaxis_cdsystem");
@@ -202,16 +209,10 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 	}
 	sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
 	*ret_f_content = get_file_content(dir_filename);
-	/* ret_f_content is NULL or no such file*/
-	if (*ret_f_content == NULL || *ret_f_content == "NO_FILE") {
-		perror("get file content");
-
-		return FAIL;
-	}
-	/* ret_f_content is empty */
-	if (strcmp(*ret_f_content, "Empty") == 0) {
-		perror("get empty file");
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
 		*ret_f_content = NULL;
+		perror("get file content");
 
 		return FAIL;
 	}
@@ -223,16 +224,10 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 static int get_syscfg(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_CFG);
-	/* ret_f_content is NULL or no such file*/
-	if (*ret_f_content == NULL || *ret_f_content == "NO_FILE") {
-		perror("get file content");
-
-		return FAIL;
-	}
-	/* ret_f_content is empty */
-	if (strcmp(*ret_f_content, "Empty") == 0) {
-		perror("get empty file");
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
 		*ret_f_content = NULL;
+		perror("get file content");
 
 		return FAIL;
 	}
@@ -245,6 +240,7 @@ static int get_accounts(char **ret_f_content)
 {
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
+
 	sprintf(sql, "select * from account");
 	if (select_info_nokey_json_sqlite3(DB_ACCOUNT, sql, &json_data) == -1) {
 		perror("select account");
@@ -269,25 +265,19 @@ static int get_accounts(char **ret_f_content)
 static int get_account_info(char **ret_f_content)
 {
 	cJSON *root_json = NULL;
-	char *buf = NULL;
+
 	root_json = cJSON_CreateObject();
 	cJSON_AddStringToObject(root_json, "username", cur_account.username);
 	cJSON_AddStringToObject(root_json, "auth", cur_account.auth);
-	buf = cJSON_Print(root_json);
-	//printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-	} else {
-		perror("calloc");
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
 		return FAIL;
 	}
 	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
 
 	return SUCCESS;
 }
@@ -298,9 +288,7 @@ static int get_webversion(char **ret_f_content)
 	char *strline = NULL;
 	strline = (char *)calloc(1, sizeof(char)*LINE_LEN);
 	char version[LINE_LEN] = {0};
-	char *buf = NULL;
 	FILE *fp;
-	int ret = FAIL;
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateObject();
@@ -318,34 +306,27 @@ static int get_webversion(char **ret_f_content)
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
-
-	buf = cJSON_Print(root_json);
-	//printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-		ret = SUCCESS;
-	} else {
-		perror("calloc");
-		ret = FAIL;
-	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
 	free(strline);
 	strline = NULL;
+	fclose(fp);
+
+	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
-	return ret;
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
 }
 
 /* check point result */
 static int get_checkpoint(char **ret_f_content, const cJSON *data_json)
 {
 	char sql[1024] = {0};
-	int ret = FAIL;
-	char *buf = NULL;
 	cJSON *name = NULL;
 	cJSON *root_json = NULL;
 	cJSON *json_data = NULL;
@@ -368,30 +349,24 @@ static int get_checkpoint(char **ret_f_content, const cJSON *data_json)
 	cJSON_Delete(json_data);
 	json_data = NULL;
 
-	buf = cJSON_Print(root_json);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-		ret = SUCCESS;
-	} else {
-		perror("calloc");
-		ret = FAIL;
-	}
-	free(buf);
-	buf = NULL;
+	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
-	return ret;
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
 }
 
 /* get robot cfg and return to page */
 static int get_robot_cfg(char **ret_f_content)
 {
 	char strline[LINE_LEN] = {0};
-	char *buf = NULL;
 	FILE *fp;
-	int ret = FAIL;
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateObject();
@@ -522,6 +497,15 @@ static int get_robot_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "FRIC_COMPENSATION = ", 20)) {
 			strrpc(strline, "FRIC_COMPENSATION = ", "");
 			cJSON_AddStringToObject(root_json, "fric_compensation", strline);
+		} else if(!strncmp(strline, "FRIC_VALUE_LEVEL = ", 19)) {
+			strrpc(strline, "FRIC_VALUE_LEVEL = ", "");
+			cJSON_AddStringToObject(root_json, "fric_value_level", strline);
+		} else if(!strncmp(strline, "FRIC_VALUE_WALL = ", 18)) {
+			strrpc(strline, "FRIC_VALUE_WALL = ", "");
+			cJSON_AddStringToObject(root_json, "fric_value_wall", strline);
+		} else if(!strncmp(strline, "FRIC_VALUE_CEILING = ", 21)) {
+			strrpc(strline, "FRIC_VALUE_CEILING = ", "");
+			cJSON_AddStringToObject(root_json, "fric_value_ceiling", strline);
 		} else if(!strncmp(strline, "COLLISION_ERROR_TIME = ", 23)) {
 			strrpc(strline, "COLLISION_ERROR_TIME = ", "");
 			cJSON_AddStringToObject(root_json, "collision_error_time", strline);
@@ -699,33 +683,26 @@ static int get_robot_cfg(char **ret_f_content)
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
+	fclose(fp);
 
-	buf = cJSON_Print(root_json);
-	//printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-		ret = SUCCESS;
-	} else {
-		perror("calloc");
-		ret = FAIL;
-	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
+	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
-	return ret;
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
 }
 
 /** get exaxis cfg */
 static int get_exaxis_cfg(char **ret_f_content)
 {
 	char strline[LINE_LEN] = {0};
-	char *buf = NULL;
 	FILE *fp;
-	int ret = FAIL;
 	cJSON *root_json = NULL;
 	cJSON *item1 = NULL;
 	cJSON *item2 = NULL;
@@ -774,9 +751,12 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS1_RESOLUTION = ", 27)) {
 			strrpc(strline, "EXTERNALAXIS1_RESOLUTION = ", "");
 			cJSON_AddStringToObject(item1, "axis_enres", strline);
-		} else if(!strncmp(strline, "EXTERNALAXIS1_GEARRATIO = ", 26)) {
-			strrpc(strline, "EXTERNALAXIS1_GEARRATIO = ", "");
-			cJSON_AddStringToObject(item1, "axis_ratio", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_LEAD = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS1_LEAD = ", "");
+			cJSON_AddStringToObject(item1, "axis_lead", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_OFFSET = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS1_OFFSET = ", "");
+			cJSON_AddStringToObject(item1, "axis_offset", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS2_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS2_TYPE = ", "");
 			cJSON_AddStringToObject(item2, "axis_type", strline);
@@ -798,9 +778,12 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS2_RESOLUTION = ", 27)) {
 			strrpc(strline, "EXTERNALAXIS2_RESOLUTION = ", "");
 			cJSON_AddStringToObject(item2, "axis_enres", strline);
-		} else if(!strncmp(strline, "EXTERNALAXIS2_GEARRATIO = ", 26)) {
-			strrpc(strline, "EXTERNALAXIS2_GEARRATIO = ", "");
-			cJSON_AddStringToObject(item2, "axis_ratio", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_LEAD = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS2_LEAD = ", "");
+			cJSON_AddStringToObject(item2, "axis_lead", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_OFFSET = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS2_OFFSET = ", "");
+			cJSON_AddStringToObject(item2, "axis_offset", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS3_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS3_TYPE = ", "");
 			cJSON_AddStringToObject(item3, "axis_type", strline);
@@ -822,9 +805,12 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS3_RESOLUTION = ", 27)) {
 			strrpc(strline, "EXTERNALAXIS3_RESOLUTION = ", "");
 			cJSON_AddStringToObject(item3, "axis_enres", strline);
-		} else if(!strncmp(strline, "EXTERNALAXIS3_GEARRATIO = ", 26)) {
-			strrpc(strline, "EXTERNALAXIS3_GEARRATIO = ", "");
-			cJSON_AddStringToObject(item3, "axis_ratio", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_LEAD = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS3_LEAD = ", "");
+			cJSON_AddStringToObject(item3, "axis_lead", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_OFFSET = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS3_OFFSET = ", "");
+			cJSON_AddStringToObject(item3, "axis_offset", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS4_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS4_TYPE = ", "");
 			cJSON_AddStringToObject(item4, "axis_type", strline);
@@ -846,38 +832,34 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS4_RESOLUTION = ", 27)) {
 			strrpc(strline, "EXTERNALAXIS4_RESOLUTION = ", "");
 			cJSON_AddStringToObject(item4, "axis_enres", strline);
-		} else if(!strncmp(strline, "EXTERNALAXIS4_GEARRATIO = ", 26)) {
-			strrpc(strline, "EXTERNALAXIS4_GEARRATIO = ", "");
-			cJSON_AddStringToObject(item4, "axis_ratio", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_LEAD = ", 21)) {
+			strrpc(strline, "EXTERNALAXIS4_LEAD = ", "");
+			cJSON_AddStringToObject(item4, "axis_lead", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_OFFSET = ", 23)) {
+			strrpc(strline, "EXTERNALAXIS4_OFFSET = ", "");
+			cJSON_AddStringToObject(item4, "axis_offset", strline);
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
+	fclose(fp);
 
-	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-		ret = SUCCESS;
-	} else {
-		perror("calloc");
-		ret = FAIL;
-	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
+	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
-	return ret;
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
 }
 
 static int get_weave(char **ret_f_content)
 {
 	char strline[LINE_LEN] = {0};
-	char *buf = NULL;
 	FILE *fp;
-	int ret = FAIL;
 	cJSON *root_json = NULL;
 	cJSON *item0 = NULL;
 	cJSON *item1 = NULL;
@@ -1044,24 +1026,384 @@ static int get_weave(char **ret_f_content)
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
+	fclose(fp);
 
-	buf = cJSON_Print(root_json);
-	printf("buf = %s\n", buf);
-	*ret_f_content = (char *)calloc(1, strlen(buf)+1);
-	if(*ret_f_content != NULL) {
-		strcpy((*ret_f_content), buf);
-		ret = SUCCESS;
-	} else {
-		perror("calloc");
-		ret = FAIL;
-	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
-	free(buf);
-	buf = NULL;
+	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
 
-	return ret;
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
+/* get plugin info */
+static int get_plugin_info(char **ret_f_content)
+{
+	int i = 0;
+	char *dir_list = NULL;
+	char package_path[100] = {0};
+	char *package_content = NULL;
+	cJSON *dir_list_json = NULL;
+	cJSON *dir_plugin_name_json = NULL;
+	cJSON *root_json = NULL;
+	cJSON *package_json = NULL;
+
+	dir_list = get_dir_filename(UPLOAD_WEB_PLUGINS);
+	if (dir_list == NULL) {
+		perror("get dir filename");
+
+		return FAIL;
+	}
+	//printf("dir_list = %s\n", dir_list);
+
+	dir_list_json = cJSON_Parse(dir_list);
+	free(dir_list);
+	dir_list = NULL;
+	if (dir_list_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+
+	root_json = cJSON_CreateArray();
+	for (i = 0; i < cJSON_GetArraySize(dir_list_json); i++) {
+		bzero(package_path, sizeof(package_path));
+		dir_plugin_name_json = cJSON_GetArrayItem(dir_list_json, i);
+		sprintf(package_path, "%s%s/package.json", UPLOAD_WEB_PLUGINS, dir_plugin_name_json->valuestring);
+		//printf("package_path = %s\n", package_path);
+
+		package_content = get_file_content(package_path);
+		if (package_content == NULL || strcmp(package_content, "NO_FILE") == 0 || strcmp(package_content, "Empty") == 0) {
+			perror("get file content");
+			cJSON_Delete(dir_list_json);
+			dir_list_json = NULL;
+			cJSON_Delete(root_json);
+			root_json = NULL;
+
+			return FAIL;
+		}
+		//printf("package_content = %s\n", package_content);
+		package_json = cJSON_Parse(package_content);
+		free(package_content);
+		package_content = NULL;
+		cJSON_AddItemToArray(root_json, package_json);
+	}
+	cJSON_Delete(dir_list_json);
+	dir_list_json = NULL;
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", *ret_f_content);
+
+	return SUCCESS;
+}
+
+/* get plugin nav */
+static int get_plugin_nav(char **ret_f_content)
+{
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
+	int i = 0;
+	char dir_plugin[100] = {0};
+	char html_path[100] = {0};
+	char package_path[100] = {0};
+	char *dir_list = NULL;
+	char *package_content = NULL;
+	cJSON *dir_list_json = NULL;
+	cJSON *dir_plugin_name_json = NULL;
+	cJSON *root_json = NULL;
+	cJSON *package_json = NULL;
+	cJSON *newitem = NULL;
+	cJSON *nav_name = NULL;
+	cJSON *enable = NULL;
+
+	dir_list = get_dir_filename(UPLOAD_WEB_PLUGINS);
+	if (dir_list == NULL) {
+		perror("get dir filename");
+
+		return FAIL;
+	}
+	//printf("dir_list = %s\n", dir_list);
+
+	dir_list_json = cJSON_Parse(dir_list);
+	free(dir_list);
+	dir_list = NULL;
+	if (dir_list_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+
+	root_json = cJSON_CreateArray();
+	for (i = 0; i < cJSON_GetArraySize(dir_list_json); i++) {
+		bzero(dir_plugin, sizeof(dir_plugin));
+		bzero(html_path, sizeof(html_path));
+		bzero(package_path, sizeof(package_path));
+		dir_plugin_name_json = cJSON_GetArrayItem(dir_list_json, i);
+
+		sprintf(dir_plugin, "%s%s/", UPLOAD_WEB_PLUGINS, dir_plugin_name_json->valuestring);
+		//printf("dir_plugin = %s\n", dir_plugin);
+		dir = opendir(dir_plugin);
+		if (dir == NULL) {
+			perror("opendir");
+
+			goto end;
+		}
+		while((ptr = readdir(dir)) != NULL) {
+			if(is_in(ptr->d_name, ".html") == 1) {
+				sprintf(html_path, "./plugins/web-plugins/%s/%s", dir_plugin_name_json->valuestring, ptr->d_name);
+				break;
+			}
+		}
+		closedir(dir);
+		dir = NULL;
+
+		sprintf(package_path, "%s%s/package.json", UPLOAD_WEB_PLUGINS, dir_plugin_name_json->valuestring);
+		package_content = get_file_content(package_path);
+		if (package_content == NULL || strcmp(package_content, "NO_FILE") == 0 || strcmp(package_content, "Empty") == 0) {
+			perror("get file content");
+
+			goto end;
+		}
+		//printf("package_content = %s\n", package_content);
+		package_json = cJSON_Parse(package_content);
+		free(package_content);
+		package_content = NULL;
+		if (package_json == NULL) {
+			perror("cJSON_Parse");
+
+			goto end;
+		}
+		nav_name = cJSON_GetObjectItem(package_json, "nav_name");
+		if (nav_name == NULL || nav_name->valuestring == NULL) {
+			perror("JSON");
+
+			goto end;
+		}
+		enable = cJSON_GetObjectItem(package_json, "enable");
+		if (enable == NULL) {
+			perror("JSON");
+
+			goto end;
+		}
+		if (enable->valueint == 1) {
+			newitem = cJSON_CreateObject();
+			cJSON_AddStringToObject(newitem, "url", html_path);
+			cJSON_AddStringToObject(newitem, "nav_name", nav_name->valuestring);
+			cJSON_AddItemToArray(root_json, newitem);
+		}
+	}
+	cJSON_Delete(dir_list_json);
+	dir_list_json = NULL;
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", *ret_f_content);
+
+	return SUCCESS;
+
+end:
+	cJSON_Delete(dir_list_json);
+	dir_list_json = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	return FAIL;
+}
+
+/* get plugin config */
+static int get_plugin_config(char **ret_f_content, const cJSON *data_json)
+{
+	cJSON *name = NULL;
+	cJSON *config_json = NULL;
+	cJSON *di_json = NULL;
+	cJSON *do_json = NULL;
+	cJSON *root_json = NULL;
+	char config_path[100] = {0};
+	char *config_content = NULL;
+	char strline[LINE_LEN] = {0};
+	FILE *fp;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(config_path, "%s%s/config.json", UPLOAD_WEB_PLUGINS, name->valuestring);
+	config_content = get_file_content(config_path);
+	if (config_content == NULL || strcmp(config_content, "NO_FILE") == 0 || strcmp(config_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	//printf("config_content = %s\n", config_content);
+	config_json = cJSON_Parse(config_content);
+	free(config_content);
+	config_content = NULL;
+	if (config_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	root_json = cJSON_CreateObject();
+	di_json = cJSON_CreateArray();
+	do_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "config", config_json);
+	cJSON_AddItemToObject(root_json, "di", di_json);
+	cJSON_AddItemToObject(root_json, "do", do_json);
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if (!strncmp(strline, "CTL_DI8_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DI8_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(8));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI9_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DI9_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(9));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI10_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI10_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(10));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI11_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI11_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(11));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI12_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI12_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(12));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI13_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI13_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(13));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI14_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI14_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(14));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DI15_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DI15_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(di_json, cJSON_CreateNumber(15));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO8_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DO8_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(8));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO9_CONFIG = ", 17)) {
+			strrpc(strline, "CTL_DO9_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(9));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO10_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO10_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(10));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO11_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO11_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(11));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO12_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO12_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(12));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO13_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO13_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(13));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO14_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO14_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(14));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		} else if (!strncmp(strline, "CTL_DO15_CONFIG = ", 18)) {
+			strrpc(strline, "CTL_DO15_CONFIG = ", "");
+			if (atoi(strline) == 0) {
+				cJSON_AddItemToArray(do_json, cJSON_CreateNumber(15));
+			}
+			bzero(strline, sizeof(char)*LINE_LEN);
+			continue;
+		}
+	}
+	fclose(fp);
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
 }
 
 /* get web data and return to page */
@@ -1093,7 +1435,7 @@ void get(Webs *wp)
 		perror("json");
 		goto end;
 	}
-	//printf("data:%s\n", buf = cJSON_Print(data));
+	printf("data:%s\n", buf = cJSON_Print(data));
 	free(buf);
 	buf = NULL;
 	/* get cmd */
@@ -1155,6 +1497,17 @@ void get(Webs *wp)
 		ret = get_weave(&ret_f_content);
 	} else if(!strcmp(cmd, "get_exaxis_cfg")) {
 		ret = get_exaxis_cfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_plugin_info")) {
+		ret = get_plugin_info(&ret_f_content);
+	} else if(!strcmp(cmd, "get_plugin_nav")) {
+		ret = get_plugin_nav(&ret_f_content);
+	} else if(!strcmp(cmd, "get_plugin_config")) {
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = get_plugin_config(&ret_f_content, data_json);
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -1200,8 +1553,10 @@ end:
 	websWrite(wp, "fail");
 	websDone(wp);
 	/* free ret_f_content */
-	free(ret_f_content);
-	ret_f_content = NULL;
+	if (ret_f_content != NULL) {
+		free(ret_f_content);
+		ret_f_content = NULL;
+	}
 	return;
 }
 
