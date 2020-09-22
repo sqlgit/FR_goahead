@@ -166,6 +166,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *lin = NULL;
 	cJSON *point_1 = NULL;
 	cJSON *point_2 = NULL;
+	cJSON *point_3 = NULL;
+	cJSON *rx_3 = NULL;
+	cJSON *ry_3 = NULL;
+	cJSON *rz_3 = NULL;
 	cJSON *ext_axis_ptp = NULL;
 
 	/* PTP */
@@ -221,7 +225,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 
 	/* EXT_AXIS_PTP */
-	}else if(!strncmp(lua_cmd, "EXT_AXIS_PTP:", 13)) {
+	} else if(!strncmp(lua_cmd, "EXT_AXIS_PTP:", 13)) {
 		strrpc(lua_cmd, "EXT_AXIS_PTP:", "");
 		if(separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
 			perror("separate recv");
@@ -335,15 +339,23 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* Lin */
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
 		strrpc(lua_cmd, "Lin:", "");
-		if(separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
-			perror("separate recv");
+		if(is_in(lua_cmd, "seamPos") == 1) {
+			if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
+				perror("separate recv");
 
-			return FAIL;
+				return FAIL;
+			}
+		} else {
+			if(separate_string_to_array(lua_cmd, ",", 3, 20, (char *)&cmd_array) != 3) {
+				perror("separate recv");
+
+				return FAIL;
+			}
 		}
 
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "select * from points where name = \'%s\';", cmd_array[0]);
+		sprintf(sql, "select * from points;", cmd_array[0]);
 		if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
 			perror("select lin points");
 
@@ -363,7 +375,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 				goto end;
 			}
-			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
+			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3]);
 		} else {
 			j1 = cJSON_GetObjectItem(lin, "j1");
 			j2 = cJSON_GetObjectItem(lin, "j2");
@@ -598,7 +610,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "select * from coordinate_system where name = \'%s\';", cmd_array[0]);
+		sprintf(sql, "select * from coordinate_system;", cmd_array[0]);
 		if(select_info_json_sqlite3(DB_CDSYSTEM, sql, &f_json) == -1) {
 			perror("select cdsystem");
 
@@ -633,7 +645,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			return FAIL;
 		}
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "select * from et_coordinate_system where name = \'%s\';", cmd_array[0]);
+		sprintf(sql, "select * from et_coordinate_system;", cmd_array[0]);
 		if(select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &f_json) == -1) {
 			perror("select cdsystem");
 
@@ -737,6 +749,72 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if (!strcmp(cmd_array[0], "off")) {
 			sprintf(tmp_content, "%sLaserTrackDataRecord(0)\n", file_content);
 		}
+		strcpy(file_content, tmp_content);
+	/* PostureAdjustOn */
+	} else if(!strncmp(lua_cmd, "PostureAdjustOn:", 16)) {
+		strrpc(lua_cmd, "PostureAdjustOn:", "");
+		if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+
+		/* open and get point.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from points;", cmd_array[1]);
+		if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+			perror("select points");
+
+			return FAIL;
+		}
+
+		point_1 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[1]);
+		if(point_1 == NULL || point_1->type != cJSON_Object) {
+
+			goto end;
+		}
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		if(rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+
+			goto end;
+		}
+		point_2 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[2]);
+		if(point_2 == NULL || point_2->type != cJSON_Object) {
+
+			goto end;
+		}
+		rx_2 = cJSON_GetObjectItem(point_2, "rx");
+		ry_2 = cJSON_GetObjectItem(point_2, "ry");
+		rz_2 = cJSON_GetObjectItem(point_2, "rz");
+		if(rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL) {
+
+			goto end;
+		}
+		point_3 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[3]);
+		if(point_3 == NULL || point_3->type != cJSON_Object) {
+
+			goto end;
+		}
+		rx_3 = cJSON_GetObjectItem(point_3, "rx");
+		ry_3 = cJSON_GetObjectItem(point_3, "ry");
+		rz_3 = cJSON_GetObjectItem(point_3, "rz");
+		if(rx_3->valuestring == NULL || ry_3->valuestring == NULL || rz_3->valuestring == NULL) {
+
+			goto end;
+		}
+		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring);
+		strcpy(file_content, tmp_content);
+	/* PostureAdjustOff */
+	} else if(!strncmp(lua_cmd, "PostureAdjustOff:", 17)) {
+		strrpc(lua_cmd, "PostureAdjustOff:", "");
+		if(separate_string_to_array(lua_cmd, ",", 1, 20, (char *)&cmd_array) != 1) {
+			perror("separate recv");
+
+			return FAIL;
+		}
+		sprintf(tmp_content, "%sPostureAdjustOff(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
