@@ -82,5 +82,6 @@ void *create_dir(const char *dir_path);
 int authority_management(const char *cmd_type);
 void delete_timer();
 int clear_plugin_config(char *plugin_name);
+char *my_strlwr(char * str);
 
 #endif

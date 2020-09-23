@@ -1034,6 +1034,62 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->weld_readystate = 0;
 	}
+	//for (i = 0; i < 4; i++) {
+	for (i = 0; i < 1; i++) {
+		if (state->exaxis_status[i].exAxisALM == 1) {
+			memset(content, 0, sizeof(content));
+			sprintf(content, "外部轴 %d 伺服报警", (i+1));
+			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->exaxis_status[i].exAxisALM != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisALM = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisALM = 0;
+		}
+	}
+	//for (i = 0; i < 4; i++) {
+	for (i = 0; i < 1; i++) {
+		if (state->exaxis_status[i].exAxisNLMT == 1) {
+			memset(content, 0, sizeof(content));
+			sprintf(content, "外部轴 %d 到负限位", (i+1));
+			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->exaxis_status[i].exAxisNLMT != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisNLMT = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisNLMT = 0;
+		}
+	}
+	//for (i = 0; i < 4; i++) {
+	for (i = 0; i < 1; i++) {
+		if (state->exaxis_status[i].exAxisPLMT == 1) {
+			memset(content, 0, sizeof(content));
+			sprintf(content, "外部轴 %d 到正限位", (i+1));
+			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->exaxis_status[i].exAxisPLMT != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisPLMT = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisPLMT = 0;
+		}
+	}
+	//for (i = 0; i < 4; i++) {
+	for (i = 0; i < 1; i++) {
+		if (state->exaxis_status[i].exAxisOFLIN == 1) {
+			memset(content, 0, sizeof(content));
+			sprintf(content, "外部轴 %d 通信超时，控制卡与控制箱板485通信超时", (i+1));
+			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->exaxis_status[i].exAxisOFLIN != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisOFLIN = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisOFLIN = 0;
+		}
+	}
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
 	strcpy(ret_status, buf);

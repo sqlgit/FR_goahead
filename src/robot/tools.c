@@ -769,3 +769,21 @@ int clear_plugin_config(char *plugin_name)
 
 	return SUCCESS;
 }
+
+char *my_strlwr(char * str)   //定义一个my_strlwr函数,大写字符串转小写
+{
+	assert(str);         //str的非空性
+	char *ret = str;       //定义一个ret保存最初的str
+	while(*str != '\0')      //判断字符串是否结束
+	{
+		if((*str >= 'A')&&(*str <= 'Z'))//判断当前啊字符是否是                        大写字母
+		{
+			*str = *str +32;     //将其转化为小写字母
+			str++;
+		}
+		else
+			str++;
+	}
+	return ret;       //返回该字符串数组的首地址
+}
+
