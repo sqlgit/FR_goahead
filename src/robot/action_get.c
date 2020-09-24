@@ -43,7 +43,7 @@ static int get_points(char **ret_f_content)
 	cJSON *json_data = NULL;
 
 	sprintf(sql, "select * from points");
-	if (select_info_json_sqlite3(DB_POINTS, sql, &json_data) == -1) {
+	if (select_info_json_sqlite3_reversed_order(DB_POINTS, sql, &json_data) == -1) {
 		perror("select points");
 
 		return FAIL;

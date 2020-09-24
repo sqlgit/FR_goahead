@@ -18,14 +18,48 @@ cJSON *json_construction(char **resultp, int nrow, int ncloumn)
 	cJSON *forceast = NULL;
 		
 	forceast = cJSON_CreateObject();
+	//printf("nrow = %d\n", nrow);
+	//printf("ncloumn = %d\n", ncloumn);
 	for (i = 0; i < nrow; i++) {
 		array = cJSON_CreateObject();
 		for (j = 0; j < ncloumn; j++) {
-			cJSON_AddStringToObject(array, resultp[j], resultp[(i + 1) * ncloumn + j]);
+			if (resultp[(i+1)*ncloumn+j] != NULL) {
+				cJSON_AddStringToObject(array, resultp[j], resultp[(i + 1) * ncloumn + j]);
+			}
 		}
-		memset(info, 0, sizeof(info));
-		strcpy(info, resultp[(i + 1) * ncloumn]);
-		cJSON_AddItemToObject(forceast, info, array);
+		if (resultp[(i+1)*ncloumn] != NULL) {
+			memset(info, 0, sizeof(info));
+			strcpy(info, resultp[(i + 1) * ncloumn]);
+			cJSON_AddItemToObject(forceast, info, array);
+		}
+	}
+
+	return forceast;
+}
+
+cJSON *json_construction_reversed_order(char **resultp, int nrow, int ncloumn)
+{
+	int i;
+	int j;
+	char info[1024] = {0};
+	cJSON *array = NULL;
+	cJSON *forceast = NULL;
+
+	forceast = cJSON_CreateObject();
+	//printf("nrow = %d\n", nrow);
+	//printf("ncloumn = %d\n", ncloumn);
+	for (i = (nrow-1); i >= 0; i--) {
+		array = cJSON_CreateObject();
+		for (j = 0; j < ncloumn; j++) {
+			if (resultp[(i+1)*ncloumn+j] != NULL) {
+				cJSON_AddStringToObject(array, resultp[j], resultp[(i + 1) * ncloumn + j]);
+			}
+		}
+		if (resultp[(i+1)*ncloumn] != NULL) {
+			memset(info, 0, sizeof(info));
+			strcpy(info, resultp[(i + 1) * ncloumn]);
+			cJSON_AddItemToObject(forceast, info, array);
+		}
 	}
 
 	return forceast;
@@ -105,6 +139,23 @@ int select_info_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_Data)
 	}
 
 	(*JSON_Data) = json_construction(resultp, nrow, ncloumn);
+
+	sqlite3_free_table(resultp); //释放结果集
+
+	return 0;
+}
+
+int select_info_json_sqlite3_reversed_order(char *db_name, const char *sql, cJSON **JSON_Data)
+{
+	int nrow = 0;
+	int ncloumn = 0;
+	char **resultp = NULL;
+
+	if (select_info_sqlite3(db_name, sql, &resultp, &nrow, &ncloumn) == -1) {
+		return -1;
+	}
+
+	(*JSON_Data) = json_construction_reversed_order(resultp, nrow, ncloumn);
 
 	sqlite3_free_table(resultp); //释放结果集
 
