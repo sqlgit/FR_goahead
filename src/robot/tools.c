@@ -278,8 +278,8 @@ char *get_dir_filename(const char *dir_path)
 		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
 		//cJSON_AddStringToObject(root_json, "key", ptr->d_name);
-		cJSON_AddItemToArray(root_json, cJSON_CreateString(ptr->d_name));
-		//cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
+		//cJSON_AddItemToArray(root_json, cJSON_CreateString(ptr->d_name));
+		cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
 	}
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
