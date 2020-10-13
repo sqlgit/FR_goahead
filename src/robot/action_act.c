@@ -586,6 +586,7 @@ void act(Webs *wp)
 	cJSON *data = NULL;
 	cJSON *data_json = NULL;
 	cJSON *post_type = NULL;
+	char log_content[1024] = {0};
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -630,36 +631,52 @@ void act(Webs *wp)
 	}
 	if (!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
+		strcpy(log_content, "保存当前程序示教文件");
 	} else if (!strcmp(cmd, "remove_lua_file")) {
 		ret = remove_lua_file(data_json);
+		strcpy(log_content, "删除当前程序示教文件");
 	} else if (!strcmp(cmd, "save_template_file")) {
 		ret = save_template_file(data_json);
+		strcpy(log_content, "保存程序示教模板文件");
 	} else if (!strcmp(cmd, "remove_template_file")) {
 		ret = remove_template_file(data_json);
+		strcpy(log_content, "删除程序示教模板文件");
 	} else if (!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
+		strcpy(log_content, "重命名当前程序示教文件");
 	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
 		ret = modify_tool_cdsystem(data_json);
+		strcpy(log_content, "修改工具坐标系");
 	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		ret = modify_ex_tool_cdsystem(data_json);
+		strcpy(log_content, "修改外部工具坐标系");
 	} else if (!strcmp(cmd, "modify_exaxis_cdsystem")) {
 		ret = modify_exaxis_cdsystem(data_json);
+		strcpy(log_content, "修改外部轴工具坐标系");
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
+		strcpy(log_content, "保存点信息");
 	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
+		strcpy(log_content, "移除点信息");
 	} else if (!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
+		strcpy(log_content, "切换实体和虚拟机器人");
 	} else if (!strcmp(cmd, "log_management")) {
 		ret = log_management(data_json);
+		strcpy(log_content, "日志配置");
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
+		strcpy(log_content, "保存账户信息");
 	} else if (!strcmp(cmd, "plugin_enable")) {
 		ret = plugin_enable(data_json);
+		strcpy(log_content, "启用/停用外设插件");
 	} else if (!strcmp(cmd, "plugin_remove")) {
 		ret = plugin_remove(data_json);
+		strcpy(log_content, "删除外设插件");
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
+		strcpy(log_content, "系统关机");
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -668,7 +685,7 @@ void act(Webs *wp)
 		perror("ret fail");
 		goto end;
 	}
-	my_syslog("应用操作", cmd, cur_account.username);
+	my_syslog("应用操作", log_content, cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

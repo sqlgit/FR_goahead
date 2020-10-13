@@ -6,6 +6,9 @@
 #include	"filehandler.h"
 
 extern ACCOUNT_INFO cur_account;
+extern SOCKET_INFO socket_cmd;
+extern SOCKET_INFO socket_vir_cmd;
+extern int robot_type;
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
 static int compute_file_md5(const char *file_path, char *md5_str);
@@ -137,6 +140,7 @@ void upload(Webs *wp)
 {
 	WebsKey         *s;
 	WebsUpload      *up;
+	SOCKET_INFO *sock_cmd = NULL;
 	char            *upfile;
 	int i = 0;
 	char *dir_list = NULL;
@@ -198,7 +202,7 @@ void upload(Webs *wp)
 				strcpy(filename, upfile);
 			/* control user file */
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {
-				upfile = sfmt("%s", ROBOT_CFG);
+				upfile = sfmt("%s", WEB_ROBOT_CFG);
 				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
 			/* webapp upgrade file */
 			} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
@@ -256,12 +260,25 @@ void upload(Webs *wp)
 	/**	bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "chmod 777 %s", SHELL_WEBUPGRADE);
 		system(cmd);
-	 */
+	*/
 		bzero(cmd, sizeof(cmd));
+	//	sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
+		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
+	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
+		system(cmd);
+		//bzero(cmd, sizeof(cmd));
 		//sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
 		//sprintf(cmd, "sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-		sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
-		system(cmd);
+	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE_2, CLIENT_IP);
+		//system(cmd);
+
+		/* send webappupgrade cmd to TM to do web_upgrade.sh shell */
+		if (robot_type == 1) { // "1" 代表实体机器人
+			sock_cmd = &socket_cmd;
+		} else { // "0" 代表虚拟机器人
+			sock_cmd = &socket_vir_cmd;
+		}
+		socket_enquene(sock_cmd, 344, "WebAppUpgrade()", 1);
 		printf("webapp upgrade success!\n");
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 	} else if (strcmp(filename, UPGRADE_CONTROL) == 0) {

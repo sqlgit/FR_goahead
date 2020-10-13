@@ -9,6 +9,7 @@
 #define SUCCESS 1
 #define FAIL 0
 #define ROBOT_CFG "/root/robot/user.config"
+#define WEB_ROBOT_CFG "/root/web/file/robotcfg/user.config"
 #define EXAXIS_CFG "/root/robot/exaxis.config"
 #define README_WEB_NOW "/root/README/README_WEB.txt"
 #define README_WEB_UP "/tmp/webapp/README_WEB.txt"
@@ -20,6 +21,7 @@
 #define UPGRADE_FR_CONTROL "/tmp/control/fr_control.tar.gz"
 #define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
 #define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
+#define SHELL_WEBTARCP "/root/web/webserver/shell/web_tar_cp.sh"
 #define SHELL_CRLUPGRADE "/root/web/webserver/shell/fr_control_upgrade.sh"
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"

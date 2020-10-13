@@ -300,8 +300,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
 		speed = cJSON_GetObjectItem(point_1, "speed");
 		acc = cJSON_GetObjectItem(point_1, "acc");
-		E1 = cJSON_GetObjectItem(point_1, "E1");
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL || E1->valuestring == NULL) {
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL) {
 
 			goto end;
 		}
@@ -327,14 +326,13 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		toolnum_2 = cJSON_GetObjectItem(point_2, "toolnum");
 		speed_2 = cJSON_GetObjectItem(point_2, "speed");
 		acc_2 = cJSON_GetObjectItem(point_2, "acc");
-		E1_2 = cJSON_GetObjectItem(point_2, "E1");
 
-		if(j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || cmd_array[2] == NULL || E1_2->valuestring == NULL) {
+		if(j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || cmd_array[2] == NULL) {
 
 			goto end;
 		}
 
-		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2], E1_2->valuestring);
+		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
@@ -753,7 +751,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	/* PostureAdjustOn */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOn:", 16)) {
 		strrpc(lua_cmd, "PostureAdjustOn:", "");
-		if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
+		if(separate_string_to_array(lua_cmd, ",", 5, 20, (char *)&cmd_array) != 5) {
 			perror("separate recv");
 
 			return FAIL;
@@ -804,7 +802,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring);
+		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4]);
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOff */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOff:", 17)) {
@@ -1379,7 +1377,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 345) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1762,6 +1760,11 @@ void set(Webs *wp)
 		strcpy(log_content, "设置激光跟踪传感器位置");
 		ret = copy_content(data_json, content);
 		break;
+	case 283:
+		port = cmdport;
+		strcpy(log_content, "获取激光跟踪传感器配置信息");
+		ret = copy_content(data_json, content);
+		break;
 	case 287:
 		port = cmdport;
 		strcpy(log_content, "激活/去激活外部轴坐标系");
@@ -1890,7 +1893,7 @@ void set(Webs *wp)
 		break;
 	case 321:
 		port = cmdport;
-		strcpy(log_content, "机器人配置文件生效");
+		strcpy(log_content, "生效机器人配置文件");
 		ret = copy_content(data_json, content);
 		break;
 	case 323:
@@ -1925,7 +1928,7 @@ void set(Webs *wp)
 		break;
 	case 330:
 		port = cmdport;
-		strcpy(log_content, "应用当前显示的外部和工具坐标系");
+		strcpy(log_content, "应用当前显示的外部工具坐标系");
 		ret = copy_content(data_json, content);
 		break;
 	case 332:
@@ -1981,6 +1984,11 @@ void set(Webs *wp)
 	case 343:
 		port = cmdport;
 		strcpy(log_content, "同步系统时间");
+		ret = copy_content(data_json, content);
+		break;
+	case 345:
+		port = cmdport;
+		strcpy(log_content, "检测机器人配置文件");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:

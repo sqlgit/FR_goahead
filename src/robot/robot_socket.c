@@ -411,8 +411,37 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 						createnode(&node, atoi(array[2]), msg_content);
 						free(msg_content);
 						msg_content = NULL;
+					} else if (atoi(array[2]) == 283) {//获取激光跟踪传感器配置信息
+						char *msg_content = NULL;
+						char msg_array[4][20] = {{0}};
+						cJSON *root_json = cJSON_CreateObject();
+
+						if (separate_string_to_array(array[4], ",", 4, 20, (char *)&msg_array) != 4) {
+							perror("separate recv");
+						}
+
+						cJSON_AddStringToObject(root_json, "ip", msg_array[0]);
+						cJSON_AddStringToObject(root_json, "port", msg_array[1]);
+						cJSON_AddStringToObject(root_json, "period", msg_array[2]);
+						cJSON_AddStringToObject(root_json, "protocol_id", msg_array[3]);
+						msg_content = cJSON_Print(root_json);
+						createnode(&node, atoi(array[2]), msg_content);
+						free(msg_content);
+						msg_content = NULL;
 					} else {
 						createnode(&node, atoi(array[2]), array[4]);
+					}
+					if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
+						//printf("robot cfg : array[4] = %s\n", array[4]);
+						if (strcmp(array[4], "0") == 0) {
+							//printf("fail！\n");
+						}
+						if (strcmp(array[4], "1") == 0) {
+							//printf("success！\n");
+							char cmd[128] = {0};
+							sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
+							system(cmd);
+						}
 					}
 
 					pthread_mutex_lock(&sock->mut);

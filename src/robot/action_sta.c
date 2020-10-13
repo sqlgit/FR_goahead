@@ -111,6 +111,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
 	cJSON_AddNumberToObject(root_json, "flag_zero_set", state->flag_zero_set);
+	cJSON_AddNumberToObject(root_json, "weldTrackSpeed", state->weldTrackSpeed);
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
@@ -557,6 +558,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (pre_state->cmdPointError != 23) {
 				my_syslog("错误", "焊接指令错误，起收弧间只允许LIN和ARC指令", cur_account.username);
 				pre_state->cmdPointError = 23;
+			}
+			break;
+		case 24:
+			cJSON_AddStringToObject(error_json, "key", "摆焊参数错误");
+			if (pre_state->cmdPointError != 24) {
+				my_syslog("错误", "摆焊参数错误", cur_account.username);
+				pre_state->cmdPointError = 24;
 			}
 			break;
 		default:

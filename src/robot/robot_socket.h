@@ -135,6 +135,7 @@ typedef struct _CTRL_STATE
 	int 	   aliveSlaveNumFeedback;   /** 活动从站数量反馈 */
 	uint8_t	   ctrl_query_state;		/** 控制器查询状态 0-未查询，1-查询中 */
 	uint8_t    weld_readystate;			/** 焊机准备状态 1-准备好；0-未准备好 */
+	double     weldTrackSpeed;			/** 焊缝跟踪速度 mm/s */
 } CTRL_STATE;
 #pragma pack(pop)
 

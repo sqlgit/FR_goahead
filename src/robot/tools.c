@@ -740,15 +740,14 @@ int clear_plugin_config(char *plugin_name)
 		} else { // "0" 代表虚拟机器人
 			sock_cmd = &socket_vir_cmd;
 		}
+		bzero(content, sizeof(content));
 		/* clear 外设 DO */
 		if (dio_json->valueint == 1) {
-			bzero(content, sizeof(content));
 			sprintf(content, "SetPluginDO(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
 			//printf("content = %s\n", content);
 			socket_enquene(sock_cmd, 339, content, 1);
 		/* clear 外设 DI */
 		} else {
-			bzero(content, sizeof(content));
 			sprintf(content, "SetPluginDI(%d,%d,%d)", dio_value_json->valueint, 0, dio_level_json->valueint);
 			//printf("content = %s\n", content);
 			socket_enquene(sock_cmd, 340, content, 1);
