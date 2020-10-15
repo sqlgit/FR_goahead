@@ -20,7 +20,7 @@
 #define UPGRADE_CONTROL "/tmp/control.tar.gz"
 #define UPGRADE_FR_CONTROL "/tmp/control/fr_control.tar.gz"
 #define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
-#define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
+//#define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
 #define SHELL_WEBTARCP "/root/web/webserver/shell/web_tar_cp.sh"
 #define SHELL_CRLUPGRADE "/root/web/webserver/shell/fr_control_upgrade.sh"
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"

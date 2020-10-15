@@ -17,12 +17,6 @@ if test -x /tmp/fr_control/frapploader.sh; then
 	cp  /tmp/fr_control/frapploader.sh  /etc/rc.d/
 fi
 
-#update ehtercat cobot_v2.xml
-if test -x /tmp/fr_control/cobot_v2.xml; then
-    rm  /root/ethercat/cobot_v2.xml;
-	cp  /tmp/fr_control/cobot_v2.xml  /root/ethercat/
-fi
-
 # update control firmware and config files
 if test -x /tmp/fr_control/zqrobot-v2.0; then
 	rm  /root/robot/zqrobot-v2.0
@@ -47,6 +41,11 @@ fi
 if test -x /tmp/fr_control/ex_device.config; then
 	rm  /root/robot/ex_device.config
 	cp  /tmp/fr_control/ex_device.config  /root/robot/
+fi
+
+if test -x /tmp/fr_control/exaxis.config; then
+	rm  /root/robot/exaxis.config
+	cp  /tmp/fr_control/exaxis.config  /root/robot/
 fi
 
 #if test -x /tmp/fr_control/userSim.config; then

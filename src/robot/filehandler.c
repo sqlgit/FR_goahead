@@ -262,15 +262,16 @@ void upload(Webs *wp)
 		system(cmd);
 	*/
 		bzero(cmd, sizeof(cmd));
-	//	sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
 		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
-	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
 		system(cmd);
-		//bzero(cmd, sizeof(cmd));
-		//sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-		//sprintf(cmd, "sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE_2, CLIENT_IP);
-		//system(cmd);
+	//	bzero(cmd, sizeof(cmd));
+	//	sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
+	//	sprintf(cmd, "nohup sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
+	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
+	//	sprintf(cmd, "sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
+	//	char *exec_argv[] = {"web_upgrade.sh", "192.168.58.2", NULL};
+	//	execv("/root/web/webserver/shell/web_upgrade.sh", exec_argv);
+	//	sleep(5);
 
 		/* send webappupgrade cmd to TM to do web_upgrade.sh shell */
 		if (robot_type == 1) { // "1" 代表实体机器人
