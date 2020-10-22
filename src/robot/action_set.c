@@ -338,7 +338,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
 		strrpc(lua_cmd, "Lin:", "");
 		if(is_in(lua_cmd, "seamPos") == 1) {
-			if(separate_string_to_array(lua_cmd, ",", 4, 20, (char *)&cmd_array) != 4) {
+			if(separate_string_to_array(lua_cmd, ",", 5, 20, (char *)&cmd_array) != 5) {
 				perror("separate recv");
 
 				return FAIL;
@@ -373,7 +373,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 				goto end;
 			}
-			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3]);
+			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		} else {
 			j1 = cJSON_GetObjectItem(lin, "j1");
 			j2 = cJSON_GetObjectItem(lin, "j2");

@@ -43,7 +43,7 @@ typedef struct _EXTERNALAXIS_STATU
 	unsigned char exAxisRDY;	//伺服准备好
 	unsigned char exAxisINPOS;	//伺服到位
 	unsigned char exAxisALM;	//伺服报警
-	unsigned char exAxisEMG;	//伺服停止
+	unsigned char exAxisFLERR;	//跟随误差
 	unsigned char exAxisNLMT;	//到负限位
 	unsigned char exAxisPLMT;	//到正限位
 	unsigned char exAxisORG;    //到原点

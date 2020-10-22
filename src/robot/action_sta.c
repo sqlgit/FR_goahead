@@ -567,6 +567,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->cmdPointError = 24;
 			}
 			break;
+		case 25:
+			cJSON_AddStringToObject(error_json, "key", "圆弧指令点间距过小");
+			if (pre_state->cmdPointError != 25) {
+				my_syslog("错误", "圆弧指令点间距过小", cur_account.username);
+				pre_state->cmdPointError = 25;
+			}
+			break;
 		default:
 			pre_state->cmdPointError = 0;
 			break;
@@ -1056,6 +1063,19 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->exaxis_status[i].exAxisALM = 0;
 		}
 	}
+	for (i = 0; i < 1; i++) {
+		if (state->exaxis_status[i].exAxisFLERR == 1) {
+			memset(content, 0, sizeof(content));
+			sprintf(content, "外部轴 %d 跟随误差过大", (i+1));
+			cJSON_AddStringToObject(error_json, "key", content);
+			if (pre_state->exaxis_status[i].exAxisFLERR != 1) {
+				my_syslog("错误", content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisFLERR = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisFLERR = 0;
+		}
+	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 1; i++) {
 		if (state->exaxis_status[i].exAxisNLMT == 1) {
@@ -1240,7 +1260,6 @@ void set_timer()
 /* get motion controller data and return to page */
 void sta(Webs *wp)
 {
-
 	char *ret_status = NULL;
 	int ret = FAIL;
 	//char *buf = NULL;
