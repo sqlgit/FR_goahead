@@ -1903,7 +1903,8 @@ PUBLIC void websWriteHeaders(Webs *wp, ssize length, cchar *location)
         if (wp->ext) {
             char *etok = sfmt("%s,", &wp->ext[1]);
             if (strstr(ME_GOAHEAD_CLIENT_CACHE ",", etok)) {
-                websWriteHeader(wp, "Cache-Control", "public, max-age=%d", ME_GOAHEAD_CLIENT_CACHE_LIFESPAN);
+                //websWriteHeader(wp, "Cache-Control", "public, max-age=%d", ME_GOAHEAD_CLIENT_CACHE_LIFESPAN);
+				websWriteHeader(wp, "Cache-Control", "no-cache");
             }
             wfree(etok);
         }
