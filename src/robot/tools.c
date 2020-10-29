@@ -14,35 +14,172 @@ extern int robot_type;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_vir_cmd;
 
-/*********************************** Code *************************************/
 
-/*
-pszInput:输入待分割字符串, MAXSIZE: 20480
-pszDelimiters:分割标识符
-Ary_num:分割的份数
-Ary_size:每份的size
-pszAry_out:分割的子串的输出参数
- */
-int separate_string_to_array(char *pszInput, char *pszDelimiters , unsigned int Ary_num, unsigned int Ary_size, char *pszAry_out)
+
+/********************************************************************
+*@function: string_to_string_list
+*
+*@param1 [IN]: src_str, 有固定分隔符的字符串
+*
+*@param2 [IN]: delimiter, 分隔符字符
+*
+*@param3 [OUT]: delimiter_count, 出参, 分隔符数量
+*
+*@param4 [OUT]: str_list, 出参，用于存放结果的二位字符串数组，
+*               使用完成后需要使用LB_FREE_ARRAY释放数组内存
+*
+*@return: 1 for ok, 0 for error
+*
+*@description: 将传入的有固定分隔符的字符串分解后存入到二维字符串数组
+*
+	*******************************************************************/
+int string_to_string_list(char *src_str, char *delimiter, int *delimiter_count, char ***str_list)
 {
-	//char *pszData = strdup(pszInput);
-	char pszData[20480]={0};
-	strcpy(pszData, pszInput);
-	char *pszToken = NULL, *pszToken_saveptr;
-	unsigned int Ary_cnt = 0;
+	char *start = NULL;
+	char* end = NULL;
+	int count = 0;
+	int ret = 0;
 
-	pszToken = strtok_r(pszData, pszDelimiters, &pszToken_saveptr);
-	while (pszToken != NULL) {
-		//printf("pszToken=%s\n", pszToken);
-		memcpy(pszAry_out + Ary_cnt*Ary_size, pszToken, Ary_size);
+	if (src_str == NULL || delimiter_count == NULL || str_list == NULL)
+	{
+		printf("[%s:%d] param error...\n", __FUNCTION__, __LINE__);
+		return ret;
+	}
+
+	start = src_str;
+	while (*start != '\0')
+	{
+		if (strncmp(start, delimiter, strlen(delimiter)) == 0) // 统计数组元素的个数
+		{
+			count++;
+		}
+		start++;
+	}
+
+	count++;
+	*str_list = (char **)memset(malloc(count * sizeof(char*)), 0, count*sizeof(char*));
+	if (*str_list == NULL)
+	{
+		printf("[%s:%d] malloc failed...\n", __FUNCTION__, __LINE__);
+		return ret;
+	}
+
+	*delimiter_count = count;
+	count = 0;
+	start = src_str;
+
+	//    while (*start == ' ' || *start == '\t')  //过滤掉前面的空格
+	//    {
+	//        start++;
+	//    }
+
+	int size = 0;
+	while (*start != '\0' && (end = strstr(start, delimiter)))
+	{
+		size = end - start + 1;
+		(*str_list)[count] = (char *)memset(malloc(size * sizeof(char)), 0, size*sizeof(char));
+		if ((*str_list)[count] != NULL)
+		{
+			strncpy((*str_list)[count], start, end - start);
+			ret = 1;
+		}
+		else
+		{
+			printf("[%s:%d][Error] malloc failed...\n", __FUNCTION__, __LINE__);
+			ret = 0;
+			break;
+		}
+
+		count++;
+		start = end + strlen(delimiter);
+		//        while (*start == ' ' || *start == '\t') //过滤掉空格
+		//        {
+		//            start++;
+		//        }
+	}
+
+	size = strlen(start) + 1;
+	(*str_list)[count] = (char *)memset(malloc(size * sizeof(char)), 0, size*sizeof(char));
+	if ((*str_list)[count] != NULL)
+	{
+		strncpy((*str_list)[count], start, strlen(start));
+		ret = 1;
+	}
+	else
+	{
+		printf("[%s:%d][Error] malloc failed...\n", __FUNCTION__, __LINE__);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+void string_list_free(char **str_list, int list_size)
+{
+	int index = 0;
+
+	if ((str_list != NULL) && (list_size > 0)) {
+		while (index < list_size) {
+			if (str_list[index] != NULL) {
+				free(str_list[index]);
+				str_list[index] = NULL;
+			}
+			index++;
+		}
+	}
+
+	if (str_list != NULL) {
+		free(str_list);
+		str_list = NULL;
+	}
+}
+
+/**
+	pData:输入待分割字符串
+	pDelimiter:分割标识符
+	Ary_num:分割的份数
+	Ary_size:每份的size
+	pAry_out:分割的子串的输出参数
+*/
+/*int separate_string_to_array(char *pData, char *pDelimiter , unsigned int Ary_num, unsigned int Ary_size, char ***pAry_out)
+{
+	assert(pData != NULL);
+	//若 pData 为NULL，则抛出异常。
+
+	assert(pDelimiter != NULL);
+	//若 pDelimiter 为NULL，则抛出异常。
+
+	assert(pAry_out != NULL);
+	//若 pAry_out 为NULL，则抛出异常。
+
+	//char *pSrc = strdup(pData);
+	//char *pSrc = (char *)malloc(strlen(pData)+1);
+	char *pSrc = NULL;
+	char *pToken = NULL;
+	char *pSave = NULL;
+	unsigned int Ary_cnt = 0;
+	pSrc = (char *)calloc(1, strlen(pData) + 1);
+	if (pSrc == NULL) {
+		perror("calloc");
+
+		return -1;
+	}
+
+	strcpy(pSrc, pData);
+	pToken = strtok_r(pSrc, pDelimiter, &pSave);
+	while (pToken != NULL) {
+		printf("pToken=%s\n", pToken);
+		//memcpy(pAry_out+Ary_cnt*Ary_size, pToken, Ary_size-1);
+		strncpy((*pAry_out)[Ary_cnt], pToken, strlen(pToken));
 		if(++Ary_cnt >= Ary_num)
 			break;
-		pszToken = strtok_r(NULL, pszDelimiters, &pszToken_saveptr);
+		pToken = strtok_r(NULL, pDelimiter, &pSave);
 	}
-	//free(pszData);
+	free(pSrc);
+	pSrc = NULL;
 
 	return Ary_cnt;
-}
+}*/
 
 /* 获取整数的长度 */
 int get_n_len(const int n)
@@ -60,8 +197,13 @@ int write_file(const char *file_name, const char *file_content)
 	//printf("write filecontent = %s\n", file_content);
 	FILE *fp = NULL;
 
-	if((fp = fopen(file_name, "w")) == NULL) {
+	if((fp = fopen(file_name, "w+")) == NULL) {
 		perror("open file");
+
+		return FAIL;
+	}
+	if (file_content == NULL) {
+		perror("file content null");
 
 		return FAIL;
 	}
@@ -85,6 +227,11 @@ int write_file_append(const char *file_name, const char *file_content)
 
 	if((fp = fopen(file_name, "a+")) == NULL) {
 		perror("open file");
+
+		return FAIL;
+	}
+	if (file_content == NULL) {
+		perror("file content null");
 
 		return FAIL;
 	}
@@ -389,8 +536,10 @@ char *get_dir_filename_txt(const char *dir_path)
 char *strrpc(char *str, const char *oldstr, const char *newstr)
 {
 	int i;
-	char bstr[strlen(str)+10];//转换缓冲区
-	memset(bstr, 0, sizeof(strlen(str)+10));
+	//char bstr[strlen(str)+10];//转换缓冲区
+	//memset(bstr, 0, sizeof(strlen(str)+10));
+	char *bstr = NULL;
+	bstr = (char *)calloc(1, strlen(str)*sizeof(char)+10);
 
 	for (i = 0; i < strlen(str); i++) {
 		if (!strncmp(str+i, oldstr, strlen(oldstr))) {//查找目标字符串
@@ -401,6 +550,7 @@ char *strrpc(char *str, const char *oldstr, const char *newstr)
 		}
 	}
 	strcpy(str, bstr);
+	free(bstr);
 
 	return str;
 }
@@ -408,17 +558,21 @@ char *strrpc(char *str, const char *oldstr, const char *newstr)
 /* 判断一个字符串是否包含另一个字符串 */
 int is_in(char *s, char *c)
 {
+	assert(s != NULL);
+
+	assert(c != NULL);
+
 	int i=0,j=0,flag=-1;
-	while(i<strlen(s) && j<strlen(c)){
-		if(s[i]==c[j]){//如果字符相同则两个字符都增加
+	while (i < strlen(s) && j < strlen(c)){
+		if(s[i] == c[j]){//如果字符相同则两个字符都增加
 			i++;
 			j++;
-		}else{
-			i=i-j+1; //主串字符回到比较最开始比较的后一个字符
-			j=0;     //字串字符重新开始
+		} else {
+			i = i-j+1; //主串字符回到比较最开始比较的后一个字符
+			j = 0;     //字串字符重新开始
 		}
-		if(j==strlen(c)){ //如果匹配成功
-			flag=1;  //字串出现
+		if(j == strlen(c)){ //如果匹配成功
+			flag = 1;  //字串出现
 			break;
 		}
 	}

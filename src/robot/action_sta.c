@@ -87,7 +87,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
 	cJSON *feedback_json = NULL;
-	cJSON *array_json = NULL;
+	cJSON *array_exAxisPos = NULL;
+	cJSON *array_exAxisRDY = NULL;
+	cJSON *array_exAxisINPOS = NULL;
+	cJSON *array_exAxisSpeedBack = NULL;
+	cJSON *array_exAxisHomeStatus = NULL;
+	cJSON *array_ai = NULL;
+	cJSON *array_ao = NULL;
 	int array[16] = {0};
 	Qnode *p = NULL;
 	SOCKET_INFO *sock_cmd = NULL;
@@ -104,23 +110,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	tcp_json = cJSON_CreateObject();
 	feedback_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
-	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
-	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
+	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
+	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddNumberToObject(root_json, "flag_zero_set", state->flag_zero_set);
 	cJSON_AddNumberToObject(root_json, "weldTrackSpeed", state->weldTrackSpeed);
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
 	uint16_to_array(state->gripperActStatus, array);
-	array_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "gripper_state", cJSON_CreateIntArray(array, 8));
+	/*array_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "gripper_state", array_json);
 	for (i = 0; i < 8; i++) {
 		cJSON_AddNumberToObject(array_json, "key", array[i]);
-	}
+	}*/
 
 	memset(array, 0, sizeof(array));
 	uint8_to_array(state->cl_dgt_output_l, state->cl_dgt_output_h, array);
@@ -135,50 +142,50 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	uint8_to_array(state->tl_dgt_input_l, state->tl_dgt_input_h, array);
 	cJSON_AddItemToObject(root_json, "tl_di", cJSON_CreateIntArray(array, 16));
 
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "exAxisPos", array_json);
+	array_exAxisPos = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisPos", array_exAxisPos);
 	for (i = 0; i < 4; i++) {
 		//printf("state->exaxis_status[%d].exAxisPos = %d\n", i, state->exaxis_status[i].exAxisPos);
-		cJSON_AddNumberToObject(array_json, "key", double_round(state->exaxis_status[i].exAxisPos, 3));
+		cJSON_AddNumberToObject(array_exAxisPos, "key", double_round(state->exaxis_status[i].exAxisPos, 3));
 	}
 					
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "exAxisRDY", array_json);
+	array_exAxisRDY = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisRDY", array_exAxisRDY);
 	for (i = 0; i < 4; i++) {
-		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisRDY);
+		cJSON_AddNumberToObject(array_exAxisRDY, "key", (double)state->exaxis_status[i].exAxisRDY);
 	}
 
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "exAxisINPOS", array_json);
+	array_exAxisINPOS = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisINPOS", array_exAxisINPOS);
 	for (i = 0; i < 4; i++) {
-		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisINPOS);
+		cJSON_AddNumberToObject(array_exAxisINPOS, "key", (double)state->exaxis_status[i].exAxisINPOS);
 	}
 	cJSON_AddNumberToObject(root_json, "exAxisActiveFlag", state->exAxisActiveFlag);
 
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "exAxisSpeedBack", array_json);
+	array_exAxisSpeedBack = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisSpeedBack", array_exAxisSpeedBack);
 	for (i = 0; i < 4; i++) {
 		//printf("state->exaxis_status[%d].exAxisSpeedBack = %d\n", i, state->exaxis_status[i].exAxisSpeedBack);
-		cJSON_AddNumberToObject(array_json, "key", double_round(state->exaxis_status[i].exAxisSpeedBack, 3));
+		cJSON_AddNumberToObject(array_exAxisSpeedBack, "key", double_round(state->exaxis_status[i].exAxisSpeedBack, 3));
 	}
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "exAxisHomeStatus", array_json);
+	array_exAxisHomeStatus = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "exAxisHomeStatus", array_exAxisHomeStatus);
 	for (i = 0; i < 4; i++) {
-		cJSON_AddNumberToObject(array_json, "key", state->exaxis_status[i].exAxisHomeStatus);
+		cJSON_AddNumberToObject(array_exAxisHomeStatus, "key", state->exaxis_status[i].exAxisHomeStatus);
 	}
 
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "ai", array_json);
+	array_ai = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "ai", array_ai);
 	for (i = 0; i < 6; i++) {
 		//printf("state->analog_input[%d] = %d\n", i, state->analog_input[i]);
-		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_input[i]/40.95, 3));
+		cJSON_AddNumberToObject(array_ai, "key", double_round(1.0*state->analog_input[i]/40.95, 3));
 	}
 
-	array_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "ao", array_json);
+	array_ao = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "ao", array_ao);
 	for (i = 0; i < 6; i++) {
 		//printf("state->analog_output[%d] = %d\n", i, state->analog_output[i]);
-		cJSON_AddNumberToObject(array_json, "key", double_round(1.0*state->analog_output[i]/40.95, 3));
+		cJSON_AddNumberToObject(array_ao, "key", double_round(1.0*state->analog_output[i]/40.95, 3));
 	}
 
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
@@ -188,6 +195,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);
 		//printf("joint_value = %.3lf\n", joint_value);
+		memset(joint, 0, sizeof(joint));
 		sprintf(joint, "j%d", (i+1));
 		cJSON_AddNumberToObject(joints_json, joint, joint_value);
 	}
@@ -213,9 +221,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
 		sprintf(content, "%d", p->data.type);
-		printf("content = %s\n", content);
-		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
-		cJSON_AddStringToObject(feedback_json, content,  p->data.msgcontent);
+	//	printf("content = %s\n", content);
+	//	printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
 		pthread_mutex_lock(&sock_cmd->ret_mute);
 		dequene(&sock_cmd->ret_quene, p->data);
@@ -226,11 +234,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	p = sock_file->ret_quene.front->next;
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
-		//sprintf(content, "%d%s", p->data.type, p->data.msgcontent);
-		//cJSON_AddStringToObject(feedback_json, "key", content);
 		sprintf(content, "%d", p->data.type);
-		printf("content = %s\n", content);
-		printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+	//	printf("content = %s\n", content);
+	//	printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
 		pthread_mutex_lock(&sock_file->ret_mute);
@@ -249,8 +255,8 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->strangePosFlag = 0;
 	}
-	memset(content, 0, sizeof(content));
 	if (state->aliveSlaveNumError == 1) {
+		memset(content, 0, sizeof(content));
 		sprintf(content, "活动从站数量错误，活动从站数量为:%d", state->aliveSlaveNumFeedback);
 		cJSON_AddStringToObject(error_json, "key", content);
 		if (pre_state->aliveSlaveNumError != 1) {
@@ -572,6 +578,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (pre_state->cmdPointError != 25) {
 				my_syslog("错误", "圆弧指令点间距过小", cur_account.username);
 				pre_state->cmdPointError = 25;
+			}
+			break;
+		case 26:
+			cJSON_AddStringToObject(error_json, "key", "激光传感器指令偏差过大");
+			if (pre_state->cmdPointError != 26) {
+				my_syslog("错误", "激光传感器指令偏差过大", cur_account.username);
+				pre_state->cmdPointError = 26;
 			}
 			break;
 		default:
@@ -1051,7 +1064,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 1; i++) {
-		if (state->exaxis_status[i].exAxisALM == 1) {
+		if ((int)state->exaxis_status[i].exAxisALM == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 伺服报警", (i+1));
 			cJSON_AddStringToObject(error_json, "key", content);
@@ -1064,7 +1077,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	}
 	for (i = 0; i < 1; i++) {
-		if (state->exaxis_status[i].exAxisFLERR == 1) {
+		if ((int)state->exaxis_status[i].exAxisFLERR == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 跟随误差过大", (i+1));
 			cJSON_AddStringToObject(error_json, "key", content);
@@ -1078,7 +1091,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 1; i++) {
-		if (state->exaxis_status[i].exAxisNLMT == 1) {
+		if ((int)state->exaxis_status[i].exAxisNLMT == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 到负限位", (i+1));
 			cJSON_AddStringToObject(error_json, "key", content);
@@ -1092,7 +1105,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 1; i++) {
-		if (state->exaxis_status[i].exAxisPLMT == 1) {
+		if ((int)state->exaxis_status[i].exAxisPLMT == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 到正限位", (i+1));
 			cJSON_AddStringToObject(error_json, "key", content);
@@ -1106,7 +1119,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 1; i++) {
-		if (state->exaxis_status[i].exAxisOFLIN == 1) {
+		if ((int)state->exaxis_status[i].exAxisOFLIN == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 通信超时，控制卡与控制箱板485通信超时", (i+1));
 			cJSON_AddStringToObject(error_json, "key", content);
@@ -1165,17 +1178,19 @@ static int vardata_feedback(char *ret_status)
 		root_json = cJSON_CreateObject();
 		value_json = cJSON_CreateObject();
 
-		/*printf("state_fb.iCount= %d\n", state_fb.icount);
-		printf("state_ret[0][0] = %f\n", state_ret[0][0]);
+		//printf("state_fb.iCount= %d\n", state_fb.icount);
+		/*printf("state_ret[0][0] = %f\n", state_ret[0][0]);
 		printf("state_ret[1][0] = %f\n", state_ret[1][0]);
 		printf("state_ret[0][1] = %f\n", state_ret[0][1]);
 		printf("state_ret[1][1] = %f\n", state_ret[1][1]);*/
 		for (i = 0; i < state_fb.icount; i++) {
+			//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
 			itoa(state_fb.id[i], key, 10);
 			root = cJSON_CreateArray();
 			cJSON_AddItemToObject(value_json, key, root);
 			for (j = 0; j < 100; j++) {
 				//cJSON_AddNumberToObject(root, "key", state_fb.var[j][i]);
+				//printf("fb_quene.front fb[%d][%d] = %d\n", j, i, fb_quene.front->next->data.fb[j][i]);
 				cJSON_AddNumberToObject(root, "key", fb_quene.front->next->data.fb[j][i]);
 				//cJSON_AddNumberToObject(root, "key", 100);
 			}
@@ -1335,6 +1350,7 @@ void sta(Webs *wp)
 	cJSON_Delete(data);
 	data = NULL;
 	//printf("ret_status = %s\n", ret_status);
+	//printf("strlen(ret_status) = %d\n", strlen(ret_status));
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);

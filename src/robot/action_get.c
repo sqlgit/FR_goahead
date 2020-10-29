@@ -365,14 +365,15 @@ static int get_checkpoint(char **ret_f_content, const cJSON *data_json)
 /* get robot cfg and return to page */
 static int get_robot_cfg(char **ret_f_content)
 {
-	char array[2][128] = {{0}};
+	char **array = NULL;
+	int size = 0;
 	char strline[LINE_LEN] = {0};
-	FILE *fp;
+	FILE *fp = NULL;
 	cJSON *root_json = NULL;
 
 	root_json = cJSON_CreateObject();
 	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
-		perror("open file");
+		perror("user.config : open file");
 
 		return FAIL;
 	}
@@ -380,18 +381,19 @@ static int get_robot_cfg(char **ret_f_content)
 		if (is_in(strline, "=") == -1) {
 			continue;
 		}
-		bzero(array, sizeof(array));
 		strrpc(strline, "\n", "");
-		//printf("strline = %s\n", strline);
-		if(separate_string_to_array(strline, " = ", 2, 128, (char *)&array) != 2) {
-			perror("separate recv");
+		//printf("user.config strline = %s\n", strline);
+		if (string_to_string_list(strline, " = ", &size, &array) == 0) {
+			perror("string to string list");
 			fclose(fp);
+			string_list_free(array, size);
 
 			return FAIL;
 		}
-		//printf("array[0] = %s\n", array[0]);
-		//printf("array[1] = %s\n", array[1]);
-		cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
+		if (array[0] != NULL && (array[1] != NULL || array[1] == 0)) {
+			cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
+		}
+		string_list_free(array, size);
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 	fclose(fp);
@@ -400,11 +402,11 @@ static int get_robot_cfg(char **ret_f_content)
 	cJSON_Delete(root_json);
 	root_json = NULL;
 	if (*ret_f_content == NULL) {
-		perror("cJSON_Print");
+		perror("user.config : cJSON_Print");
 
 		return FAIL;
 	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	//printf("user.config : content = %s\n", (*ret_f_content));
 
 	return SUCCESS;
 }
@@ -562,7 +564,7 @@ static int get_exaxis_cfg(char **ret_f_content)
 
 		return FAIL;
 	}
-	//printf("*ret_f_content = %s\n", (*ret_f_content));
+	printf("get_exaxis_cfg = %s\n", (*ret_f_content));
 
 	return SUCCESS;
 }
@@ -1230,7 +1232,7 @@ void get(Webs *wp)
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
-	//printf("ret_f_content = %s\n", ret_f_content);
+	printf("ret_f_content = %s\n", ret_f_content);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);

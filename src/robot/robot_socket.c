@@ -297,7 +297,7 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
 	char recvbuf[MAX_BUF] = {0};
-	char array[6][MAX_BUF] = {{0}};
+	char **array = NULL;
 	int recv_len = 0;
 
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
@@ -321,6 +321,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	char *head = NULL;
 	char *tail = NULL;
 	int frame_len = 0;
+	int size = 0;
+	char **msg_array = NULL;
 	char *frame = NULL;//提取出一帧, 存放buf
 	frame =	(char *)calloc(1, sizeof(char)*BUFFSIZE);
 	char *buf = NULL; // 内圈循环 buf
@@ -346,19 +348,18 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			/* 取出整包数据然后校验解包 */
 			bzero(frame, BUFFSIZE);
 			strncpy(frame, head, frame_len);
-			printf("exist complete frame!\nframe data = %s\n", frame);
+			//printf("exist complete frame!\nframe data = %s\n", frame);
 
 			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
 			bzero(buf_memory, BUFFSIZE);
 			strcpy(buf_memory, (tail + strlen(pack_tail)));
 
-			memset(array, 0, sizeof(array));
 			/* 把接收到的包按照分割符"III"进行分割 */
-			if (separate_string_to_array(frame, "III", 6, MAX_BUF, (char *)&array) != 6) {
-				perror("separate recv");
+			if (string_to_string_list(frame, "III", &size, &array) == 0) {
+				perror("string to string list");
+				string_list_free(array, size);
 
 				continue;
-				//return FAIL;
 			}
 
 			/* 遍历整个队列, 更改相关结点信息 */
@@ -394,10 +395,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 					} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 262 || atoi(array[2]) == 250 || atoi(array[2]) == 272 || atoi(array[2]) == 274 || atoi(array[2]) == 277 || atoi(array[2]) == 289) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿, 计算摆焊坐标系, 十点法计算传感器位姿, 八点法计算激光跟踪传感器位姿， 三点法计算跟踪传感器位姿，四点法外部轴坐标TCP计算
 						char *msg_content = NULL;
 						cJSON *root_json = cJSON_CreateObject();
-						char msg_array[6][20] = {{0}};
-
-						if (separate_string_to_array(array[4], ",", 6, 20, (char *)&msg_array) != 6) {
-							perror("separate recv");
+						size = 0;
+						if (string_to_string_list(array[4], ",", &size, &msg_array) == 0) {
+							perror("string to string list");
+							string_list_free(msg_array, size);
 						}
 
 						cJSON_AddStringToObject(root_json, "x", msg_array[0]);
@@ -409,15 +410,17 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 						msg_content = cJSON_Print(root_json);
 						//printf("msg_content = %s\n", msg_content);
 						createnode(&node, atoi(array[2]), msg_content);
+						string_list_free(msg_array, size);
 						free(msg_content);
 						msg_content = NULL;
 					} else if (atoi(array[2]) == 283) {//获取激光跟踪传感器配置信息
 						char *msg_content = NULL;
-						char msg_array[4][20] = {{0}};
 						cJSON *root_json = cJSON_CreateObject();
 
-						if (separate_string_to_array(array[4], ",", 4, 20, (char *)&msg_array) != 4) {
-							perror("separate recv");
+						size = 0;
+						if (string_to_string_list(array[4], ",", &size, &msg_array) == 0) {
+							perror("string to string list");
+							string_list_free(msg_array, size);
 						}
 
 						cJSON_AddStringToObject(root_json, "ip", msg_array[0]);
@@ -426,6 +429,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 						cJSON_AddStringToObject(root_json, "protocol_id", msg_array[3]);
 						msg_content = cJSON_Print(root_json);
 						createnode(&node, atoi(array[2]), msg_content);
+						string_list_free(msg_array, size);
 						free(msg_content);
 						msg_content = NULL;
 					} else {
@@ -466,6 +470,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				//}
 		//		p = p->next;
 		//	}
+			string_list_free(array, size);
 		}
 		/* 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
 		if ((head == NULL && tail != NULL) || (head == NULL && tail == NULL)) {
@@ -811,6 +816,7 @@ void *socket_state_feedback_thread(void *arg)
 	int j;
 	int num = 0;
 	int port = (int)arg;
+	int size = 0;
 	printf("port = %d\n", port);
 
 	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
@@ -851,7 +857,7 @@ void *socket_state_feedback_thread(void *arg)
 		/* recv ctrl status */
 		while (1) {
 			bzero(state_buf, sizeof(char)*(STATEFB_SIZE+100));
-			char array[5][13000] = {{0}};
+			char **array = NULL;
 			int recv_len = 0;
 
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
@@ -867,8 +873,14 @@ void *socket_state_feedback_thread(void *arg)
 			//printf("recv len = %d\n", recv_len);
 			//printf("recv state_buf = %s\n", state_buf);
 			/* 把接收到的包按照分割符"III"进行分割 */
-			if (separate_string_to_array(state_buf, "III", 5, 13000, (char *)&array) != 5) {
+			/*if (separate_string_to_array(state_buf, "III", 5, 13000, &array) != 5) {
 				perror("separate recv");
+
+				continue;
+			}*/
+			if (string_to_string_list(state_buf, "III", &size, &array) == 0) {
+				perror("string to string list");
+				string_list_free(array, size);
 
 				continue;
 			}
@@ -926,6 +938,7 @@ void *socket_state_feedback_thread(void *arg)
 					//printf("end print state fb\n");
 				}
 			}
+			string_list_free(array, size);
 			//printf("after StringToBytes\n");
 		}
 		/* socket disconnected */
@@ -938,6 +951,10 @@ void *socket_state_feedback_thread(void *arg)
 	}
 	free(state_buf);
 	state_buf = NULL;
+	free(tmp_content);
+	tmp_content = NULL;
+	free(write_content);
+	write_content = NULL;
 }
 
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
