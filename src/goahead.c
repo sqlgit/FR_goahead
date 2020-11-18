@@ -217,14 +217,17 @@ MAIN(goahead, int argc, char **argv, char **envp)
     }
 #endif
 
+#if recover_mode
+	create_dir(DIR_CDSYSTEM);
+	create_dir(DIR_CFG);
+	create_dir(DIR_POINTS);
+	create_dir(DIR_ROBOT_CFG);
+	create_dir(DIR_STATEFB);
+	create_dir(DIR_TEMPLATE);
 	create_dir(DIR_USER);
 	create_dir(DIR_LOG);
-	create_dir(DIR_TEMPLATE);
-	create_dir(DIR_CDSYSTEM);
-	create_dir(DIR_POINTS);
-	create_dir(DIR_SHELL);
-	create_dir(DIR_CFG);
 	delete_log_file(0);
+#endif
 
 	pthread_t t_socket_cmd;
 	pthread_t t_socket_file;
@@ -234,6 +237,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_vir_file;
 	pthread_t t_socket_vir_status;
 
+#if recover_mode
 	/* create socket_cmd thread */
 	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_thread, (void *)CMD_PORT)) {
 		perror("pthread_create");
@@ -250,6 +254,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_create(&t_socket_state_feedback, NULL, (void *)&socket_state_feedback_thread, (void *)STATE_FEEDBACK_PORT)) {
 		perror("pthread_create");
 	}
+#endif
 #if virtual_robot
 	/* create socket_vir_cmd thread */
 	if (pthread_create(&t_socket_vir_cmd, NULL, (void *)&socket_thread, (void *)VIR_CMD_PORT)) {
@@ -267,6 +272,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 
     websServiceEvents(&finished);
 
+#if recover_mode
 	/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
 	if (pthread_join(t_socket_cmd, NULL)) {
 		perror("pthread_join");
@@ -280,6 +286,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	if (pthread_join(t_socket_state_feedback, NULL)) {
 		perror("pthread_join");
 	}
+#endif
 #if virtual_robot
 	if (pthread_join(t_socket_vir_cmd, NULL)) {
 		perror("pthread_join");

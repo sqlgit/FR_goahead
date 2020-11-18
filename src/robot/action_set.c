@@ -221,7 +221,47 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 		sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring);
 		strcpy(file_content, tmp_content);
+	/* SPL */
+	} else if(!strncmp(lua_cmd, "SPL:", 4)) {
+		strrpc(cmd_array[0], "SPL:", "");
+		/* open and get point.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from points;");
+		if(select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+			perror("select ptp points");
 
+			return FAIL;
+		}
+
+		point_1 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
+		if(point_1 == NULL || point_1->type != cJSON_Object) {
+
+			goto end;
+		}
+
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL	|| toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+
+			goto end;
+		}
+
+		sprintf(tmp_content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+		strcpy(file_content, tmp_content);
 	/* EXT_AXIS_PTP */
 	} else if(!strncmp(lua_cmd, "EXT_AXIS_PTP:", 13)) {
 		strrpc(cmd_array[0], "EXT_AXIS_PTP:", "");
@@ -254,7 +294,6 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			sprintf(tmp_content,"%sExtAxisMoveJ(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], E1->valuestring);
 			strcpy(file_content, tmp_content);
 		}
-
 	/* ARC */
 	} else if(!strncmp(lua_cmd, "ARC:", 4)) {
 		strrpc(cmd_array[0], "ARC:", "");
@@ -321,6 +360,72 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
+	/* SCIRC */
+	} else if(!strncmp(lua_cmd, "SCIRC:", 6)) {
+		strrpc(cmd_array[0], "SCIRC:", "");
+		/* open and get point.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from points;");
+		if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+			perror("select arc1 points");
+
+			return FAIL;
+		}
+		point_1 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
+		if(point_1 == NULL || point_1->type != cJSON_Object) {
+
+			goto end;
+		}
+
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL|| x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL|| speed->valuestring == NULL || acc->valuestring == NULL) {
+
+			goto end;
+		}
+
+		point_2 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[1]);
+		if (point_2 == NULL || point_2->type != cJSON_Object) {
+
+			goto end;
+		}
+
+		j1_2 = cJSON_GetObjectItem(point_2, "j1");
+		j2_2 = cJSON_GetObjectItem(point_2, "j2");
+		j3_2 = cJSON_GetObjectItem(point_2, "j3");
+		j4_2 = cJSON_GetObjectItem(point_2, "j4");
+		j5_2 = cJSON_GetObjectItem(point_2, "j5");
+		j6_2 = cJSON_GetObjectItem(point_2, "j6");
+		x_2 = cJSON_GetObjectItem(point_2, "x");
+		y_2 = cJSON_GetObjectItem(point_2, "y");
+		z_2 = cJSON_GetObjectItem(point_2, "z");
+		rx_2 = cJSON_GetObjectItem(point_2, "rx");
+		ry_2 = cJSON_GetObjectItem(point_2, "ry");
+		rz_2 = cJSON_GetObjectItem(point_2, "rz");
+		toolnum_2 = cJSON_GetObjectItem(point_2, "toolnum");
+		speed_2 = cJSON_GetObjectItem(point_2, "speed");
+		acc_2 = cJSON_GetObjectItem(point_2, "acc");
+
+		if(j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || cmd_array[2] == NULL) {
+
+			goto end;
+		}
+
+		sprintf(tmp_content, "%sSplineCIRC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
+		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
 	/*	strrpc(lua_cmd, "Lin:", "");
@@ -385,6 +490,45 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			}
 			sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring);
 		}
+		strcpy(file_content, tmp_content);
+	/* SLIN */
+	} else if(!strncmp(lua_cmd, "SLIN:", 5)) {
+		strrpc(cmd_array[0], "SLIN:", "");
+		/* open and get point.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from points;", cmd_array[0]);
+		if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+			perror("select lin points");
+
+			return FAIL;
+		}
+
+		point_1 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
+		if(point_1 == NULL || point_1->type != cJSON_Object) {
+
+			goto end;
+		}
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+
+			goto end;
+		}
+		sprintf(tmp_content, "%sSplineLINE(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* set DO */
 	} else if(!strncmp(lua_cmd, "SetDO:", 6)) {
@@ -785,6 +929,21 @@ static int step_over(const cJSON *data_json, char *content)
 	/* SetExToolCoord */
 	} else if (!strncmp(pgvalue->valuestring, "SetExToolList:", 14)) {
 		cmd = 331;
+	/* SplineStart */
+	} else if (!strncmp(pgvalue->valuestring, "SplineStart", 11)) {
+		cmd = 346;
+	/* SPL */
+	} else if (!strncmp(pgvalue->valuestring, "SPL", 3)) {
+		cmd = 347;
+	/* SLIN */
+	} else if (!strncmp(pgvalue->valuestring, "SLIN", 4)) {
+		cmd = 348;
+	/* SCIRC */
+	} else if (!strncmp(pgvalue->valuestring, "SCIRC", 5)) {
+		cmd = 349;
+	/* SplineEnd */
+	} else if (!strncmp(pgvalue->valuestring, "SplineEnd", 9)) {
+		cmd = 350;
 	/* error */
 	} else {
 		return FAIL;
@@ -867,7 +1026,6 @@ static int movej(const cJSON *data_json, char *content)
 /* 230 set_state_id */
 static int set_state_id(const cJSON *data_json, char *content)
 {
-	char cmd[128] = {0};
 	int icount = 0;
 	int i;
 	cJSON *id_num = NULL;
@@ -882,14 +1040,10 @@ static int set_state_id(const cJSON *data_json, char *content)
 	//printf("type = %d\n", type->valueint);
 	state_fb.icount = cJSON_GetArraySize(id); /*获取数组长度*/
 	state_fb.type = type->valueint; /*获取type*/
-	if (state_fb.type == 1) { /* clear statefb.txt */
-		sprintf(cmd, "echo > %s", FILE_STATEFB);
-		system(cmd);
-	}
 	//printf("state_fb.iCount= %d\n", state_fb.icount);
 
 	/* empty state_fb id */
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < STATEFB_ID_MAXNUM; i++) {
 		state_fb.id[i] = 0;
 	}
 	for (i = 0; i < state_fb.icount; i++) {
@@ -898,7 +1052,7 @@ static int set_state_id(const cJSON *data_json, char *content)
 		state_fb.id[i] = atoi(id_num->valuestring);
 		//printf("array , state_fb.id[%d] = %d\n", i, state_fb.id[i]);
 	}
-	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_fb.icount, state_fb.id[0], state_fb.id[1], state_fb.id[2], state_fb.id[3], state_fb.id[4], state_fb.id[5], state_fb.id[6], state_fb.id[7], state_fb.id[8], state_fb.id[9]);
+	sprintf(content, "SetCTLStateQueryParam(%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d)", state_fb.icount, state_fb.id[0], state_fb.id[1], state_fb.id[2], state_fb.id[3], state_fb.id[4], state_fb.id[5], state_fb.id[6], state_fb.id[7], state_fb.id[8], state_fb.id[9], state_fb.id[10], state_fb.id[11], state_fb.id[12], state_fb.id[13], state_fb.id[14], state_fb.id[15], state_fb.id[16], state_fb.id[17], state_fb.id[18], state_fb.id[19]);
 
 	return SUCCESS;
 }
@@ -907,6 +1061,9 @@ static int set_state_id(const cJSON *data_json, char *content)
 static int set_state(const cJSON *data_json, char *content)
 {
 	cJSON *flag = cJSON_GetObjectItem(data_json, "flag");
+	char *src_buf = NULL;
+	int ret = 0;
+
 	if(flag == NULL || flag->valuestring == NULL) {
 		perror("json");
 
@@ -916,6 +1073,51 @@ static int set_state(const cJSON *data_json, char *content)
 	pthread_mutex_lock(&socket_state.mute);
 	fb_clearquene(&fb_quene);
 	pthread_mutex_unlock(&socket_state.mute);
+
+	/** 开始查询，清空文件 */
+	if (strcmp(flag->valuestring, "0") == 1) {
+		/** clear statefb.txt */
+		if (state_fb.type == 1) {
+			ret = open(FILE_STATEFB, O_WRONLY | O_TRUNC);
+			if (ret != -1) {
+				close(ret);
+			}
+		}
+		/** clear statefb10.txt && clear index */
+		if (state_fb.type == 2 || state_fb.type == 3) {
+			ret = open(FILE_STATEFB10, O_WRONLY | O_TRUNC);
+			if (ret != -1) {
+				close(ret);
+			}
+			state_fb.index = 0;
+		}
+	}
+
+	/** 停止查询，写入文件 */
+	if(strcmp(flag->valuestring, "0") == 0 && (state_fb.type == 2 || state_fb.type == 3)) {
+		src_buf = (char *)calloc(1, sizeof(char)*(STATEFB_BUFSIZE+1));
+		if (src_buf == NULL) {
+			perror("calloc\n");
+
+			return FAIL;
+		}
+		//printf("strlen state_fb.buf = %d\n", strlen(state_fb.buf));
+		strcpy(src_buf, state_fb.buf);
+		//double duration;
+		//clock_t start, finish;
+		//start = clock();
+		//printf("before write, %d\n", start);
+		if (write_file(FILE_STATEFB10, src_buf) == FAIL) {
+			perror("write file content");
+		}
+		//inish = clock();
+		//printf("after write, %d\n", finish);
+		//duration = (double)(finish - start) / CLOCKS_PER_SEC;
+		//printf("run time is %f seconds\n", duration);
+		free(src_buf);
+		src_buf = NULL;
+	}
+
 	sprintf(content, "SetCTLStateQuery(%s)", flag->valuestring);
 
 	return SUCCESS;

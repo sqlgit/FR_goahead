@@ -13,7 +13,7 @@
 #pragma pack(push, 1)
 /** 状态查询数据 */
 typedef struct _STATE_FB {
-	float fb[100][10]
+	float fb[100][20];
 } STATE_FB;
 #pragma pack(pop)
 

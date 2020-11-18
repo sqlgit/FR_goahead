@@ -35,6 +35,7 @@ static void socket_init(SOCKET_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
+static int socket_pkg_handle(char *buf_memory, char **frame);
 static int socket_send(SOCKET_INFO *sock, QElemType *node);
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
 static void *socket_send_thread(void *arg);
@@ -54,11 +55,12 @@ static void state_feedback_init(STATE_FEEDBACK *fb)
 	bzero(fb, sizeof(STATE_FEEDBACK));
 
 	int i = 0;
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < STATEFB_ID_MAXNUM; i++) {
 		fb->id[i] = 0;
 	}
 	fb->icount = 0;
 	fb->overflow = 0;
+	fb->index = 0;
 }
 
 /* socket init */
@@ -181,6 +183,77 @@ static int socket_timeout(SOCKET_INFO *sock)
 	return 0;
 }
 
+/**
+	function : 数据包收包后对于“粘包”，“断包”，“残包”，“错包”的处理
+
+	buf_memory[IN] : 待处理数据缓冲区
+
+	frame[out]：获取到的完整一帧数据包
+
+	return: 如果有完整一帧数据包，返回其数据长度，否则返回 0 for error
+*/
+static int socket_pkg_handle(char *buf_memory, char **frame)
+{
+	//printf("buf_memory is: %s\n", buf_memory);
+	assert(buf_memory != NULL);
+
+	char *pack_head = "/f/b";
+	char *pack_tail = "/b/f";
+	char *head = NULL;
+	char *tail = NULL;
+	int frame_len = 0;
+	char *buf = NULL; // 内圈循环 buf
+
+	buf = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+	/* 如果缓冲区中为空，则可以直接进行下一轮tcp请求 */
+	while (strlen(buf_memory) != 0) {
+		bzero(buf, BUFFSIZE);
+		strcpy(buf, buf_memory);
+		//printf("buf = %s\n", buf);
+		head = strstr(buf, pack_head);
+		tail = strstr(buf, pack_tail);
+		/* 断包(有头无尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
+		if (head != NULL && tail == NULL) {
+			//perror("Broken package");
+
+			break;
+		}
+		/* 找到了包头包尾，则提取出一帧 */
+		if (head != NULL && tail != NULL && head < tail) {
+			frame_len = tail - head + strlen(pack_tail);
+			*frame = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+			/* 取出整包数据然后校验解包 */
+			strncpy(*frame, head, frame_len);
+			//printf("exist complete frame!\nframe data = %s\n", *frame);
+
+			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
+			bzero(buf_memory, BUFFSIZE);
+			strcpy(buf_memory, (tail + strlen(pack_tail)));
+
+			break;
+		}
+		/* 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
+		if ((head == NULL && tail != NULL) || (head == NULL && tail == NULL)) {
+			perror("Incomplete package!");
+			/* 清空缓冲区, 直接跳出内圈循环，到外圈循环里 */
+			bzero(buf_memory, BUFFSIZE);
+
+			break;
+		}
+		/* 包头在包尾后面，则扔掉缓冲区中包头之前的多余字节, 继续内圈循环 */
+		if (head != NULL && tail != NULL && head > tail) {
+			perror("Error package");
+			/* 清空缓冲区, 并把包头后的内容推入缓冲区 */
+			bzero(buf_memory, BUFFSIZE);
+			strcpy(buf_memory, head);
+		}
+	}
+	free(buf);
+	buf = NULL;
+
+	return frame_len;
+}
+
 /* socket send */
 static int socket_send(SOCKET_INFO *sock, QElemType *node)
 {
@@ -296,9 +369,18 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
+	cJSON *newitem = NULL;
+	cJSON *root_json = NULL;
 	char recvbuf[MAX_BUF] = {0};
 	char **array = NULL;
 	int recv_len = 0;
+	char *msg_content = NULL;
+	int i = 0;
+	int size_package = 0;
+	int size_content = 0;
+	char **msg_array = NULL;
+	char *frame = NULL;//提取出一帧, 存放buf
+	GRIPPERS_CONFIG_INFO *gri_info = NULL;
 
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
 	if (recv_len <= 0) {
@@ -314,184 +396,170 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	//if (atoi(array[2]) != 401) {
 		printf("recv data from socket server is: %s\n", recvbuf);
 	//}
+	strcat(buf_memory, recvbuf);
 
 	/* 对于"粘包"，"断包"进行处理 */
-	char *pack_head = "/f/b";
-	char *pack_tail = "/b/f";
-	char *head = NULL;
-	char *tail = NULL;
-	int frame_len = 0;
-	int size = 0;
-	char **msg_array = NULL;
-	char *frame = NULL;//提取出一帧, 存放buf
-	frame =	(char *)calloc(1, sizeof(char)*BUFFSIZE);
-	char *buf = NULL; // 内圈循环 buf
-	buf = (char *)calloc(1, sizeof(char)*BUFFSIZE);
-	buf_memory = strcat(buf_memory, recvbuf);
+	while (socket_pkg_handle(buf_memory, &frame) != 0) {
+		//printf("frame is : %s\n", frame);
+		/* 把接收到的包按照分割符"III"进行分割 */
+		if (string_to_string_list(frame, "III", &size_package, &array) == 0 || size_package != 6) {
+			perror("string to string list");
+			string_list_free(array, size_package);
 
-	/* 如果缓冲区中为空，则可以直接进行下一轮tcp请求 */
-	while (strlen(buf_memory) != 0) {
-		bzero(buf, BUFFSIZE);
-		strcpy(buf, buf_memory);
-		//printf("buf = %s\n", buf);
-		head = strstr(buf, pack_head);
-		tail = strstr(buf, pack_tail);
-		/* 断包(有头无尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
-		if (head != NULL && tail == NULL) {
-			perror("Broken package");
-
-			break;
+			continue;
 		}
-		/* 找到了包头包尾，则提取出一帧 */
-		if (head != NULL && tail != NULL && head < tail) {
-			frame_len = tail - head + strlen(pack_tail);
-			/* 取出整包数据然后校验解包 */
-			bzero(frame, BUFFSIZE);
-			strncpy(frame, head, frame_len);
-			//printf("exist complete frame!\nframe data = %s\n", frame);
-
-			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
-			bzero(buf_memory, BUFFSIZE);
-			strcpy(buf_memory, (tail + strlen(pack_tail)));
-
-			/* 把接收到的包按照分割符"III"进行分割 */
-			if (string_to_string_list(frame, "III", &size, &array) == 0) {
+		/* 遍历整个队列, 更改相关结点信息 */
+		/* 创建结点 */
+		QElemType node;
+		//printf("array[2] = %s\n", array[2]);
+		//printf("array[4] = %s\n", array[4]);
+		if (atoi(array[2]) == 229) {//反馈夹爪配置信息
+			gri_info = &grippers_config_info;
+			bzero(gri_info, sizeof(GRIPPERS_CONFIG_INFO));
+			StringToBytes(array[4], (BYTE *)gri_info, sizeof(GRIPPERS_CONFIG_INFO));
+			root_json = cJSON_CreateArray();
+			for(i = 0; i < MAXGRIPPER; i++) {
+				newitem = cJSON_CreateObject();
+				cJSON_AddNumberToObject(newitem, "id", (i+1));
+				//printf("gri_info->id_company[%d] = %d", i, gri_info->id_company[i]);
+				cJSON_AddNumberToObject(newitem, "name", gri_info->id_company[i]);
+				cJSON_AddNumberToObject(newitem, "type", gri_info->id_device[i]);
+				cJSON_AddNumberToObject(newitem, "version", gri_info->id_softversion[i]);
+				cJSON_AddNumberToObject(newitem, "position", gri_info->id_bus[i]);
+				cJSON_AddItemToArray(root_json, newitem);
+			}
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			createnode(&node, atoi(array[2]), msg_content);
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+		} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 262 || atoi(array[2]) == 250 || atoi(array[2]) == 272 || atoi(array[2]) == 274 || atoi(array[2]) == 277 || atoi(array[2]) == 289) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿, 计算摆焊坐标系, 十点法计算传感器位姿, 八点法计算激光跟踪传感器位姿， 三点法计算跟踪传感器位姿，四点法外部轴坐标TCP计算
+			cJSON *root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
-				string_list_free(array, size);
+				printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
 
 				continue;
 			}
 
-			/* 遍历整个队列, 更改相关结点信息 */
-		//	Qnode *p = sock->ret_quene.front->next;
-		//	while (p != NULL) {
-					/* 创建结点 */
-					QElemType node;
-					GRIPPERS_CONFIG_INFO *gri_info = &grippers_config_info;
-					//printf("array[2] = %s\n", array[2]);
-					//printf("array[4] = %s\n", array[4]);
-					if (atoi(array[2]) == 229) {//反馈夹爪配置信息
-						char *msg_content = NULL;
-						int i = 0;
-						cJSON *root_json = cJSON_CreateArray();
-						cJSON *newitem = NULL;
+			cJSON_AddStringToObject(root_json, "x", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "y", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "z", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
+			cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
+			cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			printf("msg_content = %s\n", msg_content);
+			createnode(&node, atoi(array[2]), msg_content);
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 278) {//反馈激光传感器记录点内
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 13) {
+				perror("string to string list");
+				printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
 
-						bzero(gri_info, sizeof(GRIPPERS_CONFIG_INFO));
-						StringToBytes(array[4], (BYTE *)gri_info, sizeof(GRIPPERS_CONFIG_INFO));
-						for(i = 0; i < MAXGRIPPER; i++) {
-							newitem = cJSON_CreateObject();
-							cJSON_AddNumberToObject(newitem, "id", (i+1));
-							//printf("gri_info->id_company[%d] = %d", i, gri_info->id_company[i]);
-							cJSON_AddNumberToObject(newitem, "name", gri_info->id_company[i]);
-							cJSON_AddNumberToObject(newitem, "type", gri_info->id_device[i]);
-							cJSON_AddNumberToObject(newitem, "version", gri_info->id_softversion[i]);
-							cJSON_AddNumberToObject(newitem, "position", gri_info->id_bus[i]);
-							cJSON_AddItemToArray(root_json, newitem);
-						}
-						msg_content = cJSON_Print(root_json);
-						createnode(&node, atoi(array[2]), msg_content);
-						free(msg_content);
-						msg_content = NULL;
-					} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 262 || atoi(array[2]) == 250 || atoi(array[2]) == 272 || atoi(array[2]) == 274 || atoi(array[2]) == 277 || atoi(array[2]) == 289) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿, 计算摆焊坐标系, 十点法计算传感器位姿, 八点法计算激光跟踪传感器位姿， 三点法计算跟踪传感器位姿，四点法外部轴坐标TCP计算
-						char *msg_content = NULL;
-						cJSON *root_json = cJSON_CreateObject();
-						size = 0;
-						if (string_to_string_list(array[4], ",", &size, &msg_array) == 0) {
-							perror("string to string list");
-							string_list_free(msg_array, size);
-						}
+				continue;
+			}
+			printf("size_content = %d\n", size_content);
+			root_json = cJSON_CreateObject();
+			cJSON_AddStringToObject(root_json, "j1", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "j2", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "j3", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "j4", msg_array[3]);
+			cJSON_AddStringToObject(root_json, "j5", msg_array[4]);
+			cJSON_AddStringToObject(root_json, "j6", msg_array[5]);
+			cJSON_AddStringToObject(root_json, "x", msg_array[6]);
+			cJSON_AddStringToObject(root_json, "y", msg_array[7]);
+			cJSON_AddStringToObject(root_json, "z", msg_array[8]);
+			cJSON_AddStringToObject(root_json, "rx", msg_array[9]);
+			cJSON_AddStringToObject(root_json, "ry", msg_array[10]);
+			cJSON_AddStringToObject(root_json, "rz", msg_array[11]);
+			cJSON_AddStringToObject(root_json, "E1", msg_array[12]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			createnode(&node, atoi(array[2]), msg_content);
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 283) {//获取激光跟踪传感器配置信息
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 4) {
+				perror("string to string list");
+				printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
 
-						cJSON_AddStringToObject(root_json, "x", msg_array[0]);
-						cJSON_AddStringToObject(root_json, "y", msg_array[1]);
-						cJSON_AddStringToObject(root_json, "z", msg_array[2]);
-						cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
-						cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
-						cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
-						msg_content = cJSON_Print(root_json);
-						//printf("msg_content = %s\n", msg_content);
-						createnode(&node, atoi(array[2]), msg_content);
-						string_list_free(msg_array, size);
-						free(msg_content);
-						msg_content = NULL;
-					} else if (atoi(array[2]) == 283) {//获取激光跟踪传感器配置信息
-						char *msg_content = NULL;
-						cJSON *root_json = cJSON_CreateObject();
+				continue;
+			}
 
-						size = 0;
-						if (string_to_string_list(array[4], ",", &size, &msg_array) == 0) {
-							perror("string to string list");
-							string_list_free(msg_array, size);
-						}
-
-						cJSON_AddStringToObject(root_json, "ip", msg_array[0]);
-						cJSON_AddStringToObject(root_json, "port", msg_array[1]);
-						cJSON_AddStringToObject(root_json, "period", msg_array[2]);
-						cJSON_AddStringToObject(root_json, "protocol_id", msg_array[3]);
-						msg_content = cJSON_Print(root_json);
-						createnode(&node, atoi(array[2]), msg_content);
-						string_list_free(msg_array, size);
-						free(msg_content);
-						msg_content = NULL;
-					} else {
-						createnode(&node, atoi(array[2]), array[4]);
-					}
-					if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
-						//printf("robot cfg : array[4] = %s\n", array[4]);
-						if (strcmp(array[4], "0") == 0) {
-							//printf("fail！\n");
-						}
-						if (strcmp(array[4], "1") == 0) {
-							//printf("success！\n");
-							char cmd[128] = {0};
-							sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
-							system(cmd);
-						}
-					}
-
-					pthread_mutex_lock(&sock->mut);
-					if (sock->msghead >= MAX_MSGHEAD) {
-						sock->msghead = 1;
-					} else {
-						sock->msghead++;
-					}
-					node.msghead = sock->msghead;
-					pthread_mutex_unlock(&sock->mut);
-					/* 创建结点插入队列中 */
-					pthread_mutex_lock(&sock->ret_mute);
-					enquene(&sock->ret_quene, node);
-					pthread_mutex_unlock(&sock->ret_mute);
-				/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
-				//if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
-					/* set state to 2: have recv data */
-				//	strcpy(p->data.msgcontent, array[4]);
-					//p->data.msglen = strlen(p->data.msgcontent);
-				//	p->data.type = atoi(array[2]);
-					//p->data.state = 2;
-				//}
-		//		p = p->next;
-		//	}
-			string_list_free(array, size);
+			cJSON_AddStringToObject(root_json, "ip", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "port", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "period", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "protocol_id", msg_array[3]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			createnode(&node, atoi(array[2]), msg_content);
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
+			//printf("robot cfg : array[4] = %s\n", array[4]);
+			if (strcmp(array[4], "0") == 0) {
+				//printf("fail！\n");
+			}
+			if (strcmp(array[4], "1") == 0) {
+				//printf("success！\n");
+				char cmd[128] = {0};
+				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
+				system(cmd);
+			}
+			createnode(&node, atoi(array[2]), array[4]);
+		} else {
+			createnode(&node, atoi(array[2]), array[4]);
 		}
-		/* 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
-		if ((head == NULL && tail != NULL) || (head == NULL && tail == NULL)) {
-			perror("Incomplete package!");
-			/* 清空缓冲区, 直接跳出内圈循环，到外圈循环里 */
-			bzero(buf_memory, BUFFSIZE);
 
-			break;
+		pthread_mutex_lock(&sock->mut);
+		if (sock->msghead >= MAX_MSGHEAD) {
+			sock->msghead = 1;
+		} else {
+			sock->msghead++;
 		}
-		/* 包头在包尾后面，则扔掉缓冲区中包头之前的多余字节, 继续内圈循环 */
-		if (head != NULL && tail != NULL && head > tail) {
-			perror("Error package");
-			/* 清空缓冲区, 并把包头后的内容推入缓冲区 */
-			bzero(buf_memory, BUFFSIZE);
-			strcpy(buf_memory, head);
+		node.msghead = sock->msghead;
+		pthread_mutex_unlock(&sock->mut);
+		/* 创建结点插入队列中 */
+		pthread_mutex_lock(&sock->ret_mute);
+		enquene(&sock->ret_quene, node);
+		pthread_mutex_unlock(&sock->ret_mute);
+		/* 处于已经发送的状态并且接收和发送的消息头一致, 认为已经收到服务器端的回复 */
+		//if (p->data.state == 1 && p->data.msghead == atoi(array[1])) {
+			/* set state to 2: have recv data */
+		//	strcpy(p->data.msgcontent, array[4]);
+			//p->data.msglen = strlen(p->data.msgcontent);
+		//	p->data.type = atoi(array[2]);
+			//p->data.state = 2;
+		//}
+		//	p = p->next;
+		string_list_free(array, size_package);
+		if (frame != NULL) {
+			free(frame);
+			frame = NULL;
 		}
 	}
-	free(frame);
-	frame = NULL;
-	free(buf);
-	buf = NULL;
 
 	return SUCCESS;
 }
@@ -718,8 +786,9 @@ void *socket_status_thread(void *arg)
 	CTRL_STATE *pre_state = NULL;
 	int port = (int)arg;
 	int recv_len = 0;
-	char *recv_buf = NULL;//提取出一帧, 存放buf
-	recv_buf = (char *)calloc(1, sizeof(char)*5000);
+	char recvbuf[STATE_SIZE] = {0};
+	char *frame = NULL;//提取出一帧, 存放buf
+	char *buf_memory = NULL;
 
 	printf("port = %d\n", port);
 	switch(port) {
@@ -741,6 +810,13 @@ void *socket_status_thread(void *arg)
 	while(1) {
 		bzero(state, sizeof(CTRL_STATE));
 		bzero(pre_state, sizeof(CTRL_STATE));
+		/* calloc buf */
+		buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+		if (buf_memory == NULL) {
+			perror("calloc");
+
+			continue;
+		}
 		/* do socket connect */
 		/* create socket */
 		if (socket_create(sock) == FAIL) {
@@ -765,63 +841,91 @@ void *socket_status_thread(void *arg)
 
 		/* recv ctrl status */
 		while (1) {
-			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1081 bytes */
-			bzero(recv_buf, sizeof(char)*5000);
-			recv_len = recv(sock->fd, recv_buf, (sizeof(CTRL_STATE)*3+14), 0);
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1221 bytes */
+			bzero(recvbuf, STATE_SIZE);
+			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				perror("recv");
+				/* 认为连接已经断开 */
 
 				break;
 			}
-			char status_buf[5000] = {0};
+			recvbuf[recv_len] = '\0';
 			//printf("recv len = %d\n", recv_len);
-			strncpy(status_buf, (recv_buf + 7), (strlen(recv_buf) - 14));
-			//strrpc(status_buf, "/f/bIII", "");
-			//strrpc(status_buf, "III/b/f", "");
-			//printf("strlen status_buf = %d\n", strlen(status_buf));
-			//printf("recv status_buf = %s\n", status_buf);
-			//printf("state = %p\n", state);
-			if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
-				StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
-			/*	printf("state->program_state d = %d\n", state->program_state);
-				printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
-				printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
-				*/
-			/*	int i;
-				for (i = 0; i < 6; i++) {
-					printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
-				}*/
+			//printf("sizeof(CTRL_STATE)*3+14 = %d\n", sizeof(CTRL_STATE)*3+14);
+			strcat(buf_memory, recvbuf);
+
+			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
+			while (socket_pkg_handle(buf_memory, &frame) == sizeof(CTRL_STATE)*3+14) {
+				//printf("strlen frame = %d\n", strlen(frame));
+				char status_buf[STATE_SIZE] = {0};
+				strncpy(status_buf, (frame+7), (strlen(frame)-14));
+				free(frame);
+				frame = NULL;
+				//strrpc(status_buf, "/f/bIII", "");
+				//strrpc(status_buf, "III/b/f", "");
+				//printf("strlen status_buf = %d\n", strlen(status_buf));
+				//printf("recv status_buf = %s\n", status_buf);
+				//printf("state = %p\n", state);
+				if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
+					StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
+				/*	printf("state->program_state d = %d\n", state->program_state);
+					printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
+					printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
+					*/
+				/*	int i;
+					for (i = 0; i < 6; i++) {
+						printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
+					}*/
+				}
+				//printf("after StringToBytes\n");
 			}
-			//printf("after StringToBytes\n");
+			if (frame != NULL) {
+				free(frame);
+				frame = NULL;
+			}
 		}
 		/* socket disconnected */
 		/* close socket */
 		close(sock->fd);
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
+		free(buf_memory);
+		buf_memory = NULL;
 	}
-	free(recv_buf);
-	recv_buf = NULL;
 }
 
 /** 状态查询线程 */
 void *socket_state_feedback_thread(void *arg)
 {
 	SOCKET_INFO *sock = NULL;
-	char *state_buf = NULL;
-	char *write_content = NULL;
+	char state_buf[STATEFB_SIZE+100] = {0};
+	char *pkg_content = NULL;
 	char *tmp_content = NULL;
+/*	char *file_content = NULL;
+	char *write_content = NULL;*/
+	char *tmp_buf = NULL;
+	int pkg_len[100] = {0};
 	int i;
 	int j;
-	int num = 0;
+	//int num = 0;
 	int port = (int)arg;
 	int size = 0;
+	FILE *fp = NULL;
+	int linenum = 0;
+	char strline[LINE_LEN] = {0};
+	char *buf_memory = NULL;
+	char *frame = NULL;//提取出一帧, 存放buf
+	int recv_len = 0;
+	char **array = NULL;
+	int varnum = 0;
+	int varnum_len = 0;
 	printf("port = %d\n", port);
 
-	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
-	write_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
-	tmp_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+//	state_buf = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+/*	file_content = (char *)calloc(1, sizeof(char)*(STATEFB_FILESIZE+100));
+	write_content = (char *)calloc(1, sizeof(char)*(STATEFB_WRITESIZE+100));*/
 	sock = &socket_state;
 	/* init socket */
 	socket_init(sock, port);
@@ -829,8 +933,16 @@ void *socket_state_feedback_thread(void *arg)
 	fb_initquene(&fb_quene);
 	/* init FB struct */
 	state_feedback_init(&state_fb);
+	state_fb.buf = (char *)calloc(1, sizeof(char)*(STATEFB_BUFSIZE+1));
 
 	while(1) {
+		/* calloc buf */
+		buf_memory = (char *)calloc(1, sizeof(char)*BUFFSIZE);
+		if (buf_memory == NULL) {
+			perror("calloc");
+
+			continue;
+		}
 		/* do socket connect */
 		/* create socket */
 		if (socket_create(sock) == FAIL) {
@@ -857,11 +969,9 @@ void *socket_state_feedback_thread(void *arg)
 		/* recv ctrl status */
 		while (1) {
 			bzero(state_buf, sizeof(char)*(STATEFB_SIZE+100));
-			char **array = NULL;
-			int recv_len = 0;
 
 			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is bytes */
-			recv_len = recv(sock->fd, state_buf, (7+1+3+5+3+sizeof(STATE_FB)*3+7), 0); /* Now recv buf is 1225 bytes*/
+			recv_len = recv(sock->fd, state_buf, STATEFB_SIZE, 0); /* Now recv buf is 24026 bytes*/
 			//printf("recv_len = %d\n", recv_len);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
@@ -869,77 +979,189 @@ void *socket_state_feedback_thread(void *arg)
 
 				break;
 			}
-				//printf("__LINE__ = %d\n", __LINE__);
+			state_buf[recv_len] = '\0';
+			strcat(buf_memory, state_buf);
 			//printf("recv len = %d\n", recv_len);
 			//printf("recv state_buf = %s\n", state_buf);
-			/* 把接收到的包按照分割符"III"进行分割 */
-			/*if (separate_string_to_array(state_buf, "III", 5, 13000, &array) != 5) {
-				perror("separate recv");
-
-				continue;
-			}*/
-			if (string_to_string_list(state_buf, "III", &size, &array) == 0) {
-				perror("string to string list");
-				string_list_free(array, size);
-
-				continue;
+			/**
+				获取到的一帧长度等于期望长度（/f/bIII变量个数III数据长度III数据区III/b/f）
+				变量个数长度：varnum_len
+				数据长度：5
+				数据区：sizeof(STATE_FB)
+			*/
+			varnum = state_fb.icount;
+			varnum_len = 0;
+			while (varnum) {
+				varnum/=10;
+				varnum_len++;
 			}
-			/*printf("array[0]=%s\n", array[0]);
-			printf("array[1]=%s\n", array[1]);
-			printf("array[2]=%s\n", array[2]);
-			printf("array[3]=%s\n", array[3]);
-			printf("array[4]=%s\n", array[4]);*/
-			//strrpc(state_buf, "/f/bIII", "");
-			//strrpc(state_buf, "III/b/f", "");
-			//printf("strlen state_buf = %d\n", strlen(state_buf));
-			//printf("recv state_buf = %s\n", state_buf);
-			//printf("strlen(array[3]) = %d\n", strlen(array[3]));
-			//printf("3*sizeof(STATE_FB) = %d\n", 3*sizeof(STATE_FB));
-			if (strlen(array[3]) == 3*sizeof(STATE_FB)) {
-				//printf("enter if\n");
-				STATE_FB sta_fb;
-				fb_createnode(&sta_fb);
-				//bzero(state, sizeof(STATE_FB));
-				StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
-				if (state_fb.type == 0) { //"0":图表查询
-					if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
-						state_fb.overflow = 1;
-						/** clear state quene */
-						pthread_mutex_lock(&sock->mute);
-						fb_clearquene(&fb_quene);
-						pthread_mutex_unlock(&sock->mute);
-					} else {
-						state_fb.overflow = 0;
-					}
-					/** enquene node */
-					pthread_mutex_lock(&sock->mute);
-					fb_enquene(&fb_quene, sta_fb);
-					pthread_mutex_unlock(&sock->mute);
-				} else { //"1":轨迹数据查询
-					//printf("state fb = ");
-					bzero(write_content, sizeof(char)*(STATEFB_SIZE+100));
-					/*bzero(tmp_content, sizeof(char)*(STATEFB_SIZE+100));
-					num++;
-					sprintf(tmp_content, "%sNo:%d\n", write_content, num);
-					strcpy(write_content, tmp_content);*/
-					for(i = 0; i < 100; i++) {
-						for(j = 0; j < 7; j++) {
-							bzero(tmp_content, sizeof(char)*(STATEFB_SIZE+100));
-							if (j < 6) {
-								sprintf(tmp_content, "%s%f,", write_content, sta_fb.fb[i][j]);
-							} else {
-								sprintf(tmp_content, "%s%f\n", write_content, sta_fb.fb[i][j]);
-							}
-							strcpy(write_content, tmp_content);
-						}
-					}
-					//printf("write_content = %s\n", write_content);
-					write_file_append(FILE_STATEFB, write_content);
-					//printf("end print state fb\n");
+			//printf("varnum_len = %d\n", varnum_len);
+			//printf("7+varnum_len+3+5+3+sizeof(STATE_FB)*3+7 = %d\n", 7+varnum_len+3+5+3+sizeof(STATE_FB)*3+7);
+			while (socket_pkg_handle(buf_memory, &frame) == (7+varnum_len+3+5+3+sizeof(STATE_FB)*3+7)) {
+				if (string_to_string_list(frame, "III", &size, &array) == 0 || size != 5) {
+					perror("string to string list");
+					string_list_free(array, size);
+
+					continue;
 				}
+				free(frame);
+				frame = NULL;
+				/*printf("array[0]=%s\n", array[0]);
+				printf("array[1]=%s\n", array[1]);
+				printf("array[2]=%s\n", array[2]);
+				printf("array[3]=%s\n", array[3]);
+				printf("array[4]=%s\n", array[4]);*/
+				//strrpc(state_buf, "/f/bIII", "");
+				//strrpc(state_buf, "III/b/f", "");
+				//printf("strlen state_buf = %d\n", strlen(state_buf));
+				//printf("recv state_buf = %s\n", state_buf);
+				//printf("strlen(array[3]) = %d\n", strlen(array[3]));
+				//printf("__LINE__ = %d\n", __LINE__);
+				//printf("3*sizeof(STATE_FB) = %d\n", 3*sizeof(STATE_FB));
+				if (strlen(array[3]) == 3*sizeof(STATE_FB)) {
+					STATE_FB sta_fb;
+					fb_createnode(&sta_fb);
+					//bzero(state, sizeof(STATE_FB));
+					StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
+					//printf("enter/if\n");
+					if (state_fb.type == 0) { //"0":图表查询
+						if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
+							state_fb.overflow = 1;
+							/** clear state quene */
+							pthread_mutex_lock(&sock->mute);
+							fb_clearquene(&fb_quene);
+							pthread_mutex_unlock(&sock->mute);
+						} else {
+							state_fb.overflow = 0;
+						}
+						/** enquene node */
+						pthread_mutex_lock(&sock->mute);
+						fb_enquene(&fb_quene, sta_fb);
+						pthread_mutex_unlock(&sock->mute);
+					} else if (state_fb.type == 1) {// "1":轨迹数据查询
+						pkg_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+						for (i = 0; i < STATEFB_PERPKG_NUM; i++) {
+							for (j = 0; j < 7; j ++) {
+								tmp_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+								if (j < 6) {
+									sprintf(tmp_content, "%s%f,", pkg_content, sta_fb.fb[i][j]);
+								} else {
+									sprintf(tmp_content, "%s%f\n", pkg_content, sta_fb.fb[i][j]);
+								}
+								strcpy(pkg_content, tmp_content);
+								free(tmp_content);
+								tmp_content = NULL;
+							}
+						}
+						write_file_append(FILE_STATEFB, pkg_content);
+						free(pkg_content);
+						pkg_content = NULL;
+					} else if (state_fb.type == 2 || state_fb.type == 3) { //"2":查询 10 秒内固定格式机器人数据 "3":查询 10 秒内部分选择的机器人数据
+						/** 重新开始计包个数时，清空缓冲区 */
+						if (state_fb.index == 0) {
+							bzero(state_fb.buf, sizeof(char)*(STATEFB_BUFSIZE+1));
+						}
+						pkg_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+						for (i = 0; i < STATEFB_PERPKG_NUM; i++) {
+							for (j = 0; j < 15; j++) {
+								tmp_content = (char *)calloc(1, sizeof(char)*(STATEFB_SIZE+100));
+								if (j < 14) {
+									sprintf(tmp_content, "%s%f,", pkg_content, sta_fb.fb[i][j]);
+								} else {
+									sprintf(tmp_content, "%s%f\n", pkg_content, sta_fb.fb[i][j]);
+								}
+								strcpy(pkg_content, tmp_content);
+								free(tmp_content);
+								tmp_content = NULL;
+							}
+						}
+						//printf("end print state fb\n");
+						if (state_fb.index >= 100) { /** 收到包超过 100 个，即超过 10 秒 */
+							tmp_buf = (char *)calloc(1, sizeof(char)*(STATEFB_BUFSIZE+1));
+							//strcpy(tmp_buf, state_fb.buf+STATEFB_SIZE);
+							strcpy(tmp_buf, state_fb.buf+pkg_len[state_fb.index%100]);
+							bzero(state_fb.buf, sizeof(char)*(STATEFB_BUFSIZE+1));
+							strcpy(state_fb.buf, tmp_buf);
+							free(tmp_buf);
+							tmp_buf = NULL;
+						}
+						pkg_len[state_fb.index%100] = strlen(pkg_content);
+						//printf("strlen(pkg_content) = %d\n", strlen(pkg_content));
+
+						strcat(state_fb.buf, pkg_content);
+						free(pkg_content);
+						pkg_content = NULL;
+					//	printf("state_fb.buf strlen = %d\n", strlen(state_fb.buf));
+						printf("state_fb.index = %d\n", state_fb.index);
+						state_fb.index++;
+
+						// 重新开始计包个数时，清空二级缓冲区
+						/*if (state_fb.index == 0) {
+							bzero(write_content, sizeof(char)*(STATEFB_WRITESIZE+100));
+						}
+
+						strcat(write_content, pkg_content);
+						state_fb.index++;
+						printf("index = %d\n", state_fb.index);
+						if (state_fb.index%10 == 0) {
+							printf("strlen(write_content) = %d\n", strlen(write_content));
+							// check line num is over 10000 or not
+							bzero(file_content, sizeof(char)*(STATEFB_FILESIZE+100));
+							linenum = 0;
+							if ((fp = fopen(FILE_STATEFB, "r")) == NULL) {
+								perror("file statefb : open file");
+
+								continue;
+							}
+							//rewind(fp);
+							//fseek(fp, strlen(write_content), SEEK_SET);
+							while (fgets(strline, LINE_LEN, fp) != NULL) {
+								linenum++;
+								if (linenum > STATEFB_PERPKG_NUM*10) {
+									file_content = strcat(file_content, strline);
+								}
+							}
+							fclose(fp);
+							//printf("read file: file_content = %s\n", file_content);
+							printf("linenum = %d\n", linenum);
+							if (linenum >= 10000) {
+								if (write_file(FILE_STATEFB, file_content) == FAIL) {
+									perror("write file content");
+								}
+							}
+
+							//printf("write_content = %s\n", write_content);
+							write_file_append(FILE_STATEFB, write_content);
+							bzero(write_content, sizeof(char)*(STATEFB_WRITESIZE+100));
+						}*/
+
+
+						/** 重新开始计包个数时，清空缓冲区 */
+						/*if (state_fb.index == 0) {
+							bzero(state_fb.buf, sizeof(char)*(STATEFB_BUFSIZE+1));
+						}
+						//printf("end print state fb\n");
+						if (state_fb.index >= 100) { // 收到包超过 100 个，即超过 10 秒
+							tmp_buf = (char *)calloc(1, sizeof(char)*(STATEFB_BUFSIZE+1));
+							strcpy(tmp_buf, state_fb.buf+STATEFB_SIZE);
+							bzero(state_fb.buf, sizeof(char)*(STATEFB_BUFSIZE+1));
+							strcpy(state_fb.buf, tmp_buf);
+							free(tmp_buf);
+							tmp_buf = NULL;
+						}
+						strcat(state_fb.buf, array[3]);
+					//	printf("state_fb.buf strlen = %d\n", strlen(state_fb.buf));
+						printf("state_fb.index = %d\n", state_fb.index);
+						state_fb.index++;*/
+					}
+				}
+				string_list_free(array, size);
+				//printf("after StringToBytes\n");
 			}
-			string_list_free(array, size);
-			//printf("after StringToBytes\n");
+			if (frame != NULL) {
+				free(frame);
+				frame = NULL;
+			}
 		}
 		/* socket disconnected */
 		/* 释放互斥锁 */
@@ -948,13 +1170,15 @@ void *socket_state_feedback_thread(void *arg)
 		close(sock->fd);
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
+		free(buf_memory);
+		buf_memory = NULL;
 	}
-	free(state_buf);
-	state_buf = NULL;
-	free(tmp_content);
-	tmp_content = NULL;
-	free(write_content);
-	write_content = NULL;
+//	free(state_buf);
+//	state_buf = NULL;
+/*	free(write_content);
+	write_content = NULL;*/
+	free(state_fb.buf);
+	state_fb.buf = NULL;
 }
 
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)

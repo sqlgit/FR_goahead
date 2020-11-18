@@ -23,7 +23,7 @@ extern SOCKET_INFO socket_vir_cmd;
 *
 *@param2 [IN]: delimiter, 分隔符字符
 *
-*@param3 [OUT]: delimiter_count, 出参, 分隔符数量
+*@param3 [OUT]: delimiter_count, 出参, 分隔符数量+1, 即 array 分割的份数
 *
 *@param4 [OUT]: str_list, 出参，用于存放结果的二位字符串数组，
 *               使用完成后需要使用LB_FREE_ARRAY释放数组内存

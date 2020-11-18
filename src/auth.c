@@ -511,15 +511,25 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
     }
 	/**
 		sql:
-		增加判断SessionCount计数是否大于0，
+		增加判断 SessionCount 计数是否大于0，
 		如果大于0，证明之前已经有用户登录过了，
+		只允许之前已经登录过的用户重新登录，清空之前已有 session，建新的 session id，
 		禁止其他用户再次登录，返回登录出错提示
 	*/
-    if (websGetSessionCount() > 0) {
-		printf("exist webs login user before\n");
-        trace(2, "exist sessiond id, forbid login");
-        return 0;
-    }
+//	printf("websGetSessionCount = %d\n", websGetSessionCount());
+//	printf("username = %s\n", username);
+//	printf("cur_account.username = %s\n", cur_account.username);
+	if (websGetSessionCount() > 0) {
+		if (strcmp(username, cur_account.username) == 0) {
+			//websRemoveSessionVar(wp, WEBS_SESSION_USERNAME);
+			//websDestroySession(wp);
+			myfreeSessions();
+		} else {
+			printf("exist webs login user before\n");
+			trace(2, "exist sessiond id, forbid login");
+			return 0;
+		}
+	}
     trace(2, "Login successful for %s", username);
     websCreateSession(wp);
     websSetSessionVar(wp, WEBS_SESSION_USERNAME, wp->username);
@@ -545,7 +555,7 @@ PUBLIC bool websLogoutUser(Webs *wp)
 	pthread_mutex_unlock(&socket_state.mute);
 	/** send stop vardata_feedback to TaskManagement */
 	socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
-	delete_timer();
+	//delete_timer();
 	my_syslog("普通操作", "用户登出成功", cur_account.username);
 
     return 1;

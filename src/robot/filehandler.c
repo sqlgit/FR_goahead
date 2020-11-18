@@ -13,6 +13,7 @@ static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
 static int compute_file_md5(const char *file_path, char *md5_str);
 static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path);
+static int update_userconfig();
 
 /**
 	计算 MD5 值：
@@ -77,8 +78,10 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 	char strline[LINE_LEN] = {0};
 	char md5sum_up[MD5_STR_LEN + 1] = "";
 	char md5sum_com[MD5_STR_LEN + 1] = "";
+#if recover_mode
 	char version_now[20] = "";
 	char version_up[20] = "";
+#endif
 
 	if (compute_file_md5(upgrade_path, md5sum_com) == -1) {
 		perror("md5 compute");
@@ -96,14 +99,21 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 		if (!strncmp(strline, "MD5SUM=", 7)) {
 			strrpc(strline, "MD5SUM=", "");
 			strcpy(md5sum_up, strline);
+#if recover_mode
 		} else if (!strncmp(strline, "VERSION=", 8)) {
 			strrpc(strline, "VERSION=", "");
 			strcpy(version_up, strline);
+#endif
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 	fclose(fp);
 
+	printf("md5sum_com = %s\n", md5sum_com);
+	printf("md5sum_up = %s\n", md5sum_up);
+	printf("strcmp(md5sum_com, md5sum_up) = %d\n", strcmp(md5sum_com, md5sum_up));
+
+#if recover_mode
 	if ((fp = fopen(readme_now_path, "r")) == NULL) {
 		perror("open file");
 
@@ -119,20 +129,112 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 	}
 	fclose(fp);
 
-	printf("md5sum_com = %s\n", md5sum_com);
-	printf("md5sum_up = %s\n", md5sum_up);
 	printf("version_now = %s\n", version_now);
 	printf("version_up = %s\n", version_up);
-	printf("strcmp(md5sum_com, md5sum_up) = %d\n", strcmp(md5sum_com, md5sum_up));
 	printf("strcmp(version_up, version_now) = %d\n", strcmp(version_up, version_now));
+#endif
 
-	if (strcmp(md5sum_com, md5sum_up) != 0 || strcmp(version_up, version_now) <= 0) {
+#if recover_mode
+	if (strcmp(md5sum_com, md5sum_up) != 0 || strcmp(version_up, version_now) < 0) {
+#else
+	if (strcmp(md5sum_com, md5sum_up) != 0) {
+#endif
 		perror("upgrade fail");
 
 		return FAIL;
 	}
 
 	return SUCCESS;
+}
+
+/**
+  update user.config
+*/
+static int update_userconfig()
+{
+	FILE *fp_up = NULL;
+	char strline_up[LINE_LEN] = {0};
+	char **array_up = NULL;
+	int size_up = 0;
+	FILE *fp_now = NULL;
+	char strline_now[LINE_LEN] = {0};
+	char **array_now = NULL;
+	int size_now = 0;
+	char write_line[LINE_LEN] = {0};
+	char write_content[LINE_LEN*10] = {0};
+	int line_index = 0;
+	char cmd[128] = {0};
+
+	if ((fp_up = fopen(UPGRADE_ROBOT_CFG, "r")) == NULL) {
+		perror("user.config : open file");
+
+		return FAIL;
+	}
+	//  now user.config is not exist
+	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+		fclose(fp_up);
+		perror("now user.config : open file");
+		sprintf(cmd, "cp %s %s", UPGRADE_ROBOT_CFG, ROBOT_CFG);
+		system(cmd);
+
+		return SUCCESS;
+	}
+	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
+		line_index++;
+		bzero(write_line, sizeof(char)*LINE_LEN);
+		strcpy(write_line, strline_up);
+		if (is_in(strline_up, "=") == 1 && line_index > 2) {
+			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
+				perror("string to string list");
+				fclose(fp_up);
+				fclose(fp_now);
+				string_list_free(array_up, size_up);
+
+				return FAIL;
+			}
+			if (array_up[0] != NULL) {// 出现左边的 key 值
+				while (fgets(strline_now, LINE_LEN, fp_now) != NULL) {
+					//printf("strline_now = %s\n", strline_now);
+					if (is_in(strline_now, "=") == -1) {
+						continue;
+					}
+					if (string_to_string_list(strline_now, " = ", &size_now, &array_now) == 0 || size_now != 2) {
+						perror("string to string list");
+						fclose(fp_up);
+						fclose(fp_now);
+						string_list_free(array_now, size_now);
+
+						return FAIL;
+					}
+					if (array_now[0] != NULL) {
+						//printf("array_now[0] = %s\n", array_now[0]);
+						//printf("array_up[0] = %s\n", array_up[0]);
+						if (strcmp(array_now[0], array_up[0]) == 0) {
+							//printf("array_now[1] = %s\n", array_now[1]);
+							//printf("array_up[0] = array_up[0]\n");
+							bzero(write_line, sizeof(char)*LINE_LEN);
+							sprintf(write_line, "%s = %s", array_up[0], array_now[1]);
+							string_list_free(array_now, size_now);
+							bzero(strline_now, sizeof(char)*LINE_LEN);
+							break;
+						}
+					}
+					string_list_free(array_now, size_now);
+					bzero(strline_now, sizeof(char)*LINE_LEN);
+				}
+			}
+			string_list_free(array_up, size_up);
+		}
+		bzero(strline_up, sizeof(char)*LINE_LEN);
+		strcat(write_content, write_line);
+	}
+	fclose(fp_now);
+	fclose(fp_up);
+
+	//printf("write_content len = %d\n", strlen(write_content));
+	//printf("write_content = %s\n", write_content);
+
+	return write_file(ROBOT_CFG, write_content);
 }
 
 
@@ -205,14 +307,19 @@ void upload(Webs *wp)
 				upfile = sfmt("%s", WEB_ROBOT_CFG);
 				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
 			/* webapp upgrade file */
-			} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
+		/*	} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_WEBAPP);
 				my_syslog("普通操作", "导入 webapp 升级文件成功", cur_account.username);
-				strcpy(filename, upfile);
+				strcpy(filename, upfile);*/
 			/* control upgrade file */
-			} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
+		/*	} else if (strcmp(up->clientFilename, "control.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_CONTROL);
 				my_syslog("普通操作", "导入控制器升级文件成功", cur_account.username);
+				strcpy(filename, upfile);*/
+			/** Software Upgrade package file */
+			} else if (strcmp(up->clientFilename, "software.tar.gz") == 0) {
+				upfile = sfmt("%s", UPGRADE_SOFTWARE);
+				my_syslog("普通操作", "导入软件升级文件成功", cur_account.username);
 				strcpy(filename, upfile);
 			/* peripheral plugin file */
 			} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
@@ -239,10 +346,48 @@ void upload(Webs *wp)
 		delete_log_file(0);
 	} else if (strcmp(filename, FILE_USERDATA) == 0) {
 		system("rm -rf /root/web/file");
-		system("rm -f /root/robot/user.config");
+		system("rm -f /root/robot/exaxis.config");
 		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
-		system("rm -f /root/fr_user_data.tar.gz");
-	} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
+		//system("rm -f /root/fr_user_data.tar.gz");
+	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
+		system("cd /tmp && tar -zxvf software.tar.gz");
+		// md5 check && verison check
+		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL || check_upfile(UPGRADE_FR_CONTROL, README_CTL_NOW, README_CTL_UP) == FAIL) {
+			perror("md5 & version check fail!");
+			my_syslog("普通操作", "升级软件失败", cur_account.username);
+			goto end;
+		}
+
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "openssl des3 -d -k frweb -salt -in %s | tar xzvf - -C /tmp/", UPGRADE_WEB);
+		if (system(cmd) != 0) {
+			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
+			perror("uncompress fail!");
+			goto end;
+		}
+		/** 更新 user.config 文件 */
+		update_userconfig();
+
+		bzero(cmd, sizeof(cmd));
+#if recover_mode
+		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
+#else
+		sprintf(cmd, "sh %s", SHELL_RECOVER_WEBTARCP);
+#endif
+		system(cmd);
+		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
+
+		bzero(cmd, sizeof(cmd));
+#if recover_mode
+		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
+#else
+		sprintf(cmd, "sh %s", SHELL_RECOVER_CRLUPGRADE);
+#endif
+		system(cmd);
+		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
+
+		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/software");
+	/*} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
 		system("cd /tmp && tar -zxvf webapp.tar.gz");
 		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL) {
 			perror("md5 & version check fail!");
@@ -255,15 +400,15 @@ void upload(Webs *wp)
 			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
 			perror("uncompress fail!");
 			goto end;
-		}
+		}*/
 
 	/**	bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "chmod 777 %s", SHELL_WEBUPGRADE);
 		system(cmd);
 	*/
-		bzero(cmd, sizeof(cmd));
+	/*	bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
-		system(cmd);
+		system(cmd);*/
 	//	bzero(cmd, sizeof(cmd));
 	//	sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
 	//	sprintf(cmd, "nohup sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
@@ -274,7 +419,7 @@ void upload(Webs *wp)
 	//	sleep(5);
 
 		/* send webappupgrade cmd to TM to do web_upgrade.sh shell */
-		if (robot_type == 1) { // "1" 代表实体机器人
+	/*	if (robot_type == 1) { // "1" 代表实体机器人
 			sock_cmd = &socket_cmd;
 		} else { // "0" 代表虚拟机器人
 			sock_cmd = &socket_vir_cmd;
@@ -291,7 +436,7 @@ void upload(Webs *wp)
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
 		system(cmd);
-		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
+		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);*/
 	} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
 		strncpy(plugin_name, up->clientFilename, (strlen(up->clientFilename)-7));
 		//printf("plugin_name = %s\n", plugin_name);
@@ -475,8 +620,11 @@ static int avolfileHandler(Webs *wp)
 	if (pathfilename == NULL)
 		return 1;
 	if (strcmp(pathfilename, FILE_USERDATA) == 0) {
+		char cmd[128] = {0};
+		sprintf(cmd, "cp %s %s", ROBOT_CFG, WEB_ROBOT_CFG);
+		system(cmd);
 		system("rm -f /root/fr_user_data.tar.gz");
-		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/user.config");
+		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config");
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
 		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);
@@ -488,6 +636,8 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出用户程序文件成功", cur_account.username);
 	} else if (strcmp(pathfilename, FILE_STATEFB) == 0) {
 		my_syslog("普通操作", "导出状态查询文件成功", cur_account.username);
+	} else if (strcmp(pathfilename, FILE_STATEFB10) == 0) {
+		my_syslog("普通操作", "导出出现异常 10s 前机器人数据文件成功", cur_account.username);
 	} else if (is_in(pathfilename, DIR_LOG) == 1) {
 		my_syslog("普通操作", "导出 log 文件成功", cur_account.username);
 	}

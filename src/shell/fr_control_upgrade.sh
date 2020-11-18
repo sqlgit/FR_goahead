@@ -1,8 +1,8 @@
 #! /bin/sh
 
 echo "##### Uncompress fr_control upgrade file";
-tar -zxvf /tmp/control/fr_control.tar.gz -C /tmp/
-mv /tmp/control/README_CTL.txt /root/README/
+tar -zxvf /tmp/software/fr_control.tar.gz -C /tmp/
+mv /tmp/software/README_CTL.txt /root/README/
 
 echo "##### Mv fr_control upgrade file"
 # update QNX system image (xxx.ifs)
@@ -16,6 +16,14 @@ if test -x /tmp/fr_control/frapploader.sh; then
 	rm  /etc/rc.d/frapploader.sh
 	cp  /tmp/fr_control/frapploader.sh  /etc/rc.d/
 fi
+
+
+# update ethercat cobot_v2.xml
+if test -x /tmp/fr_control/cobot_v2.xml; then
+	rm  /root/ethercat/cobot_v2.xml;
+	cp  /tmp/fr_control/cobot_v2.xml  /root/ethercat/
+fi
+
 
 # update control firmware and config files
 if test -x /tmp/fr_control/zqrobot-v2.0; then
@@ -104,11 +112,9 @@ if test -x /tmp/fr_control/lsm-ethercat.so; then
 fi
 
 echo "##### rm temporary file in the TMP directory"
-rm -rf /tmp/control
-rm -f /tmp/control.tar.gz
 rm -rf /tmp/fr_control
 
 echo "##### Upload fr_control upgrade file success!"
 
-echo "##### will shutdown!"
+echo "##### need shutdown!"
 #shutdown

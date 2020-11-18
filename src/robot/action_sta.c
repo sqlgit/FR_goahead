@@ -79,7 +79,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	int i = 0;
 	char *buf = NULL;
 	char joint[10] = {0};
-	char content[100] = {0};
+	char content[MAX_BUF] = {0};
 	double joint_value = 0;
 	double tcp_value[6] = {0};
 	cJSON *root_json = NULL;
@@ -221,8 +221,8 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
 		sprintf(content, "%d", p->data.type);
-	//	printf("content = %s\n", content);
-	//	printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+		//printf("content = %s\n", content);
+		//printf("p->data.msgcontent = %s\n", p->data.msgcontent);
 		cJSON_AddStringToObject(feedback_json, content, p->data.msgcontent);
 		/* 删除结点信息 */
 		pthread_mutex_lock(&sock_cmd->ret_mute);
@@ -255,6 +255,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->strangePosFlag = 0;
 	}
+
+	if (state->drag_alarm == 1) {
+		cJSON_AddStringToObject(error_json, "key", "拖动警告, 当前处于自动模式");
+		if (pre_state->drag_alarm != 1) {
+			my_syslog("错误", "拖动警告, 当前处于自动模式", cur_account.username);
+			pre_state->drag_alarm = 1;
+		}
+	} else {
+		pre_state->drag_alarm = 0;
+	}
+
 	if (state->aliveSlaveNumError == 1) {
 		memset(content, 0, sizeof(content));
 		sprintf(content, "活动从站数量错误，活动从站数量为:%d", state->aliveSlaveNumFeedback);
@@ -1188,7 +1199,7 @@ static int vardata_feedback(char *ret_status)
 			itoa(state_fb.id[i], key, 10);
 			root = cJSON_CreateArray();
 			cJSON_AddItemToObject(value_json, key, root);
-			for (j = 0; j < 100; j++) {
+			for (j = 0; j < STATEFB_PERPKG_NUM; j++) {
 				//cJSON_AddNumberToObject(root, "key", state_fb.var[j][i]);
 				//printf("fb_quene.front fb[%d][%d] = %d\n", j, i, fb_quene.front->next->data.fb[j][i]);
 				cJSON_AddNumberToObject(root, "key", fb_quene.front->next->data.fb[j][i]);
@@ -1284,7 +1295,7 @@ void sta(Webs *wp)
 
 	/*calloc content*/
 	//ret_status = (char *)calloc(1, sizeof(char)*1024);
-	ret_status = (char *)calloc(1, 10000);
+	ret_status = (char *)calloc(1, 20000);
 	if (ret_status == NULL) {
 		perror("calloc");
 		goto end;
@@ -1317,8 +1328,8 @@ void sta(Webs *wp)
 	if(!strcmp(cmd, "cons")) {
 		//print_num++;
 		ret = connect_status(ret_status);
-		delete_timer();
-		set_timer();
+		//delete_timer();
+		//set_timer();
 	} else if(!strcmp(cmd, "basic")) {
 		ret = basic(ret_status, state, pre_state);
 	} else if(!strcmp(cmd, "program_teach")) {
@@ -1335,7 +1346,7 @@ void sta(Webs *wp)
 		/** send stop vardata_feedback to TaskManagement */
 		socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
 		//print_num++;
-		delete_timer();
+		//delete_timer();
 		ret = SUCCESS;
 		strcpy(ret_status, "refresh!");
 	} else {

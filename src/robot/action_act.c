@@ -26,6 +26,7 @@ static int modify_tool_cdsystem(const cJSON *data_json);
 static int modify_ex_tool_cdsystem(const cJSON *data_json);
 static int modify_exaxis_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
+static int save_lasersensor_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int log_management(const cJSON *data_json);
@@ -33,6 +34,8 @@ static int save_accounts(const cJSON *data_json);
 static int shutdown_system(const cJSON *data_json);
 static int plugin_enable(const cJSON *data_json);
 static int plugin_remove(const cJSON *data_json);
+static int clear_DH_file(const cJSON *data_json);
+static int save_DH_point(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -336,6 +339,67 @@ static int save_point(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* save point */
+static int save_lasersensor_point(const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	cJSON *name = NULL;
+	cJSON *speed = NULL;
+	cJSON *elbow_speed = NULL;
+	cJSON *acc = NULL;
+	cJSON *elbow_acc = NULL;
+	cJSON *toolnum = NULL;
+	cJSON *j1 = NULL;
+	cJSON *j2 = NULL;
+	cJSON *j3 = NULL;
+	cJSON *j4 = NULL;
+	cJSON *j5 = NULL;
+	cJSON *j6 = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+	cJSON *E1 = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	speed = cJSON_GetObjectItem(data_json, "speed");
+	acc = cJSON_GetObjectItem(data_json, "acc");
+	elbow_speed = cJSON_GetObjectItem(data_json, "elbow_speed");
+	elbow_acc = cJSON_GetObjectItem(data_json, "elbow_acc");
+	toolnum = cJSON_GetObjectItem(data_json, "toolnum");
+	j1 = cJSON_GetObjectItem(data_json, "j1");
+	j2 = cJSON_GetObjectItem(data_json, "j2");
+	j3 = cJSON_GetObjectItem(data_json, "j3");
+	j4 = cJSON_GetObjectItem(data_json, "j4");
+	j5 = cJSON_GetObjectItem(data_json, "j5");
+	j6 = cJSON_GetObjectItem(data_json, "j6");
+	x = cJSON_GetObjectItem(data_json, "x");
+	y = cJSON_GetObjectItem(data_json, "y");
+	z = cJSON_GetObjectItem(data_json, "z");
+	rx = cJSON_GetObjectItem(data_json, "rx");
+	ry = cJSON_GetObjectItem(data_json, "ry");
+	rz = cJSON_GetObjectItem(data_json, "rz");
+	E1 = cJSON_GetObjectItem(data_json, "E1");
+	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || E1 == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || E1->valuestring == NULL ) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,E1,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
+				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring,\
+				j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, E1->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* remove points info */
 static int remove_points(const cJSON *data_json)
 {
@@ -576,6 +640,89 @@ static int plugin_remove(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/** clear_DH_file */
+static int clear_DH_file(const cJSON *data_json)
+{
+	int ret = open(FILE_DH_POINT, O_WRONLY | O_TRUNC);
+	if (ret == -1) {
+		printf("DH POINT file is not exist!\n");
+	} else {
+		close(ret);
+	}
+
+	return SUCCESS;
+}
+
+/** save_DH_point */
+static int save_DH_point(const cJSON *data_json)
+{
+	char point_info[LINE_LEN] = {0};
+	char strline[LINE_LEN] = {0};
+	char write_content[26*LINE_LEN] = {0};
+	char tmp_content[26*LINE_LEN] = {0};
+	FILE *fp = NULL;
+	char **array = NULL;
+	int size = 0;
+	int write_ret = FAIL;
+	int exist_point = 0;
+	CTRL_STATE *state = NULL;
+	cJSON *no = NULL;
+
+	no = cJSON_GetObjectItem(data_json, "no");
+	if (no == NULL || no->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
+
+	sprintf(point_info, "%s %lf %lf %lf %lf %lf %lf\n", no->valuestring, state->jt_cur_pos[0], state->jt_cur_pos[1], state->jt_cur_pos[2], state->jt_cur_pos[3], state->jt_cur_pos[4], state->jt_cur_pos[5]);
+	//printf("point_info = %s\n", point_info);
+
+	/** DH point 文件存在 */
+	if ((fp = fopen(FILE_DH_POINT, "r+")) != NULL) {
+		while (fgets(strline, LINE_LEN, fp) != NULL) {
+			if (string_to_string_list(strline, " ", &size, &array) == 0 || size != 7) {
+				perror("string to string list");
+				fclose(fp);
+				string_list_free(array, size);
+
+				return FAIL;
+			}
+			bzero(tmp_content, 26*LINE_LEN);
+			/** 已经存在记录过的 DH 校准点, 替换原本点信息 */
+			if (strcmp(array[0], no->valuestring) == 0) {
+				sprintf(tmp_content, "%s%s", write_content, point_info);
+				exist_point = 1;
+			} else {
+				sprintf(tmp_content, "%s%s", write_content, strline);
+			}
+			strcpy(write_content, tmp_content);
+			string_list_free(array, size);
+			bzero(strline, LINE_LEN);
+		}
+		fclose(fp);
+		//printf("write_content = %s\n", write_content);
+		write_ret = write_file(FILE_DH_POINT, write_content);
+		if (write_ret == FAIL) {
+			perror("write file");
+
+			return FAIL;
+		}
+		/** 文件不存在记录过的 DH 校准点，追加点的信息到文末即可 */
+		if (exist_point == 0) {
+			return write_file_append(FILE_DH_POINT, point_info);
+		}
+	/** DH point 文件不存在 */
+	} else {
+		return write_file_append(FILE_DH_POINT, point_info);
+	}
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -611,13 +758,13 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_lasersensor_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -656,6 +803,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 		strcpy(log_content, "保存点信息");
+	} else if (!strcmp(cmd, "save_lasersensor_point")) {
+		ret = save_lasersensor_point(data_json);
+		strcpy(log_content, "保存激光传感器记录点信息");
 	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
 		strcpy(log_content, "移除点信息");
@@ -674,6 +824,12 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "plugin_remove")) {
 		ret = plugin_remove(data_json);
 		strcpy(log_content, "删除外设插件");
+	} else if (!strcmp(cmd, "clear_DH_file")) {
+		ret = clear_DH_file(data_json);
+		strcpy(log_content, "清空DH参数校准数据采集文件");
+	} else if (!strcmp(cmd, "save_DH_point")) {
+		ret = save_DH_point(data_json);
+		strcpy(log_content, "DH 参数校准数据采集下发");
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
 		strcpy(log_content, "系统关机");

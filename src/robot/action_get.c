@@ -33,6 +33,8 @@ static int get_exaxis_cfg(char **ret_f_content);
 static int get_plugin_info(char **ret_f_content);
 static int get_plugin_nav(char **ret_f_content);
 static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
+static int get_DH_file(char **ret_f_content);
+//static int index_get_config = 0;
 
 /*********************************** Code *************************************/
 
@@ -369,35 +371,48 @@ static int get_robot_cfg(char **ret_f_content)
 	int size = 0;
 	char strline[LINE_LEN] = {0};
 	FILE *fp = NULL;
+	int line_num = 0;
 	cJSON *root_json = NULL;
+	//struct timespec start, stop, end;
 
-	root_json = cJSON_CreateObject();
+	//index_get_config++;
+	//printf("get config index : %d\n", index_get_config);
+	//clock_gettime(CLOCK_REALTIME, &start);
+	//printf("before fopen, %d, %ld\n", start.tv_sec, start.tv_nsec);
 	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
 		perror("user.config : open file");
 
 		return FAIL;
 	}
+	//clock_gettime(CLOCK_REALTIME, &stop);
+	//printf("after fopen, %d, %ld\n", stop.tv_sec, stop.tv_nsec);
+	root_json = cJSON_CreateObject();
 	while (fgets(strline, LINE_LEN, fp) != NULL) {
 		if (is_in(strline, "=") == -1) {
 			continue;
 		}
 		strrpc(strline, "\n", "");
 		//printf("user.config strline = %s\n", strline);
-		if (string_to_string_list(strline, " = ", &size, &array) == 0) {
+		if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
 			perror("string to string list");
 			fclose(fp);
 			string_list_free(array, size);
+			cJSON_Delete(root_json);
+			root_json = NULL;
 
 			return FAIL;
 		}
-		if (array[0] != NULL && (array[1] != NULL || array[1] == 0)) {
+		if (array[0] != NULL) {
 			cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
 		}
 		string_list_free(array, size);
 		bzero(strline, sizeof(char)*LINE_LEN);
+		line_num++;
 	}
 	fclose(fp);
-
+	//clock_gettime(CLOCK_REALTIME, &end);
+	//printf("after fclose, %d, %ld\n", end.tv_sec, end.tv_nsec);
+	printf("line_num = %d\n", line_num);
 	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
@@ -1119,6 +1134,47 @@ static int get_plugin_config(char **ret_f_content, const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* get DH file */
+static int get_DH_file(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+	char strline[LINE_LEN] = {0};
+	FILE *fp = NULL;
+	char **array = NULL;
+	int size = 0;
+
+	root_json = cJSON_CreateArray();
+	if ((fp = fopen(FILE_DH_POINT, "r+")) != NULL) {
+		while (fgets(strline, LINE_LEN, fp) != NULL) {
+			if (string_to_string_list(strline, " ", &size, &array) == 0 || size != 7) {
+				perror("string to string list");
+				fclose(fp);
+				string_list_free(array, size);
+				cJSON_Delete(root_json);
+				root_json = NULL;
+
+				return FAIL;
+			}
+			if (array[0] != NULL) {
+				cJSON_AddItemToArray(root_json, cJSON_CreateNumber(atoi(array[0])));
+			}
+			string_list_free(array, size);
+			bzero(strline, LINE_LEN);
+		}
+		fclose(fp);
+	}
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cjson_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -1221,6 +1277,8 @@ void get(Webs *wp)
 			goto end;
 		}
 		ret = get_plugin_config(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "get_DH_file")) {
+		ret = get_DH_file(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -1232,7 +1290,7 @@ void get(Webs *wp)
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
-	printf("ret_f_content = %s\n", ret_f_content);
+	//printf("ret_f_content = %s\n", ret_f_content);
 	websSetStatus(wp, 200);
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);

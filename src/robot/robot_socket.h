@@ -29,9 +29,14 @@
 #define MAX_BUF 1024
 #define MAX_MSGHEAD 10000
 #define BUFFSIZE 1300000*2
-#define STATEFB_SIZE 12000
+#define STATE_SIZE 4096
+#define STATEFB_SIZE 24000 /** 4(sizeof(float))*100(row)*20(column)*3 */
+#define STATEFB_BUFSIZE 2400000 /** 4(sizeof(float))*100(row)*20(column)*3*100(num) */
+//#define STATEFB_WRITESIZE 10*8000*2 /** 10(num)*4(sizeof(float))*100(row)*20(column)*2 */
+//#define STATEFB_FILESIZE 100*8000*2 /** 100(num)*4(sizeof(float))*100(row)*20(column)*2 */
+#define STATEFB_PERPKG_NUM 100
+#define STATEFB_ID_MAXNUM 20
 #define STATEFB_MAX 1000 /** state feedback quene, node max number */
-#define STATE_FB_ID 3
 #define MAXGRIPPER 8
 
 /** 外部轴状态结构体 */
@@ -82,7 +87,7 @@ typedef struct _CTRL_STATE
 	uint16_t     analog_input[6];         /**< 模拟输入,四个控制箱,2个工具    */
 	double     ctrl_time;               /**< 控制器实时线程执行时间         */
 	double     test_data;               /**< 测试数据ur机器人软件使用       */
-	uint8_t        robot_mode;              /**< 机器人模式  0:自动 1:手动                    */
+	uint8_t    robot_mode;              /**< 机器人模式 0:自动 1:手动       */
 	double     joint_mode[6];  			/**< 关节模式					    */
 	double     safe_mode;               /**< 安全模式                       */
 	int        collision_level;         /**< 碰撞等级,一级敏感,三级不敏感   */
@@ -136,6 +141,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   ctrl_query_state;		/** 控制器查询状态 0-未查询，1-查询中 */
 	uint8_t    weld_readystate;			/** 焊机准备状态 1-准备好；0-未准备好 */
 	double     weldTrackSpeed;			/** 焊缝跟踪速度 mm/s */
+	uint8_t    drag_alarm;				/** 拖动警告, 当前处于自动模式, 0-不报警 1-报警 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -153,10 +159,12 @@ typedef struct _GRIPPERS_CONFIG_INFO
 /** 状态查询结构体 */
 typedef struct _STATE_FEEDBACK
 {
-	int id[10];			// state feedback id
-	int icount;			// state feedback icount
-	int type;			// state feedback type, "0":图表查询，"1":轨迹数据查询
-	int overflow;		// state feedback overflow
+	int id[STATEFB_ID_MAXNUM];			// state feedback id
+	int icount;							// state feedback icount
+	int type;							// state feedback type, "0": 图表查询，"1": 轨迹数据查询, "2": 查询 10 秒内固定机器人数据，"3":查询 10 秒内部分选择的机器人数据
+	int overflow;						// state feedback overflow
+	int index;						    // state feedback index "最大为 100"
+	char *buf;						    // state feedback buf 缓存数据
 } STATE_FEEDBACK;
 
 /* socket 相关信息结构体 */
