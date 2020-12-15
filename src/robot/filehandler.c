@@ -6,13 +6,14 @@
 #include	"filehandler.h"
 
 extern ACCOUNT_INFO cur_account;
-extern SOCKET_INFO socket_cmd;
-extern SOCKET_INFO socket_vir_cmd;
-extern int robot_type;
+//extern SOCKET_INFO socket_cmd;
+//extern SOCKET_INFO socket_vir_cmd;
+//extern int robot_type;
 static void fileWriteEvent(Webs *wp);
 static int avolfileHandler(Webs *wp);
 static int compute_file_md5(const char *file_path, char *md5_str);
 static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path);
+static int check_version(const char *readme_now_path, const char *readme_up_path);
 static int update_userconfig();
 
 /**
@@ -139,6 +140,59 @@ static int check_upfile(const char *upgrade_path, const char *readme_now_path, c
 #else
 	if (strcmp(md5sum_com, md5sum_up) != 0) {
 #endif
+		perror("upgrade fail");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/**
+	do version check again
+*/
+static int check_version(const char *readme_now_path, const char *readme_up_path)
+{
+	FILE *fp;
+	char strline[LINE_LEN] = {0};
+	char version_now[20] = "";
+	char version_up[20] = "";
+
+	if ((fp = fopen(readme_up_path, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if (!strncmp(strline, "VERSION=", 8)) {
+			strrpc(strline, "VERSION=", "");
+			strcpy(version_up, strline);
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp);
+
+	if ((fp = fopen(readme_now_path, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		strrpc(strline, "\n", "");
+		if (!strncmp(strline, "VERSION=", 8)) {
+			strrpc(strline, "VERSION=", "");
+			strcpy(version_now, strline);
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp);
+
+	printf("version_now = %s\n", version_now);
+	printf("version_up = %s\n", version_up);
+	printf("strcmp(version_up, version_now) = %d\n", strcmp(version_up, version_now));
+
+	if (strcmp(version_up, version_now) != 0) {
 		perror("upgrade fail");
 
 		return FAIL;
@@ -297,6 +351,11 @@ void upload(Webs *wp)
 				upfile = sfmt("%s", FILE_CFG);
 				my_syslog("普通操作", "导入 web 端系统配置文件成功", cur_account.username);
 				strcpy(filename, upfile);
+			/* vision_pkg_des.txt file */
+			} else if (strcmp(up->clientFilename, "vision_pkg_des.txt") == 0) {
+				upfile = sfmt("%s", FILE_VISION);
+				my_syslog("普通操作", "导入 vision_pkg_des.txt 文件成功", cur_account.username);
+				strcpy(filename, upfile);
 			/* web user data file */
 			} else if (strcmp(up->clientFilename, "fr_user_data.tar.gz") == 0) {
 				upfile = sfmt("%s", FILE_USERDATA);
@@ -370,23 +429,32 @@ void upload(Webs *wp)
 
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
-		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
+		//sprintf(cmd, "sh %s", SHELL_WEBTARCP);
+		sprintf(cmd, "sh %s", UPGRADE_WEBTARCP);
 #else
 		sprintf(cmd, "sh %s", SHELL_RECOVER_WEBTARCP);
 #endif
-		system(cmd);
+		do {
+			system(cmd);
+		} while (check_version(README_WEB_NOW, README_WEB_UP) == FAIL);
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
-		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
+		//sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
+		sprintf(cmd, "sh %s", UPGRADE_CRLUPGRADE);
 #else
 		sprintf(cmd, "sh %s", SHELL_RECOVER_CRLUPGRADE);
 #endif
-		system(cmd);
+		do {
+			system(cmd);
+		} while (check_version(README_CTL_NOW, README_CTL_UP) == FAIL);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 
-		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/software");
+		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/fr_control && rm -rf /tmp/web && rm -rf /tmp/software");
+
+	//	system("sleep 1 && shutdown -b &");
+
 	/*} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
 		system("cd /tmp && tar -zxvf webapp.tar.gz");
 		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL) {

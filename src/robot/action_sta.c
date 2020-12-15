@@ -15,8 +15,6 @@ extern CTRL_STATE vir_ctrl_state;
 extern CTRL_STATE pre_ctrl_state;
 extern CTRL_STATE pre_vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
-//extern STATE_FB state_fb;
-//extern float state_ret[100][10];
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_file;
 extern SOCKET_INFO socket_status;
@@ -32,46 +30,10 @@ static int test_index = 0;
 
 /********************************* Function declaration ***********************/
 
-static int connect_status(char *ret_status);
 static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state);
-static int program_teach(char *ret_status, CTRL_STATE *state);
 static int vardata_feedback(char *ret_status);
 
 /********************************* Code *************************************/
-
-/* connect status */
-static int connect_status(char *ret_status)
-{
-	char *buf = NULL;
-	cJSON *root_json = NULL;
-	int ret_connect_status = 0;
-
-	if (robot_type == 1) { // "1" 代表实体机器人
-		/* cmd file status state all connect */
-		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status && socket_state.connect_status) {
-			ret_connect_status = 1;
-		} else {
-			ret_connect_status = 0;
-		}
-	} else { // "0" 代表虚拟机器人
-		/* cmd file status state all connect */
-		if (socket_vir_status.connect_status && socket_vir_cmd.connect_status && socket_vir_file.connect_status) {
-			ret_connect_status = 1;
-		} else {
-			ret_connect_status = 0;
-		}
-	}
-	root_json = cJSON_CreateObject();
-	cJSON_AddNumberToObject(root_json, "cons", ret_connect_status);
-	buf = cJSON_Print(root_json);
-	strcpy(ret_status, buf);
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
-
-	return SUCCESS;
-}
 
 /* basic */
 static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
@@ -92,9 +54,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_exAxisINPOS = NULL;
 	cJSON *array_exAxisSpeedBack = NULL;
 	cJSON *array_exAxisHomeStatus = NULL;
+	cJSON *array_indentifydata = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
 	int array[16] = {0};
+	int ret_connect_status = 0;
 	Qnode *p = NULL;
 	SOCKET_INFO *sock_cmd = NULL;
 	SOCKET_INFO *sock_file = NULL;
@@ -118,6 +82,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
 	cJSON_AddNumberToObject(root_json, "flag_zero_set", state->flag_zero_set);
 	cJSON_AddNumberToObject(root_json, "weldTrackSpeed", state->weldTrackSpeed);
+	cJSON_AddNumberToObject(root_json, "conveyor_encoder_pos", state->conveyor_encoder_pos);
+	cJSON_AddNumberToObject(root_json, "conveyor_speed", state->conveyor_speed);
+	cJSON_AddNumberToObject(root_json, "btn_box_stop_signal", state->btn_box_stop_signal);
+	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
@@ -212,10 +180,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_cmd = &socket_cmd;
 		sock_file = &socket_file;
+		/* cmd file status state all connect */
+		if (socket_status.connect_status && socket_cmd.connect_status && socket_file.connect_status && socket_state.connect_status) {
+			ret_connect_status = 1;
+		} else {
+			ret_connect_status = 0;
+		}
 	} else { // "0" 代表虚拟机器人
 		sock_cmd = &socket_vir_cmd;
 		sock_file = &socket_vir_file;
+		/* cmd file status state all connect */
+		if (socket_vir_status.connect_status && socket_vir_cmd.connect_status && socket_vir_file.connect_status) {
+			ret_connect_status = 1;
+		} else {
+			ret_connect_status = 0;
+		}
 	}
+	cJSON_AddNumberToObject(root_json, "cons", ret_connect_status);
+
 
 	p = sock_cmd->ret_quene.front->next;
 	while (p != NULL) {
@@ -245,6 +227,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		p = sock_file->ret_quene.front->next;
 	}
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
+
 
 	if (state->strangePosFlag == 1) {
 		cJSON_AddStringToObject(error_json, "key", "当前处于奇异位姿");
@@ -415,6 +398,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->slaveComError = 0;
 			break;
 	}
+	//printf("state->cmdPointError = %d", state->cmdPointError);
 	switch(state->cmdPointError) {
 		case 1:
 			cJSON_AddStringToObject(error_json, "key", "关节指令点错误");
@@ -596,6 +580,20 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (pre_state->cmdPointError != 26) {
 				my_syslog("错误", "激光传感器指令偏差过大", cur_account.username);
 				pre_state->cmdPointError = 26;
+			}
+			break;
+		case 27:
+			cJSON_AddStringToObject(error_json, "key", "激光传感器指令中断, 焊缝跟踪提前结束");
+			if (pre_state->cmdPointError != 27) {
+				my_syslog("错误", "激光传感器指令中断, 焊缝跟踪提前结束", cur_account.username);
+				pre_state->cmdPointError = 27;
+			}
+			break;
+		case 28:
+			cJSON_AddStringToObject(error_json, "key", "外部轴指令速度超限");
+			if (pre_state->cmdPointError != 28) {
+				my_syslog("错误", "外部轴指令速度超限", cur_account.username);
+				pre_state->cmdPointError = 28;
 			}
 			break;
 		default:
@@ -1142,28 +1140,19 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->exaxis_status[i].exAxisOFLIN = 0;
 		}
 	}
+
+	//printf("LoadIdentifyData[0]: weight = %lf\n", state->LoadIdentifyData[0]);
+	//printf("LoadIdentifyData[1]: x = %lf\n", state->LoadIdentifyData[1]);
+	//printf("LoadIdentifyData[2]: y = %lf\n", state->LoadIdentifyData[2]);
+	//printf("LoadIdentifyData[3]: z = %lf\n", state->LoadIdentifyData[3]);
+	array_indentifydata = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "loadidentifydata", array_indentifydata);
+	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[0], 3));
+	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[1], 3));
+	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[2], 3));
+	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[3], 3));
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
-	strcpy(ret_status, buf);
-	free(buf);
-	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
-
-	return SUCCESS;
-}
-
-/* program teach */
-static int program_teach(char *ret_status, CTRL_STATE *state)
-{
-	cJSON *root_json = NULL;
-	char *buf = NULL;
-
-	//printf("state.line_number = %u\n", state->line_number);
-//	printf("state->program_state d = %d\n", state->program_state);
-	root_json = cJSON_CreateObject();
-	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
-	buf = cJSON_Print(root_json);
 	strcpy(ret_status, buf);
 	free(buf);
 	buf = NULL;
@@ -1178,22 +1167,20 @@ static int vardata_feedback(char *ret_status)
 {
 	int i = 0;
 	int j = 0;
+	int k = 0;
 	char key[10] = {0};
 	char *buf = NULL;
 	cJSON *root_json = NULL;
 	cJSON *value_json = NULL;
-	cJSON *root = NULL;
+	cJSON *root[4] = {0};
+	//clock_t time_2, time_3, time_4, time_5, time_6;
 
-	if (fb_queneempty(&fb_quene)) {
+/*	if (fb_queneempty(&fb_quene)) {
 		fb_print_node_num(fb_quene);
 		root_json = cJSON_CreateObject();
 		value_json = cJSON_CreateObject();
 
 		//printf("state_fb.iCount= %d\n", state_fb.icount);
-		/*printf("state_ret[0][0] = %f\n", state_ret[0][0]);
-		printf("state_ret[1][0] = %f\n", state_ret[1][0]);
-		printf("state_ret[0][1] = %f\n", state_ret[0][1]);
-		printf("state_ret[1][1] = %f\n", state_ret[1][1]);*/
 		for (i = 0; i < state_fb.icount; i++) {
 			//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
 			itoa(state_fb.id[i], key, 10);
@@ -1214,18 +1201,64 @@ static int vardata_feedback(char *ret_status)
 		//printf("send to GUI = %s\n", buf);
 		strcpy(ret_status, buf);
 
-		/* delete front node */
+		// delete front node
 		pthread_mutex_lock(&socket_state.mute);
 		fb_dequene(&fb_quene);
-		pthread_mutex_unlock(&socket_state.mute);
-	/** quene is empty */
+		pthread_mutex_unlock(&socket_state.mute);*/
+	fb_print_node_num(fb_quene);
+	root_json = cJSON_CreateObject();
+	if (state_fb.overflow == 0) {
+		if (fb_get_node_num(fb_quene) >= 10) {
+			value_json = cJSON_CreateObject();
+			//time_2 = clock();
+			//printf("feedback time_2, %d\n", time_2);
+
+			for (i = 0; i < state_fb.icount; i++) {
+				//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
+				itoa(state_fb.id[i], key, 10);
+				root[i] = cJSON_CreateArray();
+				cJSON_AddItemToObject(value_json, key, root[i]);
+			}
+			for(k = 0; k < 10; k++) {
+				for (i = 0; i < state_fb.icount; i++) {
+					//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
+					for (j = 0; j < STATEFB_PERPKG_NUM; j++) {
+						//cJSON_AddNumberToObject(root, "key", state_fb.var[j][i]);
+						//printf("fb_quene.front fb[%d][%d] = %d\n", j, i, fb_quene.front->next->data.fb[j][i]);
+						cJSON_AddNumberToObject(root[i], "key", fb_quene.front->next->data.fb[j][i]);
+						//cJSON_AddNumberToObject(root, "key", 100);
+					}
+				}
+				/* delete front node */
+				pthread_mutex_lock(&socket_state.mute);
+				fb_dequene(&fb_quene);
+				pthread_mutex_unlock(&socket_state.mute);
+			}
+			cJSON_AddItemToObject(root_json, "value", value_json);
+			test_index++;
+			cJSON_AddNumberToObject(root_json, "index", test_index);
+			//time_3 = clock();
+			//printf("feedback time_3, %d\n", time_3);
+			//cJSON_AddNumberToObject(root_json, "overflow", state_fb.overflow);
+		/** quene is empty or node less then 10 */
+		} else {
+			cJSON_AddNumberToObject(root_json, "empty_data", 0);
+		}
 	} else {
-		root_json = cJSON_CreateObject();
-		cJSON_AddNumberToObject(root_json, "empty_data", 0);
-		buf = cJSON_Print(root_json);
-		strcpy(ret_status, buf);
-		//printf("send empty data to GUI\n");
+		/** Node in quene is over then STATEFB_MAX */
+		cJSON_AddNumberToObject(root_json, "overflow", 0);
+		state_fb.overflow = 0;
 	}
+	//time_4 = clock();
+	//printf("feedback time_4, %d\n", time_4);
+	buf = cJSON_Print(root_json);
+	//time_5 = clock();
+	//printf("feedback time_5, %d\n", time_5);
+	//printf("send to GUI = %s\n", buf);
+	//printf("strlen buf = %d\n", strlen(buf));
+	strcpy(ret_status, buf);
+	//time_6 = clock();
+	//printf("feedback time_6, %d\n", time_6);
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(root_json);
@@ -1292,14 +1325,11 @@ void sta(Webs *wp)
 	char *cmd = NULL;
 	cJSON *command = NULL;
 	cJSON *data = NULL;
+	CTRL_STATE *state = NULL;
+	CTRL_STATE *pre_state = NULL;
 
 	/*calloc content*/
 	//ret_status = (char *)calloc(1, sizeof(char)*1024);
-	ret_status = (char *)calloc(1, 20000);
-	if (ret_status == NULL) {
-		perror("calloc");
-		goto end;
-	}
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
 		perror("json");
@@ -1314,8 +1344,6 @@ void sta(Webs *wp)
 		perror("json");
 		goto end;
 	}
-	CTRL_STATE *state = NULL;
-	CTRL_STATE *pre_state = NULL;
 	if (robot_type == 1) { // "1" 代表实体机器人
 		state = &ctrl_state;
 		pre_state = &pre_ctrl_state;
@@ -1325,18 +1353,33 @@ void sta(Webs *wp)
 	}
 
 	cmd = command->valuestring;
-	if(!strcmp(cmd, "cons")) {
-		//print_num++;
-		ret = connect_status(ret_status);
-		//delete_timer();
-		//set_timer();
-	} else if(!strcmp(cmd, "basic")) {
+	if(!strcmp(cmd, "basic")) {
+		ret_status = (char *)calloc(1, 2000);
+		if (ret_status == NULL) {
+			perror("calloc");
+			goto end;
+		}
 		ret = basic(ret_status, state, pre_state);
-	} else if(!strcmp(cmd, "program_teach")) {
-		ret = program_teach(ret_status, state);
 	} else if(!strcmp(cmd, "vardata_feedback")) {
+		//clock_t time_0, time_1, time_10;
+		//time_0 = clock();
+		//printf("feedback time_0, %d\n", time_0);
+		ret_status = (char *)calloc(1, 100000);
+		if (ret_status == NULL) {
+			perror("calloc");
+			goto end;
+		}
+		//time_1 = clock();
+		//printf("feedback time_1, %d\n", time_1);
 		ret = vardata_feedback(ret_status);
+		//time_10 = clock();
+		//printf("feedback time_10, %d\n", time_10);
 	} else if(!strcmp(cmd, "refresh")) {
+		ret_status = (char *)calloc(1, 10);
+		if (ret_status == NULL) {
+			perror("calloc");
+			goto end;
+		}
 		printf("refresh !\n");
 		printf("Will clear state quene!\n");
 		/** clear state quene */
@@ -1344,10 +1387,9 @@ void sta(Webs *wp)
 		fb_clearquene(&fb_quene);
 		pthread_mutex_unlock(&socket_state.mute);
 		/** send stop vardata_feedback to TaskManagement */
-		socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
+		ret = socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
 		//print_num++;
 		//delete_timer();
-		ret = SUCCESS;
 		strcpy(ret_status, "refresh!");
 	} else {
 		perror("cmd not found");
@@ -1368,8 +1410,10 @@ void sta(Webs *wp)
 	websWrite(wp, ret_status);
 	websDone(wp);
 	/* free ret_status */
-	free(ret_status);
-	ret_status = NULL;
+	if (ret_status != NULL) {
+		free(ret_status);
+		ret_status = NULL;
+	}
 
 	return;
 
@@ -1384,8 +1428,10 @@ end:
 	websWrite(wp, "fail");
 	websDone(wp);
 	/* free ret_status */
-	free(ret_status);
-	ret_status = NULL;
+	if (ret_status != NULL) {
+		free(ret_status);
+		ret_status = NULL;
+	}
 	return;
 }
 

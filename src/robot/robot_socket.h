@@ -28,15 +28,16 @@
 #define SOCK_SELECT_TIMEOUT 1 /* 秒 */
 #define MAX_BUF 1024
 #define MAX_MSGHEAD 10000
-#define BUFFSIZE 1300000*2
+//#define BUFFSIZE 1300000*2
+#define BUFFSIZE 8192
 #define STATE_SIZE 4096
-#define STATEFB_SIZE 24000 /** 4(sizeof(float))*100(row)*20(column)*3 */
+#define STATEFB_SIZE 25000 /** 4(sizeof(float))*100(row)*20(column)*3 + 1000(包头包尾分隔符等) */
 #define STATEFB_BUFSIZE 2400000 /** 4(sizeof(float))*100(row)*20(column)*3*100(num) */
 //#define STATEFB_WRITESIZE 10*8000*2 /** 10(num)*4(sizeof(float))*100(row)*20(column)*2 */
 //#define STATEFB_FILESIZE 100*8000*2 /** 100(num)*4(sizeof(float))*100(row)*20(column)*2 */
 #define STATEFB_PERPKG_NUM 100
 #define STATEFB_ID_MAXNUM 20
-#define STATEFB_MAX 1000 /** state feedback quene, node max number */
+#define STATEFB_MAX 100 /** state feedback quene, node max number */
 #define MAXGRIPPER 8
 
 /** 外部轴状态结构体 */
@@ -142,6 +143,10 @@ typedef struct _CTRL_STATE
 	uint8_t    weld_readystate;			/** 焊机准备状态 1-准备好；0-未准备好 */
 	double     weldTrackSpeed;			/** 焊缝跟踪速度 mm/s */
 	uint8_t    drag_alarm;				/** 拖动警告, 当前处于自动模式, 0-不报警 1-报警 */
+	double	   LoadIdentifyData[4];		/** 负载辨识结果 (weight, x, y, z) */
+	long	   conveyor_encoder_pos;	/** 传送带编码器位置 */
+	double	   conveyor_speed;			/** 传送带速度 mm/s */
+	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号 */
 } CTRL_STATE;
 #pragma pack(pop)
 

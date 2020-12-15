@@ -1,13 +1,13 @@
 #!/bin/sh
 
-echo "##### Uncompress tar web upgrade file"
-
+echo "##### CP web upgrade file"
+cp /tmp/software/README_WEB.txt /root/README/
 rm -rf /root/web/webserver
 rm -rf /root/web/frontend
 #tar -zxvf /tmp/webapp/web.tar.gz -C /root/
-mv /tmp/web/webserver /root/web/
-mv /tmp/web/frontend /root/web/
-mv /tmp/software/README_WEB.txt /root/README/
+cp -R /tmp/web/webserver /root/web/
+cp -R /tmp/web/frontend /root/web/
+echo "##### Upload web upgrade file success!"
 
-echo "##### rm temporary file in the TMP directory"
-rm -rf /tmp/web
+#echo "##### rm temporary file in the TMP directory"
+#rm -rf /tmp/web

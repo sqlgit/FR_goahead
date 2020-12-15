@@ -181,6 +181,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	}
 	/* PTP */
 	if(!strncmp(lua_cmd, "PTP:", 4)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "PTP:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -188,7 +193,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		if(select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
 			perror("select ptp points");
 
-			return FAIL;
+			goto end;
 		}
 
 		ptp = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
@@ -214,15 +219,19 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		acc = cJSON_GetObjectItem(ptp, "acc");
 		E1 = cJSON_GetObjectItem(ptp, "E1");
 
-		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL	|| toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || E1->valuestring == NULL) {
+		if(j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || E1->valuestring == NULL) {
 
 			goto end;
 		}
-
-		sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring);
+		sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SPL */
 	} else if(!strncmp(lua_cmd, "SPL:", 4)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SPL:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -264,8 +273,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* EXT_AXIS_PTP */
 	} else if(!strncmp(lua_cmd, "EXT_AXIS_PTP:", 13)) {
-		strrpc(cmd_array[0], "EXT_AXIS_PTP:", "");
+		if (size != 3) {
+			perror("string to string list");
 
+			goto end;
+		}
+		strrpc(cmd_array[0], "EXT_AXIS_PTP:", "");
 		if(strcmp(cmd_array[2], "seamPos") == 0) {
 			sprintf(tmp_content,"%sExtAxisMoveJ(%s,%s,%s,\"%s\")\n", file_content, cmd_array[0], cmd_array[1], "0", "seamPos");
 			strcpy(file_content, tmp_content);
@@ -296,6 +309,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 	/* ARC */
 	} else if(!strncmp(lua_cmd, "ARC:", 4)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "ARC:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -362,6 +380,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* SCIRC */
 	} else if(!strncmp(lua_cmd, "SCIRC:", 6)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SCIRC:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -428,6 +451,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
+	/*	if (size != 5) {
+			perror("string to string list");
+
+			goto end;
+		}*/
 	/*	strrpc(lua_cmd, "Lin:", "");
 		if(is_in(lua_cmd, "seamPos") == 1) {
 			if(separate_string_to_array(lua_cmd, ",", 5, 20, &cmd_array) != 5) {
@@ -462,11 +490,20 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			speed = cJSON_GetObjectItem(lin, "speed");
 			acc = cJSON_GetObjectItem(lin, "acc");
 			toolnum = cJSON_GetObjectItem(lin, "toolnum");
-			if(toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL || cmd_array[2] == NULL) {
+			if(toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
 
 				goto end;
 			}
 			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
+		} else if (strcmp(cmd_array[0], "cvrCatchPoint") == 0 || strcmp(cmd_array[0], "cvrRaisePoint") == 0) {
+			speed = cJSON_GetObjectItem(lin, "speed");
+			acc = cJSON_GetObjectItem(lin, "acc");
+			toolnum = cJSON_GetObjectItem(lin, "toolnum");
+			if(toolnum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+
+				goto end;
+			}
+			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,0,0)\n", file_content, cmd_array[0], toolnum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
 		} else {
 			j1 = cJSON_GetObjectItem(lin, "j1");
 			j2 = cJSON_GetObjectItem(lin, "j2");
@@ -493,6 +530,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* SLIN */
 	} else if(!strncmp(lua_cmd, "SLIN:", 5)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SLIN:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -532,41 +574,81 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* set DO */
 	} else if(!strncmp(lua_cmd, "SetDO:", 6)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetDO:", "");
 		sprintf(tmp_content, "%sSetDO(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* set ToolDO */
 	} else if(!strncmp(lua_cmd, "SetToolDO:", 10)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetToolDO:", "");
 		sprintf(tmp_content, "%sSetToolDO(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* get DI */
 	} else if(!strncmp(lua_cmd, "GetDI:", 6)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "GetDI:", "");
 		sprintf(tmp_content, "%sGetDI(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* get ToolDI */
 	} else if (!strncmp(lua_cmd, "GetToolDI:", 10)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "GetToolDI:", "");
 		sprintf(tmp_content, "%sGetToolDI(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* set AO */
 	} else if(!strncmp(lua_cmd, "SetAO:", 6)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetAO:", "");
 		sprintf(tmp_content, "%sSetAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolAO */
 	} else if(!strncmp(lua_cmd, "SetToolAO:", 10)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetToolAO:", "");
 		sprintf(tmp_content, "%sSetToolAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* get AI */
 	} else if(!strncmp(lua_cmd, "GetAI:", 6)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "GetAI:", "");
 		sprintf(tmp_content, "%sGetAI(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* get ToolAI */
 	} else if(!strncmp(lua_cmd, "GetToolAI:", 10)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "GetToolAI:", "");
 		sprintf(tmp_content, "%sGetToolAI(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
@@ -577,36 +659,71 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* WaitDI */
 	} else if(!strncmp(lua_cmd, "WaitDI:", 7)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WaitDI:", "");
 		sprintf(tmp_content, "%sWaitDI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* WaitToolDI */
 	} else if(!strncmp(lua_cmd, "WaitToolDI:", 11)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WaitToolDI:", "");
 		sprintf(tmp_content, "%sWaitToolDI(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* WaitAI */
 	} else if(!strncmp(lua_cmd, "WaitAI:", 7)) {
+		if (size != 4) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WaitAI:", "");
 		sprintf(tmp_content, "%sWaitAI(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
 	/* WaitToolAI */
 	} else if(!strncmp(lua_cmd, "WaitToolAI:", 11)) {
+		if (size != 5) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WaitToolAI:", "");
 		sprintf(tmp_content, "%sWaitToolAI(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
 	/* set MoveTPD */
 	} else if(!strncmp(lua_cmd, "MoveTPD:", 8)) {
+		if (size != 3) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "MoveTPD:", "");
 		sprintf(tmp_content, "%sMoveTPD(%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* set MoveGripper */
 	} else if(!strncmp(lua_cmd, "MoveGripper:", 12)) {
+		if (size != 5) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "MoveGripper:", "");
 		sprintf(tmp_content, "%sMoveGripper(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		strcpy(file_content, tmp_content);
 	/* SetToolCoord */
 	} else if(!strncmp(lua_cmd, "SetToolList:", 12)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetToolList:", "");
 
 		memset(sql, 0, sizeof(sql));
@@ -638,6 +755,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* SetExToolCoord */
 	} else if(!strncmp(lua_cmd, "SetExToolList:", 14)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "SetExToolList:", "");
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from et_coordinate_system;", cmd_array[0]);
@@ -672,36 +794,71 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* WeaveStart */
 	} else if(!strncmp(lua_cmd, "WeaveStart:", 11)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WeaveStart:", "");
 		sprintf(tmp_content, "%sWeaveStart(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* WeaveEnd */
 	} else if(!strncmp(lua_cmd, "WeaveEnd:", 9)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "WeaveEnd:", "");
 		sprintf(tmp_content, "%sWeaveEnd(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* ARCStart */
 	} else if(!strncmp(lua_cmd, "ARCStart:", 9)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "ARCStart:", "");
 		sprintf(tmp_content, "%sARCStart(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* ARCEnd */
 	} else if(!strncmp(lua_cmd, "ARCEnd:", 7)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "ARCEnd:", "");
 		sprintf(tmp_content, "%sARCEnd(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* LTLaserOn */
 	} else if(!strncmp(lua_cmd, "LTLaserOn:", 10)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "LTLaserOn:", "");
 		sprintf(tmp_content, "%sLTLaserOn(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* LTSearchStart */
 	} else if(!strncmp(lua_cmd, "LTSearchStart:", 14)) {
+		if (size != 4) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "LTSearchStart:", "");
 		sprintf(tmp_content, "%sLTSearchStart(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
 		strcpy(file_content, tmp_content);
 	/* LTDataRecord */
 	} else if(!strncmp(lua_cmd, "LTRecord:", 9)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "LTRecord:", "");
 		if (!strcmp(cmd_array[0], "on")) {
 			sprintf(tmp_content, "%sLaserTrackDataRecord(1)\n", file_content);
@@ -712,6 +869,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOn */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOn:", 16)) {
+		if (size != 5) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "PostureAdjustOn:", "");
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -762,8 +924,33 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOff */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOff:", 17)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
 		strrpc(cmd_array[0], "PostureAdjustOff:", "");
 		sprintf(tmp_content, "%sPostureAdjustOff(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* ConveyorIODetect */
+	} else if(!strncmp(lua_cmd, "ConveyorIODetect:", 17)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "ConveyorIODetect:", "");
+		sprintf(tmp_content, "%sConveyorIODetect(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* Mode */
+	} else if(!strncmp(lua_cmd, "Mode:", 5)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "Mode:", "");
+		sprintf(tmp_content, "%sMode(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
@@ -923,6 +1110,15 @@ static int step_over(const cJSON *data_json, char *content)
 	/* LTDataRecord */
 	} else if (!strncmp(pgvalue->valuestring, "LTRecord", 8)) {
 		cmd = 278;
+	/* PostureAdjustOn */
+	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOn", 15)) {
+		cmd = 281;
+	/* PostureAdjustOff */
+	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOff", 16)) {
+		cmd = 282;
+	/* Mode */
+	} else if (!strncmp(pgvalue->valuestring, "Mode:", 5)) {
+		cmd = 303;
 	/* SetToolList */
 	} else if (!strncmp(pgvalue->valuestring, "SetToolList:", 12)) {
 		cmd = 319;
@@ -944,6 +1140,18 @@ static int step_over(const cJSON *data_json, char *content)
 	/* SplineEnd */
 	} else if (!strncmp(pgvalue->valuestring, "SplineEnd", 9)) {
 		cmd = 350;
+	/* ConveyorIODetect */
+	} else if (!strncmp(pgvalue->valuestring, "ConveyorIODetect", 16)) {
+		cmd = 363;
+	/* ConveyorGetTrackData */
+	} else if (!strncmp(pgvalue->valuestring, "ConveyorGetTrackData", 20)) {
+		cmd = 364;
+	/* ConveyorTrackStart */
+	} else if (!strncmp(pgvalue->valuestring, "ConveyorTrackStart", 18)) {
+		cmd = 365;
+	/* ConveyorTrackEnd */
+	} else if (!strncmp(pgvalue->valuestring, "ConveyorTrackEnd", 16)) {
+		cmd = 366;
 	/* error */
 	} else {
 		return FAIL;
@@ -1095,14 +1303,21 @@ static int set_state(const cJSON *data_json, char *content)
 
 	/** 停止查询，写入文件 */
 	if(strcmp(flag->valuestring, "0") == 0 && (state_fb.type == 2 || state_fb.type == 3)) {
+		//clock_t time_6, time_7, time_8, time_9;
+		//time_6 = clock();
+		//printf("time_6, %d\n", time_6);
 		src_buf = (char *)calloc(1, sizeof(char)*(STATEFB_BUFSIZE+1));
 		if (src_buf == NULL) {
 			perror("calloc\n");
 
 			return FAIL;
 		}
+		//time_7 = clock();
+		//printf("time_7, %d\n", time_7);
 		//printf("strlen state_fb.buf = %d\n", strlen(state_fb.buf));
 		strcpy(src_buf, state_fb.buf);
+		//time_8 = clock();
+		//printf("time_8, %d\n", time_8);
 		//double duration;
 		//clock_t start, finish;
 		//start = clock();
@@ -1110,6 +1325,8 @@ static int set_state(const cJSON *data_json, char *content)
 		if (write_file(FILE_STATEFB10, src_buf) == FAIL) {
 			perror("write file content");
 		}
+		//time_9 = clock();
+		//printf("time_9, %d\n", time_9);
 		//inish = clock();
 		//printf("after write, %d\n", finish);
 		//duration = (double)(finish - start) / CLOCKS_PER_SEC;
@@ -1295,7 +1512,7 @@ static int get_lua_content_size(const cJSON *data_json)
 {
 	char *tmp_file = NULL;
 	int line_num = 0;
-	int content_size = 0;
+	int content_size = FAIL;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -1388,7 +1605,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 345) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2000,6 +2217,86 @@ void set(Webs *wp)
 	case 345:
 		port = cmdport;
 		strcpy(log_content, "检测机器人配置文件");
+		ret = copy_content(data_json, content);
+		break;
+	case 353:
+		port = cmdport;
+		strcpy(log_content, "配置视觉控制器 IP 和 Port");
+		ret = copy_content(data_json, content);
+		break;
+	case 354:
+		port = cmdport;
+		strcpy(log_content, "加载视觉传感器通信驱动");
+		ret = copy_content(data_json, content);
+		break;
+	case 355:
+		port = cmdport;
+		strcpy(log_content, "卸载视觉传感器通信驱动");
+		ret = copy_content(data_json, content);
+		break;
+	case 356:
+		port = cmdport;
+		strcpy(log_content, "触发相机拍照");
+		ret = copy_content(data_json, content);
+		break;
+	case 357:
+		port = cmdport;
+		strcpy(log_content, "负载辨识启停");
+		ret = copy_content(data_json, content);
+		break;
+	case 358:
+		port = cmdport;
+		strcpy(log_content, "传送带启动");
+		ret = copy_content(data_json, content);
+		break;
+	case 359:
+		port = cmdport;
+		strcpy(log_content, "传送带 IO 切入点标定");
+		ret = copy_content(data_json, content);
+		break;
+	case 360:
+		port = cmdport;
+		strcpy(log_content, "传送带 A 点标定");
+		ret = copy_content(data_json, content);
+		break;
+	case 361:
+		port = cmdport;
+		strcpy(log_content, "传送带参考点标定");
+		ret = copy_content(data_json, content);
+		break;
+	case 362:
+		port = cmdport;
+		strcpy(log_content, "传送带 B 点标定");
+		ret = copy_content(data_json, content);
+		break;
+	case 367:
+		port = cmdport;
+		strcpy(log_content, "传送带参数配置");
+		ret = copy_content(data_json, content);
+		break;
+	case 368:
+		port = cmdport;
+		strcpy(log_content, "传送带抓取点补偿");
+		ret = copy_content(data_json, content);
+		break;
+	case 369:
+		port = cmdport;
+		strcpy(log_content, "配置末端DI");
+		ret = copy_content(data_json, content);
+		break;
+	case 370:
+		port = cmdport;
+		strcpy(log_content, "配置末端DO");
+		ret = copy_content(data_json, content);
+		break;
+	case 371:
+		port = cmdport;
+		strcpy(log_content, "设置末端DI有效电平");
+		ret = copy_content(data_json, content);
+		break;
+	case 372:
+		port = cmdport;
+		strcpy(log_content, "设置末端DO有效电平");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:

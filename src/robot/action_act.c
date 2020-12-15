@@ -30,6 +30,7 @@ static int save_lasersensor_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int log_management(const cJSON *data_json);
+static int ptnbox(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
 static int shutdown_system(const cJSON *data_json);
 static int plugin_enable(const cJSON *data_json);
@@ -457,24 +458,97 @@ static int log_management(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
-	cJSON *root_json = NULL;
-	cJSON *count = cJSON_GetObjectItem(data_json, "count");
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *count = NULL;
+
+	count = cJSON_GetObjectItem(data_json, "count");
 	if (count == NULL || count->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
 
-	root_json = cJSON_CreateObject();
-	cJSON_AddStringToObject(root_json, "log_count", count->valuestring);
-	buf = cJSON_Print(root_json);
+	cfg_content = get_file_content(FILE_CFG);
+	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	cfg_json = cJSON_Parse(cfg_content);
+	free(cfg_content);
+	cfg_content = NULL;
+	if (cfg_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateString(count->valuestring));
+	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
 	buf = NULL;
-	cJSON_Delete(root_json);
-	root_json = NULL;
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
 
 	delete_log_file(0);
+
+	return ret;
+}
+
+/* ptnbox */
+static int ptnbox(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *name = NULL;
+	cJSON *number = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	number = cJSON_GetObjectItem(data_json, "number");
+	if (number == NULL || number->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cfg_content = get_file_content(FILE_CFG);
+	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	cfg_json = cJSON_Parse(cfg_content);
+	if (cfg_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	free(cfg_content);
+	cfg_content = NULL;
+	if (cJSON_GetObjectItem(cfg_json, "name") == NULL) {
+		cJSON_AddStringToObject(cfg_json, "name", name->valuestring);
+	} else {
+		cJSON_ReplaceItemInObject(cfg_json, "name", cJSON_CreateString(name->valuestring));
+	}
+	if (cJSON_GetObjectItem(cfg_json, "number") == NULL) {
+		cJSON_AddStringToObject(cfg_json, "number", number->valuestring);
+	} else {
+		cJSON_ReplaceItemInObject(cfg_json, "number", cJSON_CreateString(number->valuestring));
+	}
+	buf = cJSON_Print(cfg_json);
+	ret = write_file(FILE_CFG, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
 
 	return ret;
 }
@@ -758,7 +832,7 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
@@ -815,6 +889,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "log_management")) {
 		ret = log_management(data_json);
 		strcpy(log_content, "日志配置");
+	} else if (!strcmp(cmd, "ptnbox")) {
+		ret = ptnbox(data_json);
+		strcpy(log_content, "按钮盒记录点个数限制");
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
 		strcpy(log_content, "保存账户信息");

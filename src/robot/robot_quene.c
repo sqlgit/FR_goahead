@@ -19,6 +19,8 @@ void createnode(QElemType *pnode, int type, char *msgcontent)
 	pnode->type = type;
 	strcpy(pnode->msgcontent, msgcontent);
 	pnode->msglen = strlen(pnode->msgcontent);
+
+	return;
 }
 
 /* 初始化带有头结点队列 */
