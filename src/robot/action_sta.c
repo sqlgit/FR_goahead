@@ -55,6 +55,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_exAxisSpeedBack = NULL;
 	cJSON *array_exAxisHomeStatus = NULL;
 	cJSON *array_indentifydata = NULL;
+	cJSON *array_register_var = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
 	int array[16] = {0};
@@ -229,6 +230,16 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
 
+	if (state->btn_box_stop_signal == 1) {
+		cJSON_AddStringToObject(error_json, "key", "按钮盒急停按下");
+		if (pre_state->btn_box_stop_signal != 1) {
+			my_syslog("警告", "按钮盒急停按下", cur_account.username);
+			pre_state->btn_box_stop_signal = 1;
+		}
+	} else {
+		pre_state->btn_box_stop_signal = 0;
+	}
+
 	if (state->strangePosFlag == 1) {
 		cJSON_AddStringToObject(error_json, "key", "当前处于奇异位姿");
 		if (pre_state->strangePosFlag != 1) {
@@ -351,51 +362,380 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->robot_mode = 0;
 	}
-	switch(state->slaveComError) {
+	switch(state->slaveComError[0]) {
 		case 1:
-			cJSON_AddStringToObject(error_json, "key", "从站掉线");
-			if (pre_state->slaveComError != 1) {
-				my_syslog("错误", "从站掉线", cur_account.username);
-				pre_state->slaveComError = 1;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站掉线");
+			if (pre_state->slaveComError[0] != 1) {
+				my_syslog("错误", "控制箱从站掉线", cur_account.username);
+				pre_state->slaveComError[0] = 1;
 			}
 			break;
 		case 2:
-			cJSON_AddStringToObject(error_json, "key", "从站状态与设置值不一致");
-			if (pre_state->slaveComError != 2) {
-				my_syslog("错误", "从站状态与设置值不一致", cur_account.username);
-				pre_state->slaveComError = 2;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站状态与设置值不一致");
+			if (pre_state->slaveComError[0] != 2) {
+				my_syslog("错误", "控制箱从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[0] = 2;
 			}
 			break;
 		case 3:
-			cJSON_AddStringToObject(error_json, "key", "从站未配置");
-			if (pre_state->slaveComError != 3) {
-				my_syslog("错误", "从站未配置", cur_account.username);
-				pre_state->slaveComError = 3;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站未配置");
+			if (pre_state->slaveComError[0] != 3) {
+				my_syslog("错误", "控制箱从站未配置", cur_account.username);
+				pre_state->slaveComError[0] = 3;
 			}
 			break;
 		case 4:
-			cJSON_AddStringToObject(error_json, "key", "从站配置错误");
-			if (pre_state->slaveComError != 4) {
-				my_syslog("错误", "从站配置错误", cur_account.username);
-				pre_state->slaveComError = 4;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站配置错误");
+			if (pre_state->slaveComError[0] != 4) {
+				my_syslog("错误", "控制箱从站配置错误", cur_account.username);
+				pre_state->slaveComError[0] = 4;
 			}
 			break;
 		case 5:
-			cJSON_AddStringToObject(error_json, "key", "从站初始化错误");
-			if (pre_state->slaveComError != 5) {
-				my_syslog("错误", "从站初始化错误", cur_account.username);
-				pre_state->slaveComError = 5;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站初始化错误");
+			if (pre_state->slaveComError[0] != 5) {
+				my_syslog("错误", "控制箱从站初始化错误", cur_account.username);
+				pre_state->slaveComError[0] = 5;
 			}
 			break;
 		case 6:
-			cJSON_AddStringToObject(error_json, "key", "从站邮箱通信初始化错误");
-			if (pre_state->slaveComError != 6) {
-				my_syslog("错误", "从站邮箱通信初始化错误", cur_account.username);
-				pre_state->slaveComError = 6;
+			cJSON_AddStringToObject(error_json, "key", "控制箱从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[0] != 6) {
+				my_syslog("错误", "控制箱从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[0] = 6;
 			}
 			break;
 		default:
-			pre_state->slaveComError = 0;
+			pre_state->slaveComError[0] = 0;
+			break;
+	}
+	switch(state->slaveComError[1]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站掉线");
+			if (pre_state->slaveComError[1] != 1) {
+				my_syslog("错误", "一轴从站掉线", cur_account.username);
+				pre_state->slaveComError[1] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[1] != 2) {
+				my_syslog("错误", "一轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[1] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站未配置");
+			if (pre_state->slaveComError[1] != 3) {
+				my_syslog("错误", "一轴从站未配置", cur_account.username);
+				pre_state->slaveComError[1] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站配置错误");
+			if (pre_state->slaveComError[1] != 4) {
+				my_syslog("错误", "一轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[1] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站初始化错误");
+			if (pre_state->slaveComError[1] != 5) {
+				my_syslog("错误", "一轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[1] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "一轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[1] != 6) {
+				my_syslog("错误", "一轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[1] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[1] = 0;
+			break;
+	}
+	switch(state->slaveComError[2]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站掉线");
+			if (pre_state->slaveComError[2] != 1) {
+				my_syslog("错误", "二轴从站掉线", cur_account.username);
+				pre_state->slaveComError[2] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[2] != 2) {
+				my_syslog("错误", "二轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[2] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站未配置");
+			if (pre_state->slaveComError[2] != 3) {
+				my_syslog("错误", "二轴从站未配置", cur_account.username);
+				pre_state->slaveComError[2] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站配置错误");
+			if (pre_state->slaveComError[2] != 4) {
+				my_syslog("错误", "二轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[2] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站初始化错误");
+			if (pre_state->slaveComError[2] != 5) {
+				my_syslog("错误", "二轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[2] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "二轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[2] != 6) {
+				my_syslog("错误", "二轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[2] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[2] = 0;
+			break;
+	}
+	switch(state->slaveComError[3]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站掉线");
+			if (pre_state->slaveComError[3] != 1) {
+				my_syslog("错误", "三轴从站掉线", cur_account.username);
+				pre_state->slaveComError[3] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[3] != 2) {
+				my_syslog("错误", "三轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[3] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站未配置");
+			if (pre_state->slaveComError[3] != 3) {
+				my_syslog("错误", "三轴从站未配置", cur_account.username);
+				pre_state->slaveComError[3] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站配置错误");
+			if (pre_state->slaveComError[3] != 4) {
+				my_syslog("错误", "三轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[3] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站初始化错误");
+			if (pre_state->slaveComError[3] != 5) {
+				my_syslog("错误", "三轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[3] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "三轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[3] != 6) {
+				my_syslog("错误", "三轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[3] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[3] = 0;
+			break;
+	}
+	switch(state->slaveComError[4]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站掉线");
+			if (pre_state->slaveComError[4] != 1) {
+				my_syslog("错误", "四轴从站掉线", cur_account.username);
+				pre_state->slaveComError[4] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[4] != 2) {
+				my_syslog("错误", "四轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[4] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站未配置");
+			if (pre_state->slaveComError[4] != 3) {
+				my_syslog("错误", "四轴从站未配置", cur_account.username);
+				pre_state->slaveComError[4] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站配置错误");
+			if (pre_state->slaveComError[4] != 4) {
+				my_syslog("错误", "四轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[4] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站初始化错误");
+			if (pre_state->slaveComError[4] != 5) {
+				my_syslog("错误", "四轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[4] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "四轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[4] != 6) {
+				my_syslog("错误", "四轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[4] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[4] = 0;
+			break;
+	}
+	switch(state->slaveComError[5]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站掉线");
+			if (pre_state->slaveComError[5] != 1) {
+				my_syslog("错误", "五轴从站掉线", cur_account.username);
+				pre_state->slaveComError[5] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[5] != 2) {
+				my_syslog("错误", "五轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[5] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站未配置");
+			if (pre_state->slaveComError[5] != 3) {
+				my_syslog("错误", "五轴从站未配置", cur_account.username);
+				pre_state->slaveComError[5] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站配置错误");
+			if (pre_state->slaveComError[5] != 4) {
+				my_syslog("错误", "五轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[5] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站初始化错误");
+			if (pre_state->slaveComError[5] != 5) {
+				my_syslog("错误", "五轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[5] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "五轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[5] != 6) {
+				my_syslog("错误", "五轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[5] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[5] = 0;
+			break;
+	}
+	switch(state->slaveComError[6]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站掉线");
+			if (pre_state->slaveComError[6] != 1) {
+				my_syslog("错误", "六轴从站掉线", cur_account.username);
+				pre_state->slaveComError[6] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站状态与设置值不一致");
+			if (pre_state->slaveComError[6] != 2) {
+				my_syslog("错误", "六轴从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[6] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站未配置");
+			if (pre_state->slaveComError[6] != 3) {
+				my_syslog("错误", "六轴从站未配置", cur_account.username);
+				pre_state->slaveComError[6] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站配置错误");
+			if (pre_state->slaveComError[6] != 4) {
+				my_syslog("错误", "六轴从站配置错误", cur_account.username);
+				pre_state->slaveComError[6] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站初始化错误");
+			if (pre_state->slaveComError[6] != 5) {
+				my_syslog("错误", "六轴从站初始化错误", cur_account.username);
+				pre_state->slaveComError[6] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "六轴从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[6] != 6) {
+				my_syslog("错误", "六轴从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[6] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[6] = 0;
+			break;
+	}
+	switch(state->slaveComError[7]) {
+		case 1:
+			cJSON_AddStringToObject(error_json, "key", "末端从站掉线");
+			if (pre_state->slaveComError[7] != 1) {
+				my_syslog("错误", "末端从站掉线", cur_account.username);
+				pre_state->slaveComError[7] = 1;
+			}
+			break;
+		case 2:
+			cJSON_AddStringToObject(error_json, "key", "末端从站状态与设置值不一致");
+			if (pre_state->slaveComError[7] != 2) {
+				my_syslog("错误", "末端从站状态与设置值不一致", cur_account.username);
+				pre_state->slaveComError[7] = 2;
+			}
+			break;
+		case 3:
+			cJSON_AddStringToObject(error_json, "key", "末端从站未配置");
+			if (pre_state->slaveComError[7] != 3) {
+				my_syslog("错误", "末端从站未配置", cur_account.username);
+				pre_state->slaveComError[7] = 3;
+			}
+			break;
+		case 4:
+			cJSON_AddStringToObject(error_json, "key", "末端从站配置错误");
+			if (pre_state->slaveComError[7] != 4) {
+				my_syslog("错误", "末端从站配置错误", cur_account.username);
+				pre_state->slaveComError[7] = 4;
+			}
+			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "末端从站初始化错误");
+			if (pre_state->slaveComError[7] != 5) {
+				my_syslog("错误", "末端从站初始化错误", cur_account.username);
+				pre_state->slaveComError[7] = 5;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "末端从站邮箱通信初始化错误");
+			if (pre_state->slaveComError[7] != 6) {
+				my_syslog("错误", "末端从站邮箱通信初始化错误", cur_account.username);
+				pre_state->slaveComError[7] = 6;
+			}
+			break;
+		default:
+			pre_state->slaveComError[7] = 0;
 			break;
 	}
 	//printf("state->cmdPointError = %d", state->cmdPointError);
@@ -594,6 +934,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (pre_state->cmdPointError != 28) {
 				my_syslog("错误", "外部轴指令速度超限", cur_account.username);
 				pre_state->cmdPointError = 28;
+			}
+			break;
+		case 29:
+			cJSON_AddStringToObject(error_json, "key", "传送带跟踪-起始点与参考点姿态变化过大");
+			if (pre_state->cmdPointError != 29) {
+				my_syslog("错误", "传送带跟踪-起始点与参考点姿态变化过大", cur_account.username);
+				pre_state->cmdPointError = 29;
 			}
 			break;
 		default:
@@ -1072,7 +1419,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pre_state->weld_readystate = 0;
 	}
 	//for (i = 0; i < 4; i++) {
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisALM == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 伺服报警", (i+1));
@@ -1085,7 +1432,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->exaxis_status[i].exAxisALM = 0;
 		}
 	}
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisFLERR == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 跟随误差过大", (i+1));
@@ -1099,7 +1446,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	}
 	//for (i = 0; i < 4; i++) {
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisNLMT == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 到负限位", (i+1));
@@ -1113,7 +1460,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	}
 	//for (i = 0; i < 4; i++) {
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisPLMT == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 到正限位", (i+1));
@@ -1127,7 +1474,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	}
 	//for (i = 0; i < 4; i++) {
-	for (i = 0; i < 1; i++) {
+	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisOFLIN == 1) {
 			memset(content, 0, sizeof(content));
 			sprintf(content, "外部轴 %d 通信超时，控制卡与控制箱板485通信超时", (i+1));
@@ -1140,7 +1487,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->exaxis_status[i].exAxisOFLIN = 0;
 		}
 	}
-
 	//printf("LoadIdentifyData[0]: weight = %lf\n", state->LoadIdentifyData[0]);
 	//printf("LoadIdentifyData[1]: x = %lf\n", state->LoadIdentifyData[1]);
 	//printf("LoadIdentifyData[2]: y = %lf\n", state->LoadIdentifyData[2]);
@@ -1151,6 +1497,27 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[1], 3));
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[2], 3));
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[3], 3));
+
+	array_register_var = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "register_var", array_register_var);
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[0], 3));
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[1], 3));
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[2], 3));
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[3], 3));
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[4], 3));
+	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[5], 3));
+
+	if (state->motionAlarm == 1) {
+		cJSON_AddStringToObject(error_json, "key", "警告 : LIN 指令姿态变化过大");
+		if (pre_state->motionAlarm != 1) {
+			my_syslog("错误", "警告 : LIN指令姿态变化过大", cur_account.username);
+			pre_state->motionAlarm = 1;
+		}
+	} else {
+		pre_state->motionAlarm = 0;
+	}
+
+
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
 	strcpy(ret_status, buf);
@@ -1354,7 +1721,7 @@ void sta(Webs *wp)
 
 	cmd = command->valuestring;
 	if(!strcmp(cmd, "basic")) {
-		ret_status = (char *)calloc(1, 2000);
+		ret_status = (char *)calloc(1, 10000);
 		if (ret_status == NULL) {
 			perror("calloc");
 			goto end;

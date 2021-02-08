@@ -3,7 +3,7 @@
 
 /********************************* Defines ************************************/
 
-#define MAX_BUFFSIZE 6*1024
+#define MAX_BUFFSIZE 10*1024
 /* 
    front,next -----> 
    node1,next -----> 
@@ -16,7 +16,8 @@ typedef struct _COMMAND_INTERACTION {
 	//uint8_t type;                       	// 指令标签,具体参照指令字典,8位
 	int 	msghead;                  		// 指令信息头，唯一标识
 	int		type;                       	// 指令标签,具体参照指令字典位
-	char	msgcontent[MAX_BUFFSIZE];     	// 消息内容
+	//char	msgcontent[MAX_BUFFSIZE];     	// 消息内容
+	char	*msgcontent;     				// 消息内容
 	int		msglen;                     	// 消息内容长度
 //	int		state;                      	// 处理状态, 0:init, 1:send to server, 2:recv data
 } COMMAND_INTERACTION;
@@ -35,7 +36,7 @@ typedef struct LINKQuene {
 
 /********************************* Function declaration ***********************/
 
-void createnode(QElemType *pnode, int type, char *msgcontent);
+int createnode(QElemType *pnode, int type, char *msgcontent);
 void initquene(LinkQuene *q);
 void clearquene(LinkQuene *q);
 int queneempty(LinkQuene *q);

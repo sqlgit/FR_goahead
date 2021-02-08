@@ -16,7 +16,6 @@ SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
 STATE_FEEDBACK state_fb;
-GRIPPERS_CONFIG_INFO grippers_config_info;
 CTRL_STATE ctrl_state;
 CTRL_STATE vir_ctrl_state;
 CTRL_STATE pre_ctrl_state;
@@ -276,70 +275,58 @@ static int socket_pkg_handle(char *buf_memory, char *sec_buf_memory, char *frame
 /* socket send */
 static int socket_send(SOCKET_INFO *sock, QElemType *node)
 {
-//	Qnode *p = sock->quene.front->next;
-//	while (p != NULL) {
-		/* 处于等待发送的初始状态 */
-//		if (p->data.state == 0) {
+	char *sendbuf = NULL;
+	char buf[MAX_BUF+1] = {0};
+	int send_len = 0;
+	int send_index = 0;
 
-			// TODO: add signal
+	send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
+	sendbuf = (char *)calloc(1, sizeof(char)*(send_len));
+	if (sendbuf == NULL) {
+		perror("calloc\n");
 
-//			QElemType *node = &p->data;
-			/* /f/bIII{msghead}III{type}III{msglen}III{msgcontent}III/b/f */
-			int send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
-			char sendbuf[send_len];
-			memset(sendbuf, 0, send_len);
-			/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
-			sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
+		return FAIL;
+	}
+	/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
+	sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", node->msghead, node->type, node->msglen, node->msgcontent);
+
 #if test_package
-			if (node->type == 106) {
-				sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
-			}
-			if (node->type == 100) {
-				sprintf(sendbuf, "/b/f");
-			}
+	if (node->type == 106) {
+		sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII", node->msghead, node->type, node->msglen, node->msgcontent);
+	}
+	if (node->type == 100) {
+		sprintf(sendbuf, "/b/f");
+	}
 #endif
-			printf("send_len = %d\n", send_len);
+	printf("send_len = %d\n", send_len);
+	printf("send data to socket server is: %s\n", sendbuf);
 
-			/* send over 1024 bytes */
-			while (send_len > MAX_BUF) {
-				char buf[MAX_BUF+1] = {0};
-				strncpy(buf, sendbuf, MAX_BUF);
-				printf("send data to socket server is: %s\n", buf);
-				if (send(sock->fd, buf, MAX_BUF, 0) != MAX_BUF) {
-					perror("send");
-					/* set socket status: disconnected */
-					sock->connect_status = 0;
+	/* send over 1024 bytes */
+	while ((send_len-send_index) > MAX_BUF) {
+		if (send(sock->fd, (sendbuf+send_index), MAX_BUF, 0) != MAX_BUF) {
+			perror("send");
+			free(sendbuf);
+			sendbuf = NULL;
+			/* set socket status: disconnected */
+			sock->connect_status = 0;
 
-					return FAIL;
-				}
-				send_len = send_len - MAX_BUF;
-				char tmp_buf[send_len];
-				memset(tmp_buf, 0, send_len);
-				int i;
-				for(i = 0; i < send_len; i++){
-					tmp_buf[i] = sendbuf[i+MAX_BUF];
-				}
-				bzero(sendbuf, sizeof(sendbuf));
-				strcpy(sendbuf, tmp_buf);
-			}
+			return FAIL;
+		}
+		send_index += MAX_BUF;
+	}
 
-			//if (node->type != 401) {
-				printf("send data to socket server is: %s\n", sendbuf);
-			//}
+	/* send normal (low) 1024 bytes */
+	if (send(sock->fd, (sendbuf+send_index), (send_len-send_index), 0) != (send_len-send_index)) {
+		perror("send");
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+		free(sendbuf);
+		sendbuf = NULL;
 
-			/* send normal (low) 1024 bytes */
-			if (send(sock->fd, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
-				perror("send");
-				/* set socket status: disconnected */
-				sock->connect_status = 0;
-
-				return FAIL;
-			}
-			/* set state to 1:send to server */
-			//node->state = 1;
-//		}
-//		p = p->next;
-//	}
+		return FAIL;
+	}
+	free(sendbuf);
+	sendbuf = NULL;
 
 	return SUCCESS;
 	/* socket set recv timeout */
@@ -400,7 +387,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	char **msg_array = NULL;
 	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
 	char sec_buf_memory[BUFFSIZE] = {0};
-	GRIPPERS_CONFIG_INFO *gri_info = NULL;
+	GRIPPERS_CONFIG_INFO grippers_config_info;
 
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
 	//printf("recv_len = %d\n", recv_len);
@@ -442,24 +429,26 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		//printf("array[2] = %s\n", array[2]);
 		//printf("array[4] = %s\n", array[4]);
 		if (atoi(array[2]) == 229) {//反馈夹爪配置信息
-			gri_info = &grippers_config_info;
-			bzero(gri_info, sizeof(GRIPPERS_CONFIG_INFO));
-			StringToBytes(array[4], (BYTE *)gri_info, sizeof(GRIPPERS_CONFIG_INFO));
+			bzero(&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
+			StringToBytes(array[4], (BYTE *)&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
 			root_json = cJSON_CreateArray();
 			for(i = 0; i < MAXGRIPPER; i++) {
 				newitem = cJSON_CreateObject();
 				cJSON_AddNumberToObject(newitem, "id", (i+1));
-				//printf("gri_info->id_company[%d] = %d", i, gri_info->id_company[i]);
-				cJSON_AddNumberToObject(newitem, "name", gri_info->id_company[i]);
-				cJSON_AddNumberToObject(newitem, "type", gri_info->id_device[i]);
-				cJSON_AddNumberToObject(newitem, "version", gri_info->id_softversion[i]);
-				cJSON_AddNumberToObject(newitem, "position", gri_info->id_bus[i]);
+				cJSON_AddNumberToObject(newitem, "name", grippers_config_info.id_company[i]);
+				cJSON_AddNumberToObject(newitem, "type", grippers_config_info.id_device[i]);
+				cJSON_AddNumberToObject(newitem, "version", grippers_config_info.id_softversion[i]);
+				cJSON_AddNumberToObject(newitem, "position", grippers_config_info.id_bus[i]);
 				cJSON_AddItemToArray(root_json, newitem);
 			}
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
-			createnode(&node, atoi(array[2]), msg_content);
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
+			//printf("msg_content = %s\n", msg_content);
 			if (msg_content != NULL) {
 				free(msg_content);
 				msg_content = NULL;
@@ -483,8 +472,11 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
-			printf("msg_content = %s\n", msg_content);
-			createnode(&node, atoi(array[2]), msg_content);
+			//printf("msg_content = %s\n", msg_content);
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
 			if (msg_content != NULL) {
 				free(msg_content);
 				msg_content = NULL;
@@ -498,7 +490,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 				continue;
 			}
-			printf("size_content = %d\n", size_content);
+			//printf("size_content = %d\n", size_content);
 			root_json = cJSON_CreateObject();
 			cJSON_AddStringToObject(root_json, "j1", msg_array[0]);
 			cJSON_AddStringToObject(root_json, "j2", msg_array[1]);
@@ -516,7 +508,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
-			createnode(&node, atoi(array[2]), msg_content);
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
 			if (msg_content != NULL) {
 				free(msg_content);
 				msg_content = NULL;
@@ -539,7 +534,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
-			createnode(&node, atoi(array[2]), msg_content);
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
 			if (msg_content != NULL) {
 				free(msg_content);
 				msg_content = NULL;
@@ -562,7 +560,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
-			createnode(&node, atoi(array[2]), msg_content);
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
 			if (msg_content != NULL) {
 				free(msg_content);
 				msg_content = NULL;
@@ -579,11 +580,18 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
 				system(cmd);
 			}
-			createnode(&node, atoi(array[2]), array[4]);
+			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+
+				continue;
+			}
 		} else {
-			createnode(&node, atoi(array[2]), array[4]);
+			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+
+				continue;
+			}
 		}
 
+		/*
 		pthread_mutex_lock(&sock->mut);
 		if (sock->msghead >= MAX_MSGHEAD) {
 			sock->msghead = 1;
@@ -592,6 +600,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		}
 		node.msghead = sock->msghead;
 		pthread_mutex_unlock(&sock->mut);
+		*/
 		/* 创建结点插入队列中 */
 		pthread_mutex_lock(&sock->ret_mute);
 		enquene(&sock->ret_quene, node);
@@ -1277,7 +1286,10 @@ int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const 
 
 	/* 创建结点 */
 	QElemType node;
-	createnode(&node, type, send_content);
+	if (createnode(&node, type, send_content) == FAIL) {
+
+		return FAIL;
+	}
 	pthread_mutex_lock(&sock->mut);
 	if (sock->msghead >= MAX_MSGHEAD) {
 		sock->msghead = 1;

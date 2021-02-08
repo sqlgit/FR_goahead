@@ -39,6 +39,7 @@
 #define STATEFB_ID_MAXNUM 20
 #define STATEFB_MAX 100 /** state feedback quene, node max number */
 #define MAXGRIPPER 8
+#define MAXSLAVES 8
 
 /** 外部轴状态结构体 */
 typedef struct _EXTERNALAXIS_STATU
@@ -123,7 +124,7 @@ typedef struct _CTRL_STATE
 	uint8_t    strangePosFlag;          /**< 当前处于奇异位姿标志 */
 	int        configStatus;            /**< 机器人关节配置状态  */
 	uint8_t    aliveSlaveNumError;    /**< 活动从站数量错误，1：数量错误；0：正常  */
-	uint8_t    slaveComError;      /**< 从站错误，0：正常；1：从站掉线；2：从站状态与设置值不一致；3：从站未配置；4：从站配置错误；5：从站初始化错误；6：从站邮箱通信初始化错误 */
+	uint8_t    slaveComError[MAXSLAVES];      /**< 从站错误，0：正常；1：从站掉线；2：从站状态与设置值不一致；3：从站未配置；4：从站配置错误；5：从站初始化错误；6：从站邮箱通信初始化错误 */
 	uint8_t    cmdPointError;      /**< 指令点关节位置与末端位姿不符错误，0：正常；1：直线指令错误；2：圆弧指令点错误；3：TPD指令工具与当前工具不符；4：TPD当前指令与下一条指令起始点偏差过大*/
 	uint8_t    ioError;                 /** IO错误 */
 	uint8_t    gripperError;            /** 夹爪错误 */
@@ -146,7 +147,9 @@ typedef struct _CTRL_STATE
 	double	   LoadIdentifyData[4];		/** 负载辨识结果 (weight, x, y, z) */
 	long	   conveyor_encoder_pos;	/** 传送带编码器位置 */
 	double	   conveyor_speed;			/** 传送带速度 mm/s */
-	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号 */
+	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号, 1-按下急停 */
+	uint8_t	   motionAlarm;				/** 运动警告 */
+	double	   register_var[6];			/** 注册变量 */
 } CTRL_STATE;
 #pragma pack(pop)
 

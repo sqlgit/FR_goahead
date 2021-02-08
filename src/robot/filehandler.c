@@ -224,15 +224,6 @@ static int update_userconfig()
 
 		return FAIL;
 	}
-	//  now user.config is not exist
-	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
-		fclose(fp_up);
-		perror("now user.config : open file");
-		sprintf(cmd, "cp %s %s", UPGRADE_ROBOT_CFG, ROBOT_CFG);
-		system(cmd);
-
-		return SUCCESS;
-	}
 	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
 		line_index++;
 		bzero(write_line, sizeof(char)*LINE_LEN);
@@ -241,12 +232,20 @@ static int update_userconfig()
 			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
 				perror("string to string list");
 				fclose(fp_up);
-				fclose(fp_now);
 				string_list_free(array_up, size_up);
 
 				return FAIL;
 			}
 			if (array_up[0] != NULL) {// 出现左边的 key 值
+				//  now user.config is not exist
+				if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+					fclose(fp_up);
+					perror("now user.config : open file");
+					sprintf(cmd, "cp %s %s", UPGRADE_ROBOT_CFG, ROBOT_CFG);
+					system(cmd);
+
+					return SUCCESS;
+				}
 				while (fgets(strline_now, LINE_LEN, fp_now) != NULL) {
 					//printf("strline_now = %s\n", strline_now);
 					if (is_in(strline_now, "=") == -1) {
@@ -264,8 +263,8 @@ static int update_userconfig()
 						//printf("array_now[0] = %s\n", array_now[0]);
 						//printf("array_up[0] = %s\n", array_up[0]);
 						if (strcmp(array_now[0], array_up[0]) == 0) {
-							//printf("array_now[1] = %s\n", array_now[1]);
 							//printf("array_up[0] = array_up[0]\n");
+							//printf("array_now[1] = %s\n", array_now[1]);
 							bzero(write_line, sizeof(char)*LINE_LEN);
 							sprintf(write_line, "%s = %s", array_up[0], array_now[1]);
 							string_list_free(array_now, size_now);
@@ -276,13 +275,13 @@ static int update_userconfig()
 					string_list_free(array_now, size_now);
 					bzero(strline_now, sizeof(char)*LINE_LEN);
 				}
+				fclose(fp_now);
 			}
 			string_list_free(array_up, size_up);
 		}
 		bzero(strline_up, sizeof(char)*LINE_LEN);
 		strcat(write_content, write_line);
 	}
-	fclose(fp_now);
 	fclose(fp_up);
 
 	//printf("write_content len = %d\n", strlen(write_content));

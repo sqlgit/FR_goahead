@@ -11,16 +11,22 @@
 
 /*********************************** Code *************************************/
 
-void createnode(QElemType *pnode, int type, char *msgcontent)
+int createnode(QElemType *pnode, int type, char *msgcontent)
 {
 	bzero(pnode, sizeof(QElemType));
 
 	pnode->msghead = 0;
 	pnode->type = type;
+	pnode->msgcontent = (char *)calloc(1, strlen(msgcontent)+1);
+	if (pnode->msgcontent == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
 	strcpy(pnode->msgcontent, msgcontent);
 	pnode->msglen = strlen(pnode->msgcontent);
 
-	return;
+	return SUCCESS;
 }
 
 /* 初始化带有头结点队列 */
@@ -112,6 +118,10 @@ void dequene(LinkQuene *q, QElemType e)
 	if (p->next == NULL) {
 		//printf("will delete rear node: e\n");
 		q->rear = pre;
+	}
+	if (p->data.msgcontent != NULL) {
+		free(p->data.msgcontent);
+		p->data.msgcontent = NULL;
 	}
 	free(p);
 

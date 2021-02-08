@@ -26,7 +26,7 @@ static int modify_tool_cdsystem(const cJSON *data_json);
 static int modify_ex_tool_cdsystem(const cJSON *data_json);
 static int modify_exaxis_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
-static int save_lasersensor_point(const cJSON *data_json);
+static int modify_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int log_management(const cJSON *data_json);
@@ -37,6 +37,7 @@ static int plugin_enable(const cJSON *data_json);
 static int plugin_remove(const cJSON *data_json);
 static int clear_DH_file(const cJSON *data_json);
 static int save_DH_point(const cJSON *data_json);
+static int factory_reset(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -340,8 +341,8 @@ static int save_point(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* save point */
-static int save_lasersensor_point(const cJSON *data_json)
+/* modify point */
+static int modify_point(const cJSON *data_json)
 {
 	char sql[1024] = {0};
 	cJSON *name = NULL;
@@ -505,6 +506,7 @@ static int ptnbox(const cJSON *data_json)
 	cJSON *cfg_json = NULL;
 	cJSON *name = NULL;
 	cJSON *number = NULL;
+	cJSON *laser = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
 	if (name == NULL || name->valuestring == NULL) {
@@ -514,6 +516,12 @@ static int ptnbox(const cJSON *data_json)
 	}
 	number = cJSON_GetObjectItem(data_json, "number");
 	if (number == NULL || number->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	laser = cJSON_GetObjectItem(data_json, "laser");
+	if (laser == NULL || laser->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -542,6 +550,11 @@ static int ptnbox(const cJSON *data_json)
 		cJSON_AddStringToObject(cfg_json, "number", number->valuestring);
 	} else {
 		cJSON_ReplaceItemInObject(cfg_json, "number", cJSON_CreateString(number->valuestring));
+	}
+	if (cJSON_GetObjectItem(cfg_json, "laser") == NULL) {
+		cJSON_AddStringToObject(cfg_json, "laser", laser->valuestring);
+	} else {
+		cJSON_ReplaceItemInObject(cfg_json, "laser", cJSON_CreateString(laser->valuestring));
 	}
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
@@ -693,7 +706,6 @@ static int plugin_enable(const cJSON *data_json)
 static int plugin_remove(const cJSON *data_json)
 {
 	char delete_cmd[128] = {0};
-	int write_ret = FAIL;
 	cJSON *name = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
@@ -797,6 +809,26 @@ static int save_DH_point(const cJSON *data_json)
 	}
 }
 
+/** factory reset */
+static int factory_reset(const cJSON *data_json)
+{
+	char cmd[128] = {0};
+
+	memset(cmd, 0, 128);
+	sprintf(cmd, "rm -rf %s*", DIR_FILE);
+	system(cmd);
+
+	memset(cmd, 0, 128);
+	sprintf(cmd, "rm -rf %s*", DIR_LOG);
+	system(cmd);
+
+	memset(cmd, 0, 128);
+	sprintf(cmd, "cp -r %s* %s", DIR_FACTORY, DIR_FILE);
+	system(cmd);
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -832,13 +864,13 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_lasersensor_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -877,9 +909,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 		strcpy(log_content, "保存点信息");
-	} else if (!strcmp(cmd, "save_lasersensor_point")) {
-		ret = save_lasersensor_point(data_json);
-		strcpy(log_content, "保存激光传感器记录点信息");
+	} else if (!strcmp(cmd, "modify_point")) {
+		ret = modify_point(data_json);
+		strcpy(log_content, "修改记录点信息");
 	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
 		strcpy(log_content, "移除点信息");
@@ -910,6 +942,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
 		strcpy(log_content, "系统关机");
+	} else if (!strcmp(cmd, "factory_reset")) {
+		ret = factory_reset(data_json);
+		strcpy(log_content, "恢复出厂值");
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -34,12 +34,14 @@
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
-#define DIR_USER "/root/web/file/user/"
+#define DIR_SHELL "/root/web/webserver/shell/"
+#define DIR_FACTORY "/root/web/webserver/file_factory/"
 #define DIR_LOG "/root/web/log/"
+#define DIR_FILE "/root/web/file/"
+#define DIR_USER "/root/web/file/user/"
 #define DIR_TEMPLATE "/root/web/file/template/"
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"
 #define DIR_POINTS "/root/web/file/points/"
-#define DIR_SHELL "/root/web/webserver/shell/"
 #define DIR_CFG "/root/web/file/cfg/"
 #define DIR_WELD "/root/web/file/weld/"
 #define DIR_ROBOT_CFG "/root/web/file/robotcfg/"
@@ -60,6 +62,7 @@
 #define MD5_SIZE		16
 #define MD5_STR_LEN		(MD5_SIZE * 2)
 #define LINE_LEN	1024
+#define FILENAME_SIZE	1024
 
 typedef unsigned char BYTE;
 

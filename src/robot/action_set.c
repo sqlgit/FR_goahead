@@ -8,6 +8,7 @@
 
 /********************************* Defines ************************************/
 
+char lua_filename[FILENAME_SIZE] = "";
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
@@ -99,6 +100,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	sprintf(content, "%s%s", DIR_FRUSER, name->valuestring);
+	strcpy(lua_filename, content);
 	//printf("content = %s\n", content);
 
 	return SUCCESS;
@@ -108,11 +110,16 @@ static int sendfilename(const cJSON *data_json, char *content)
 static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 {
 	//printf("lua cmd = %s\n", lua_cmd);
-	char tmp_content[len];
 	char sql[1024] = {0};
 	char **cmd_array = NULL;
 	int size = 0;
-	memset(tmp_content, 0, len);
+	char *tmp_content = NULL;
+	tmp_content = (char *)calloc(1, sizeof(char)*(len));
+	if (tmp_content == NULL) {
+		perror("calloc\n");
+
+		return FAIL;
+	}
 
 	cJSON *f_json = NULL;
 	cJSON *id = NULL;
@@ -869,7 +876,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOn */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOn:", 16)) {
-		if (size != 5) {
+		if (size != 11) {
 			perror("string to string list");
 
 			goto end;
@@ -920,7 +927,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4]);
+		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10]);
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOff */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOff:", 17)) {
@@ -952,12 +959,58 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "Mode:", "");
 		sprintf(tmp_content, "%sMode(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
+	/* SegmentWeldStart */
+	} else if(!strncmp(lua_cmd, "SegmentWeldStart:", 17)) {
+		if (size != 6) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SegmentWeldStart:", "");
+		sprintf(tmp_content, "%sSegmentWeldStart(%s,%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5]);
+		strcpy(file_content, tmp_content);
+	/* SegmentWeldEnd */
+	} else if(!strncmp(lua_cmd, "SegmentWeldEnd:", 15)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SegmentWeldEnd:", "");
+		sprintf(tmp_content, "%sSegmentWeldEnd(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
+	/* RegisterVar */
+	} else if(!strncmp(lua_cmd, "RegisterVar:", 12)) {
+		if (size < 1 || size > 6) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "RegisterVar:", "");
+		memset(tmp_content, 0, sizeof(char)*(len));
+		sprintf(tmp_content, "%sRegisterVar(", file_content);
+		strcpy(file_content, tmp_content);
+		int i = 0;
+		for (i = 0; i < (size - 1); i++){
+			memset(tmp_content, 0, sizeof(char)*(len));
+			sprintf(tmp_content, "%s\"%s\",", file_content, cmd_array[i]);
+			strcpy(file_content, tmp_content);
+		}
+		memset(tmp_content, 0, sizeof(char)*(len));
+		sprintf(tmp_content, "%s\"%s\")\n", file_content, cmd_array[size-1]);
+		strcpy(file_content, tmp_content);
+		//sprintf(tmp_content, "%sRegisterVar(\"%s\",\"%s\",\"%s\")\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2]);
+		//strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
 		strcpy(file_content, tmp_content);
 	}
 	//printf("file_content = %s\n", file_content);
+	if (tmp_content != NULL) {
+		free(tmp_content);
+		tmp_content = NULL;
+	}
 	cJSON_Delete(f_json);
 	f_json = NULL;
 	string_list_free(cmd_array, size);
@@ -965,6 +1018,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	return SUCCESS;
 
 end:
+	if (tmp_content != NULL) {
+		free(tmp_content);
+		tmp_content = NULL;
+	}
 	cJSON_Delete(f_json);
 	f_json = NULL;
 	string_list_free(cmd_array, size);
@@ -976,6 +1033,7 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 {
 	const char s[2] = "\n";
 	char *token = NULL;
+	//int i = 0;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if(pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -983,9 +1041,12 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 
 		return FAIL;
 	}
+	//printf("before parse lua cmd\n");
 	/* get first line */
 	token = strtok(pgvalue->valuestring, s);
 	while (token != NULL) {
+		//printf("i = %d\n", i);
+		//i++;
 		//printf("token = %s\n", token);
 		if (parse_lua_cmd(token, content_len, content) == FAIL) {
 
@@ -995,6 +1056,12 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 		token = strtok(NULL, s);
 	}
 	printf("content = %s\n", content);
+	//printf("strlen content = %d\n", strlen(content));
+	if (write_file(lua_filename, content) == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
 
 	return SUCCESS;
 }
@@ -1152,6 +1219,18 @@ static int step_over(const cJSON *data_json, char *content)
 	/* ConveyorTrackEnd */
 	} else if (!strncmp(pgvalue->valuestring, "ConveyorTrackEnd", 16)) {
 		cmd = 366;
+	/* SegmentWeldStart */
+	} else if (!strncmp(pgvalue->valuestring, "SegmentWeldStart", 16)) {
+		cmd = 373;
+	/* SegmentWeldEnd */
+	} else if (!strncmp(pgvalue->valuestring, "SegmentWeldEnd", 14)) {
+		cmd = 374;
+	/* Pause */
+	} else if (!strncmp(pgvalue->valuestring, "Pause", 5)) {
+		cmd = 378;
+	/* RegisterVar */
+	} else if (!strncmp(pgvalue->valuestring, "RegisterVar", 11)) {
+		cmd = 379;
 	/* error */
 	} else {
 		return FAIL;
@@ -1585,7 +1664,7 @@ void set(Webs *wp)
 	}
 
 	/* calloc content */
-	content = (char *) calloc(1, sizeof(char) * MAX_BUF);
+	content = (char *)calloc(1, sizeof(char) * MAX_BUF);
 	if (content == NULL) {
 		perror("calloc");
 		goto end;
@@ -1605,7 +1684,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 ||cmd == 324 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2299,6 +2378,21 @@ void set(Webs *wp)
 		strcpy(log_content, "设置末端DO有效电平");
 		ret = copy_content(data_json, content);
 		break;
+	case 375:
+		port = cmdport;
+		strcpy(log_content, "获取关节位置");
+		ret = copy_content(data_json, content);
+		break;
+	case 376:
+		port = cmdport;
+		strcpy(log_content, "ServoJ");
+		ret = copy_content(data_json, content);
+		break;
+	case 377:
+		port = cmdport;
+		strcpy(log_content, "清除控制器错误");
+		ret = copy_content(data_json, content);
+		break;
 	case 400:
 		port = cmdport;
 		strcpy(log_content, "获取控制器软件版本");
@@ -2340,7 +2434,11 @@ void set(Webs *wp)
 		break;
 		/* send file cmd to 8082 port */
 	case FILE_PORT:
-		ret = socket_enquene(&socket_file, cmd, content, cmd_type);
+		if (cmd != 106) {
+			ret = socket_enquene(&socket_file, cmd, content, cmd_type);
+		} else {
+			ret = SUCCESS;
+		}
 		break;
 		/* send cmd to 8070 port */
 	case VIR_CMD_PORT:
@@ -2348,7 +2446,11 @@ void set(Webs *wp)
 		break;
 		/* send file cmd to 8072 port */
 	case VIR_FILE_PORT:
-		ret = socket_enquene(&socket_vir_file, cmd, content, cmd_type);
+		if (cmd != 106) {
+			ret = socket_enquene(&socket_vir_file, cmd, content, cmd_type);
+		} else {
+			ret = SUCCESS;
+		}
 		break;
 	default:
 		perror("port");

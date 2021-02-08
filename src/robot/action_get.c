@@ -1,4 +1,3 @@
-
 /********************************* Includes ***********************************/
 
 #include    "goahead.h"
@@ -25,6 +24,7 @@ static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_syscfg(char **ret_f_content);
 static int get_accounts(char **ret_f_content);
+static int get_account_info(char **ret_f_content);
 static int get_webversion(char **ret_f_content);
 static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
