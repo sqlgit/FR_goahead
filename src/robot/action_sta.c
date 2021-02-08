@@ -231,9 +231,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 
 	if (state->btn_box_stop_signal == 1) {
-		cJSON_AddStringToObject(error_json, "key", "按钮盒急停按下");
+		cJSON_AddStringToObject(error_json, "key", "按钮盒急停已按下, 请松开急停按钮并断电重启控制箱");
 		if (pre_state->btn_box_stop_signal != 1) {
-			my_syslog("警告", "按钮盒急停按下", cur_account.username);
+			my_syslog("警告", "按钮盒急停已按下, 请松开急停按钮并断电重启控制箱", cur_account.username);
 			pre_state->btn_box_stop_signal = 1;
 		}
 	} else {
