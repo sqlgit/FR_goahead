@@ -136,9 +136,12 @@ typedef struct _CTRL_STATE
 	uint8_t    alarm;                   /** 警告 */
 	uint8_t    safetydoor_alarm;        /** 安全门警告 */
 	int        toolNum;                 /** 工具号 */
+	int        workPieceNum;            /** 工件号 */
+	int        exAxisNum;            	/** 外部轴号 */
 	uint8_t    gripperFaultId;          /** 错误夹爪号 */
 	uint8_t    gripperFaultNum;         /** 夹爪错误编号 */
 	uint16_t   gripperActStatus;		/** 夹爪激活状态 */
+	uint8_t    gripperMotionDone;		/** 夹爪运动完成 */
 	int 	   aliveSlaveNumFeedback;   /** 活动从站数量反馈 */
 	uint8_t	   ctrl_query_state;		/** 控制器查询状态 0-未查询，1-查询中 */
 	uint8_t    weld_readystate;			/** 焊机准备状态 1-准备好；0-未准备好 */
@@ -150,6 +153,10 @@ typedef struct _CTRL_STATE
 	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号, 1-按下急停 */
 	uint8_t	   motionAlarm;				/** 运动警告 */
 	double	   register_var[6];			/** 注册变量 */
+	uint8_t	   encoder_type_flag;		/** 编码器类型切换完成标志,0:未完成,1:完成,2:超时 */
+	uint8_t	   curEncoderType[6]; 		/** 当前各轴编码器类型,0:光编,1:磁编 */
+	uint8_t    alarm_check_emerg_stop_btn; /** 1-通信异常,检查急停按钮是否松开 */
+	uint8_t    alarm_reboot_rebot; 		/** 1-断电重启机器人 */
 } CTRL_STATE;
 #pragma pack(pop)
 

@@ -14,7 +14,7 @@ static int avolfileHandler(Webs *wp);
 static int compute_file_md5(const char *file_path, char *md5_str);
 static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path);
 static int check_version(const char *readme_now_path, const char *readme_up_path);
-static int update_userconfig();
+static int update_config(char *filename);
 
 /**
 	计算 MD5 值：
@@ -202,9 +202,9 @@ static int check_version(const char *readme_now_path, const char *readme_up_path
 }
 
 /**
-  update user.config
+  update user.config/ex_device.config/exaxis.config
 */
-static int update_userconfig()
+static int update_config(char *filename)
 {
 	FILE *fp_up = NULL;
 	char strline_up[LINE_LEN] = {0};
@@ -218,8 +218,23 @@ static int update_userconfig()
 	char write_content[LINE_LEN*10] = {0};
 	int line_index = 0;
 	char cmd[128] = {0};
+	char upgrade_filename[100] = "";
+	char now_filename[100] = "";
 
-	if ((fp_up = fopen(UPGRADE_ROBOT_CFG, "r")) == NULL) {
+	if (!strcmp(filename, ROBOT_CFG)) {
+		strcpy(upgrade_filename, UPGRADE_ROBOT_CFG);
+		strcpy(now_filename, ROBOT_CFG);
+	} else if (!strcmp(filename, EX_DEVICE_CFG)) {
+		strcpy(upgrade_filename, UPGRADE_EX_DEVICE_CFG);
+		strcpy(now_filename, EX_DEVICE_CFG);
+	} else if (!strcmp(filename, EXAXIS_CFG)) {
+		strcpy(upgrade_filename, UPGRADE_EXAXIS_CFG);
+		strcpy(now_filename, EXAXIS_CFG);
+	}
+	printf("upgrade_filename = %s\n", upgrade_filename);
+	printf("now_filename = %s\n", now_filename);
+
+	if ((fp_up = fopen(upgrade_filename, "r")) == NULL) {
 		perror("user.config : open file");
 
 		return FAIL;
@@ -237,11 +252,11 @@ static int update_userconfig()
 				return FAIL;
 			}
 			if (array_up[0] != NULL) {// 出现左边的 key 值
-				//  now user.config is not exist
-				if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+				//  now config file is not exist
+				if ((fp_now = fopen(now_filename, "r")) == NULL) {
 					fclose(fp_up);
 					perror("now user.config : open file");
-					sprintf(cmd, "cp %s %s", UPGRADE_ROBOT_CFG, ROBOT_CFG);
+					sprintf(cmd, "cp %s %s", upgrade_filename, now_filename);
 					system(cmd);
 
 					return SUCCESS;
@@ -280,6 +295,7 @@ static int update_userconfig()
 			string_list_free(array_up, size_up);
 		}
 		bzero(strline_up, sizeof(char)*LINE_LEN);
+		//printf("write_line = %s\n", write_line);
 		strcat(write_content, write_line);
 	}
 	fclose(fp_up);
@@ -287,7 +303,7 @@ static int update_userconfig()
 	//printf("write_content len = %d\n", strlen(write_content));
 	//printf("write_content = %s\n", write_content);
 
-	return write_file(ROBOT_CFG, write_content);
+	return write_file(now_filename, write_content);
 }
 
 
@@ -384,6 +400,11 @@ void upload(Webs *wp)
 				upfile = sfmt("%s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
 				my_syslog("普通操作", "导入外设插件文件成功", cur_account.username);
 				strcpy(filename, upfile);
+			/* ODM file */
+			} else if (strcmp(up->clientFilename, "odm.tar.gz") == 0) {
+				upfile = sfmt("%s", UPLOAD_WEB_ODM);
+				my_syslog("普通操作", "导入 ODM 文件成功", cur_account.username);
+				strcpy(filename, upfile);
 			} else {
 				my_syslog("普通操作", "导入文件未匹配", cur_account.username);
 				goto end;
@@ -405,6 +426,7 @@ void upload(Webs *wp)
 	} else if (strcmp(filename, FILE_USERDATA) == 0) {
 		system("rm -rf /root/web/file");
 		system("rm -f /root/robot/exaxis.config");
+		system("rm -f /root/robot/ex_device.config");
 		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
 		//system("rm -f /root/fr_user_data.tar.gz");
 	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
@@ -424,7 +446,11 @@ void upload(Webs *wp)
 			goto end;
 		}
 		/** 更新 user.config 文件 */
-		update_userconfig();
+		update_config(ROBOT_CFG);
+		/** 更新 ex_device.config 文件 */
+		update_config(EX_DEVICE_CFG);
+		/** 更新 exaxis.config 文件 */
+		update_config(EXAXIS_CFG);
 
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
@@ -610,6 +636,10 @@ void upload(Webs *wp)
 			system(delete_cmd);
 			goto end;
 		}
+	} else if (strcmp(filename, UPLOAD_WEB_ODM) == 0) {
+		system("rm -rf /root/web/frontend/plugins/odm");
+		system("cd /root/web/frontend/plugins/ && tar -zxvf odm.tar.gz");
+		system("rm -f /root/web/frontend/plugins/odm.tar.gz");
 	}
 
 	websSetStatus(wp, 200);
@@ -690,8 +720,14 @@ static int avolfileHandler(Webs *wp)
 		char cmd[128] = {0};
 		sprintf(cmd, "cp %s %s", ROBOT_CFG, WEB_ROBOT_CFG);
 		system(cmd);
+		memset(cmd, 0, 128);
+		sprintf(cmd, "cp %s %s", EX_DEVICE_CFG, WEB_EX_DEVICE_CFG);
+		system(cmd);
+		memset(cmd, 0, 128);
+		sprintf(cmd, "cp %s %s", EXAXIS_CFG, WEB_EXAXIS_CFG);
+		system(cmd);
 		system("rm -f /root/fr_user_data.tar.gz");
-		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config");
+		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config ./robot/ex_device.config");
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
 		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);

@@ -453,11 +453,11 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-		} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 262 || atoi(array[2]) == 250 || atoi(array[2]) == 272 || atoi(array[2]) == 274 || atoi(array[2]) == 277 || atoi(array[2]) == 289) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿, 计算摆焊坐标系, 十点法计算传感器位姿, 八点法计算激光跟踪传感器位姿， 三点法计算跟踪传感器位姿，四点法外部轴坐标TCP计算
+		} else if (atoi(array[2]) == 320 || atoi(array[2]) == 314 || atoi(array[2]) == 327 || atoi(array[2]) == 329 || atoi(array[2]) == 262 || atoi(array[2]) == 250 || atoi(array[2]) == 272 || atoi(array[2]) == 274 || atoi(array[2]) == 277 || atoi(array[2]) == 289 || atoi(array[2]) == 390) {// 计算TCF, 计算工具坐标系, 计算外部TCF, 计算工具TCF, 计算传感器位姿, 计算摆焊坐标系, 十点法计算传感器位姿, 八点法计算激光跟踪传感器位姿， 三点法计算跟踪传感器位姿，四点法外部轴坐标TCP计算,变位机坐标系计算
 			cJSON *root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
-				printf("size_content = %d\n", size_content);
+				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
 
 				continue;
@@ -483,7 +483,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			}
 			string_list_free(msg_array, size_content);
 		} else if (atoi(array[2]) == 278) {//反馈激光传感器记录点内
-			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 13) {
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 16) {
 				perror("string to string list");
 				printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
@@ -505,6 +505,37 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_AddStringToObject(root_json, "ry", msg_array[10]);
 			cJSON_AddStringToObject(root_json, "rz", msg_array[11]);
 			cJSON_AddStringToObject(root_json, "E1", msg_array[12]);
+			cJSON_AddStringToObject(root_json, "E2", msg_array[13]);
+			cJSON_AddStringToObject(root_json, "E3", msg_array[14]);
+			cJSON_AddStringToObject(root_json, "E4", msg_array[15]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 325) {//计算 TCF to Joint
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
+				perror("string to string list");
+				printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+
+				continue;
+			}
+			//printf("size_content = %d\n", size_content);
+			root_json = cJSON_CreateObject();
+			cJSON_AddStringToObject(root_json, "j1", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "j2", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "j3", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "j4", msg_array[3]);
+			cJSON_AddStringToObject(root_json, "j5", msg_array[4]);
+			cJSON_AddStringToObject(root_json, "j6", msg_array[5]);
 			msg_content = cJSON_Print(root_json);
 			cJSON_Delete(root_json);
 			root_json = NULL;
@@ -584,6 +615,59 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 				continue;
 			}
+		} else if (atoi(array[2]) == 380) {//修改示教点数据
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+
+				continue;
+			}
+
+			cJSON_AddStringToObject(root_json, "j1", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "j2", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "j3", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "j4", msg_array[3]);
+			cJSON_AddStringToObject(root_json, "j5", msg_array[4]);
+			cJSON_AddStringToObject(root_json, "j6", msg_array[5]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 386) {//修改示教点数据
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+
+				continue;
+			}
+
+			cJSON_AddStringToObject(root_json, "x_offset", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "y_offset", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "z_offset", msg_array[2]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 

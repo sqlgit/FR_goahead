@@ -397,6 +397,7 @@ char *get_dir_content(const char *dir_path)
 		closedir(dir);
 		dir = NULL;
 	}
+	//printf("content = %s\n", content);
 
 	return content;
 }

@@ -23,13 +23,16 @@ static int save_template_file(const cJSON *data_json);
 static int remove_template_file(const cJSON *data_json);
 static int rename_lua_file(const cJSON *data_json);
 static int modify_tool_cdsystem(const cJSON *data_json);
+static int modify_wobj_tool_cdsystem(const cJSON *data_json);
 static int modify_ex_tool_cdsystem(const cJSON *data_json);
 static int modify_exaxis_cdsystem(const cJSON *data_json);
 static int save_point(const cJSON *data_json);
+static int save_laser_point(const cJSON *data_json);
 static int modify_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
-static int log_management(const cJSON *data_json);
+static int set_syscfg(const cJSON *data_json);
+static int set_ODM_cfg(const cJSON *data_json);
 static int ptnbox(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
 static int shutdown_system(const cJSON *data_json);
@@ -38,6 +41,7 @@ static int plugin_remove(const cJSON *data_json);
 static int clear_DH_file(const cJSON *data_json);
 static int save_DH_point(const cJSON *data_json);
 static int factory_reset(const cJSON *data_json);
+static int odm_password(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -180,6 +184,45 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* modify wobj tool cdsystem */
+static int modify_wobj_tool_cdsystem(const cJSON *data_json)
+{
+	char sql[1204] = {0};
+	cJSON *name = NULL;
+	cJSON *id = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	id = cJSON_GetObjectItem(data_json, "id");
+	x = cJSON_GetObjectItem(data_json, "x");
+	y = cJSON_GetObjectItem(data_json, "y");
+	z = cJSON_GetObjectItem(data_json, "z");
+	rx = cJSON_GetObjectItem(data_json, "rx");
+	ry = cJSON_GetObjectItem(data_json, "ry");
+	rz = cJSON_GetObjectItem(data_json, "rz");
+	if(name == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(sql, "insert into wobj_coordinate_system(name,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s');"\
+					, name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+
+	if (change_info_sqlite3(DB_WOBJ_CDSYSTEM, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* modify ex && tool cdsystem */
 static int modify_ex_tool_cdsystem(const cJSON *data_json)
 {
@@ -283,6 +326,9 @@ static int save_point(const cJSON *data_json)
 	char sql[1024] = {0};
 	int i = 0;
 	char E1[20] = {0};
+	char E2[20] = {0};
+	char E3[20] = {0};
+	char E4[20] = {0};
 	char tcp_value_string[6][10] = {0};
 	char joint_value_string[6][10] = {0};
 	cJSON *name = NULL;
@@ -291,6 +337,7 @@ static int save_point(const cJSON *data_json)
 	cJSON *acc = NULL;
 	cJSON *elbow_acc = NULL;
 	cJSON *toolnum = NULL;
+	cJSON *workpiecenum = NULL;
 	cJSON *j1 = NULL;
 	cJSON *j2 = NULL;
 	cJSON *j3 = NULL;
@@ -315,7 +362,8 @@ static int save_point(const cJSON *data_json)
 	elbow_speed = cJSON_GetObjectItem(data_json, "elbow_speed");
 	elbow_acc = cJSON_GetObjectItem(data_json, "elbow_acc");
 	toolnum = cJSON_GetObjectItem(data_json, "toolnum");
-	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL) {
+	workpiecenum = cJSON_GetObjectItem(data_json, "workpiecenum");
+	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || workpiecenum == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -327,11 +375,85 @@ static int save_point(const cJSON *data_json)
 		sprintf(tcp_value_string[i], "%.3lf", state->tl_cur_pos[i]);
 	}
 	sprintf(E1, "%.3lf", state->exaxis_status[0].exAxisPos);
-	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,E1,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+	sprintf(E2, "%.3lf", state->exaxis_status[1].exAxisPos);
+	sprintf(E3, "%.3lf", state->exaxis_status[2].exAxisPos);
+	sprintf(E4, "%.3lf", state->exaxis_status[3].exAxisPos);
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
 				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
-				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring,\
-				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5], E1,\
+				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring, workpiecenum->valuestring,\
+				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5], E1, E2, E3, E4,\
 				tcp_value_string[0], tcp_value_string[1], tcp_value_string[2], tcp_value_string[3], tcp_value_string[4], tcp_value_string[5]);
+	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* save laserpoint */
+static int save_laser_point(const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	cJSON *name = NULL;
+	cJSON *speed = NULL;
+	cJSON *elbow_speed = NULL;
+	cJSON *acc = NULL;
+	cJSON *elbow_acc = NULL;
+	cJSON *toolnum = NULL;
+	cJSON *workpiecenum = NULL;
+	cJSON *j1 = NULL;
+	cJSON *j2 = NULL;
+	cJSON *j3 = NULL;
+	cJSON *j4 = NULL;
+	cJSON *j5 = NULL;
+	cJSON *j6 = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+	cJSON *E1_json = NULL;
+	cJSON *E2_json = NULL;
+	cJSON *E3_json = NULL;
+	cJSON *E4_json = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	speed = cJSON_GetObjectItem(data_json, "speed");
+	acc = cJSON_GetObjectItem(data_json, "acc");
+	elbow_speed = cJSON_GetObjectItem(data_json, "elbow_speed");
+	elbow_acc = cJSON_GetObjectItem(data_json, "elbow_acc");
+	toolnum = cJSON_GetObjectItem(data_json, "toolnum");
+	workpiecenum = cJSON_GetObjectItem(data_json, "workpiecenum");
+	j1 = cJSON_GetObjectItem(data_json, "j1");
+	j2 = cJSON_GetObjectItem(data_json, "j2");
+	j3 = cJSON_GetObjectItem(data_json, "j3");
+	j4 = cJSON_GetObjectItem(data_json, "j4");
+	j5 = cJSON_GetObjectItem(data_json, "j5");
+	j6 = cJSON_GetObjectItem(data_json, "j6");
+	x = cJSON_GetObjectItem(data_json, "x");
+	y = cJSON_GetObjectItem(data_json, "y");
+	z = cJSON_GetObjectItem(data_json, "z");
+	rx = cJSON_GetObjectItem(data_json, "rx");
+	ry = cJSON_GetObjectItem(data_json, "ry");
+	rz = cJSON_GetObjectItem(data_json, "rz");
+	E1_json = cJSON_GetObjectItem(data_json, "E1");
+	E2_json = cJSON_GetObjectItem(data_json, "E2");
+	E3_json = cJSON_GetObjectItem(data_json, "E3");
+	E4_json = cJSON_GetObjectItem(data_json, "E4");
+
+	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || workpiecenum == NULL || j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL|| rx == NULL || ry == NULL || rz == NULL || E1_json == NULL || E2_json == NULL || E3_json == NULL || E4_json == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL|| rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || E1_json->valuestring == NULL || E2_json->valuestring == NULL || E3_json->valuestring == NULL || E4_json->valuestring == NULL ) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
+				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring, workpiecenum->valuestring,\
+				j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, E1_json->valuestring, E2_json->valuestring, E3_json->valuestring, E4_json->valuestring,\
+				x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
 		perror("database");
 
@@ -351,6 +473,7 @@ static int modify_point(const cJSON *data_json)
 	cJSON *acc = NULL;
 	cJSON *elbow_acc = NULL;
 	cJSON *toolnum = NULL;
+	cJSON *workpiecenum = NULL;
 	cJSON *j1 = NULL;
 	cJSON *j2 = NULL;
 	cJSON *j3 = NULL;
@@ -364,6 +487,9 @@ static int modify_point(const cJSON *data_json)
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
 	cJSON *E1 = NULL;
+	cJSON *E2 = NULL;
+	cJSON *E3 = NULL;
+	cJSON *E4 = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
 	speed = cJSON_GetObjectItem(data_json, "speed");
@@ -371,6 +497,7 @@ static int modify_point(const cJSON *data_json)
 	elbow_speed = cJSON_GetObjectItem(data_json, "elbow_speed");
 	elbow_acc = cJSON_GetObjectItem(data_json, "elbow_acc");
 	toolnum = cJSON_GetObjectItem(data_json, "toolnum");
+	workpiecenum = cJSON_GetObjectItem(data_json, "workpiecenum");
 	j1 = cJSON_GetObjectItem(data_json, "j1");
 	j2 = cJSON_GetObjectItem(data_json, "j2");
 	j3 = cJSON_GetObjectItem(data_json, "j3");
@@ -384,15 +511,18 @@ static int modify_point(const cJSON *data_json)
 	ry = cJSON_GetObjectItem(data_json, "ry");
 	rz = cJSON_GetObjectItem(data_json, "rz");
 	E1 = cJSON_GetObjectItem(data_json, "E1");
-	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || E1 == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || E1->valuestring == NULL ) {
+	E2 = cJSON_GetObjectItem(data_json, "E2");
+	E3 = cJSON_GetObjectItem(data_json, "E3");
+	E4 = cJSON_GetObjectItem(data_json, "E4");
+	if (name == NULL || speed == NULL || acc == NULL || elbow_speed == NULL || elbow_acc == NULL || toolnum == NULL || workpiecenum == NULL || j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || E1 == NULL || E2 == NULL || E3 == NULL || E4 == NULL || name->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || elbow_speed->valuestring == NULL || elbow_acc->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || E1->valuestring == NULL || E2->valuestring == NULL || E3->valuestring == NULL || E4->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,j1,j2,j3,j4,j5,j6,E1,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+	sprintf(sql, "update points set name='%s', speed='%s', elbow_speed='%s', acc='%s', elbow_acc='%s', toolnum='%s', workpiecenum='%s', j1='%s', j2='%s', j3='%s', j4='%s', j5='%s', j6='%s', E1='%s', E2='%s', E3='%s', E4='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s' where name='%s';"\
 				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
-				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring,\
-				j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, E1->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring, workpiecenum->valuestring,\
+				j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, name->valuestring);
 	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
 		perror("database");
 
@@ -454,8 +584,8 @@ static int change_type(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* log management */
-static int log_management(const cJSON *data_json)
+/* set_syscfg */
+static int set_syscfg(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
@@ -463,7 +593,7 @@ static int log_management(const cJSON *data_json)
 	cJSON *cfg_json = NULL;
 	cJSON *count = NULL;
 
-	count = cJSON_GetObjectItem(data_json, "count");
+	count = cJSON_GetObjectItem(data_json, "log_count");
 	if (count == NULL || count->valuestring == NULL) {
 		perror("json");
 
@@ -487,6 +617,36 @@ static int log_management(const cJSON *data_json)
 	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateString(count->valuestring));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
+
+	delete_log_file(0);
+
+	return ret;
+}
+
+/* set_ODM_cfg */
+static int set_ODM_cfg(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *robot_model = NULL;
+
+	cfg_json = cJSON_CreateObject();
+	robot_model = cJSON_GetObjectItem(data_json, "robot_model");
+	if (robot_model == NULL || robot_model->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cJSON_AddStringToObject(cfg_json, "robot_model", robot_model->valuestring);
+	buf = cJSON_Print(cfg_json);
+	ret = write_file(FILE_ODM_CFG, buf);
 	free(buf);
 	buf = NULL;
 	cJSON_Delete(cfg_json);
@@ -826,7 +986,38 @@ static int factory_reset(const cJSON *data_json)
 	sprintf(cmd, "cp -r %s* %s", DIR_FACTORY, DIR_FILE);
 	system(cmd);
 
+	system("rm -f /root/robot/ex_device.config");
+	memset(cmd, 0, 128);
+	sprintf(cmd, "cp %s %s", WEB_EX_DEVICE_CFG, EX_DEVICE_CFG);
+	system(cmd);
+
+	system("rm -f /root/robot/exaxis.config");
+	memset(cmd, 0, 128);
+	sprintf(cmd, "cp %s %s", WEB_EXAXIS_CFG, EXAXIS_CFG);
+	system(cmd);
+
 	return SUCCESS;
+}
+
+/** odm_password */
+static int odm_password(const cJSON *data_json)
+{
+	cJSON *password = NULL;
+
+	password = cJSON_GetObjectItem(data_json, "password");
+	if (password == NULL || password->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	if (strcmp(password->valuestring, ODM_PASSWORD) == 0) {
+
+		return SUCCESS;
+	} else {
+
+		return FAIL;
+	}
 }
 
 /* do some user actions basic on web */
@@ -864,13 +1055,13 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "log_management") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -900,6 +1091,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
 		ret = modify_tool_cdsystem(data_json);
 		strcpy(log_content, "修改工具坐标系");
+	} else if (!strcmp(cmd, "modify_wobj_tool_cdsystem")) {
+		ret = modify_wobj_tool_cdsystem(data_json);
+		strcpy(log_content, "修改工件工具坐标系");
 	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		ret = modify_ex_tool_cdsystem(data_json);
 		strcpy(log_content, "修改外部工具坐标系");
@@ -909,6 +1103,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 		strcpy(log_content, "保存点信息");
+	} else if (!strcmp(cmd, "save_laser_point")) {
+		ret = save_laser_point(data_json);
+		strcpy(log_content, "保存激光点信息");
 	} else if (!strcmp(cmd, "modify_point")) {
 		ret = modify_point(data_json);
 		strcpy(log_content, "修改记录点信息");
@@ -918,9 +1115,12 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
 		strcpy(log_content, "切换实体和虚拟机器人");
-	} else if (!strcmp(cmd, "log_management")) {
-		ret = log_management(data_json);
-		strcpy(log_content, "日志配置");
+	} else if (!strcmp(cmd, "set_syscfg")) {
+		ret = set_syscfg(data_json);
+		strcpy(log_content, "设置系统配置");
+	} else if (!strcmp(cmd, "set_ODM_cfg")) {
+		ret = set_ODM_cfg(data_json);
+		strcpy(log_content, "设置 ODM 配置");
 	} else if (!strcmp(cmd, "ptnbox")) {
 		ret = ptnbox(data_json);
 		strcpy(log_content, "按钮盒记录点个数限制");
@@ -945,6 +1145,9 @@ void act(Webs *wp)
 	} else if (!strcmp(cmd, "factory_reset")) {
 		ret = factory_reset(data_json);
 		strcpy(log_content, "恢复出厂值");
+	} else if (!strcmp(cmd, "odm_password")) {
+		ret = odm_password(data_json);
+		strcpy(log_content, "认证ODM密码");
 	} else {
 		perror("cmd not found");
 		goto end;

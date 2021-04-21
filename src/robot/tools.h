@@ -10,9 +10,14 @@
 #define SUCCESS 1
 #define FAIL 0
 #define ROBOT_CFG "/root/robot/user.config"
+#define EX_DEVICE_CFG "/root/robot/ex_device.config"
 #define EXAXIS_CFG "/root/robot/exaxis.config"
 #define WEB_ROBOT_CFG "/root/web/file/robotcfg/user.config"
+#define WEB_EX_DEVICE_CFG "/root/web/file/robotcfg/ex_device.config"
+#define WEB_EXAXIS_CFG "/root/web/file/robotcfg/exaxis.config"
 #define UPGRADE_ROBOT_CFG "/tmp/web/file/robotcfg/user.config"
+#define UPGRADE_EXAXIS_CFG "/tmp/web/file/robotcfg/exaxis.config"
+#define UPGRADE_EX_DEVICE_CFG "/tmp/web/file/robotcfg/ex_device.config"
 #define UPGRADE_WEBTARCP "/tmp/web/webserver/shell/web_tar_cp.sh"
 #define UPGRADE_CRLUPGRADE "/tmp/web/webserver/shell/fr_control_upgrade.sh"
 #define README_WEB_NOW "/root/README/README_WEB.txt"
@@ -34,6 +39,7 @@
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
+#define FILE_SN "/root/web/file/SN/SN.txt"
 #define DIR_SHELL "/root/web/webserver/shell/"
 #define DIR_FACTORY "/root/web/webserver/file_factory/"
 #define DIR_LOG "/root/web/log/"
@@ -51,10 +57,13 @@
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"
 #define DB_ET_CDSYSTEM "/root/web/file/cdsystem/et_coordinate_system.db"
+#define DB_WOBJ_CDSYSTEM "/root/web/file/cdsystem/wobj_coordinate_system.db"
 #define DB_EXAXIS_CDSYSTEM "/root/web/file/cdsystem/exaxis_coordinate_system.db"
 #define DB_ACCOUNT "/root/web/account/account.db"
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
+#define UPLOAD_WEB_ODM "/root/web/frontend/plugins/odm.tar.gz"
+#define FILE_ODM_CFG "/root/web/frontend/plugins/odm/cfg.txt"
 #define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
@@ -63,6 +72,7 @@
 #define MD5_STR_LEN		(MD5_SIZE * 2)
 #define LINE_LEN	1024
 #define FILENAME_SIZE	1024
+#define ODM_PASSWORD	"ODM"
 
 typedef unsigned char BYTE;
 

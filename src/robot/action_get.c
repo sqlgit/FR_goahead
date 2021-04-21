@@ -15,6 +15,7 @@ extern ACCOUNT_INFO cur_account;
 
 static int get_points(char **ret_f_content);
 static int get_tool_cdsystem(char **ret_f_content);
+static int get_wobj_tool_cdsystem(char **ret_f_content);
 static int get_ex_tool_cdsystem(char **ret_f_content);
 static int get_exaxis_cdsystem(char **ret_f_content);
 static int get_user(char **ret_f_content);
@@ -23,17 +24,20 @@ static int get_tpd_name(char **ret_f_content);
 static int get_log_name(char **ret_f_content);
 static int get_log_data(char **ret_f_content, const cJSON *data_json);
 static int get_syscfg(char **ret_f_content);
+static int get_ODM_cfg(char **ret_f_content);
 static int get_accounts(char **ret_f_content);
 static int get_account_info(char **ret_f_content);
 static int get_webversion(char **ret_f_content);
 static int get_checkpoint(char **ret_f_content, const cJSON *data_json);
 static int get_robot_cfg(char **ret_f_content);
+static int get_ex_device_cfg(char **ret_f_content);
 static int get_weave(char **ret_f_content);
 static int get_exaxis_cfg(char **ret_f_content);
 static int get_plugin_info(char **ret_f_content);
 static int get_plugin_nav(char **ret_f_content);
 static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 static int get_DH_file(char **ret_f_content);
+static int get_robot_serialnumber(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -73,6 +77,32 @@ static int get_tool_cdsystem(char **ret_f_content)
 	sprintf(sql, "select * from coordinate_system order by id ASC");
 	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get wobj tool coordinate system data */
+static int get_wobj_tool_cdsystem(char **ret_f_content)
+{
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+
+	sprintf(sql, "select * from wobj_coordinate_system order by id ASC");
+	if (select_info_json_sqlite3(DB_WOBJ_CDSYSTEM, sql, &json_data) == -1) {
+		perror("select wobj coordinate_system");
 
 		return FAIL;
 	}
@@ -226,6 +256,21 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 static int get_syscfg(char **ret_f_content)
 {
 	*ret_f_content = get_file_content(FILE_CFG);
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get ODM cfg and return to page */
+static int get_ODM_cfg(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(FILE_ODM_CFG);
 	/* ret_f_content is NULL or no such file or empty */
 	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
 		*ret_f_content = NULL;
@@ -422,6 +467,58 @@ static int get_robot_cfg(char **ret_f_content)
 		return FAIL;
 	}
 	//printf("user.config : content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
+/* get ex device cfg and return to page */
+static int get_ex_device_cfg(char **ret_f_content)
+{
+	char **array = NULL;
+	int size = 0;
+	char strline[LINE_LEN] = {0};
+	FILE *fp = NULL;
+	int line_num = 0;
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateObject();
+	if ((fp = fopen(EX_DEVICE_CFG, "r")) == NULL) {
+		perror("ex_device.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		if (is_in(strline, "=") == -1) {
+			continue;
+		}
+		strrpc(strline, "\n", "");
+		//printf("user.config strline = %s\n", strline);
+		if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
+			perror("string to string list");
+			fclose(fp);
+			string_list_free(array, size);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+
+			return FAIL;
+		}
+		if (array[0] != NULL) {
+			cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
+		}
+		string_list_free(array, size);
+		bzero(strline, sizeof(char)*LINE_LEN);
+		line_num++;
+	}
+	fclose(fp);
+	printf("line_num = %d\n", line_num);
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("ex_device.config : cJSON_Print");
+
+		return FAIL;
+	}
 
 	return SUCCESS;
 }
@@ -1175,6 +1272,48 @@ static int get_DH_file(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get SN */
+static int get_robot_serialnumber(char **ret_f_content)
+{
+	char *strline = NULL;
+	strline = (char *)calloc(1, sizeof(char)*LINE_LEN);
+	char serialnumber[LINE_LEN] = {0};
+	FILE *fp;
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateObject();
+	if ((fp = fopen(FILE_SN, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		if (!strncmp(strline, "SN=", 3)) {
+			//printf("strlen(strline) = %d\n", strlen(strline));
+			strncpy(serialnumber, (strline + 3), (strlen(strline) - 3));
+			cJSON_AddStringToObject(root_json, "serialnumber", serialnumber);
+
+			break;
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+	free(strline);
+	strline = NULL;
+	fclose(fp);
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -1226,6 +1365,8 @@ void get(Webs *wp)
 		ret = get_points(&ret_f_content);
 	} else if(!strcmp(cmd, "get_tool_cdsystem")) {
 		ret = get_tool_cdsystem(&ret_f_content);
+	} else if(!strcmp(cmd, "get_wobj_tool_cdsystem")) {
+		ret = get_wobj_tool_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_ex_tool_cdsystem")) {
 		ret = get_ex_tool_cdsystem(&ret_f_content);
 	} else if(!strcmp(cmd, "get_exaxis_cdsystem")) {
@@ -1247,6 +1388,8 @@ void get(Webs *wp)
 		ret = get_log_data(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_syscfg")) {
 		ret = get_syscfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_ODM_cfg")) {
+		ret = get_ODM_cfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_accounts")) {
 		ret = get_accounts(&ret_f_content);
 	} else if(!strcmp(cmd, "get_account_info")) {
@@ -1262,6 +1405,8 @@ void get(Webs *wp)
 		ret = get_checkpoint(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_robot_cfg")) {
 		ret = get_robot_cfg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_ex_device_cfg")) {
+		ret = get_ex_device_cfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_weave")) {
 		ret = get_weave(&ret_f_content);
 	} else if(!strcmp(cmd, "get_exaxis_cfg")) {
@@ -1279,6 +1424,8 @@ void get(Webs *wp)
 		ret = get_plugin_config(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_DH_file")) {
 		ret = get_DH_file(&ret_f_content);
+	} else if(!strcmp(cmd, "get_robot_serialnumber")) {
+		ret = get_robot_serialnumber(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

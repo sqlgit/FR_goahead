@@ -41,11 +41,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	int i = 0;
 	char *buf = NULL;
 	char joint[10] = {0};
+	char curencodertype[100] = "";
 	char content[MAX_BUF] = {0};
 	double joint_value = 0;
 	double tcp_value[6] = {0};
 	cJSON *root_json = NULL;
 	cJSON *joints_json = NULL;
+	cJSON *curencodertype_json = NULL;
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
 	cJSON *feedback_json = NULL;
@@ -72,12 +74,15 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}*/
 	root_json = cJSON_CreateObject();
 	joints_json = cJSON_CreateObject();
+	curencodertype_json = cJSON_CreateObject();
 	tcp_json = cJSON_CreateObject();
 	feedback_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
+	cJSON_AddNumberToObject(root_json, "encoder_type_flag", state->encoder_type_flag);
+	cJSON_AddItemToObject(root_json, "curencodertype", curencodertype_json);
 	cJSON_AddItemToObject(root_json, "tcp", tcp_json);
 	cJSON_AddNumberToObject(root_json, "state", state->ctrl_query_state);
 	cJSON_AddNumberToObject(root_json, "program_state", state->program_state);
@@ -159,6 +164,8 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
 	cJSON_AddNumberToObject(root_json, "toolnum", state->toolNum);
+	cJSON_AddNumberToObject(root_json, "workpiecenum", state->workPieceNum);
+	cJSON_AddNumberToObject(root_json, "exaxisnum", state->exAxisNum);
 	cJSON_AddNumberToObject(root_json, "vel_radio", double_round(state->vel_ratio, 3));
 	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
 	for (i = 0; i < 6; i++) {
@@ -231,9 +238,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 
 	if (state->btn_box_stop_signal == 1) {
-		cJSON_AddStringToObject(error_json, "key", "按钮盒急停已按下, 请松开急停按钮并断电重启控制箱");
+		cJSON_AddStringToObject(error_json, "key", "按钮盒急停已按下");
 		if (pre_state->btn_box_stop_signal != 1) {
-			my_syslog("警告", "按钮盒急停已按下, 请松开急停按钮并断电重启控制箱", cur_account.username);
+			my_syslog("警告", "按钮盒急停已按下", cur_account.username);
 			pre_state->btn_box_stop_signal = 1;
 		}
 	} else {
@@ -1239,6 +1246,41 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->alarm = 4;
 			}
 			break;
+		case 5:
+			cJSON_AddStringToObject(error_json, "key", "警告: WaitDI 等待超时");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "警告: WaitDI 等待超时", cur_account.username);
+				pre_state->alarm = 4;
+			}
+			break;
+		case 6:
+			cJSON_AddStringToObject(error_json, "key", "警告: WaitAI 等待超时");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "警告: WaitAI 等待超时", cur_account.username);
+				pre_state->alarm = 4;
+			}
+			break;
+		case 7:
+			cJSON_AddStringToObject(error_json, "key", "警告: WaitToolDI 等待超时");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "警告: WaitToolDI 等待超时", cur_account.username);
+				pre_state->alarm = 4;
+			}
+			break;
+		case 8:
+			cJSON_AddStringToObject(error_json, "key", "警告: WaitToolAI 等待超时");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "警告: WaitToolAI 等待超时", cur_account.username);
+				pre_state->alarm = 4;
+			}
+			break;
+		case 9:
+			cJSON_AddStringToObject(error_json, "key", "警告: 起弧成功 DI 未配置");
+			if (pre_state->alarm != 4) {
+				my_syslog("错误", "警告: 起弧成功 DI 未配置", cur_account.username);
+				pre_state->alarm = 4;
+			}
+			break;
 		default:
 			pre_state->alarm = 0;
 			break;
@@ -1517,6 +1559,32 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pre_state->motionAlarm = 0;
 	}
 
+	for (i = 0; i < 6; i++) {
+		//printf("joint_value = %.3lf\n", joint_value);
+		memset(curencodertype, 0, sizeof(curencodertype));
+		sprintf(curencodertype, "curencodertype%d", (i+1));
+		cJSON_AddNumberToObject(curencodertype_json, curencodertype, state->curEncoderType[i]);
+	}
+
+	if (state->alarm_check_emerg_stop_btn == 1) {
+		cJSON_AddStringToObject(error_json, "key", "警告 : 通信异常,检查急停按钮是否松开");
+		if (pre_state->alarm_check_emerg_stop_btn != 1) {
+			my_syslog("警告", "警告 : 通信异常,检查急停按钮是否松开", cur_account.username);
+			pre_state->alarm_check_emerg_stop_btn = 1;
+		}
+	} else {
+		pre_state->alarm_check_emerg_stop_btn = 0;
+	}
+
+	if (state->alarm_reboot_rebot == 1) {
+		cJSON_AddStringToObject(error_json, "key", "警告 : 断电重启机器人");
+		if (pre_state->alarm_reboot_rebot != 1) {
+			my_syslog("警告", "警告 : 断电重启机器人", cur_account.username);
+			pre_state->alarm_reboot_rebot = 1;
+		}
+	} else {
+		pre_state->alarm_reboot_rebot = 0;
+	}
 
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
