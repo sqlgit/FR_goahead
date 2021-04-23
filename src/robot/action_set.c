@@ -248,6 +248,16 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2]);
 		}
 		strcpy(file_content, tmp_content);
+	/* laserPTP */
+	} else if(!strncmp(lua_cmd, "laserPTP:", 9)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "laserPTP:", "");
+		sprintf(tmp_content, "%sMoveJ(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
 	/* SPL */
 	} else if(!strncmp(lua_cmd, "SPL:", 4)) {
 		if (size != 2) {
@@ -573,6 +583,16 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 				sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3]);
 			}
 		}
+		strcpy(file_content, tmp_content);
+	/* laserLin */
+	} else if(!strncmp(lua_cmd, "laserLin:", 9)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "laserLin:", "");
+		sprintf(tmp_content, "%sMoveL(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* SLIN */
 	} else if(!strncmp(lua_cmd, "SLIN:", 5)) {
@@ -1087,6 +1107,16 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "LaserSensorRecord:", "");
 		sprintf(tmp_content, "%sLaserSensorRecord(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
+	/* LaserRecordPoint */
+	} else if (!strncmp(lua_cmd, "LaserRecordPoint:", 17)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "LaserRecordPoint:", "");
+		sprintf(tmp_content, "%sLaserRecordPoint(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1325,6 +1355,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* RegisterVar */
 	} else if (!strncmp(pgvalue->valuestring, "RegisterVar", 11)) {
 		cmd = 379;
+	/* LaserSensorRecord */
+	} else if (!strncmp(pgvalue->valuestring, "LaserSensorRecord", 17)) {
+		cmd = 284;
 	/* error */
 	} else {
 		return FAIL;
