@@ -43,6 +43,7 @@
 #define DIR_SHELL "/root/web/webserver/shell/"
 #define DIR_FACTORY "/root/web/webserver/file_factory/"
 #define DIR_LOG "/root/web/log/"
+#define DIR_LOG_EN "/root/web/log_en/"
 #define DIR_FILE "/root/web/file/"
 #define DIR_USER "/root/web/file/user/"
 #define DIR_TEMPLATE "/root/web/file/template/"
@@ -105,6 +106,7 @@ void uint16_to_array(int n, int *array);
 int BytesToString(BYTE *pSrc, char *pDst, int nSrcLength);
 int StringToBytes(char *pSrc, BYTE *pDst, int nSrcLength);
 int my_syslog(const char *class, const char *content, const char *user);
+int my_en_syslog(const char *class, const char *content, const char *user);
 int delete_log_file(int flag);
 void *create_dir(const char *dir_path);
 int authority_management(const char *cmd_type);

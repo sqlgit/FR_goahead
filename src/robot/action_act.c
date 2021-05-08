@@ -13,6 +13,7 @@
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
+extern int language;
 extern ACCOUNT_INFO cur_account;
 
 /********************************* Function declaration ***********************/
@@ -32,6 +33,7 @@ static int modify_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
 static int set_syscfg(const cJSON *data_json);
+static int set_language(const cJSON *data_json);
 static int set_ODM_cfg(const cJSON *data_json);
 static int ptnbox(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
@@ -607,13 +609,14 @@ static int set_syscfg(const cJSON *data_json)
 		return FAIL;
 	}
 	cfg_json = cJSON_Parse(cfg_content);
-	free(cfg_content);
-	cfg_content = NULL;
 	if (cfg_json == NULL) {
 		perror("cJSON_Parse");
 
 		return FAIL;
 	}
+	free(cfg_content);
+	cfg_content = NULL;
+
 	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateString(count->valuestring));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
@@ -623,6 +626,54 @@ static int set_syscfg(const cJSON *data_json)
 	cfg_json = NULL;
 
 	delete_log_file(0);
+
+	return ret;
+}
+
+/* set_language */
+static int set_language(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *language_json = NULL;
+
+	language_json = cJSON_GetObjectItem(data_json, "language");
+	if (language_json == NULL || language_json->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cfg_content = get_file_content(FILE_CFG);
+	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	cfg_json = cJSON_Parse(cfg_content);
+	if (cfg_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	free(cfg_content);
+	cfg_content = NULL;
+
+	if (cJSON_GetObjectItem(cfg_json, "language") == NULL) {
+		cJSON_AddStringToObject(cfg_json, "language", language_json->valuestring);
+	} else {
+		cJSON_ReplaceItemInObject(cfg_json, "language", cJSON_CreateString(language_json->valuestring));
+	}
+	buf = cJSON_Print(cfg_json);
+	ret = write_file(FILE_CFG, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
+
+	language = atoi(language_json->valuestring);
 
 	return ret;
 }
@@ -1031,6 +1082,7 @@ void act(Webs *wp)
 	cJSON *data_json = NULL;
 	cJSON *post_type = NULL;
 	char log_content[1024] = {0};
+	char en_log_content[1024] = {0};
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -1055,7 +1107,7 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1076,78 +1128,107 @@ void act(Webs *wp)
 	if (!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
 		strcpy(log_content, "保存当前程序示教文件");
+		strcpy(en_log_content, "Save the current program teaching file");
 	} else if (!strcmp(cmd, "remove_lua_file")) {
 		ret = remove_lua_file(data_json);
 		strcpy(log_content, "删除当前程序示教文件");
+		strcpy(en_log_content, "Deletes the current program teaching file");
 	} else if (!strcmp(cmd, "save_template_file")) {
 		ret = save_template_file(data_json);
 		strcpy(log_content, "保存程序示教模板文件");
+		strcpy(en_log_content, "Save the program teaching template file");
 	} else if (!strcmp(cmd, "remove_template_file")) {
 		ret = remove_template_file(data_json);
 		strcpy(log_content, "删除程序示教模板文件");
+		strcpy(en_log_content, "Delete program teaching template file");
 	} else if (!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
 		strcpy(log_content, "重命名当前程序示教文件");
+		strcpy(en_log_content, "Rename the current program teaching file");
 	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
 		ret = modify_tool_cdsystem(data_json);
 		strcpy(log_content, "修改工具坐标系");
+		strcpy(en_log_content, "Modify the tool coordinate system");
 	} else if (!strcmp(cmd, "modify_wobj_tool_cdsystem")) {
 		ret = modify_wobj_tool_cdsystem(data_json);
 		strcpy(log_content, "修改工件工具坐标系");
+		strcpy(en_log_content, "Modify the workpiece tool coordinate system");
 	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		ret = modify_ex_tool_cdsystem(data_json);
 		strcpy(log_content, "修改外部工具坐标系");
+		strcpy(en_log_content, "Modify the external tool coordinate system");
 	} else if (!strcmp(cmd, "modify_exaxis_cdsystem")) {
 		ret = modify_exaxis_cdsystem(data_json);
 		strcpy(log_content, "修改外部轴工具坐标系");
+		strcpy(en_log_content, "Modify the external axis tool coordinate system");
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 		strcpy(log_content, "保存点信息");
+		strcpy(en_log_content, "save point");
 	} else if (!strcmp(cmd, "save_laser_point")) {
 		ret = save_laser_point(data_json);
 		strcpy(log_content, "保存激光点信息");
+		strcpy(en_log_content, "save laser point");
 	} else if (!strcmp(cmd, "modify_point")) {
 		ret = modify_point(data_json);
 		strcpy(log_content, "修改记录点信息");
+		strcpy(en_log_content, "modify point");
 	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
 		strcpy(log_content, "移除点信息");
+		strcpy(en_log_content, "remove points");
 	} else if (!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
 		strcpy(log_content, "切换实体和虚拟机器人");
+		strcpy(en_log_content, "Switch between physical and virtual robots");
 	} else if (!strcmp(cmd, "set_syscfg")) {
 		ret = set_syscfg(data_json);
 		strcpy(log_content, "设置系统配置");
+		strcpy(en_log_content, "Set up system configuration");
+	} else if (!strcmp(cmd, "set_language")) {
+		ret = set_language(data_json);
+		strcpy(log_content, "设置系统语言");
+		strcpy(en_log_content, "Set up system language");
 	} else if (!strcmp(cmd, "set_ODM_cfg")) {
 		ret = set_ODM_cfg(data_json);
 		strcpy(log_content, "设置 ODM 配置");
+		strcpy(en_log_content, "Set up the ODM configuration");
 	} else if (!strcmp(cmd, "ptnbox")) {
 		ret = ptnbox(data_json);
 		strcpy(log_content, "按钮盒记录点个数限制");
+		strcpy(en_log_content, "Limit the number of record points in the button box");
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
 		strcpy(log_content, "保存账户信息");
+		strcpy(en_log_content, "save accounts");
 	} else if (!strcmp(cmd, "plugin_enable")) {
 		ret = plugin_enable(data_json);
 		strcpy(log_content, "启用/停用外设插件");
+		strcpy(en_log_content, "Enable/disable peripheral plug-ins");
 	} else if (!strcmp(cmd, "plugin_remove")) {
 		ret = plugin_remove(data_json);
 		strcpy(log_content, "删除外设插件");
+		strcpy(en_log_content, "Remove the peripheral plug-in");
 	} else if (!strcmp(cmd, "clear_DH_file")) {
 		ret = clear_DH_file(data_json);
 		strcpy(log_content, "清空DH参数校准数据采集文件");
+		strcpy(en_log_content, "Clear the DH parameter calibration data collection file");
 	} else if (!strcmp(cmd, "save_DH_point")) {
 		ret = save_DH_point(data_json);
 		strcpy(log_content, "DH 参数校准数据采集下发");
+		strcpy(en_log_content, "DH parameter calibration data collection and issuance");
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
 		strcpy(log_content, "系统关机");
+		strcpy(en_log_content, "Shutdown");
 	} else if (!strcmp(cmd, "factory_reset")) {
 		ret = factory_reset(data_json);
 		strcpy(log_content, "恢复出厂值");
+		strcpy(en_log_content, "Factory reset");
 	} else if (!strcmp(cmd, "odm_password")) {
 		ret = odm_password(data_json);
 		strcpy(log_content, "认证ODM密码");
+		strcpy(en_log_content, "Authenticate the ODM password");
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -1157,6 +1238,7 @@ void act(Webs *wp)
 		goto end;
 	}
 	my_syslog("应用操作", log_content, cur_account.username);
+	my_en_syslog("apply operation", en_log_content, cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -1169,7 +1251,8 @@ void act(Webs *wp)
 	return;
 
 auth_end:
-	my_syslog("机器人操作", "当前用户无相应指令操作权限", cur_account.username);
+	my_syslog("应用操作", "当前用户无相应指令操作权限", cur_account.username);
+	my_en_syslog("apply operation", "The current user has no authority to operate the corresponding instruction", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -1181,7 +1264,8 @@ auth_end:
 	return;
 
 end:
-	my_syslog("机器人操作", "普通操作失败", cur_account.username);
+	my_syslog("应用操作", "应用操作失败", cur_account.username);
+	my_en_syslog("apply operation", "apply operation fail", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

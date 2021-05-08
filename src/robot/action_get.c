@@ -10,6 +10,7 @@
 
 extern STATE_FEEDBACK state_fb;
 extern ACCOUNT_INFO cur_account;
+extern int language;
 
 /********************************* Function declaration ***********************/
 
@@ -217,7 +218,11 @@ static int get_tpd_name(char **ret_f_content)
 /* get log name */
 static int get_log_name(char **ret_f_content)
 {
-	*ret_f_content = get_dir_filename(DIR_LOG);
+	if (language == 0){
+		*ret_f_content = get_dir_filename(DIR_LOG);
+	} else {
+		*ret_f_content = get_dir_filename(DIR_LOG_EN);
+	}
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get dir content");
@@ -239,7 +244,11 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
+	if (language == 0){
+		sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
+	} else {
+		sprintf(dir_filename, "%s%s", DIR_LOG_EN, file_name->valuestring);
+	}
 	*ret_f_content = get_file_content(dir_filename);
 	/* ret_f_content is NULL or no such file or empty */
 	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
@@ -582,6 +591,15 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS1_OFFSET = ", 23)) {
 			strrpc(strline, "EXTERNALAXIS1_OFFSET = ", "");
 			cJSON_AddStringToObject(item1, "axis_offset", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_COMPANY = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS1_COMPANY = ", "");
+			cJSON_AddStringToObject(item1, "axis_company", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_MODEL = ", 22)) {
+			strrpc(strline, "EXTERNALAXIS1_MODEL = ", "");
+			cJSON_AddStringToObject(item1, "axis_model", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS1_ENCTYPE = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS1_ENCTYPE = ", "");
+			cJSON_AddStringToObject(item1, "axis_enctype", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS2_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS2_TYPE = ", "");
 			cJSON_AddStringToObject(item2, "axis_type", strline);
@@ -609,6 +627,15 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS2_OFFSET = ", 23)) {
 			strrpc(strline, "EXTERNALAXIS2_OFFSET = ", "");
 			cJSON_AddStringToObject(item2, "axis_offset", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_COMPANY = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS2_COMPANY = ", "");
+			cJSON_AddStringToObject(item2, "axis_company", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_MODEL = ", 22)) {
+			strrpc(strline, "EXTERNALAXIS2_MODEL = ", "");
+			cJSON_AddStringToObject(item2, "axis_model", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS2_ENCTYPE = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS2_ENCTYPE = ", "");
+			cJSON_AddStringToObject(item2, "axis_enctype", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS3_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS3_TYPE = ", "");
 			cJSON_AddStringToObject(item3, "axis_type", strline);
@@ -636,6 +663,15 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS3_OFFSET = ", 23)) {
 			strrpc(strline, "EXTERNALAXIS3_OFFSET = ", "");
 			cJSON_AddStringToObject(item3, "axis_offset", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_COMPANY = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS3_COMPANY = ", "");
+			cJSON_AddStringToObject(item3, "axis_company", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_MODEL = ", 22)) {
+			strrpc(strline, "EXTERNALAXIS3_MODEL = ", "");
+			cJSON_AddStringToObject(item3, "axis_model", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS3_ENCTYPE = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS3_ENCTYPE = ", "");
+			cJSON_AddStringToObject(item3, "axis_enctype", strline);
 		}else if(!strncmp(strline, "EXTERNALAXIS4_TYPE = ", 21)) {
 			strrpc(strline, "EXTERNALAXIS4_TYPE = ", "");
 			cJSON_AddStringToObject(item4, "axis_type", strline);
@@ -663,6 +699,15 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS4_OFFSET = ", 23)) {
 			strrpc(strline, "EXTERNALAXIS4_OFFSET = ", "");
 			cJSON_AddStringToObject(item4, "axis_offset", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_COMPANY = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS4_COMPANY = ", "");
+			cJSON_AddStringToObject(item4, "axis_company", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_MODEL = ", 22)) {
+			strrpc(strline, "EXTERNALAXIS4_MODEL = ", "");
+			cJSON_AddStringToObject(item4, "axis_model", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS4_ENCTYPE = ", 24)) {
+			strrpc(strline, "EXTERNALAXIS4_ENCTYPE = ", "");
+			cJSON_AddStringToObject(item4, "axis_enctype", strline);
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
