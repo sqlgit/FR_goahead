@@ -1117,6 +1117,16 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "LaserRecordPoint:", "");
 		sprintf(tmp_content, "%sLaserRecordPoint(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
+	/* EXT_AXIS_SETHOMNIG */
+	} else if (!strncmp(lua_cmd, "EXT_AXIS_SETHOMING:", 19)) {
+		if (size != 5) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "EXT_AXIS_SETHOMING:", "");
+		sprintf(tmp_content, "%sExtAxisSetHoming(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1301,6 +1311,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* PostureAdjustOff */
 	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOff", 16)) {
 		cmd = 282;
+	/* EXT_AXIS_SETHOMING */
+	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_SETHOMING", 18)) {
+		cmd = 290;
 	/* EXT_AXIS_PTP */
 	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_PTP", 12)) {
 		cmd = 297;

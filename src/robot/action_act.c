@@ -293,6 +293,7 @@ static int modify_exaxis_cdsystem(const cJSON *data_json)
 	cJSON *rx = NULL;
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
+	cJSON *flag = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
 	exaxisid = cJSON_GetObjectItem(data_json, "exaxisid");
@@ -303,14 +304,15 @@ static int modify_exaxis_cdsystem(const cJSON *data_json)
 	rx = cJSON_GetObjectItem(data_json, "rx");
 	ry = cJSON_GetObjectItem(data_json, "ry");
 	rz = cJSON_GetObjectItem(data_json, "rz");
-	if(name == NULL || exaxisid == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || exaxisid->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+	flag = cJSON_GetObjectItem(data_json, "flag");
+	if(name == NULL || exaxisid == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || flag == NULL || name->valuestring == NULL || exaxisid->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || flag->valuestring == NULL) {
 		perror("json");
  
 		return FAIL;
 	}
 
-	sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
-					, name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+	sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+					, name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
 
 	if (change_info_sqlite3( DB_EXAXIS_CDSYSTEM, sql) == -1) {
 		perror("database");
