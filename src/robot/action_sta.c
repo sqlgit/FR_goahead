@@ -45,6 +45,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	char curencodertype[100] = "";
 	char content[MAX_BUF] = {0};
 	char en_content[MAX_BUF] = {0};
+	char jap_content[MAX_BUF] = {0};
 	double joint_value = 0;
 	double tcp_value[6] = {0};
 	cJSON *root_json = NULL;
@@ -247,9 +248,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "The button box emergency stop has been pressed");
 		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "ボタンボックスが押されました");
+		}
 		if (pre_state->btn_box_stop_signal != 1) {
 			my_syslog("错误", "按钮盒急停已按下", cur_account.username);
 			my_en_syslog("error", "The button box emergency stop has been pressed", cur_account.username);
+			my_jap_syslog("さくご", "ボタンボックスが押されました", cur_account.username);
 			pre_state->btn_box_stop_signal = 1;
 		}
 	} else {
@@ -263,9 +268,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "It is currently in a singular position");
 		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "今は不思議な姿をしている");
+		}
 		if (pre_state->strangePosFlag != 1) {
 			my_syslog("错误", "当前处于奇异位姿", cur_account.username);
-			my_en_syslog("error", "", cur_account.username);
+			my_en_syslog("error", "It is currently in a singular position", cur_account.username);
+			my_jap_syslog("さくご", "今は不思議な姿をしている", cur_account.username);
 			pre_state->strangePosFlag = 1;
 		}
 	} else {
@@ -279,9 +288,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Drag warning, currently in automatic mode");
 		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "警告をドラッグすると、自動モードになります");
+		}
 		if (pre_state->drag_alarm != 1) {
 			my_syslog("错误", "拖动警告, 当前处于自动模式", cur_account.username);
-			my_en_syslog("error", "", cur_account.username);
+			my_en_syslog("error", "Drag warning, currently in automatic mode", cur_account.username);
+			my_jap_syslog("さくご", "警告をドラッグすると、自動モードになります", cur_account.username);
 			pre_state->drag_alarm = 1;
 		}
 	} else {
@@ -290,18 +303,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->aliveSlaveNumError == 1) {
 		memset(content, 0, sizeof(content));
-		sprintf(content, "活动从站数量错误，活动从站数量为:%d", state->aliveSlaveNumFeedback);
 		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "活动从站数量错误，活动从站数量为:%d", state->aliveSlaveNumFeedback);
 		sprintf(en_content, "Number of active slave stations is wrong. Number of active slave stations is:%d", state->aliveSlaveNumFeedback);
+		sprintf(jap_content, "キャンペーンスレーブは誤作動し、キャンペーンスレーブは次のようになる。", state->aliveSlaveNumFeedback);
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", content);
 		}
 		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", en_content);
 		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", jap_content);
+		}
 		if (pre_state->aliveSlaveNumError != 1) {
 			my_syslog("错误", content, cur_account.username);
 			my_en_syslog("error", en_content, cur_account.username);
+			my_jap_syslog("さくご", jap_content, cur_account.username);
 			pre_state->aliveSlaveNumError = 1;
 		}
 	} else {
@@ -315,9 +334,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw 485 timed out");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "はさみ爪485タイムアウト");
+			}
 			if (pre_state->gripperFaultNum != 1) {
 				my_syslog("错误", "夹爪485超时", cur_account.username);
 				my_en_syslog("error", "Claw 485 timed out", cur_account.username);
+				my_jap_syslog("さくご", "はさみ爪485タイムアウト", cur_account.username);
 				pre_state->gripperFaultNum = 1;
 			}
 			break;
@@ -328,9 +351,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Incorrect format of claw instruction");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップコマンドのフォーマットが間違っています");
+			}
 			if (pre_state->gripperFaultNum != 2) {
 				my_syslog("错误", "夹爪指令格式错误", cur_account.username);
 				my_en_syslog("error", "Incorrect format of claw instruction", cur_account.username);
+				my_jap_syslog("さくご", "クリップコマンドのフォーマットが間違っています", cur_account.username);
 				pre_state->gripperFaultNum = 2;
 			}
 			break;
@@ -341,9 +368,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw action delay, must be activated first");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "爪の動作が遅れて、まず起動しなければならない");
+			}
 			if (pre_state->gripperFaultNum != 5) {
 				my_syslog("错误", "夹爪动作延迟，须先激活", cur_account.username);
 				my_en_syslog("error", "Claw action delay, must be activated first", cur_account.username);
+				my_jap_syslog("さくご", "爪の動作が遅れて、まず起動しなければならない", cur_account.username);
 				pre_state->gripperFaultNum = 5;
 			}
 			break;
@@ -354,9 +385,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw not active");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップが作動していない");
+			}
 			if (pre_state->gripperFaultNum != 7) {
 				my_syslog("错误", "夹爪未激活", cur_account.username);
 				my_en_syslog("error", "Claw not active", cur_account.username);
+				my_jap_syslog("さくご", "クリップが作動していない", cur_account.username);
 				pre_state->gripperFaultNum = 7;
 			}
 			break;
@@ -367,9 +402,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw temperature is too high");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "爪の温度が高すぎる");
+			}
 			if (pre_state->gripperFaultNum != 8) {
 				my_syslog("错误", "夹爪温度过高", cur_account.username);
 				my_en_syslog("error", "Claw temperature is too high", cur_account.username);
+				my_jap_syslog("さくご", "爪の温度が高すぎる", cur_account.username);
 				pre_state->gripperFaultNum = 8;
 			}
 			break;
@@ -380,9 +419,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw voltage is too low");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップ電圧が低すぎる");
+			}
 			if (pre_state->gripperFaultNum != 10) {
 				my_syslog("错误", "夹爪电压过低", cur_account.username);
 				my_en_syslog("error", "Claw voltage is too low", cur_account.username);
+				my_jap_syslog("さくご", "クリップ電圧が低すぎる", cur_account.username);
 				pre_state->gripperFaultNum = 10;
 			}
 			break;
@@ -393,9 +436,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw is releasing automatically");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップが自動的に解放されている");
+			}
 			if (pre_state->gripperFaultNum != 11) {
 				my_syslog("错误", "夹爪正在自动释放", cur_account.username);
 				my_en_syslog("error", "Claw is releasing automatically", cur_account.username);
+				my_jap_syslog("さくご", "クリップが自動的に解放されている", cur_account.username);
 				pre_state->gripperFaultNum = 11;
 			}
 			break;
@@ -406,9 +453,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Internal failure of clamping claw");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップ爪の内部が故障している");
+			}
 			if (pre_state->gripperFaultNum != 12) {
 				my_syslog("错误", "夹爪内部故障", cur_account.username);
 				my_en_syslog("error", "Internal failure of clamping claw", cur_account.username);
+				my_jap_syslog("さくご", "クリップ爪の内部が故障している", cur_account.username);
 				pre_state->gripperFaultNum = 12;
 			}
 			break;
@@ -419,9 +470,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw activation failed");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップの起動に失敗する");
+			}
 			if (pre_state->gripperFaultNum != 13) {
 				my_syslog("错误", "夹爪激活失败", cur_account.username);
 				my_en_syslog("error", "Claw activation failed", cur_account.username);
+				my_jap_syslog("さくご", "クリップの起動に失敗する", cur_account.username);
 				pre_state->gripperFaultNum = 13;
 			}
 			break;
@@ -432,9 +487,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The gripper current is too large");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップ電流が大きすぎる");
+			}
 			if (pre_state->gripperFaultNum != 14) {
 				my_syslog("错误", "夹爪电流过大", cur_account.username);
 				my_en_syslog("error", "The gripper current is too large", cur_account.username);
+				my_jap_syslog("さくご", "クリップ電流が大きすぎる", cur_account.username);
 				pre_state->gripperFaultNum = 14;
 			}
 			break;
@@ -445,9 +504,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Claw automatic release end");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "クリップの自動解放が終了します");
+			}
 			if (pre_state->gripperFaultNum != 15) {
 				my_syslog("错误", "夹爪自动释放结束", cur_account.username);
 				my_en_syslog("error", "Claw automatic release end", cur_account.username);
+				my_jap_syslog("さくご", "クリップの自動解放が終了します", cur_account.username);
 				pre_state->gripperFaultNum = 15;
 			}
 			break;
@@ -462,9 +525,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Failed to toggle drag state");
 		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "ドラッグ状態の切り替えに失敗しました");
+		}
 		if (pre_state->robot_mode != 1) {
 			my_syslog("错误", "切换拖动状态失败", cur_account.username);
 			my_en_syslog("error", "Failed to toggle drag state", cur_account.username);
+			my_jap_syslog("さくご", "ドラッグ状態の切り替えに失敗しました", cur_account.username);
 			pre_state->robot_mode = 1;
 		}
 	} else {
@@ -478,69 +545,98 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box salve offline");
 			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "制御ボックスが駅から外れた");
+			}
 			if (pre_state->slaveComError[0] != 1) {
 				my_syslog("错误", "控制箱从站掉线", cur_account.username);
 				my_en_syslog("error", "Control box salve offline", cur_account.username);
+				my_jap_syslog("さくご", "制御ボックスが駅から外れた", cur_account.username);
 				pre_state->slaveComError[0] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "控制箱从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "制御ボックスはステーション状態と設定値が一致しません");
 			}
 			if (pre_state->slaveComError[0] != 2) {
 				my_syslog("错误", "控制箱从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Control box slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "制御ボックスはステーション状態と設定値が一致しません", cur_account.username);
 				pre_state->slaveComError[0] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "控制箱从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box slave is not configured");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "制御ボックスは従局未配置");
 			}
 			if (pre_state->slaveComError[0] != 3) {
 				my_syslog("错误", "控制箱从站未配置", cur_account.username);
 				my_en_syslog("error", "Control box slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "制御ボックスは従局未配置", cur_account.username);
 				pre_state->slaveComError[0] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "控制箱从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box slave configure error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "制御ボックスがステーションから誤って配置されています");
 			}
 			if (pre_state->slaveComError[0] != 4) {
 				my_syslog("错误", "控制箱从站配置错误", cur_account.username);
 				my_en_syslog("error", "Control box slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "制御ボックスがステーションから誤って配置されています", cur_account.username);
 				pre_state->slaveComError[0] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "控制箱从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box slave initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "コントロールボックスはステーションからエラーを初期化します");
 			}
 			if (pre_state->slaveComError[0] != 5) {
 				my_syslog("错误", "控制箱从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Control box slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "コントロールボックスはステーションからエラーを初期化します", cur_account.username);
 				pre_state->slaveComError[0] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "控制箱从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Control box slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "制御ボックスはステーションメールボックスから通信初期化エラー");
 			}
 			if (pre_state->slaveComError[0] != 6) {
 				my_syslog("错误", "控制箱从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Control box slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "制御ボックスはステーションメールボックスから通信初期化エラー", cur_account.username);
 				pre_state->slaveComError[0] = 6;
 			}
 			break;
@@ -548,76 +644,107 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->slaveComError[0] = 0;
 			break;
 	}
+	/*
 	switch(state->slaveComError[1]) {
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis salve offline");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 1) {
 				my_syslog("错误", "一轴从站掉线", cur_account.username);
 				my_en_syslog("error", "One axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 2) {
 				my_syslog("错误", "一轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "One axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis slave is not configured");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 3) {
 				my_syslog("错误", "一轴从站未配置", cur_account.username);
 				my_en_syslog("error", "One axis slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis slave configure error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 4) {
 				my_syslog("错误", "一轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "One axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis slave initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 5) {
 				my_syslog("错误", "一轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "One axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "一轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "One axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[1] != 6) {
 				my_syslog("错误", "一轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "One axis slave mailbox communication initialization error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[1] = 6;
 			}
 			break;
@@ -629,72 +756,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis salve offline");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 1) {
 				my_syslog("错误", "二轴从站掉线", cur_account.username);
 				my_en_syslog("error", "Two axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 2) {
 				my_syslog("错误", "二轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Two axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis slave is not configured");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 3) {
 				my_syslog("错误", "二轴从站未配置", cur_account.username);
 				my_en_syslog("error", "Two axis slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis slave configure error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 4) {
 				my_syslog("错误", "二轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "Two axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis slave initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 5) {
 				my_syslog("错误", "二轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Two axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "二轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Two axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[2] != 6) {
 				my_syslog("错误", "二轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Two axis slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[2] = 6;
 			}
 			break;
@@ -706,72 +863,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis salve offline");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 1) {
 				my_syslog("错误", "三轴从站掉线", cur_account.username);
 				my_en_syslog("error", "Three axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 2) {
 				my_syslog("错误", "三轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Three axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis slave is not configured");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 3) {
 				my_syslog("错误", "三轴从站未配置", cur_account.username);
 				my_en_syslog("error", "Three axis slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis slave configure error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 4) {
 				my_syslog("错误", "三轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "Three axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis slave initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 5) {
 				my_syslog("错误", "三轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Three axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "三轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Three axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[3] != 6) {
 				my_syslog("错误", "三轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Three axis slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[3] = 6;
 			}
 			break;
@@ -783,72 +970,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis salve offline");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 1) {
 				my_syslog("错误", "四轴从站掉线", cur_account.username);
 				my_en_syslog("error", "Four axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 2) {
 				my_syslog("错误", "四轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Four axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis slave station is not configured");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 3) {
 				my_syslog("错误", "四轴从站未配置", cur_account.username);
 				my_en_syslog("error", "Four axis slave station is not configured", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis slave configure error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 4) {
 				my_syslog("错误", "四轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "Four axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis slave initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 5) {
 				my_syslog("错误", "四轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Four axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "四轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Four axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[4] != 6) {
 				my_syslog("错误", "四轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Four axis slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[4] = 6;
 			}
 			break;
@@ -860,72 +1077,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis salve offline");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 1) {
 				my_syslog("错误", "五轴从站掉线", cur_account.username);
 				my_en_syslog("error", "Five axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 2) {
 				my_syslog("错误", "五轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Five axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis slave is not configured");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 3) {
 				my_syslog("错误", "五轴从站未配置", cur_account.username);
 				my_en_syslog("error", "Five axis slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis slave configure error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 4) {
 				my_syslog("错误", "五轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "Five axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis slave initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 5) {
 				my_syslog("错误", "五轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Five axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "五轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Five axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->slaveComError[5] != 6) {
 				my_syslog("错误", "五轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Five axis slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->slaveComError[5] = 6;
 			}
 			break;
@@ -937,149 +1184,339 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis salve offline");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸が駅から抜ける");
 			}
 			if (pre_state->slaveComError[6] != 1) {
 				my_syslog("错误", "六轴从站掉线", cur_account.username);
 				my_en_syslog("error", "Six axis salve offline", cur_account.username);
+				my_jap_syslog("さくご", "6軸が駅から抜ける", cur_account.username);
 				pre_state->slaveComError[6] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸スレーブステーションの状態と設定値が一致しない");
 			}
 			if (pre_state->slaveComError[6] != 2) {
 				my_syslog("错误", "六轴从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "Six axis slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "6軸スレーブステーションの状態と設定値が一致しない", cur_account.username);
 				pre_state->slaveComError[6] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis slave is not configured");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸スレーブステーションは未配置");
 			}
 			if (pre_state->slaveComError[6] != 3) {
 				my_syslog("错误", "六轴从站未配置", cur_account.username);
 				my_en_syslog("error", "Six axis slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "6軸スレーブステーションは未配置", cur_account.username);
 				pre_state->slaveComError[6] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis slave configure error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸スレーブステーション配置ミス");
 			}
 			if (pre_state->slaveComError[6] != 4) {
 				my_syslog("错误", "六轴从站配置错误", cur_account.username);
 				my_en_syslog("error", "Six axis slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "6軸スレーブステーション配置ミス", cur_account.username);
 				pre_state->slaveComError[6] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis slave initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸スレーブステーション初期化エラー");
 			}
 			if (pre_state->slaveComError[6] != 5) {
 				my_syslog("错误", "六轴从站初始化错误", cur_account.username);
 				my_en_syslog("error", "Six axis slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "6軸スレーブステーション初期化エラー", cur_account.username);
 				pre_state->slaveComError[6] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "六轴从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Six axis slave mailbox communication initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "6軸スレーブメールボックス通信初期化エラー");
 			}
 			if (pre_state->slaveComError[6] != 6) {
 				my_syslog("错误", "六轴从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "Six axis slave mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "6軸スレーブメールボックス通信初期化エラー", cur_account.username);
 				pre_state->slaveComError[6] = 6;
 			}
 			break;
 		default:
 			pre_state->slaveComError[6] = 0;
 			break;
+	}*/
+	for (i = 1; i <= 6; i++) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		switch(state->slaveComError[i]) {
+			case 1:
+				sprintf(content, "%d 轴从站掉线", i);
+				sprintf(en_content, "%d axis salve offline", i);
+				sprintf(jap_content, "%d 軸が駅から抜ける", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 1) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 1;
+				}
+				break;
+			case 2:
+				sprintf(content, "%d 轴从站状态与设置值不一致", i);
+				sprintf(en_content, "%d axis slave status is not consistent with the set value", i);
+				sprintf(jap_content, "%d 軸スレーブステーションの状態と設定値が一致しない", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 2) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 2;
+				}
+				break;
+			case 3:
+				sprintf(content, "%d 轴从站未配置", i);
+				sprintf(en_content, "%d axis slave is not configured", i);
+				sprintf(jap_content, "%d 軸スレーブステーションは未配置", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 3) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 3;
+				}
+				break;
+			case 4:
+				sprintf(content, "%d 轴从站配置错误", i);
+				sprintf(en_content, "%d axis slave configure error", i);
+				sprintf(jap_content, "%d 軸スレーブステーション配置ミス", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 4) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 4;
+				}
+				break;
+			case 5:
+				sprintf(content, "%d 轴从站初始化错误", i);
+				sprintf(en_content, "%d axis slave initialize error", i);
+				sprintf(jap_content, "%d 軸スレーブステーション初期化エラー", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 5) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 5;
+				}
+				break;
+			case 6:
+				sprintf(content, "%d 轴从站邮箱通信初始化错误", i);
+				sprintf(en_content, "%d axis slave mailbox communication initialize error", i);
+				sprintf(jap_content, "%d 軸スレーブメールボックス通信初期化エラー", i);
+				if (language == 0) { 
+					cJSON_AddStringToObject(error_json, "key", content);
+				}
+				if (language == 1) {
+					cJSON_AddStringToObject(error_json, "key", en_content);
+				}
+				if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", jap_content);
+				}
+				if (pre_state->slaveComError[i] != 6) {
+					my_syslog("错误", content, cur_account.username);
+					my_en_syslog("error", en_content, cur_account.username);
+					my_jap_syslog("さくご", jap_content, cur_account.username);
+					pre_state->slaveComError[i] = 6;
+				}
+				break;
+			default:
+				pre_state->slaveComError[i] = 0;
+				break;
+		}
 	}
 	switch(state->slaveComError[7]) {
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站掉线");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal salve offline");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "末端が駅から途切れた");
 			}
 			if (pre_state->slaveComError[7] != 1) {
 				my_syslog("错误", "末端从站掉线", cur_account.username);
 				my_en_syslog("error", "The terminal salve offline", cur_account.username);
+				my_jap_syslog("さくご", "末端が駅から途切れた", cur_account.username);
 				pre_state->slaveComError[7] = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站状态与设置值不一致");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal slave status is not consistent with the set value");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "終端スレーブ局の状態と設定値が一致しない");
 			}
 			if (pre_state->slaveComError[7] != 2) {
 				my_syslog("错误", "末端从站状态与设置值不一致", cur_account.username);
 				my_en_syslog("error", "The terminal slave status is not consistent with the set value", cur_account.username);
+				my_jap_syslog("さくご", "終端スレーブ局の状態と設定値が一致しない", cur_account.username);
 				pre_state->slaveComError[7] = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal slave is not configured");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "末端スレーブ局は未配置");
 			}
 			if (pre_state->slaveComError[7] != 3) {
 				my_syslog("错误", "末端从站未配置", cur_account.username);
 				my_en_syslog("error", "The terminal slave is not configured", cur_account.username);
+				my_jap_syslog("さくご", "末端スレーブ局は未配置", cur_account.username);
 				pre_state->slaveComError[7] = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站配置错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal  slave configure error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "エンドスレーブ局の設定が間違っています");
 			}
 			if (pre_state->slaveComError[7] != 4) {
 				my_syslog("错误", "末端从站配置错误", cur_account.username);
 				my_en_syslog("error", "The terminal slave configure error", cur_account.username);
+				my_jap_syslog("さくご", "エンドスレーブ局の設定が間違っています", cur_account.username);
 				pre_state->slaveComError[7] = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal  slave initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "エンドスレーブ初期化エラー");
 			}
 			if (pre_state->slaveComError[7] != 5) {
 				my_syslog("错误", "末端从站初始化错误", cur_account.username);
 				my_en_syslog("error", "The terminal  slave initialize error", cur_account.username);
+				my_jap_syslog("さくご", "エンドスレーブ初期化エラー", cur_account.username);
 				pre_state->slaveComError[7] = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "末端从站邮箱通信初始化错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The terminal  slave  mailbox communication initialize error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "終端メールボックスからの通信初期化エラー");
 			}
 			if (pre_state->slaveComError[7] != 6) {
 				my_syslog("错误", "末端从站邮箱通信初始化错误", cur_account.username);
 				my_en_syslog("error", "The terminal  slave  mailbox communication initialize error", cur_account.username);
+				my_jap_syslog("さくご", "終端メールボックスからの通信初期化エラー", cur_account.username);
 				pre_state->slaveComError[7] = 6;
 			}
 			break;
@@ -1092,348 +1529,493 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "关节指令点错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Joint command point error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "関節の指令点が間違っている");
 			}
 			if (pre_state->cmdPointError != 1) {
 				my_syslog("错误", "关节指令点错误", cur_account.username);
 				my_en_syslog("error", "Joint command point error", cur_account.username);
+				my_jap_syslog("さくご", "関節の指令点が間違っている", cur_account.username);
 				pre_state->cmdPointError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "直线目标点错误（包括工具不符）");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Straight line target point error(including tool discrepancy)");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "直線の目標点が間違っている(道具が違っていることも含む)");
 			}
 			if (pre_state->cmdPointError != 2) {
 				my_syslog("错误", "直线目标点错误（包括工具不符）", cur_account.username);
 				my_en_syslog("error", "Straight line target point error(including tool discrepancy)", cur_account.username);
+				my_jap_syslog("さくご", "直線の目標点が間違っている(道具が違っていることも含む)", cur_account.username);
 				pre_state->cmdPointError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "圆弧中间点错误（包括工具不符）");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Midpoint of arc error (including tool discrepancy)");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "円弧の中間点のエラー(ツールの不一致を含む)");
 			}
 			if (pre_state->cmdPointError != 3) {
 				my_syslog("错误", "圆弧中间点错误（包括工具不符）", cur_account.username);
 				my_en_syslog("error", "Midpoint of arc error (including tool discrepancy)", cur_account.username);
+				my_jap_syslog("さくご", "円弧の中間点のエラー(ツールの不一致を含む)", cur_account.username);
 				pre_state->cmdPointError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "圆弧目标点错误（包括工具不符）");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Arc target point error (including tool discrepancy)");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "円弧の目標点エラー(ツールが一致しないことを含む)");
 			}
 			if (pre_state->cmdPointError != 4) {
 				my_syslog("错误", "圆弧目标点错误（包括工具不符）", cur_account.username);
 				my_en_syslog("error", "Arc target point error (including tool discrepancy)", cur_account.username);
+				my_jap_syslog("さくご", "円弧の目標点エラー(ツールが一致しないことを含む)", cur_account.username);
 				pre_state->cmdPointError = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "TPD指令点错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "TPD point error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "TPD指令点エラー");
 			}
 			if (pre_state->cmdPointError != 5) {
 				my_syslog("错误", "TPD指令点错误", cur_account.username);
 				my_en_syslog("error", "TPD point error", cur_account.username);
+				my_jap_syslog("さくご", "TPD指令点エラー", cur_account.username);
 				pre_state->cmdPointError = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "TPD指令工具与当前工具不符");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "TPD instruction tool does not match the current tool");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "TPDコマンドツールは、現在のツールと一致しません");
 			}
 			if (pre_state->cmdPointError != 6) {
 				my_syslog("错误", "TPD指令工具与当前工具不符", cur_account.username);
 				my_en_syslog("error", "TPD instruction tool does not match the current tool", cur_account.username);
+				my_jap_syslog("さくご", "TPDコマンドツールは、現在のツールと一致しません", cur_account.username);
 				pre_state->cmdPointError = 6;
 			}
 			break;
 		case 7:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "TPD当前指令与下一指令起始点偏差过大");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "TPD the current instruction deviates too much from the starting point of the next instruction");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "TPD現在の命令は、次の命令の開始点から過大にずれている");
 			}
 			if (pre_state->cmdPointError != 7) {
 				my_syslog("错误", "TPD当前指令与下一指令起始点偏差过大", cur_account.username);
 				my_en_syslog("error", "TPD the current instruction deviates too much from the starting point of the next instruction", cur_account.username);
+				my_jap_syslog("さくご", "TPD現在の命令は、次の命令の開始点から過大にずれている", cur_account.username);
 				pre_state->cmdPointError = 7;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "PTP关节指令超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "PTP joint instruction out of limit");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "ptp関節コマンドオーバー");
 			}
 			if (pre_state->cmdPointError != 8) {
 				my_syslog("错误", "PTP关节指令超限", cur_account.username);
 				my_en_syslog("error", "PTP joint instruction out of limit", cur_account.username);
+				my_jap_syslog("さくご", "ptp関節コマンドオーバー", cur_account.username);
 				pre_state->cmdPointError = 8;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "TPD关节指令超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "TPD joint instruction out of limit");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "tpd関節コマンドオーバー");
 			}
 			if (pre_state->cmdPointError != 9) {
 				my_syslog("错误", "TPD关节指令超限", cur_account.username);
 				my_en_syslog("error", "TPD joint instruction out of limit", cur_account.username);
+				my_jap_syslog("さくご", "tpd関節コマンドオーバー", cur_account.username);
 				pre_state->cmdPointError = 9;
 			}
 			break;
 		case 10:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "LIN/ARC offering joint command out of limit");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "LIN/ARC関節指令を出してオーバーランさせる");
 			}
 			if (pre_state->cmdPointError != 10) {
 				my_syslog("错误", "LIN/ARC下发关节指令超限", cur_account.username);
 				my_en_syslog("error", "LIN/ARC offering joint command out of limit", cur_account.username);
+				my_jap_syslog("さくご", "LIN/ARC関節指令を出してオーバーランさせる", cur_account.username);
 				pre_state->cmdPointError = 10;
 			}
 			break;
 		case 11:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Overspeed command in Cartesian space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "デカルト空間内ではスピードの出しすぎを指示する");
 			}
 			if (pre_state->cmdPointError != 11) {
 				my_syslog("错误", "笛卡尔空间内指令超速", cur_account.username);
 				my_en_syslog("error", "Overspeed command in Cartesian space", cur_account.username);
+				my_jap_syslog("さくご", "デカルト空間内ではスピードの出しすぎを指示する", cur_account.username);
 				pre_state->cmdPointError = 11;
 			}
 			break;
 		case 12:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Excessive torque command in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "関節空間内トルク指令オーバー");
 			}
 			if (pre_state->cmdPointError != 12) {
 				my_syslog("错误", "关节空间内扭矩指令超限", cur_account.username);
 				my_en_syslog("error", "Excessive torque command in joint space", cur_account.username);
+				my_jap_syslog("さくご", "関節空間内トルク指令オーバー", cur_account.username);
 				pre_state->cmdPointError = 12;
 			}
 			break;
 		case 13:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The next command changes the joint configuration");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "次は関節配置の変化を指示します");
 			}
 			if (pre_state->cmdPointError != 13) {
 				my_syslog("错误", "下一指令关节配置发生变化", cur_account.username);
 				my_en_syslog("error", "The next command changes the joint configuration", cur_account.username);
+				my_jap_syslog("さくご", "次は関節配置の変化を指示します", cur_account.username);
 				pre_state->cmdPointError = 13;
 			}
 			break;
 		case 14:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "当前指令关节配置发生变化");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The current instruction joint configuration has changed");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "カレントコマンド関節配置が変化します");
 			}
 			if (pre_state->cmdPointError != 14) {
 				my_syslog("错误", "当前指令关节配置发生变化", cur_account.username);
 				my_en_syslog("error", "The current instruction joint configuration has changed", cur_account.username);
+				my_jap_syslog("さくご", "カレントコマンド関節配置が変化します", cur_account.username);
 				pre_state->cmdPointError = 14;
 			}
 			break;
 		case 15:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "JOG joint instruction out of limit");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "JOG関節コマンドオーバー");
 			}
 			if (pre_state->cmdPointError != 15) {
 				my_syslog("错误", "JOG关节指令超限", cur_account.username);
 				my_en_syslog("error", "JOG joint instruction out of limit", cur_account.username);
+				my_jap_syslog("さくご", "JOG関節コマンドオーバー", cur_account.username);
 				pre_state->cmdPointError = 15;
 			}
 			break;
 		case 16:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴1关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 1 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸1関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 16) {
 				my_syslog("错误", "轴1关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 1 joint overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸1関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 16;
 			}
 			break;
 		case 17:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴2关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 2 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸2関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 17) {
 				my_syslog("错误", "轴2关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 2 overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸2関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 17;
 			}
 			break;
 		case 18:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴3关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 3 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸3関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 18) {
 				my_syslog("错误", "轴3关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 3 overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸3関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 18;
 			}
 			break;
 		case 19:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴4关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 4 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸4関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 19) {
 				my_syslog("错误", "轴4关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 4 overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸4関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 19;
 			}
 			break;
 		case 20:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴5关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 5 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸5関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 20) {
 				my_syslog("错误", "轴5关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 5 overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸5関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 20;
 			}
 			break;
 		case 21:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Axis 6 overrun command velocity in joint space");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "軸6関節空間内指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 21) {
 				my_syslog("错误", "轴6关节空间内指令速度超限", cur_account.username);
 				my_en_syslog("error", "Axis 6 overrun command velocity in joint space", cur_account.username);
+				my_jap_syslog("さくご", "軸6関節空間内指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 21;
 			}
 			break;
 		case 22:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "内外部工具切换错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Error switching internal and external tools");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "内部ツールと外部ツールの切り替えエラー");
 			}
 			if (pre_state->cmdPointError != 22) {
 				my_syslog("错误", "内外部工具切换错误", cur_account.username);
 				my_en_syslog("error", "Error switching internal and external tools", cur_account.username);
+				my_jap_syslog("さくご", "内部ツールと外部ツールの切り替えエラー", cur_account.username);
 				pre_state->cmdPointError = 22;
 			}
 			break;
 		case 23:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "焊接指令错误，起收弧间只允许LIN和ARC指令");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between starting and closing arcs");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "はんだ付けコマンドが間違っていて、linとarcコマンドだけがアーク間で許可されています");
 			}
 			if (pre_state->cmdPointError != 23) {
 				my_syslog("错误", "焊接指令错误，起收弧间只允许LIN和ARC指令", cur_account.username);
 				my_en_syslog("error", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between starting and closing arcs", cur_account.username);
+				my_jap_syslog("さくご", "はんだ付けコマンドが間違っていて、linとarcコマンドだけがアーク間で許可されています", cur_account.username);
 				pre_state->cmdPointError = 23;
 			}
 			break;
 		case 24:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "摆焊参数错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Swing welding parameter error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "振り子溶接パラメータが間違っている");
 			}
 			if (pre_state->cmdPointError != 24) {
 				my_syslog("错误", "摆焊参数错误", cur_account.username);
 				my_en_syslog("error", "Swing welding parameter error", cur_account.username);
+				my_jap_syslog("さくご", "振り子溶接パラメータが間違っている", cur_account.username);
 				pre_state->cmdPointError = 24;
 			}
 			break;
 		case 25:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "圆弧指令点间距过小");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The distance between arc instruction points is too small");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "円弧コマンド点の間隔が小さすぎる");
 			}
 			if (pre_state->cmdPointError != 25) {
 				my_syslog("错误", "圆弧指令点间距过小", cur_account.username);
 				my_en_syslog("error", "The distance between arc instruction points is too small", cur_account.username);
+				my_jap_syslog("さくご", "円弧コマンド点の間隔が小さすぎる", cur_account.username);
 				pre_state->cmdPointError = 25;
 			}
 			break;
 		case 26:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "激光传感器指令偏差过大");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction deviation is too large");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "レーザーセンサーの指令偏差が大きすぎる");
 			}
 			if (pre_state->cmdPointError != 26) {
 				my_syslog("错误", "激光传感器指令偏差过大", cur_account.username);
 				my_en_syslog("error", "Laser sensor instruction deviation is too large", cur_account.username);
+				my_jap_syslog("さくご", "レーザーセンサーの指令偏差が大きすぎる", cur_account.username);
 				pre_state->cmdPointError = 26;
 			}
 			break;
 		case 27:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "激光传感器指令中断, 焊缝跟踪提前结束");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction is interrupted, weld tracking ends prematurely");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "レーザーセンサは中断され、溶接部の追跡は早期に終了します");
 			}
 			if (pre_state->cmdPointError != 27) {
 				my_syslog("错误", "激光传感器指令中断, 焊缝跟踪提前结束", cur_account.username);
 				my_en_syslog("error", "Laser sensor instruction is interrupted, weld tracking ends prematurely", cur_account.username);
+				my_jap_syslog("さくご", "レーザーセンサは中断され、溶接部の追跡は早期に終了します", cur_account.username);
 				pre_state->cmdPointError = 27;
 			}
 			break;
 		case 28:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "外部轴指令速度超限");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "External shaft instruction speed over limit");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "外部軸指令速度オーバー");
 			}
 			if (pre_state->cmdPointError != 28) {
 				my_syslog("错误", "外部轴指令速度超限", cur_account.username);
 				my_en_syslog("error", "External shaft instruction speed over limit", cur_account.username);
+				my_jap_syslog("さくご", "外部軸指令速度オーバー", cur_account.username);
 				pre_state->cmdPointError = 28;
 			}
 			break;
 		case 29:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "传送带跟踪-起始点与参考点姿态变化过大");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Belt tracking - starting point and reference point attitude change too much");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている");
 			}
 			if (pre_state->cmdPointError != 29) {
 				my_syslog("错误", "传送带跟踪-起始点与参考点姿态变化过大", cur_account.username);
 				my_en_syslog("error", "Belt tracking - starting point and reference point attitude change too much", cur_account.username);
+				my_jap_syslog("さくご", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている", cur_account.username);
 				pre_state->cmdPointError = 29;
 			}
 			break;
@@ -1445,120 +2027,170 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "通道错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The channel error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "チャネルエラー");
 			}
 			if (pre_state->ioError != 1) {
 				my_syslog("错误", "通道错误", cur_account.username);
 				my_en_syslog("error", "The channel error", cur_account.username);
+				my_jap_syslog("さくご", "チャネルエラー", cur_account.username);
 				pre_state->ioError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "数值错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "numerical fault");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "数値エラー");
 			}
 			if (pre_state->ioError != 2) {
 				my_syslog("错误", "数值错误", cur_account.username);
 				my_en_syslog("error", "numerical fault", cur_account.username);
+				my_jap_syslog("さくご", "数値エラー", cur_account.username);
 				pre_state->ioError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitDI等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitDI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "WaitDI タイムアウト待ち");
 			}
 			if (pre_state->ioError != 3) {
 				my_syslog("错误", "WaitDI等待超时", cur_account.username);
 				my_en_syslog("error", "WaitDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "WaitDI タイムアウト待ち", cur_account.username);
 				pre_state->ioError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitAI等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitAI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "WaitAI タイムアウト待ち");
 			}
 			if (pre_state->ioError != 4) {
 				my_syslog("错误", "WaitAI等待超时", cur_account.username);
 				my_en_syslog("error", "WaitAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "WaitAI タイムアウト待ち", cur_account.username);
 				pre_state->ioError = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitAxleDI等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitAxleDI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "WaitAxleDI タイムアウト待ち");
 			}
 			if (pre_state->ioError != 5) {
 				my_syslog("错误", "WaitAxleDI等待超时", cur_account.username);
 				my_en_syslog("error", "WaitAxleDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "WaitAxleDI タイムアウト待ち", cur_account.username);
 				pre_state->ioError = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitAxleAI等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitAxleAI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "WaitAxleAI タイムアウト待ち");
 			}
 			if (pre_state->ioError != 6) {
 				my_syslog("错误", "WaitAxleAI等待超时", cur_account.username);
 				my_en_syslog("error", "WaitAxleAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "WaitAxleAI タイムアウト待ち", cur_account.username);
 				pre_state->ioError = 6;
 			}
 			break;
 		case 7:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "通道已配置功能错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "The channel has been configured functionally wrong");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "チャンネルが設定されています");
 			}
 			if (pre_state->ioError != 7) {
 				my_syslog("错误", "通道已配置功能错误", cur_account.username);
 				my_en_syslog("error", "The channel has been configured functionally wrong", cur_account.username);
+				my_jap_syslog("さくご", "チャンネルが設定されています", cur_account.username);
 				pre_state->ioError = 7;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "起弧超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Striking a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "起弧タイムアウト");
 			}
 			if (pre_state->ioError != 8) {
 				my_syslog("错误", "起弧超时", cur_account.username);
 				my_en_syslog("error", "Striking a timeout", cur_account.username);
+				my_jap_syslog("さくご", "起弧タイムアウト", cur_account.username);
 				pre_state->ioError = 8;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "收弧超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Are-receive timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "円弧タイムアウト");
 			}
 			if (pre_state->ioError != 9) {
 				my_syslog("错误", "收弧超时", cur_account.username);
 				my_en_syslog("error", "Are-receive timeout", cur_account.username);
+				my_jap_syslog("さくご", "円弧タイムアウト", cur_account.username);
 				pre_state->ioError = 9;
 			}
 			break;
 		case 10:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "寻位超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Find a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "アドレッシング・タイムアウト");
 			}
 			if (pre_state->ioError != 10) {
 				my_syslog("错误", "寻位超时", cur_account.username);
 				my_en_syslog("error", "Find a timeout", cur_account.username);
+				my_jap_syslog("さくご", "アドレッシング・タイムアウト", cur_account.username);
 				pre_state->ioError = 10;
 			}
 			break;
@@ -1569,12 +2201,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->gripperError == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "夹爪运动超时错误");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Claw movement timeout error");
+		}
+		if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "爪運動タイムアウトエラー");
 		}
 		if (pre_state->gripperError != 1) {
 			my_syslog("错误", "夹爪运动超时错误", cur_account.username);
 			my_en_syslog("error", "Claw movement timeout error", cur_account.username);
+			my_jap_syslog("さくご", "爪運動タイムアウトエラー", cur_account.username);
 			pre_state->gripperError = 1;
 		}
 	} else {
@@ -1584,72 +2221,102 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "zbt配置文件版本错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "zbt incorrect configuration file version");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "zbtプロファイルのバージョンが間違っています");
 			}
 			if (pre_state->fileError != 1) {
 				my_syslog("错误", "zbt配置文件版本错误", cur_account.username);
 				my_en_syslog("error", "zbt incorrect configuration file version", cur_account.username);
+				my_jap_syslog("さくご", "zbtプロファイルのバージョンが間違っています", cur_account.username);
 				pre_state->fileError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "zbt配置文件加载失败");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "zbt the configuration file failed to load");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "zbtプロファイルのロードに失敗しました");
 			}
 			if (pre_state->fileError != 2) {
 				my_syslog("错误", "zbt配置文件加载失败", cur_account.username);
 				my_en_syslog("error", "zbt the configuration file failed to load", cur_account.username);
+				my_jap_syslog("さくご", "zbtプロファイルのロードに失敗しました", cur_account.username);
 				pre_state->fileError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "user配置文件版本错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "user incorrect configuration file version");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "userプロファイルのバージョンが間違っています");
 			}
 			if (pre_state->fileError != 3) {
 				my_syslog("错误", "user配置文件版本错误", cur_account.username);
 				my_en_syslog("error", "user incorrect configuration file version", cur_account.username);
+				my_jap_syslog("さくご", "userプロファイルのバージョンが間違っています", cur_account.username);
 				pre_state->fileError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "user配置文件加载失败");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "user the configuration file failed to load");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "userプロファイルの読み込みに失敗しました");
 			}
 			if (pre_state->fileError != 4) {
 				my_syslog("错误", "user配置文件加载失败", cur_account.username);
 				my_en_syslog("error", "user the configuration file failed to load", cur_account.username);
+				my_jap_syslog("さくご", "userプロファイルの読み込みに失敗しました", cur_account.username);
 				pre_state->fileError = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "exaxis配置文件版本错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "exaxis incorrect configuration file version");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "exaxisプロファイルのバージョンが間違っています");
 			}
 			if (pre_state->fileError != 5) {
 				my_syslog("错误", "exaxis配置文件版本错误", cur_account.username);
 				my_en_syslog("error", "exaxis incorrect configuration file version", cur_account.username);
+				my_jap_syslog("さくご", "exaxisプロファイルのバージョンが間違っています", cur_account.username);
 				pre_state->fileError = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "exaxis配置文件加载失败");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "exaxis the configuration file failed to load");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "exaxisプロファイルのロードに失敗しました");
 			}
 			if (pre_state->fileError != 6) {
 				my_syslog("错误", "exaxis配置文件加载失败", cur_account.username);
 				my_en_syslog("error", "exaxis the configuration file failed to load", cur_account.username);
+				my_jap_syslog("さくご", "exaxisプロファイルのロードに失敗しました", cur_account.username);
 				pre_state->fileError = 6;
 			}
 			break;
@@ -1662,156 +2329,221 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "工具号超限错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Error with tool number overrun");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "工具番号オーバーエラー");
 			}
 			if (pre_state->paraError != 1) {
 				my_syslog("错误", "工具号超限错误", cur_account.username);
 				my_en_syslog("error", "Error with tool number overrun", cur_account.username);
+				my_jap_syslog("さくご", "工具番号オーバーエラー", cur_account.username);
 				pre_state->paraError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "定位完成阈值错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Error in positioning completion threshold");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "定定完了しきい値エラー");
 			}
 			if (pre_state->paraError != 2) {
 				my_syslog("错误", "定位完成阈值错误", cur_account.username);
 				my_en_syslog("error", "Error in positioning completion threshold", cur_account.username);
+				my_jap_syslog("さくご", "定定完了しきい値エラー", cur_account.username);
 				pre_state->paraError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "碰撞等级错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Collision level error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "衝突レベルの誤り");
 			}
 			if (pre_state->paraError != 3) {
 				my_syslog("错误", "碰撞等级错误", cur_account.username);
 				my_en_syslog("error", "Collision level error", cur_account.username);
+				my_jap_syslog("さくご", "衝突レベルの誤り", cur_account.username);
 				pre_state->paraError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "负载重量错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Load weight error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "荷重重量の誤り");
 			}
 			if (pre_state->paraError != 4) {
 				my_syslog("错误", "负载重量错误", cur_account.username);
 				my_en_syslog("error", "Load weight error", cur_account.username);
+				my_jap_syslog("さくご", "荷重重量の誤り", cur_account.username);
 				pre_state->paraError = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "负载质心X错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Load center of mass X error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "荷重质心x間違って");
 			}
 			if (pre_state->paraError != 5) {
 				my_syslog("错误", "负载质心X错误", cur_account.username);
 				my_en_syslog("error", "Load center of mass X error", cur_account.username);
+				my_jap_syslog("さくご", "荷重质心x間違って", cur_account.username);
 				pre_state->paraError = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "负载质心Y错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Load center of mass Y error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "負荷重心Yエラー");
 			}
 			if (pre_state->paraError != 6) {
 				my_syslog("错误", "负载质心Y错误", cur_account.username);
 				my_en_syslog("error", "Load center of mass Y error", cur_account.username);
+				my_jap_syslog("さくご", "負荷重心Yエラー", cur_account.username);
 				pre_state->paraError = 6;
 			}
 			break;
 		case 7:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "负载质心Z错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Load center of mass Z error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "負荷重心zエラー");
 			}
 			if (pre_state->paraError != 7) {
 				my_syslog("错误", "负载质心Z错误", cur_account.username);
 				my_en_syslog("error", "Load center of mass Z error", cur_account.username);
+				my_jap_syslog("さくご", "負荷重心zエラー", cur_account.username);
 				pre_state->paraError = 7;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "DI滤波时间错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "DI filtering time error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "diフィルタリング時間エラー");
 			}
 			if (pre_state->paraError != 8) {
 				my_syslog("错误", "DI滤波时间错误", cur_account.username);
 				my_en_syslog("error", "DI filtering time error", cur_account.username);
+				my_jap_syslog("さくご", "diフィルタリング時間エラー", cur_account.username);
 				pre_state->paraError = 8;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "AxleDI滤波时间错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "AxleDI filtering time error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "axlediフィルタリング時間エラー");
 			}
 			if (pre_state->paraError != 9) {
 				my_syslog("错误", "AxleDI滤波时间错误", cur_account.username);
 				my_en_syslog("error", "AxleDI filtering time error", cur_account.username);
+				my_jap_syslog("さくご", "axlediフィルタリング時間エラー", cur_account.username);
 				pre_state->paraError = 9;
 			}
 			break;
 		case 10:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "AI滤波时间错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "AI filtering time error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "aiは時間エラーをフィルタリングする");
 			}
 			if (pre_state->paraError != 10) {
 				my_syslog("错误", "AI滤波时间错误", cur_account.username);
 				my_en_syslog("error", "AI filtering time error", cur_account.username);
+				my_jap_syslog("さくご", "aiは時間エラーをフィルタリングする", cur_account.username);
 				pre_state->paraError = 10;
 			}
 			break;
 		case 11:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "AxleAI滤波时间错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "AxleAI filtering time error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "axleaiは時間エラーをフィルタリングする");
 			}
 			if (pre_state->paraError != 11) {
 				my_syslog("错误", "AxleAI滤波时间错误", cur_account.username);
 				my_en_syslog("error", "AxleAI filtering time error", cur_account.username);
+				my_jap_syslog("さくご", "axleaiは時間エラーをフィルタリングする", cur_account.username);
 				pre_state->paraError = 11;
 			}
 			break;
 		case 12:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "DI高低电平范围错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "DI wrong range of high and low levels");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "diの高低の範囲が間違っている");
 			}
 			if (pre_state->paraError != 12) {
 				my_syslog("错误", "DI高低电平范围错误", cur_account.username);
 				my_en_syslog("error", "DI wrong range of high and low levels", cur_account.username);
+				my_jap_syslog("さくご", "diの高低の範囲が間違っている", cur_account.username);
 				pre_state->paraError = 12;
 			}
 			break;
 		case 13:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "DO高低电平范围错误");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "DO wrong range of high and low levels");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "do高低範囲が間違っている");
 			}
 			if (pre_state->paraError != 13) {
 				my_syslog("错误", "DO高低电平范围错误", cur_account.username);
 				my_en_syslog("error", "DO wrong range of high and low levels", cur_account.username);
+				my_jap_syslog("さくご", "do高低範囲が間違っている", cur_account.username);
 				pre_state->paraError = 13;
 			}
 			break;
@@ -1825,48 +2557,68 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "外部轴1轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "External axis 1 axis out of soft limit fault");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "外軸1軸がソフトリミットを超えるトラブル");
 			}
 			if (pre_state->exAxisExSoftLimitError != 1) {
 				my_syslog("错误", "外部轴1轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 1 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "外軸1軸がソフトリミットを超えるトラブル", cur_account.username);
 				pre_state->exAxisExSoftLimitError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "外部轴2轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "External axis 2 axis out of soft limit fault");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "外軸2軸がソフトリミットを超えるトラブル");
 			}
 			if (pre_state->exAxisExSoftLimitError != 2) {
 				my_syslog("错误", "外部轴2轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 2 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "外軸2軸がソフトリミットを超えるトラブル", cur_account.username);
 				pre_state->exAxisExSoftLimitError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "外部轴3轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "External axis 3 axis out of soft limit fault");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "外軸3軸がソフトリミットを超えるトラブル");
 			}
 			if (pre_state->exAxisExSoftLimitError != 3) {
 				my_syslog("错误", "外部轴3轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 3 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "外軸3軸がソフトリミットを超えるトラブル", cur_account.username);
 				pre_state->exAxisExSoftLimitError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "外部轴4轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "External axis 4 axis out of soft limit fault");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "外軸4軸がソフトリミットを超えるトラブル");
 			}
 			if (pre_state->exAxisExSoftLimitError != 4) {
 				my_syslog("错误", "外部轴4轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 4 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "外軸4軸がソフトリミットを超えるトラブル", cur_account.username);
 				pre_state->exAxisExSoftLimitError = 4;
 			}
 			break;
@@ -1878,108 +2630,153 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "肩关节配置变化");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Shoulder joint configuration changes");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "肩関節の配置変化");
 			}
 			if (pre_state->alarm != 1) {
 				my_syslog("错误", "肩关节配置变化", cur_account.username);
 				my_en_syslog("error", "Shoulder joint configuration changes", cur_account.username);
+				my_jap_syslog("さくご", "肩関節の配置変化", cur_account.username);
 				pre_state->alarm = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "肘关节配置变化");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Elbow  joint configuration changes");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "肘関節の配置変化");
 			}
 			if (pre_state->alarm != 2) {
 				my_syslog("错误", "肘关节配置变化", cur_account.username);
 				my_en_syslog("error", "Elbow  joint configuration changes", cur_account.username);
+				my_jap_syslog("さくご", "肘関節の配置変化", cur_account.username);
 				pre_state->alarm = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "腕关节配置变化");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Wrist  joint configuration changes");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "腕関節の配置変化");
 			}
 			if (pre_state->alarm != 3) {
 				my_syslog("错误", "腕关节配置变化", cur_account.username);
 				my_en_syslog("error", "Wrist  joint configuration changes", cur_account.username);
+				my_jap_syslog("さくご", "腕関節の配置変化", cur_account.username);
 				pre_state->alarm = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "RPY初始化失败");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "RPY initialization failure");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "rpyの初期化に失敗する");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", "RPY初始化失败", cur_account.username);
 				my_en_syslog("error", "RPY initialization failure", cur_account.username);
+				my_jap_syslog("さくご", "rpyの初期化に失敗する", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitDI 等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitDI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "waitdiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", " WaitDI 等待超时", cur_account.username);
 				my_en_syslog("error", "WaitDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "waitdiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitAI 等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitAI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "waitaiタイムアウト待ち");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", "WaitAI 等待超时", cur_account.username);
 				my_en_syslog("error", "WaitAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "waitaiタイムアウト待ち", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 7:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "WaitToolDI 等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitToolDI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "waittooldiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", "WaitToolDI 等待超时", cur_account.username);
 				my_en_syslog("error", "WaitToolDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "waittooldiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "WaitToolAI 等待超时");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "WaitToolAI wait for a timeout");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "waittoolaiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", "WaitToolAI 等待超时", cur_account.username);
 				my_en_syslog("error", "WaitToolAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "waittoolaiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "起弧成功 DI 未配置");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "Arcing success DI is not configured");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "起弧成功di未配置");
 			}
 			if (pre_state->alarm != 4) {
 				my_syslog("错误", "起弧成功 DI 未配置", cur_account.username);
 				my_en_syslog("error", "Arcing success DI is not configured", cur_account.username);
+				my_jap_syslog("さくご", "起弧成功di未配置", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
@@ -1990,31 +2787,68 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->dr_com_err == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "通信故障:控制器与驱动器心跳检测故障");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Communication failure: controller and drive heartbeat detection failure");
+		}
+		if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "通信障害:コントローラとドライバの心拍検出に障害がある");
 		}
 		if (pre_state->dr_com_err != 1) {
 			my_syslog("错误", "通信故障:控制器与驱动器心跳检测故障", cur_account.username);
 			my_en_syslog("error", "Communication failure: controller and drive heartbeat detection failure", cur_account.username);
+			my_jap_syslog("さくご", "通信障害:コントローラとドライバの心拍検出に障害がある", cur_account.username);
 			pre_state->dr_com_err = 1;
 		}
 	} else {
 		pre_state->dr_com_err = 0;
 	}
+
+	if ((int)state->dr_err != 0) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "%d 轴驱动器故障, 驱动器故障代码: %d", (int)state->dr_err, (int)state->dr_err_code);
+		sprintf(en_content, "%d axis drive failure, drive failure code:%d", (int)state->dr_err, (int)state->dr_err_code);
+		sprintf(jap_content, "%d シャフトドライブ障害ドライブ障害コード: %d", (int)state->dr_err, (int)state->dr_err_code);
+		if (language == 0) { 
+			cJSON_AddStringToObject(error_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", jap_content);
+		}
+		if (pre_state->dr_err != 1) {
+			my_syslog("错误", content, cur_account.username);
+			my_en_syslog("error", en_content, cur_account.username);
+			my_jap_syslog("さくご", jap_content, cur_account.username);
+			pre_state->dr_err = 1;
+		}
+	} else {
+		pre_state->dr_err = 0;
+	}
+	/*
 	memset(content, 0, sizeof(content));
 	memset(en_content, 0, sizeof(en_content));
 	switch ((int)state->dr_err) {
 		case 1:
-			sprintf(content, "%d轴驱动器故障, 驱动器故障代码:%d", 1, (int)state->dr_err_code);
+			sprintf(content, "%d 轴驱动器故障, 驱动器故障代码: %d", 1, (int)state->dr_err_code);
 			sprintf(en_content, "%d axis drive failure, drive failure code:%d", 1, (int)state->dr_err_code);
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->dr_err != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->dr_err = 1;
 			}
 			break;
@@ -2091,77 +2925,133 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		default:
 			pre_state->dr_err = 0;
 			break;
+	}*/
+	if ((int)state->out_sflimit_err != 0) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "%d 轴超出软限位故障", (int)state->out_sflimit_err);
+		sprintf(en_content, "%d axis out of soft limit fault", (int)state->out_sflimit_err);
+		sprintf(jap_content, "%d シャフトがソフトリミットを超えて故障する", (int)state->out_sflimit_err);
+		if (language == 0) { 
+			cJSON_AddStringToObject(error_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", jap_content);
+		}
+		if (pre_state->out_sflimit_err != 1) {
+			my_syslog("错误", content, cur_account.username);
+			my_en_syslog("error", en_content, cur_account.username);
+			my_jap_syslog("さくご", jap_content, cur_account.username);
+			pre_state->out_sflimit_err = 1;
+		}
+	} else {
+		pre_state->out_sflimit_err = 0;
 	}
-	switch ((int)state->out_sflimit_err) {
+
+	/*switch ((int)state->out_sflimit_err) {
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "1轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "1 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 1) {
 				my_syslog("错误", "1轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "1 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "2轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "2 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 2) {
 				my_syslog("错误", "2轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "2 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "3轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "3 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 3) {
 				my_syslog("错误", "3轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "3 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "4轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "4 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 4) {
 				my_syslog("错误", "4轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "4 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "5轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "5 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 5) {
 				my_syslog("错误", "5轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "5 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "6轴超出软限位故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "6 axis out of soft limit fault");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->out_sflimit_err != 6) {
 				my_syslog("错误", "6轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "6 axis out of soft limit fault", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->out_sflimit_err = 6;
 			}
 			break;
@@ -2169,76 +3059,133 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->out_sflimit_err = 0;
 			break;
 	}
+*/
+	if ((int)state->collision_err != 0) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "%d 轴碰撞故障", (int)state->collision_err);
+		sprintf(en_content, "%d axis impact fault", (int)state->collision_err);
+		sprintf(jap_content, "%d 軸衝突故障", (int)state->collision_err);
+		if (language == 0) { 
+			cJSON_AddStringToObject(error_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", jap_content);
+		}
+		if (pre_state->collision_err != 1) {
+			my_syslog("错误", content, cur_account.username);
+			my_en_syslog("error", en_content, cur_account.username);
+			my_jap_syslog("さくご", jap_content, cur_account.username);
+			pre_state->collision_err = 1;
+		}
+	} else {
+		pre_state->collision_err = 0;
+	}
+/*
 	switch((int)state->collision_err) {
 		case 1:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "1轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "1 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 1) {
 				my_syslog("错误", "1轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "1 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "2轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "2 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 2) {
 				my_syslog("错误", "2轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "2 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "3轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "3 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 3) {
 				my_syslog("错误", "3轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "3 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "4轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "4 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 4) {
 				my_syslog("错误", "4轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "4 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "5轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "5 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 5) {
 				my_syslog("错误", "5轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "5 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 5;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", "6轴碰撞故障");
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", "6 axis impact failure");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "");
 			}
 			if (pre_state->collision_err != 6) {
 				my_syslog("错误", "6轴碰撞故障", cur_account.username);
 				my_en_syslog("error", "6 axis impact failure", cur_account.username);
+				my_jap_syslog("さくご", "", cur_account.username);
 				pre_state->collision_err = 6;
 			}
 			break;
@@ -2246,15 +3193,21 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->collision_err = 0;
 			break;
 	}
+*/
 	if (state->safetydoor_alarm == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "安全门触发");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Safety door trigger");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "安全扉トリガ");
 		}
 		if (pre_state->safetydoor_alarm != 1) {
 			my_syslog("错误", "安全门触发", cur_account.username);
 			my_en_syslog("error", "Safety door trigger", cur_account.username);
+			my_jap_syslog("さくご", "安全扉トリガ", cur_account.username);
 			pre_state->safetydoor_alarm = 1;
 		}
 	} else {
@@ -2263,12 +3216,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->weld_readystate == 0) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "焊机未准备好");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "The welder is not ready");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "溶接機が準備できていない");
 		}
 		if (pre_state->weld_readystate != 1) {
 			my_syslog("错误", "焊机未准备好", cur_account.username);
 			my_en_syslog("error", "The welder is not ready", cur_account.username);
+			my_jap_syslog("さくご", "溶接機が準備できていない", cur_account.username);
 			pre_state->weld_readystate = 1;
 		}
 	} else {
@@ -2278,17 +3236,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisALM == 1) {
 			memset(content, 0, sizeof(content));
-			sprintf(content, "外部轴 %d 伺服报警", (i+1));
 			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 伺服报警", (i+1));
 			sprintf(en_content, "exaxis %d servo alarm", (i+1));
+			sprintf(jap_content, "外部軸 %d サーボアラーム", (i+1));
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
 			}
 			if (pre_state->exaxis_status[i].exAxisALM != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
 				pre_state->exaxis_status[i].exAxisALM = 1;
 			}
 		} else {
@@ -2298,17 +3263,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisFLERR == 1) {
 			memset(content, 0, sizeof(content));
-			sprintf(content, "外部轴 %d 跟随误差过大", (i+1));
 			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 跟随误差过大", (i+1));
 			sprintf(en_content, "exaxis %d too much following error", (i+1));
+			sprintf(jap_content, "外部軸 %d 追従誤差が大きすぎる", (i+1));
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
 			}
 			if (pre_state->exaxis_status[i].exAxisFLERR != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
 				pre_state->exaxis_status[i].exAxisFLERR = 1;
 			}
 		} else {
@@ -2319,17 +3291,24 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisNLMT == 1) {
 			memset(content, 0, sizeof(content));
-			sprintf(content, "外部轴 %d 到负限位", (i+1));
 			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 到负限位", (i+1));
 			sprintf(en_content, "exaxis %d to the negative limit", (i+1));
+			sprintf(jap_content, "外部軸 %d 負のリミットまで", (i+1));
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
 			}
 			if (pre_state->exaxis_status[i].exAxisNLMT != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
 				pre_state->exaxis_status[i].exAxisNLMT = 1;
 			}
 		} else {
@@ -2340,38 +3319,79 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisPLMT == 1) {
 			memset(content, 0, sizeof(content));
-			sprintf(content, "外部轴 %d 到正限位", (i+1));
 			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 到正限位", (i+1));
 			sprintf(en_content, "exaxis %d to the forward limit", (i+1));
+			sprintf(jap_content, "外部軸 %d 正のリミットまで", (i+1));
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
 			}
 			if (pre_state->exaxis_status[i].exAxisPLMT != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
 				pre_state->exaxis_status[i].exAxisPLMT = 1;
 			}
 		} else {
 			pre_state->exaxis_status[i].exAxisPLMT = 0;
 		}
 	}
+	for (i = 0; i < 4; i++) {
+		if ((int)state->exaxis_status[i].exAxisAbsOFLN == 1) {
+			memset(content, 0, sizeof(content));
+			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 驱动器485总线掉线", (i+1));
+			sprintf(en_content, "exaxis %d the driver 485 bus is disconnected", (i+1));
+			sprintf(jap_content, "外部軸 %d ドライバ485バスが中断される", (i+1));
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", content);
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
+			}
+			if (pre_state->exaxis_status[i].exAxisAbsOFLN != 1) {
+				my_syslog("错误", content, cur_account.username);
+				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
+				pre_state->exaxis_status[i].exAxisAbsOFLN = 1;
+			}
+		} else {
+			pre_state->exaxis_status[i].exAxisAbsOFLN = 0;
+		}
+	}
 	//for (i = 0; i < 4; i++) {
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisOFLIN == 1) {
 			memset(content, 0, sizeof(content));
-			sprintf(content, "外部轴 %d 通信超时，控制卡与控制箱板485通信超时", (i+1));
 			memset(en_content, 0, sizeof(en_content));
+			memset(jap_content, 0, sizeof(jap_content));
+			sprintf(content, "外部轴 %d 通信超时，控制卡与控制箱板485通信超时", (i+1));
 			sprintf(en_content, "exaxis %d communication timeout, control card and control box board 485 communication timeout", (i+1));
+			sprintf(jap_content, "外部軸 %d 通信タイムアウト制御カードと制御ボックス基板485との通信タイムアウト", (i+1));
 			if (language == 0) { 
 				cJSON_AddStringToObject(error_json, "key", content);
-			} else {
+			}
+			if (language == 1) {
 				cJSON_AddStringToObject(error_json, "key", en_content);
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", jap_content);
 			}
 			if (pre_state->exaxis_status[i].exAxisOFLIN != 1) {
 				my_syslog("错误", content, cur_account.username);
 				my_en_syslog("error", en_content, cur_account.username);
+				my_jap_syslog("さくご", jap_content, cur_account.username);
 				pre_state->exaxis_status[i].exAxisOFLIN = 1;
 			}
 		} else {
@@ -2401,12 +3421,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->motionAlarm == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "LIN 指令姿态变化过大");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "The LIN command posture has changed too much");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "linコマンドの姿勢変化が大きすぎる");
 		}
 		if (pre_state->motionAlarm != 1) {
 			my_syslog("错误", "LIN指令姿态变化过大", cur_account.username);
 			my_en_syslog("error", "The LIN command posture has changed too much", cur_account.username);
+			my_jap_syslog("さくご", "linコマンドの姿勢変化が大きすぎる", cur_account.username);
 			pre_state->motionAlarm = 1;
 		}
 	} else {
@@ -2423,12 +3448,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->alarm_check_emerg_stop_btn == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "通信异常,检查急停按钮是否松开");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Abnormal communication, check whether the emergency stop button is loosened");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "通信異常、急停止ボタンが外れているかチェック");
 		}
 		if (pre_state->alarm_check_emerg_stop_btn != 1) {
 			my_syslog("错误", "通信异常,检查急停按钮是否松开", cur_account.username);
 			my_en_syslog("error", "Warning: abnormal communication, check whether the emergency stop button is released", cur_account.username);
+			my_jap_syslog("さくご", "通信異常、急停止ボタンが外れているかチェック", cur_account.username);
 			pre_state->alarm_check_emerg_stop_btn = 1;
 		}
 	} else {
@@ -2438,12 +3468,17 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	if (state->alarm_reboot_rebot == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "断电重启机器人");
-		} else {
+		}
+		if (language == 1) {
 			cJSON_AddStringToObject(error_json, "key", "Power off and restart the robot");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "電源を切ってロボットを再起動する");
 		}
 		if (pre_state->alarm_reboot_rebot != 1) {
 			my_syslog("错误", "断电重启机器人", cur_account.username);
 			my_en_syslog("error", "Power off and restart the robot", cur_account.username);
+			my_jap_syslog("さくご", "電源を切ってロボットを再起動す", cur_account.username);
 			pre_state->alarm_reboot_rebot = 1;
 		}
 	} else {

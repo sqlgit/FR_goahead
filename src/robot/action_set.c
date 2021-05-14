@@ -1776,6 +1776,7 @@ void set(Webs *wp)
 	cJSON *data = NULL;
 	char log_content[1024] = {0};
 	char en_log_content[1024] = {0};
+	char jap_log_content[1024] = {0};
 
 	/** virtual robot */
 	if (robot_type == 0) {
@@ -1856,6 +1857,7 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "开始程序示教");
 		strcpy(en_log_content, "Begin program teaching");
+		strcpy(jap_log_content, "プログラムを教えてください");
 		ret = program_start(data_json, content);
 		break;
 	case 102:
@@ -1863,6 +1865,7 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "停止程序示教");
 		strcpy(en_log_content, "Stop program teaching");
+		strcpy(jap_log_content, "プログラムの教示を停止する");
 		ret = program_stop(data_json, content);
 		break;
 	case 103:
@@ -1870,6 +1873,7 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "暂停程序示教");
 		strcpy(en_log_content, "Pause program teaching");
+		strcpy(jap_log_content, "プログラムを一時停止して教える");
 		ret = program_pause(data_json, content);
 		break;
 	case 104:
@@ -1877,18 +1881,21 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "恢复程序示教");
 		strcpy(en_log_content, "Restore program teaching");
+		strcpy(jap_log_content, "回復プログラムが教えてくれる");
 		ret = program_resume(data_json, content);
 		break;
 	case 105:/* 8082 */
 		port = fileport;
 		strcpy(log_content, "下发程序示教名称");
 		strcpy(en_log_content, "Send the program teaching name");
+		strcpy(jap_log_content, "プログラムを発行して名称を教える");
 		ret = sendfilename(data_json, content);
 		break;
 	case 106:/* 8082 */
 		port = fileport;
 		strcpy(log_content, "下发程序示教文件内容");
 		strcpy(en_log_content, "Send program teaching document content");
+		strcpy(jap_log_content, "プログラムを交付して文書の内容を教える");
 		content_len = get_lua_content_size(data_json);
 		//printf("content_len = %d\n", content_len);
 		if (content_len == FAIL) {
@@ -1910,48 +1917,56 @@ void set(Webs *wp)
 		port = cmdport;
 		strcpy(log_content, "下发关节数据");
 		strcpy(en_log_content, "Send joint data");
+		strcpy(jap_log_content, "下毛関節データ");
 		ret = movej(data_json, content);
 		break;
 	case 203:
 		port = cmdport;
 		strcpy(log_content, "基坐标单轴点动-点按开始");
 		strcpy(en_log_content, "Base coordinate uniaxial pint - start by pint");
+		strcpy(jap_log_content, "基本座標単軸点動-点押し開始");
 		ret = copy_content(data_json, content);
 		break;
 	case 204:
 		port = cmdport;
 		strcpy(log_content, "设置控制箱DO");
 		strcpy(en_log_content, "Set the control box DO");
+		strcpy(jap_log_content, "コントロールボックスdoを設置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 206:
 		port = cmdport;
 		strcpy(log_content, "设置速度百分比");
 		strcpy(en_log_content, "Set speed percentage");
+		strcpy(jap_log_content, "速度のパーセンテージを設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 208:
 		port = cmdport;
 		strcpy(log_content, "关节坐标单轴点动-点按开始");
 		strcpy(en_log_content, "Joint coordinate uniaxial pinging - start by pinging");
+		strcpy(jap_log_content, "関節座標一軸点働-点押し開始");
 		ret = copy_content(data_json, content);
 		break;
 	case 209:
 		port = cmdport;
 		strcpy(log_content, "设置控制箱AO");
 		strcpy(en_log_content, "Set the control box AO");
+		strcpy(jap_log_content, "");
 		ret = copy_content(data_json, content);
 		break;
 	case 210:
 		port = cmdport;
 		strcpy(log_content, "设置末端工具DO");
 		strcpy(en_log_content, "Set the end tool DO");
+		strcpy(jap_log_content, "エンドツールdoを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 211:
 		port = cmdport;
 		strcpy(log_content, "设置末端工具AO");
 		strcpy(en_log_content, "Set the end tool AO");
+		strcpy(jap_log_content, "エンドツールaoを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 216:
@@ -1959,66 +1974,77 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "关节坐标单轴点动-点按结束");
 		strcpy(en_log_content, "Joint coordinate uniaxial point - point to end");
+		strcpy(jap_log_content, "関節座標一軸点働-点押し終了");
 		ret = copy_content(data_json, content);
 		break;
 	case 222:
 		port = cmdport;
 		strcpy(log_content, "控制箱DI滤波");
 		strcpy(en_log_content, "Control box DI filtering");
+		strcpy(jap_log_content, "コントロールボックスdiフィルタリング");
 		ret = copy_content(data_json, content);
 		break;
 	case 223:
 		port = cmdport;
 		strcpy(log_content, "工具DI滤波");
 		strcpy(en_log_content, "Tool DI Filtering");
+		strcpy(jap_log_content, "ツールdiフィルタリング");
 		ret = copy_content(data_json, content);
 		break;
 	case 224:
 		port = cmdport;
 		strcpy(log_content, "控制箱AI滤波");
 		strcpy(en_log_content, "Control box AI filtering");
+		strcpy(jap_log_content, "コントロールボックスaiフィルタリング");
 		ret = copy_content(data_json, content);
 		break;
 	case 225:
 		port = cmdport;
 		strcpy(log_content, "工具AI0滤波");
 		strcpy(en_log_content, "Tool AI0 Filtering");
+		strcpy(jap_log_content, "ツールai0フィルタリング");
 		ret = copy_content(data_json, content);
 		break;
 	case 226:
 		port = cmdport;
 		strcpy(log_content, "配置夹爪");
 		strcpy(en_log_content, "Configuration grip");
+		strcpy(jap_log_content, "クリップ爪を配置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 227:
 		port = cmdport;
 		strcpy(log_content, "激活和复位夹爪");
 		strcpy(en_log_content, "Activate and reset the gripper");
+		strcpy(jap_log_content, "クリップを起動してリセットします");
 		ret = copy_content(data_json, content);
 		break;
 	case 229:
 		port = cmdport;
 		strcpy(log_content, "读取夹爪配置信息");
 		strcpy(en_log_content, "Read the gripper configuration information");
+		strcpy(jap_log_content, "クリップの配置情報を読み取る");
 		ret = copy_content(data_json, content);
 		break;
 	case 230:
 		port = cmdport;
 		strcpy(log_content, "设置查询图表id号");
 		strcpy(en_log_content, "Sets the query chart ID number");
+		strcpy(jap_log_content, "クエリーチャートid番号を設定します");
 		ret = set_state_id(data_json, content);
 		break;
 	case 231:
 		port = cmdport;
 		strcpy(log_content, "状态查询开始/结束");
 		strcpy(en_log_content, "Status query starts/ends");
+		strcpy(jap_log_content, "ステータス照会の開始/終了");
 		ret = set_state(data_json, content);
 		break;
 	case 232:
 		port = cmdport;
 		strcpy(log_content, "单轴点动-长按开始");
 		strcpy(en_log_content, "Single axis point - long press to start");
+		strcpy(jap_log_content, "単軸点働-長押し開始");
 		ret = copy_content(data_json, content);
 		break;
 	case 233:
@@ -2026,6 +2052,7 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "单轴点动-长按结束");
 		strcpy(en_log_content, "Single axis point - long press to end");
+		strcpy(jap_log_content, "単軸点働-長押し終了");
 		ret = copy_content(data_json, content);
 		break;
 	case 234:
@@ -2033,6 +2060,7 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "基坐标单轴点动-点按结束");
 		strcpy(en_log_content, "Base coordinate uniaxial point - end of point pres");
+		strcpy(jap_log_content, "基本座標単軸点動-点押し終了");
 		ret = copy_content(data_json, content);
 		break;
 	case 235:
@@ -2040,354 +2068,413 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "外部工具坐标单轴点动-长按结束");
 		strcpy(en_log_content, "External tool coordinates single axis point - long press to end");
+		strcpy(jap_log_content, "外部工具座標一軸点動-長押しで終了");
 		ret = copy_content(data_json, content);
 		break;
 	case 236:
 		port = cmdport;
 		strcpy(log_content, "开始喷涂");
 		strcpy(en_log_content, "Began spray");
+		strcpy(jap_log_content, "スプレーをかける");
 		ret = copy_content(data_json, content);
 		break;
 	case 237:
 		port = cmdport;
 		strcpy(log_content, "停止喷涂");
 		strcpy(en_log_content, "Stop spray");
+		strcpy(jap_log_content, "スプレーを止める");
 		ret = copy_content(data_json, content);
 		break;
 	case 238:
 		port = cmdport;
 		strcpy(log_content, "开始清枪");
 		strcpy(en_log_content, "Began to clear gun");
+		strcpy(jap_log_content, "銃の洗浄を始める");
 		ret = copy_content(data_json, content);
 		break;
 	case 239:
 		port = cmdport;
 		strcpy(log_content, "停止清枪");
 		strcpy(en_log_content, "Stop the qing gun");
+		strcpy(jap_log_content, "清銃を止める");
 		ret = copy_content(data_json, content);
 		break;
 	case 240:
 		port = cmdport;
 		strcpy(log_content, "停止外部轴运动");
 		strcpy(en_log_content, "Stop the external axis movement");
+		strcpy(jap_log_content, "外軸の動きを止める");
 		ret = copy_content(data_json, content);
 		break;
 	case 247:
 		port = cmdport;
 		strcpy(log_content, "起弧");
 		strcpy(en_log_content, "start arc");
+		strcpy(jap_log_content, "から弧");
 		ret = copy_content(data_json, content);
 		break;
 	case 248:
 		port = cmdport;
 		strcpy(log_content, "收弧");
 		strcpy(en_log_content, "stop arc");
+		strcpy(jap_log_content, "弧を");
 		ret = copy_content(data_json, content);
 		break;
 	case 249:
 		port = cmdport;
 		strcpy(log_content, "设定工件参考点");
 		strcpy(en_log_content, "Set workpiece reference points");
+		strcpy(jap_log_content, "ワークの基準点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 250:
 		port = cmdport;
 		strcpy(log_content, "计算工件位姿");
 		strcpy(en_log_content, "Calculate the workpiece pose");
+		strcpy(jap_log_content, "ワークポジションを計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 251:
 		port = cmdport;
 		strcpy(log_content, "设置工件坐标系");
 		strcpy(en_log_content, "Set the workpiece coordinate system");
+		strcpy(jap_log_content, "ワーク座標系を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 252:
 		port = cmdport;
 		strcpy(log_content, "摆焊参数设置");
 		strcpy(en_log_content, "Swing welding parameter setting");
+		strcpy(jap_log_content, "振り子溶接パラメータを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 253:
 		port = cmdport;
 		strcpy(log_content, "开始摆焊");
 		strcpy(en_log_content, "Began to swing welding");
+		strcpy(jap_log_content, "振り子溶接を開始する");
 		ret = copy_content(data_json, content);
 		break;
 	case 254:
 		port = cmdport;
 		strcpy(log_content, "停止摆焊");
 		strcpy(en_log_content, "Stop swing welding");
+		strcpy(jap_log_content, "振り子溶接を止める");
 		ret = copy_content(data_json, content);
 		break;
 	case 255:
 		port = cmdport;
 		strcpy(log_content, "激光打开");
 		strcpy(en_log_content, "Laser on");
+		strcpy(jap_log_content, "レーザーオープン");
 		ret = copy_content(data_json, content);
 		break;
 	case 256:
 		port = cmdport;
 		strcpy(log_content, "激光关闭");
 		strcpy(en_log_content, "Laser off");
+		strcpy(jap_log_content, "レーザー閉鎖");
 		ret = copy_content(data_json, content);
 		break;
 	case 257:
 		port = cmdport;
 		strcpy(log_content, "开始跟踪");
 		strcpy(en_log_content, "Began track");
+		strcpy(jap_log_content, "追跡を開始する");
 		ret = copy_content(data_json, content);
 		break;
 	case 258:
 		port = cmdport;
 		strcpy(log_content, "停止跟踪");
 		strcpy(en_log_content, "Stop trace");
+		strcpy(jap_log_content, "尾行を止める");
 		ret = copy_content(data_json, content);
 		break;
 	case 259:
 		port = cmdport;
 		strcpy(log_content, "寻位开始,设置寻位参数");
 		strcpy(en_log_content, "To start the search, set the search parameters");
+		strcpy(jap_log_content, "ビットアドレシングを開始し、ビットアドレシングパラメータを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 260:
 		port = cmdport;
 		strcpy(log_content, "寻位结束");
 		strcpy(en_log_content, "Find an end");
+		strcpy(jap_log_content, "アドレッシング・エンド");
 		ret = copy_content(data_json, content);
 		break;
 	case 261:
 		port = cmdport;
 		strcpy(log_content, "设定传感器参考点");
 		strcpy(en_log_content, "Set the sensor reference point");
+		strcpy(jap_log_content, "センサ基準点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 262:
 		port = cmdport;
 		strcpy(log_content, "计算传感器位姿");
 		strcpy(en_log_content, "Calculate the sensor pose");
+		strcpy(jap_log_content, "センサポージングを計算します");
 		ret = copy_content(data_json, content);
 		break;
 	case 263:
 		port = cmdport;
 		strcpy(log_content, "配置机器人IP");
 		strcpy(en_log_content, "Configure Robot IP");
+		strcpy(jap_log_content, "ロボットipを構成する");
 		ret = copy_content(data_json, content);
 		break;
 	case 264:
 		port = cmdport;
 		strcpy(log_content, "配置激光跟踪传感器IP和端口");
 		strcpy(en_log_content, "Equipped with laser tracking sensor IP and port");
+		strcpy(jap_log_content, "レーザートラッキングセンサipとポートを構成します");
 		ret = copy_content(data_json, content);
 		break;
 	case 265:
 		port = cmdport;
 		strcpy(log_content, "加载传感器通信协议");
 		strcpy(en_log_content, "Load the sensor communication protocol");
+		strcpy(jap_log_content, "センサの通信プロトコルをロードします");
 		ret = copy_content(data_json, content);
 		break;
 	case 266:
 		port = cmdport;
 		strcpy(log_content, "卸载传感器通信协议");
 		strcpy(en_log_content, "Unload the sensor communication protocol");
+		strcpy(jap_log_content, "センサ通信プロトコルをアンインストールします");
 		ret = copy_content(data_json, content);
 		break;
 	case 267:
 		port = cmdport;
 		strcpy(log_content, "配置传感器采样周期");
 		strcpy(en_log_content, "Configure the sensor sampling cycle");
+		strcpy(jap_log_content, "センサのサンプリング期間を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 268:
 		port = cmdport;
 		strcpy(log_content, "开始/停止正向送丝");
 		strcpy(en_log_content, "Start/stop forward wire feed");
+		strcpy(jap_log_content, "糸の送りを開始/停止します");
 		ret = copy_content(data_json, content);
 		break;
 	case 269:
 		port = cmdport;
 		strcpy(log_content, "开始/停止反向送丝");
 		strcpy(en_log_content, "Start/stop reverse wire feed");
+		strcpy(jap_log_content, "逆送りを開始/停止します");
 		ret = copy_content(data_json, content);
 		break;
 	case 270:
 		port = cmdport;
 		strcpy(log_content, "开始/停止送气");
 		strcpy(en_log_content, "Start/stop air supply");
+		strcpy(jap_log_content, "送気を開始/停止する");
 		ret = copy_content(data_json, content);
 		break;
 	case 271:
 		port = cmdport;
 		strcpy(log_content, "十点法设定传感器参考点");
 		strcpy(en_log_content, "Ten point method to set the sensor reference point");
+		strcpy(jap_log_content, "10時法でセンサの基準点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 272:
 		port = cmdport;
 		strcpy(log_content, "十点法计算传感器位姿");
 		strcpy(en_log_content, "Ten point method to calculate the sensor posture");
+		strcpy(jap_log_content, "十時法はセンサの姿勢を計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 273:
 		port = cmdport;
 		strcpy(log_content, "八点法设置激光跟踪传感器参考点");
 		strcpy(en_log_content, "Eight point method is used to set the reference point of the laser tracking sensor");
+		strcpy(jap_log_content, "レーザートラッキングセンサの基準点を8点で設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 274:
 		port = cmdport;
 		strcpy(log_content, "八点法计算激光跟踪传感器位姿");
 		strcpy(en_log_content, "Eight point method is used to calculate the position and pose of laser tracking sensor");
+		strcpy(jap_log_content, "8点法でレーザートラッキングセンサの姿勢を計算します");
 		ret = copy_content(data_json, content);
 		break;
 	case 275:
 		port = cmdport;
 		strcpy(log_content, "激光跟踪传感器安装位置");
 		strcpy(en_log_content, "Laser tracking sensor installation position");
+		strcpy(jap_log_content, "レーザートラッキングセンサの設置場所");
 		ret = copy_content(data_json, content);
 		break;
 	case 276:
 		port = cmdport;
 		strcpy(log_content, "三点法设置激光跟踪传感器参考点");
 		strcpy(en_log_content, "The reference point of laser tracking sensor is set by three-point method");
+		strcpy(jap_log_content, "3点法でレーザートラッキングセンサの基準点を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 277:
 		port = cmdport;
 		strcpy(log_content, "三点法计算激光跟踪传感器位姿");
 		strcpy(en_log_content, "The position and pose of laser tracking sensor are calculated by three-point method");
+		strcpy(jap_log_content, "3点法でレーザートラッキングセンサの姿勢を計算します");
 		ret = copy_content(data_json, content);
 		break;
 	case 278:
 		port = cmdport;
 		strcpy(log_content, "激光跟踪数据记录");
 		strcpy(en_log_content, "Laser tracking data recording");
+		strcpy(jap_log_content, "レーザートレーシングデータ記録");
 		ret = copy_content(data_json, content);
 		break;
 	case 279:
 		port = cmdport;
 		strcpy(log_content, "激光跟踪最大差值");
 		strcpy(en_log_content, "Laser tracking maximum difference");
+		strcpy(jap_log_content, "レーザートラッカー最大差");
 		ret = copy_content(data_json, content);
 		break;
 	case 280:
 		port = cmdport;
 		strcpy(log_content, "设置激光跟踪传感器位置");
 		strcpy(en_log_content, "Set the position of the laser tracking sensor");
+		strcpy(jap_log_content, "レーザートラッキングセンサの位置を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 283:
 		port = cmdport;
 		strcpy(log_content, "获取激光跟踪传感器配置信息");
 		strcpy(en_log_content, "Gets the laser tracking sensor configuration information");
+		strcpy(jap_log_content, "レーザートラッキングセンサの構成情報を取得する");
 		ret = copy_content(data_json, content);
 		break;
 	case 287:
 		port = cmdport;
 		strcpy(log_content, "激活/去激活外部轴坐标系");
 		strcpy(en_log_content, "Activate/deactivate the external axis coordinate system");
+		strcpy(jap_log_content, "軸軸座標系をアクティブ化/非アクティブ化します");
 		ret = copy_content(data_json, content);
 		break;
 	case 288:
 		port = cmdport;
 		strcpy(log_content, "四点法设定外部轴坐标系参考点");
 		strcpy(en_log_content, "The four-point method sets the reference point of the external axis coordinate system");
+		strcpy(jap_log_content, "4点法は外部軸座標系の基準点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 289:
 		port = cmdport;
 		strcpy(log_content, "四点法计算外部轴坐标系");
 		strcpy(en_log_content, "The four-point method is used to calculate the external axis coordinate system");
+		strcpy(jap_log_content, "4点法は外部軸座標系を計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 290:
 		port = cmdport;
 		strcpy(log_content, "设定外部轴零位");
 		strcpy(en_log_content, "Set external axis zero");
+		strcpy(jap_log_content, "外軸ゼロビットを設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 291:
 		port = cmdport;
 		strcpy(log_content, "外部轴参数配置");
 		strcpy(en_log_content, "External axis parameter configuration");
+		strcpy(jap_log_content, "外部軸パラメータの設定");
 		ret = copy_content(data_json, content);
 		break;
 	case 292:
 		port = cmdport;
 		strcpy(log_content, "外部轴点动开始");
 		strcpy(en_log_content, "The external axis starts to move");
+		strcpy(jap_log_content, "外軸の点動が始まる");
 		ret = copy_content(data_json, content);
 		break;
 	case 293:
 		port = cmdport;
 		strcpy(log_content, "扩展轴系统 DH 参数配置");
 		strcpy(en_log_content, "Expansion axis system DH parameter configuration");
+		strcpy(jap_log_content, "軸軸系dhパラメータ構成を拡張します");
 		ret = copy_content(data_json, content);
 		break;
 	case 294:
 		port = cmdport;
 		strcpy(log_content, "机器人相对扩展轴位置, 0:扩展轴上,1:扩展轴外");
 		strcpy(en_log_content, "Position of the robot relative to the extension axis, 0: on the extension axis,1: off the extension axis");
+		strcpy(jap_log_content, "ロボットの相対拡幅軸位置は、0:拡幅軸上、1:拡幅軸外である");
 		ret = copy_content(data_json, content);
 		break;
 	case 295:
 		port = cmdport;
 		strcpy(log_content, "外部轴伺服警告清除");
 		strcpy(en_log_content, "External shaft servo warning cleared");
+		strcpy(jap_log_content, "外部軸サーボ警告をクリアします");
 		ret = copy_content(data_json, content);
 		break;
 	case 296:
 		port = cmdport;
 		strcpy(log_content, "外部轴伺服使能");
 		strcpy(en_log_content, "External shaft servo enabling");
+		strcpy(jap_log_content, "外部軸サーボが可能です");
 		ret = copy_content(data_json, content);
 		break;
 	case 297:
 		port = cmdport;
 		strcpy(log_content, "外部轴运动");
 		strcpy(en_log_content, "External axis motion");
+		strcpy(jap_log_content, "外軸運動");
 		ret = copy_content(data_json, content);
 		break;
 	case 302:
 		port = cmdport;
 		strcpy(log_content, "机器手急停后电机使能");
 		strcpy(en_log_content, "Enable motor after emergency stop of machine hand");
+		strcpy(jap_log_content, "机械の手が急停止して電机が作動する");
 		ret = copy_content(data_json, content);
 		break;
 	case 303:
 		port = cmdport;
 		strcpy(log_content, "更改机器人模式");
 		strcpy(en_log_content, "Change robot mode");
+		strcpy(jap_log_content, "ロボットモードを変更する");
 		ret = mode(data_json, content);
 		break;
 	case 305:
 		port = cmdport;
 		strcpy(log_content, "设置碰撞等级");
 		strcpy(en_log_content, "Set collision level");
+		strcpy(jap_log_content, "衝突レベルを設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 306:
 		port = cmdport;
 		strcpy(log_content, "设置负载重量");
 		strcpy(en_log_content, "Set load weight");
+		strcpy(jap_log_content, "荷重重量を設ける");
 		ret = copy_content(data_json, content);
 		break;
 	case 307:
 		port = cmdport;
 		strcpy(log_content, "设置负载质心");
 		strcpy(en_log_content, "Sets the load center of mass");
+		strcpy(jap_log_content, "負荷重心を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 308:
 		port = cmdport;
 		strcpy(log_content, "设置机器人正限位角度");
 		strcpy(en_log_content, "Set the positive limit Angle of the robot");
+		strcpy(jap_log_content, "ロボットのポジティブストッパ角度を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 309:
 		port = cmdport;
 		strcpy(log_content, "设置机器人负限位角度");
 		strcpy(en_log_content, "Set the negative limit Angle of the robot");
+		strcpy(jap_log_content, "ロボットの負のストッパ角度を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 312:
@@ -2395,360 +2482,420 @@ void set(Webs *wp)
 		cmd_type = 0;
 		strcpy(log_content, "零点设定");
 		strcpy(en_log_content, "Zero setting");
+		strcpy(jap_log_content, "零点設定");
 		ret = copy_content(data_json, content);
 		break;
 	case 313:
 		port = cmdport;
 		strcpy(log_content, "新建工具坐标系下发点");
 		strcpy(en_log_content, "Create a new point in the tool coordinate system");
+		strcpy(jap_log_content, "ツール座標系の配点点を新設する");
 		ret = copy_content(data_json, content);
 		break;
 	case 314:
 		port = cmdport;
 		strcpy(log_content, "计算工具坐标系");
 		strcpy(en_log_content, "Calculate tool coordinates");
+		strcpy(jap_log_content, "計算ツール座標系");
 		ret = copy_content(data_json, content);
 		break;
 	case 315:
 		port = cmdport;
 		strcpy(log_content, "开始记录TPD轨迹");
 		strcpy(en_log_content, "Start recording TPD tracks");
+		strcpy(jap_log_content, "tpdの軌跡を記録し始めました");
 		ret = copy_content(data_json, content);
 		break;
 	case 316:
 		port = cmdport;
 		strcpy(log_content, "应用当前显示的工具坐标系");
 		strcpy(en_log_content, "Apply the currently displayed tool coordinate system");
+		strcpy(jap_log_content, "現在表示されているツール座標系を適用する");
 		ret = copy_content(data_json, content);
 		break;
 	case 317:
 		port = cmdport;
 		strcpy(log_content, "停止记录TPD轨迹");
 		strcpy(en_log_content, "Stop recording the TPD trajectory");
+		strcpy(jap_log_content, "tpdトラックの記録を停止する");
 		ret = copy_content(data_json, content);
 		break;
 	case 318:
 		port = cmdport;
 		strcpy(log_content, "删除TPD轨迹");
 		strcpy(en_log_content, "Delete the TPD trace");
+		strcpy(jap_log_content, "tpdトラックを削除します");
 		ret = copy_content(data_json, content);
 		break;
 	case 320:
 		port = cmdport;
 		strcpy(log_content, "计算 Joint to TCF");
 		strcpy(en_log_content, "Calculate Joint to TCF");
+		strcpy(jap_log_content, "joint to tcfを計算する");
 		ret = jointtotcf(data_json, content);
 		break;
 	case 321:
 		port = cmdport;
 		strcpy(log_content, "生效机器人配置文件");
 		strcpy(en_log_content, "Valid robot configuration file");
+		strcpy(jap_log_content, "ロボットのプロファイルを有効にします");
 		ret = copy_content(data_json, content);
 		break;
 	case 323:
 		port = cmdport;
 		strcpy(log_content, "设置 DI 配置");
 		strcpy(en_log_content, "Setting the DI configuration");
+		strcpy(jap_log_content, "di構成を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 324:
 		port = cmdport;
 		strcpy(log_content, "设置 DO 配置");
 		strcpy(en_log_content, "Setting the DO configuration");
+		strcpy(jap_log_content, "do構成を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 325:
 		port = cmdport;
 		strcpy(log_content, "计算 TCF to Joint");
 		strcpy(en_log_content, "Calculate the TCF to Joint");
+		strcpy(jap_log_content, "tcf to jointを計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 326:
 		port = cmdport;
 		strcpy(log_content, "设定外部TCP参考点");
 		strcpy(en_log_content, "Set the external TCP reference point");
+		strcpy(jap_log_content, "外部tcp基準点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 327:
 		port = cmdport;
 		strcpy(log_content, "计算外部TCF");
 		strcpy(en_log_content, "Calculate the external TCF");
+		strcpy(jap_log_content, "外部tcfを計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 328:
 		port = cmdport;
 		strcpy(log_content, "设定外部TCP工具参考点");
 		strcpy(en_log_content, "Set the external TCP tool reference point");
+		strcpy(jap_log_content, "外部tcpツールの参照点を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 329:
 		port = cmdport;
 		strcpy(log_content, "计算工具TCF");
 		strcpy(en_log_content, "The calculation tool TCF");
+		strcpy(jap_log_content, "計算ツールtcf");
 		ret = copy_content(data_json, content);
 		break;
 	case 330:
 		port = cmdport;
 		strcpy(log_content, "应用当前显示的外部工具坐标系");
 		strcpy(en_log_content, "Apply the external tool coordinate system that is currently displayed");
+		strcpy(jap_log_content, "");
 		ret = copy_content(data_json, content);
 		break;
 	case 332:
 		port = cmdport;
 		strcpy(log_content, "进入 boot 模式");
 		strcpy(en_log_content, "Enter Boot mode");
+		strcpy(jap_log_content, "bootモードに入ります");
 		ret = copy_content(data_json, content);
 		break;
 	case 333:
 		port = cmdport;
 		strcpy(log_content, "切换拖动示教模式");
 		strcpy(en_log_content, "Toggle the drag teaching mode");
+		strcpy(jap_log_content, "ドラッグモードを切り替えます");
 		ret = copy_content(data_json, content);
 		break;
 	case 334:
 		port = cmdport;
 		strcpy(log_content, "定位完成阈值");
 		strcpy(en_log_content, "Locate the completion threshold");
+		strcpy(jap_log_content, "完了閾値を特定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 335:
 		port = cmdport;
 		strcpy(log_content, "设置 DI 有效电平");
 		strcpy(en_log_content, "Set the DI valid level");
+		strcpy(jap_log_content, "di有効レベルを設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 336:
 		port = cmdport;
 		strcpy(log_content, "设置 DO 有效电平");
 		strcpy(en_log_content, "Set the DO valid level");
+		strcpy(jap_log_content, "do有効レベルを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 337:
 		port = cmdport;
 		strcpy(log_content, "机器人安装方式");
 		strcpy(en_log_content, "Installation of robot");
+		strcpy(jap_log_content, "ロボットの取り付け方");
 		ret = copy_content(data_json, content);
 		break;
 	case 338:
 		port = cmdport;
 		strcpy(log_content, "拖动示教摩擦力补偿开关");
 		strcpy(en_log_content, "Drag the show friction compensation switch");
+		strcpy(jap_log_content, "示教摩擦力補償スイッチをドラッグします");
 		ret = copy_content(data_json, content);
 		break;
 	case 339:
 		port = cmdport;
 		strcpy(log_content, "配置外设DO");
 		strcpy(en_log_content, "Configure the peripheral DO");
+		strcpy(jap_log_content, "周辺機器doを配置する");
 		ret = set_plugin_dio(data_json, content, 1);
 		break;
 	case 340:
 		port = cmdport;
 		strcpy(log_content, "配置外设DI");
 		strcpy(en_log_content, "Configure the peripheral DI");
+		strcpy(jap_log_content, "周辺機器diを配置する");
 		ret = set_plugin_dio(data_json, content, 0);
 		break;
 	case 341:
 		port = cmdport;
 		strcpy(log_content, "设置摩擦力补偿系数");
 		strcpy(en_log_content, "Set the friction compensation coefficient");
+		strcpy(jap_log_content, "摩擦力補償係数を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 343:
 		port = cmdport;
 		strcpy(log_content, "同步系统时间");
 		strcpy(en_log_content, "Synchronous system time");
+		strcpy(jap_log_content, "同期システム時間");
 		ret = copy_content(data_json, content);
 		break;
 	case 345:
 		port = cmdport;
 		strcpy(log_content, "检测机器人配置文件");
 		strcpy(en_log_content, "Check the robot configuration file");
+		strcpy(jap_log_content, "ロボットのプロファイルを検出する");
 		ret = copy_content(data_json, content);
 		break;
 	case 353:
 		port = cmdport;
 		strcpy(log_content, "配置视觉控制器 IP 和 Port");
 		strcpy(en_log_content, "Configure the visual controller IP and Port");
+		strcpy(jap_log_content, "ビジョンコントローラipとportを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 354:
 		port = cmdport;
 		strcpy(log_content, "加载视觉传感器通信驱动");
 		strcpy(en_log_content, "Load the visual sensor communication driver");
+		strcpy(jap_log_content, "通信用視覚センサーを装填します");
 		ret = copy_content(data_json, content);
 		break;
 	case 355:
 		port = cmdport;
 		strcpy(log_content, "卸载视觉传感器通信驱动");
 		strcpy(en_log_content, "Unload the vision sensor communication driver");
+		strcpy(jap_log_content, "視覚センサ通信ドライブを取り外します");
 		ret = copy_content(data_json, content);
 		break;
 	case 356:
 		port = cmdport;
 		strcpy(log_content, "触发相机拍照");
 		strcpy(en_log_content, "Trigger camera to take pictures");
+		strcpy(jap_log_content, "カメラを作動させて");
 		ret = copy_content(data_json, content);
 		break;
 	case 357:
 		port = cmdport;
 		strcpy(log_content, "负载辨识启停");
 		strcpy(en_log_content, "Load identification starts and stops");
+		strcpy(jap_log_content, "負荷認識が開始し停止する");
 		ret = copy_content(data_json, content);
 		break;
 	case 358:
 		port = cmdport;
 		strcpy(log_content, "传送带启动");
 		strcpy(en_log_content, "The conveyor belt starts");
+		strcpy(jap_log_content, "ベルトコンベヤーが作動する");
 		ret = copy_content(data_json, content);
 		break;
 	case 359:
 		port = cmdport;
 		strcpy(log_content, "传送带 IO 切入点标定");
 		strcpy(en_log_content, "Calibration of IO cut point for conveyor belt");
+		strcpy(jap_log_content, "ベルトコンベヤーio切り口を決める");
 		ret = copy_content(data_json, content);
 		break;
 	case 360:
 		port = cmdport;
 		strcpy(log_content, "传送带 A 点标定");
 		strcpy(en_log_content, "Calibration of point A of conveyor belt");
+		strcpy(jap_log_content, "ベルトコンベヤーのa点校正");
 		ret = copy_content(data_json, content);
 		break;
 	case 361:
 		port = cmdport;
 		strcpy(log_content, "传送带参考点标定");
 		strcpy(en_log_content, "Calibration of conveyor belt reference point");
+		strcpy(jap_log_content, "ベルトコンベヤーの基準点を校正する");
 		ret = copy_content(data_json, content);
 		break;
 	case 362:
 		port = cmdport;
 		strcpy(log_content, "传送带 B 点标定");
 		strcpy(en_log_content, "Calibration of point B of conveyor belt");
+		strcpy(jap_log_content, "ベルトコンベヤーのb地点を校正する");
 		ret = copy_content(data_json, content);
 		break;
 	case 367:
 		port = cmdport;
 		strcpy(log_content, "传送带参数配置");
 		strcpy(en_log_content, "Conveyor parameters configuration");
+		strcpy(jap_log_content, "ベルトコンベヤーのパラメータ設定");
 		ret = copy_content(data_json, content);
 		break;
 	case 368:
 		port = cmdport;
 		strcpy(log_content, "传送带抓取点补偿");
 		strcpy(en_log_content, "Carousel grabbing point compensation");
+		strcpy(jap_log_content, "ベルトコンベヤーのつかみ点補償");
 		ret = copy_content(data_json, content);
 		break;
 	case 369:
 		port = cmdport;
 		strcpy(log_content, "配置末端DI");
 		strcpy(en_log_content, "Configure terminal DI");
+		strcpy(jap_log_content, "エンドdiを配置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 370:
 		port = cmdport;
 		strcpy(log_content, "配置末端DO");
 		strcpy(en_log_content, "Configure terminal DO");
+		strcpy(jap_log_content, "エンドdoを配置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 371:
 		port = cmdport;
 		strcpy(log_content, "设置末端DI有效电平");
 		strcpy(en_log_content, "Set the terminal DI effective level");
+		strcpy(jap_log_content, "エンドdi有効レベルを設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 372:
 		port = cmdport;
 		strcpy(log_content, "设置末端DO有效电平");
 		strcpy(en_log_content, "Set the terminal DO effective level");
+		strcpy(jap_log_content, "");
 		ret = copy_content(data_json, content);
 		break;
 	case 375:
 		port = cmdport;
 		strcpy(log_content, "获取关节位置");
 		strcpy(en_log_content, "Obtain joint position");
+		strcpy(jap_log_content, "関節の位置を把握する");
 		ret = copy_content(data_json, content);
 		break;
 	case 376:
 		port = cmdport;
 		strcpy(log_content, "ServoJ");
 		strcpy(en_log_content, "ServoJ");
+		strcpy(jap_log_content, "ServoJ");
 		ret = copy_content(data_json, content);
 		break;
 	case 377:
 		port = cmdport;
 		strcpy(log_content, "清除控制器错误");
 		strcpy(en_log_content, "Clear controller error");
+		strcpy(jap_log_content, "コントローラエラーをクリアする");
 		ret = copy_content(data_json, content);
 		break;
 	case 380:
 		port = cmdport;
 		strcpy(log_content, "获取控制器计算后,修改示教点数据");
 		strcpy(en_log_content, "After obtaining the controller calculation, modify the data of the teaching point");
+		strcpy(jap_log_content, "コントローラ計算を取得した後、示教点データを修正する");
 		ret = copy_content(data_json, content);
 		break;
 	case 381:
 		port = cmdport;
 		strcpy(log_content, "设置激光点");
 		strcpy(en_log_content, "Set laser point");
+		strcpy(jap_log_content, "レーザーポイントを設置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 382:
 		port = cmdport;
 		strcpy(log_content, "计算激光点");
 		strcpy(en_log_content, "Computed laser point");
+		strcpy(jap_log_content, "レーザー点を計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 384:
 		port = cmdport;
 		strcpy(log_content, "设置默认启动程序");
 		strcpy(en_log_content, "Set the default launcher");
+		strcpy(jap_log_content, "デフォルトの起動プログラムを設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 386:
 		port = cmdport;
 		strcpy(log_content, "计算激光传感器点偏移量");
 		strcpy(en_log_content, "Calculate the laser sensor point offset");
+		strcpy(jap_log_content, "レーザーセンサーのポイントオフセットを計算します");
 		ret = copy_content(data_json, content);
 		break;
 	case 387:
 		port = cmdport;
 		strcpy(log_content, "设置激光传感器标定点");
 		strcpy(en_log_content, "Set laser sensor marking point");
+		strcpy(jap_log_content, "レーザーセンサ標点を設置する");
 		ret = copy_content(data_json, content);
 		break;
 	case 388:
 		port = cmdport;
 		strcpy(log_content, "变位机坐标系参考点设置");
 		strcpy(en_log_content, "Locator coordinate system reference point setting");
+		strcpy(jap_log_content, "変位機座標系の基準点を設定します");
 		ret = copy_content(data_json, content);
 		break;
 	case 389:
 		port = cmdport;
 		strcpy(log_content, "变位机四点法标定参考点设置");
 		strcpy(en_log_content, "Positioning machine four-point calibration reference point setting");
+		strcpy(jap_log_content, "変位机4点法校正基準点の設定");
 		ret = copy_content(data_json, content);
 		break;
 	case 390:
 		port = cmdport;
 		strcpy(log_content, "变位机坐标系计算");
 		strcpy(en_log_content, "Alterator coordinate system calculation");
+		strcpy(jap_log_content, "変位機械座標系の計算");
 		ret = copy_content(data_json, content);
 		break;
 	case 391:
 		port = cmdport;
 		strcpy(log_content, "编码器类型切换");
 		strcpy(en_log_content, "Encoder type switching");
+		strcpy(jap_log_content, "エンコーダタイプ切替");
 		ret = copy_content(data_json, content);
 		break;
 	case 400:
 		port = cmdport;
 		strcpy(log_content, "获取控制器软件版本");
 		strcpy(en_log_content, "Get the controller software version");
+		strcpy(jap_log_content, "コントローラソフトウェアのバージョンを取得します");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */
 		port = cmdport;
 		strcpy(log_content, "单步执行指令");
 		strcpy(en_log_content, "Step the instruction");
+		strcpy(jap_log_content, "1ステップでコマンドを実行する");
 		ret = step_over(data_json, content);
 		if (ret == FAIL) {
 			perror("step over");
@@ -2811,6 +2958,7 @@ void set(Webs *wp)
 
 	my_syslog("机器人操作", log_content, cur_account.username);
 	my_en_syslog("robot operation", en_log_content, cur_account.username);
+	my_jap_syslog("ロボット操作", jap_log_content, cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;
@@ -2829,6 +2977,7 @@ void set(Webs *wp)
 auth_end:
 	my_syslog("机器人操作", "当前用户无相应机器人操作权限", cur_account.username);
 	my_en_syslog("robot operation", "The current user has no corresponding robot operation permissions", cur_account.username);
+	my_jap_syslog("ロボット操作", "現在のユーザには対応するロボットの操作権限がありません", cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;
@@ -2845,6 +2994,7 @@ auth_end:
 end:
 	my_syslog("机器人操作", "机器人操作失败", cur_account.username);
 	my_en_syslog("robot operation", "robot operation fail", cur_account.username);
+	my_jap_syslog("ロボット操作", "ロボットの操作に失敗する", cur_account.username);
 	/* free content */
 	free(content);
 	content = NULL;

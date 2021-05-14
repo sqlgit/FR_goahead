@@ -1085,6 +1085,7 @@ void act(Webs *wp)
 	cJSON *post_type = NULL;
 	char log_content[1024] = {0};
 	char en_log_content[1024] = {0};
+	char jap_log_content[1024] = {0};
 
 	data = cJSON_Parse(wp->input.servp);
 	if (data == NULL) {
@@ -1131,106 +1132,132 @@ void act(Webs *wp)
 		ret = save_lua_file(data_json);
 		strcpy(log_content, "保存当前程序示教文件");
 		strcpy(en_log_content, "Save the current program teaching file");
+		strcpy(jap_log_content, "現在のプログラム表示ファイルを保存します");
 	} else if (!strcmp(cmd, "remove_lua_file")) {
 		ret = remove_lua_file(data_json);
 		strcpy(log_content, "删除当前程序示教文件");
 		strcpy(en_log_content, "Deletes the current program teaching file");
+		strcpy(jap_log_content, "現在のプログラム表示ファイルを削除します");
 	} else if (!strcmp(cmd, "save_template_file")) {
 		ret = save_template_file(data_json);
 		strcpy(log_content, "保存程序示教模板文件");
 		strcpy(en_log_content, "Save the program teaching template file");
+		strcpy(jap_log_content, "プログラム教示テンプレートファイルを保存します");
 	} else if (!strcmp(cmd, "remove_template_file")) {
 		ret = remove_template_file(data_json);
 		strcpy(log_content, "删除程序示教模板文件");
 		strcpy(en_log_content, "Delete program teaching template file");
+		strcpy(jap_log_content, "プログラム教示テンプレートファイルを削除します");
 	} else if (!strcmp(cmd, "rename_lua_file")) {
 		ret = rename_lua_file(data_json);
 		strcpy(log_content, "重命名当前程序示教文件");
 		strcpy(en_log_content, "Rename the current program teaching file");
+		strcpy(jap_log_content, "現在のプログラム表示ファイルの名前を変更します");
 	} else if (!strcmp(cmd, "modify_tool_cdsystem")) {
 		ret = modify_tool_cdsystem(data_json);
 		strcpy(log_content, "修改工具坐标系");
 		strcpy(en_log_content, "Modify the tool coordinate system");
+		strcpy(jap_log_content, "ツール座標系の修正");
 	} else if (!strcmp(cmd, "modify_wobj_tool_cdsystem")) {
 		ret = modify_wobj_tool_cdsystem(data_json);
 		strcpy(log_content, "修改工件工具坐标系");
 		strcpy(en_log_content, "Modify the workpiece tool coordinate system");
+		strcpy(jap_log_content, "ワークツール座標系を修正します");
 	} else if (!strcmp(cmd, "modify_ex_tool_cdsystem")) {
 		ret = modify_ex_tool_cdsystem(data_json);
 		strcpy(log_content, "修改外部工具坐标系");
 		strcpy(en_log_content, "Modify the external tool coordinate system");
+		strcpy(jap_log_content, "外部ツール座標系を修正します");
 	} else if (!strcmp(cmd, "modify_exaxis_cdsystem")) {
 		ret = modify_exaxis_cdsystem(data_json);
 		strcpy(log_content, "修改外部轴工具坐标系");
 		strcpy(en_log_content, "Modify the external axis tool coordinate system");
+		strcpy(jap_log_content, "外部軸ツール座標系を修正します");
 	} else if (!strcmp(cmd, "save_point")) {
 		ret = save_point(data_json);
 		strcpy(log_content, "保存点信息");
 		strcpy(en_log_content, "save point");
+		strcpy(jap_log_content, "ポイント情報を保存する");
 	} else if (!strcmp(cmd, "save_laser_point")) {
 		ret = save_laser_point(data_json);
 		strcpy(log_content, "保存激光点信息");
 		strcpy(en_log_content, "save laser point");
+		strcpy(jap_log_content, "レーザーポイント情報を保存します");
 	} else if (!strcmp(cmd, "modify_point")) {
 		ret = modify_point(data_json);
 		strcpy(log_content, "修改记录点信息");
 		strcpy(en_log_content, "modify point");
+		strcpy(jap_log_content, "ログポイント情報を修正します");
 	} else if (!strcmp(cmd, "remove_points")) {
 		ret = remove_points(data_json);
 		strcpy(log_content, "移除点信息");
 		strcpy(en_log_content, "remove points");
+		strcpy(jap_log_content, "ポイント情報を除去する");
 	} else if (!strcmp(cmd, "change_type")) {
 		ret = change_type(data_json);
 		strcpy(log_content, "切换实体和虚拟机器人");
 		strcpy(en_log_content, "Switch between physical and virtual robots");
+		strcpy(jap_log_content, "実物と仮想ロボットを切り替えます");
 	} else if (!strcmp(cmd, "set_syscfg")) {
 		ret = set_syscfg(data_json);
 		strcpy(log_content, "设置系统配置");
 		strcpy(en_log_content, "Set up system configuration");
+		strcpy(jap_log_content, "システム構成を設定する");
 	} else if (!strcmp(cmd, "set_language")) {
 		ret = set_language(data_json);
 		strcpy(log_content, "设置系统语言");
 		strcpy(en_log_content, "Set up system language");
+		strcpy(jap_log_content, "システム言語を設定する");
 	} else if (!strcmp(cmd, "set_ODM_cfg")) {
 		ret = set_ODM_cfg(data_json);
 		strcpy(log_content, "设置 ODM 配置");
 		strcpy(en_log_content, "Set up the ODM configuration");
+		strcpy(jap_log_content, "odm構成を設定します");
 	} else if (!strcmp(cmd, "ptnbox")) {
 		ret = ptnbox(data_json);
 		strcpy(log_content, "按钮盒记录点个数限制");
 		strcpy(en_log_content, "Limit the number of record points in the button box");
+		strcpy(jap_log_content, "ボタンボックス記録ポイント数制限");
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
 		strcpy(log_content, "保存账户信息");
 		strcpy(en_log_content, "save accounts");
+		strcpy(jap_log_content, "口座情報を保存する");
 	} else if (!strcmp(cmd, "plugin_enable")) {
 		ret = plugin_enable(data_json);
 		strcpy(log_content, "启用/停用外设插件");
 		strcpy(en_log_content, "Enable/disable peripheral plug-ins");
+		strcpy(jap_log_content, "周辺機器プラグインを有効/無効にします");
 	} else if (!strcmp(cmd, "plugin_remove")) {
 		ret = plugin_remove(data_json);
 		strcpy(log_content, "删除外设插件");
 		strcpy(en_log_content, "Remove the peripheral plug-in");
+		strcpy(jap_log_content, "周辺機器プラグインを削除する");
 	} else if (!strcmp(cmd, "clear_DH_file")) {
 		ret = clear_DH_file(data_json);
 		strcpy(log_content, "清空DH参数校准数据采集文件");
 		strcpy(en_log_content, "Clear the DH parameter calibration data collection file");
+		strcpy(jap_log_content, "dhパラメータを空にしてデータ収集ファイルを較正します");
 	} else if (!strcmp(cmd, "save_DH_point")) {
 		ret = save_DH_point(data_json);
 		strcpy(log_content, "DH 参数校准数据采集下发");
 		strcpy(en_log_content, "DH parameter calibration data collection and issuance");
+		strcpy(jap_log_content, "dhパラメータキャリブレーションデータが取得されます");
 	} else if (!strcmp(cmd, "shutdown")) {
 		ret = shutdown_system(data_json);
 		strcpy(log_content, "系统关机");
 		strcpy(en_log_content, "Shutdown");
+		strcpy(jap_log_content, "システムのシャットダウン");
 	} else if (!strcmp(cmd, "factory_reset")) {
 		ret = factory_reset(data_json);
 		strcpy(log_content, "恢复出厂值");
 		strcpy(en_log_content, "Factory reset");
+		strcpy(jap_log_content, "出荷値を回復する");
 	} else if (!strcmp(cmd, "odm_password")) {
 		ret = odm_password(data_json);
 		strcpy(log_content, "认证ODM密码");
 		strcpy(en_log_content, "Authenticate the ODM password");
+		strcpy(jap_log_content, "odmパスワードを認証する");
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -1241,6 +1268,7 @@ void act(Webs *wp)
 	}
 	my_syslog("应用操作", log_content, cur_account.username);
 	my_en_syslog("apply operation", en_log_content, cur_account.username);
+	my_jap_syslog("応用オペレーション", jap_log_content, cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -1255,6 +1283,7 @@ void act(Webs *wp)
 auth_end:
 	my_syslog("应用操作", "当前用户无相应指令操作权限", cur_account.username);
 	my_en_syslog("apply operation", "The current user has no authority to operate the corresponding instruction", cur_account.username);
+	my_jap_syslog("応用オペレーション", "現在のユーザには、対応するコマンド操作権限がありません", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;
@@ -1268,6 +1297,7 @@ auth_end:
 end:
 	my_syslog("应用操作", "应用操作失败", cur_account.username);
 	my_en_syslog("apply operation", "apply operation fail", cur_account.username);
+	my_jap_syslog("応用オペレーション", "アプリケーション動作に失敗する", cur_account.username);
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

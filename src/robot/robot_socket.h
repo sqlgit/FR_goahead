@@ -53,7 +53,7 @@ typedef struct _EXTERNALAXIS_STATU
 	unsigned char exAxisFLERR;	//跟随误差
 	unsigned char exAxisNLMT;	//到负限位
 	unsigned char exAxisPLMT;	//到正限位
-	unsigned char exAxisORG;    //到原点
+	unsigned char exAxisAbsOFLN;//驱动器485总线掉线
 	unsigned char exAxisOFLIN;	//通信超时，控制卡与控制箱板485通信超时
 	uint8_t	exAxisHomeStatus;	//外部轴回零状态
 }EXTERNALAXIS_STATUS;

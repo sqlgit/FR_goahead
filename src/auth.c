@@ -558,6 +558,7 @@ PUBLIC bool websLogoutUser(Webs *wp)
 	//delete_timer();
 	my_syslog("普通操作", "用户登出成功", cur_account.username);
 	my_en_syslog("normal operation", "User logged out successfully", cur_account.username);
+	my_jap_syslog("普通の操作", "ユーザーがログアウトに成功", cur_account.username);
 
     return 1;
 }
@@ -617,6 +618,7 @@ static void loginServiceProc(Webs *wp)
 		get_username_auth(wp->username);
 		my_syslog("普通操作", "用户登录成功", wp->username);
 		my_en_syslog("normal operation", "User login successfully", cur_account.username);
+		my_jap_syslog("普通の操作", "ユーザーログインに成功", cur_account.username);
 	} else {
 		if (route->askLogin) {
 			(route->askLogin)(wp);

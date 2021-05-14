@@ -220,8 +220,12 @@ static int get_log_name(char **ret_f_content)
 {
 	if (language == 0){
 		*ret_f_content = get_dir_filename(DIR_LOG);
-	} else {
+	}
+	if (language == 1){
 		*ret_f_content = get_dir_filename(DIR_LOG_EN);
+	}
+	if (language == 2){
+		*ret_f_content = get_dir_filename(DIR_LOG_JAP);
 	}
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
@@ -246,8 +250,12 @@ static int get_log_data(char **ret_f_content, const cJSON *data_json)
 	}
 	if (language == 0){
 		sprintf(dir_filename, "%s%s", DIR_LOG, file_name->valuestring);
-	} else {
+	}
+	if (language == 1){
 		sprintf(dir_filename, "%s%s", DIR_LOG_EN, file_name->valuestring);
+	}
+	if (language == 2){
+		sprintf(dir_filename, "%s%s", DIR_LOG_JAP, file_name->valuestring);
 	}
 	*ret_f_content = get_file_content(dir_filename);
 	/* ret_f_content is NULL or no such file or empty */

@@ -820,6 +820,77 @@ int my_en_syslog(const char *class, const char *content, const char *user)
 	return SUCCESS;
 }
 
+/* record jap syslog */
+int my_jap_syslog(const char *class, const char *content, const char *user)
+{
+	struct tm *my_local;
+	time_t t;
+	int ret = FAIL;
+	char filename[100] = {0};
+	char now_time[100] = {0};
+	char dir_filename[100] = {0};
+	char *buf = NULL;
+	char *f_content = NULL;
+	cJSON *root_json = NULL;
+	cJSON *newitem = NULL;
+	t = time(NULL);
+
+	//printf("ctime(&t) = %s\n", ctime(&t));
+	my_local = localtime(&t);
+	//printf("Local sec is: %d\n", my_local->tm_sec); /* 秒 – 取值区间为[0,59] */
+	//printf("Local min is: %d\n", my_local->tm_min); /* 分 - 取值区间为[0,59] */
+	//printf("Local hour is: %d\n", my_local->tm_hour); /* 时 - 取值区间为[0,23] */
+	//printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
+	//printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
+	//printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
+	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
+	//printf("filename = %s\n", filename);
+	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
+
+	sprintf(dir_filename, "%s%s.txt", DIR_LOG_JAP, filename);
+	//printf("dir_filename = %s\n", dir_filename);
+
+	f_content = get_file_content(dir_filename);
+	/* f_content is NULL */
+	if (f_content == NULL) {
+		return FAIL;
+	/* no such file */
+	} else if (strcmp(f_content, "NO_FILE") == 0) {
+		if (delete_log_file(1) == FAIL) {
+			return FAIL;
+		}
+		root_json = cJSON_CreateArray();
+	/* f_content is empty */
+	} else if (strcmp(f_content, "Empty") == 0) {
+		root_json = cJSON_CreateArray();
+	/* f_content exist */
+	} else {
+		root_json = cJSON_Parse(f_content);
+		free(f_content);
+		f_content = NULL;
+	}
+
+	newitem = cJSON_CreateObject();
+	cJSON_AddStringToObject(newitem, "time", now_time);
+	cJSON_AddStringToObject(newitem, "class", class);
+	cJSON_AddStringToObject(newitem, "content", content);
+	cJSON_AddStringToObject(newitem, "user", user);
+	//cJSON_AddItemToArray(root_json, newitem);
+	/** 将一个新元素插入数组中的0索引的位置，旧的元素的索引依次加1 */
+	cJSON_InsertItemInArray(root_json, 0, newitem);
+	buf = cJSON_Print(root_json);
+
+	ret = write_file(dir_filename, buf);//write file
+
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return SUCCESS;
+}
+
+
 /* delete log file: 删除旧的 log 文件, 只保留 web 系统配置文件中的 log_count 个 log 文件 */
 int delete_log_file(int flag)
 {

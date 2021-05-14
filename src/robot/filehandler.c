@@ -353,40 +353,47 @@ void upload(Webs *wp)
 				upfile = sfmt("%s", DB_POINTS);
 				my_syslog("普通操作", "导入示教点文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import the teaching point file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "インポート web_point 文書が成功する", cur_account.username);
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
 				my_syslog("普通操作", "导入用户程序文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Imported user program file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "インポートユーザープログラム 文書が成功する", cur_account.username);
 			/* web Tool model file */
 			} else if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
 				upfile = sfmt("%s%s", UPLOAD_TOOL_MODEL, up->clientFilename);
 				my_syslog("普通操作", "导入工具模型成功", cur_account.username);
 				my_en_syslog("normal operation", "Import tool model successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "ツールモデルの導入に成功", cur_account.username);
 				sprintf(filename, "%s%s", LOAD_TOOL_MODEL, up->clientFilename);
 			/* web system config file */
 			} else if (strcmp(up->clientFilename, "system.txt") == 0) {
 				upfile = sfmt("%s", FILE_CFG);
 				my_syslog("普通操作", "导入 web 端系统配置文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import the web side system configuration file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "インポートweb側のシステム構成 文書が成功する", cur_account.username);
 				strcpy(filename, upfile);
 			/* vision_pkg_des.txt file */
 			} else if (strcmp(up->clientFilename, "vision_pkg_des.txt") == 0) {
 				upfile = sfmt("%s", FILE_VISION);
 				my_syslog("普通操作", "导入 vision_pkg_des.txt 文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import vision_pkg_des.txt file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "インポートvision_pkg_des.txt 文書が成功する", cur_account.username);
 				strcpy(filename, upfile);
 			/* web user data file */
 			} else if (strcmp(up->clientFilename, "fr_user_data.tar.gz") == 0) {
 				upfile = sfmt("%s", FILE_USERDATA);
 				my_syslog("普通操作", "导入用户数据文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import of user data file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "ユーザーデータファイルのインポートに成功しました", cur_account.username);
 				strcpy(filename, upfile);
 			/* control user file */
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {
 				upfile = sfmt("%s", WEB_ROBOT_CFG);
 				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import of controller user profile successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "コントローラ側のユーザプロファイルのインポートが成功しました", cur_account.username);
 			/* webapp upgrade file */
 		/*	} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_WEBAPP);
@@ -402,22 +409,26 @@ void upload(Webs *wp)
 				upfile = sfmt("%s", UPGRADE_SOFTWARE);
 				my_syslog("普通操作", "导入软件升级文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import software update file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "ソフトウェアアップグレードファイルのインポートに成功", cur_account.username);
 				strcpy(filename, upfile);
 			/* peripheral plugin file */
 			} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
 				upfile = sfmt("%s%s", UPLOAD_WEB_PLUGINS, up->clientFilename);
 				my_syslog("普通操作", "导入外设插件文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import peripheral plug-in file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "周辺機器プラグインファイルのインポートに成功しました", cur_account.username);
 				strcpy(filename, upfile);
 			/* ODM file */
 			} else if (strcmp(up->clientFilename, "odm.tar.gz") == 0) {
 				upfile = sfmt("%s", UPLOAD_WEB_ODM);
 				my_syslog("普通操作", "导入 ODM 文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import ODM file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "odmファイルのインポートに成功", cur_account.username);
 				strcpy(filename, upfile);
 			} else {
 				my_syslog("普通操作", "导入文件未匹配", cur_account.username);
 				my_en_syslog("normal operation", "Import file fail", cur_account.username);
+				my_jap_syslog("普通の操作", "インポートファイルが一致しません", cur_account.username);
 				goto end;
 			}
 			//printf("upfile = %s\n", upfile);
@@ -447,6 +458,7 @@ void upload(Webs *wp)
 			perror("md5 & version check fail!");
 			my_syslog("普通操作", "升级软件失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade software", cur_account.username);
+			my_jap_syslog("普通の操作", "ソフトウェアのアップグレードに失敗する", cur_account.username);
 			goto end;
 		}
 
@@ -455,6 +467,7 @@ void upload(Webs *wp)
 		if (system(cmd) != 0) {
 			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade webapp", cur_account.username);
+			my_jap_syslog("普通の操作", "webappのアップグレードに失敗", cur_account.username);
 			perror("uncompress fail!");
 			goto end;
 		}
@@ -477,6 +490,7 @@ void upload(Webs *wp)
 		} while (check_version(README_WEB_NOW, README_WEB_UP) == FAIL);
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 		my_en_syslog("normal operation", "Successed to upgrade webapp", cur_account.username);
+		my_jap_syslog("普通の操作", "webappのアップグレードに成功", cur_account.username);
 
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
@@ -490,6 +504,7 @@ void upload(Webs *wp)
 		} while (check_version(README_CTL_NOW, README_CTL_UP) == FAIL);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 		my_en_syslog("normal operation", "Controller software upgrade successful", cur_account.username);
+		my_jap_syslog("普通の操作", "コントローラソフトウェアのアップグレードに成功", cur_account.username);
 
 		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/fr_control && rm -rf /tmp/web && rm -rf /tmp/software");
 
@@ -745,27 +760,35 @@ static int avolfileHandler(Webs *wp)
 		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config ./robot/ex_device.config");
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of user data file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ユーザーデータファイルのエクスポートに成功", cur_account.username);
 	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
 		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of points file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ポイントファイルを提示して成功させる", cur_account.username);
 	} else if (strcmp(pathfilename, FILE_CFG) == 0) {
 		my_syslog("普通操作", "导出 web 端系统配置文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of web system configure file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "web側システムプロファイルのエクスポートに成功しました", cur_account.username);
 	} else if (strcmp(pathfilename, ROBOT_CFG) == 0) {
 		my_syslog("普通操作", "导出控制器端用户配置文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of controller side user configure file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "コントローラ側のユーザプロファイルを成功裏にエクスポートする", cur_account.username);
 	} else if (is_in(pathfilename, DIR_USER) == 1) {
 		my_syslog("普通操作", "导出用户程序文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of user program file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ユーザープログラムファイルをエクスポートします", cur_account.username);
 	} else if (strcmp(pathfilename, FILE_STATEFB) == 0) {
 		my_syslog("普通操作", "导出状态查询文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of Status query file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ステータス照会ファイルのエクスポートに成功しました", cur_account.username);
 	} else if (strcmp(pathfilename, FILE_STATEFB10) == 0) {
 		my_syslog("普通操作", "导出出现异常 10s 前机器人数据文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of  the robot data file 10s before the exception occurs successful", cur_account.username);
+		my_jap_syslog("普通の操作", "異常10s前ロボットデータファイルのエクスポートに成功しました", cur_account.username);
 	} else if (is_in(pathfilename, DIR_LOG) == 1) {
 		my_syslog("普通操作", "导出 log 文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of log file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ログファイルのエクスポートに成功", cur_account.username);
 	}
 
 	//取文件名和扩展名
