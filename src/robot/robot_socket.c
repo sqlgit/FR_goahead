@@ -668,6 +668,31 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 393) {//获取外部轴驱动器配置信息
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+
+				continue;
+			}
+
+			cJSON_AddStringToObject(root_json, "company", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "model", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "encType", msg_array[2]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 
