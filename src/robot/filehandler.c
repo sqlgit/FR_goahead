@@ -667,9 +667,9 @@ void upload(Webs *wp)
 			goto end;
 		}
 	} else if (strcmp(filename, UPLOAD_WEB_ODM) == 0) {
-		system("rm -rf /root/web/frontend/plugins/odm");
-		system("cd /root/web/frontend/plugins/ && tar -zxvf odm.tar.gz");
-		system("rm -f /root/web/frontend/plugins/odm.tar.gz");
+		system("rm -rf /root/web/frontend/file/odm");
+		system("cd /root/web/frontend/file/ && tar -zxvf odm.tar.gz");
+		system("rm -f /root/web/frontend/file/odm.tar.gz");
 	}
 
 	websSetStatus(wp, 200);

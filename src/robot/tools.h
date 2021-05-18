@@ -64,8 +64,8 @@
 #define DB_ACCOUNT "/root/web/account/account.db"
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
-#define UPLOAD_WEB_ODM "/root/web/frontend/plugins/odm.tar.gz"
-#define FILE_ODM_CFG "/root/web/frontend/plugins/odm/cfg.txt"
+#define UPLOAD_WEB_ODM "/root/web/frontend/file/odm.tar.gz"
+#define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
 #define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0

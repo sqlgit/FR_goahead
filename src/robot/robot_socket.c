@@ -445,6 +445,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -459,6 +460,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -474,6 +476,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			root_json = NULL;
 			//printf("msg_content = %s\n", msg_content);
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -487,6 +491,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -512,6 +517,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -525,6 +532,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -540,6 +548,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -554,6 +564,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -566,6 +577,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -580,6 +593,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -592,6 +606,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -612,6 +628,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				system(cmd);
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -621,6 +638,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -635,6 +653,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -649,6 +669,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -660,6 +681,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -674,6 +697,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
 				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -685,6 +709,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
 
 				continue;
 			}
@@ -695,6 +721,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			string_list_free(msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+				string_list_free(array, size_package);
 
 				continue;
 			}
