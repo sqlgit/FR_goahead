@@ -241,6 +241,9 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_vir_file;
 	pthread_t t_socket_vir_status;
 
+	/* 初始化扭矩系统 */
+	init_torquesys();
+
 #if recover_mode
 	/* create socket_cmd thread */
 	if (pthread_create(&t_socket_cmd, NULL, (void *)&socket_thread, (void *)CMD_PORT)) {

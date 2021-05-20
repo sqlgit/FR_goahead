@@ -12,6 +12,7 @@ SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
 SOCKET_INFO socket_state;
+SOCKET_INFO socket_torquesys;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
@@ -22,6 +23,8 @@ CTRL_STATE pre_ctrl_state;
 CTRL_STATE pre_vir_ctrl_state;
 FB_LinkQuene fb_quene;
 extern int robot_type;
+TORQUE_SYS torquesys;
+TORQUE_SYS_STATE torque_sys_state;
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -377,6 +380,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
 	cJSON *newitem = NULL;
 	cJSON *root_json = NULL;
+	cJSON *data_json = NULL;
+	cJSON *enable_json = NULL;
 	char recvbuf[MAX_BUF] = {0};
 	char **array = NULL;
 	int recv_len = 0;
@@ -719,6 +724,62 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 412) {
+			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+				string_list_free(array, size_package);
+				/* cjson delete */
+				cJSON_Delete(data_json);
+				data_json = NULL;
+
+				continue;
+			}
+
+			data_json = cJSON_Parse(array[4]);
+			if (data_json == NULL || data_json->type != cJSON_Object) {
+				string_list_free(array, size_package);
+
+				continue;
+			}
+			enable_json = cJSON_GetObjectItem(data_json, "enable");
+			if (enable_json == NULL) {
+				string_list_free(array, size_package);
+				/* cjson delete */
+				cJSON_Delete(data_json);
+				data_json = NULL;
+
+				continue;
+			}
+			/* 开启 socket thread */
+			if (enable_json->valueint == 1 && torquesys.enable == 0) {
+				torquesys.enable = 1;
+
+				/* create socket PCI thread */
+				if (pthread_create(&torquesys.t_socket_TORQUE_SYS, NULL, (void*)&socket_TORQUE_SYS_thread, (void *)TORQUE_PORT)) {
+					string_list_free(array, size_package);
+					/* cjson delete */
+					cJSON_Delete(data_json);
+					data_json = NULL;
+
+					continue;
+				}
+			}
+			/* 关闭 socket thread */
+			if (enable_json->valueint == 0 && torquesys.enable == 1) {
+				torquesys.enable = 0;
+
+				printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
+				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+				if (pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)) {
+					perror("pthread_join");
+					string_list_free(array, size_package);
+
+					continue;
+				}
+				printf("end\n");
+			}
+			/* cjson delete */
+			cJSON_Delete(data_json);
+			data_json = NULL;
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);
@@ -1096,6 +1157,77 @@ void *socket_status_thread(void *arg)
 	}
 }
 
+void *socket_TORQUE_SYS_thread(void *arg)
+{
+	SOCKET_INFO *sock = NULL;
+	int port = (int)arg;
+	int recv_len = 0;
+	char buf_memory[BUFFSIZE] = {0};
+	char sec_buf_memory[BUFFSIZE] = {0};
+	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
+	char recvbuf[STATE_SIZE] = {0};
+
+	sock = &socket_torquesys;
+	/* init socket */
+	socket_init(sock, port);
+
+	while (torquesys.enable == 1) {
+		bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
+		/* do socket connect */
+		/* create socket */
+		if (socket_create(sock) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(sock) == FAIL) {
+			/* connect fail */
+			perror("socket connect fail");
+			close(sock->fd);
+			delay(1000);
+
+			continue;
+		}
+		/* socket connected */
+		/* set socket status: connected */
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
+
+		while (torquesys.enable == 1) {
+			bzero(recvbuf, STATE_SIZE);
+			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
+			printf("sock status recv_len = %d\n", recv_len);
+			/* recv timeout or error */
+			if (recv_len <= 0) {
+				printf("sock status recv_len : %d\n", recv_len);
+				printf("sock status errno : %d\n", errno);
+				printf("sock status strerror : %s\n", strerror(errno));
+				perror("sock status recv perror :");
+				/* 认为连接已经断开 */
+
+				break;
+			}
+			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(BUFFSIZE), 清空 buf_memory
+			if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
+				bzero(buf_memory, BUFFSIZE);
+			}
+			memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
+			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
+			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) == sizeof(TORQUE_SYS_STATE)+14) {
+				bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
+				memcpy(&torque_sys_state, (frame+7), (strlen(frame)-14));
+			}
+		}
+		/* socket disconnected */
+		/* close socket */
+		close(sock->fd);
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+	}
+}
+
 /** 状态查询线程 */
 void *socket_state_feedback_thread(void *arg)
 {
@@ -1458,5 +1590,13 @@ int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const 
 
 	//return ret;
 	return SUCCESS;
+}
+
+void init_torquesys()
+{
+	/** init torquesys on off status */
+	torquesys.enable = 0;
+	/** send get_on_off to TaskManagement */
+	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
 }
 

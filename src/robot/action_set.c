@@ -40,6 +40,18 @@ static int set_state(const cJSON *data_json, char *content);
 static int mode(const cJSON *data_json, char *content);
 static int jointtotcf(const cJSON *data_json, char *content);
 static int set_plugin_dio(const cJSON *data_json, char *content, int dio);
+static int get_program_array(const cJSON *data_json, char *content);
+static int get_program_content(const cJSON *data_json, char *content);
+static int save_program(const cJSON *data_json, char *content);
+static int upload_program(const cJSON *data_json, char *content);
+static int get_control_mode(const cJSON *data_json, char *content);
+static int set_control_mode(const cJSON *data_json, char *content);
+static int test_tighten(const cJSON *data_json, char *content);
+static int test_unscrew(const cJSON *data_json, char *content);
+static int test_free(const cJSON *data_json, char *content);
+static int test_stop(const cJSON *data_json, char *content);
+static int set_on_off(const cJSON *data_json, char *content);
+static int get_on_off(const cJSON *data_json, char *content);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
@@ -1127,6 +1139,46 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "EXT_AXIS_SETHOMING:", "");
 		sprintf(tmp_content, "%sExtAxisSetHoming(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		strcpy(file_content, tmp_content);
+	/* soft-PLC setDO */
+	} else if (!strncmp(lua_cmd, "SPLCSetDO:", 10)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SPLCSetDO:", "");
+		sprintf(tmp_content, "%sSPLCSetDO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* soft-PLC setToolDO */
+	} else if (!strncmp(lua_cmd, "SPLCSetToolDO:", 14)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SPLCSetToolDO:", "");
+		sprintf(tmp_content, "%sSPLCSetToolDO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* soft-PLC setAO */
+	} else if (!strncmp(lua_cmd, "SPLCSetAO:", 10)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SPLCSetAO:", "");
+		sprintf(tmp_content, "%sSPLCSetAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* soft-PLC setToolAO */
+	} else if (!strncmp(lua_cmd, "SPLCSetToolAO:", 14)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SPLCSetToolAO:", "");
+		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1371,6 +1423,21 @@ static int step_over(const cJSON *data_json, char *content)
 	/* LaserSensorRecord */
 	} else if (!strncmp(pgvalue->valuestring, "LaserSensorRecord", 17)) {
 		cmd = 284;
+	/* soft-PLC setDO */
+	} else if (!strncmp(pgvalue->valuestring, "SPLCSetDO", 9)) {
+		cmd = 394;
+	/* soft-PLC setToolDO */
+	} else if (!strncmp(pgvalue->valuestring, "SPLCSetToolDO", 13)) {
+		cmd = 395;
+	/* soft-PLC setAO */
+	} else if (!strncmp(pgvalue->valuestring, "SPLCSetAO", 9)) {
+		cmd = 396;
+	/* soft-PLC setToolAO */
+	} else if (!strncmp(pgvalue->valuestring, "SPLCSetToolAO", 13)) {
+		cmd = 397;
+	/* soft-PLC getDI */
+	} else if (!strncmp(pgvalue->valuestring, "SPLCGetDI", 9)) {
+		cmd = 398;
 	/* error */
 	} else {
 		return FAIL;
@@ -1727,6 +1794,140 @@ static int set_plugin_dio(const cJSON *data_json, char *content, int dio)
 	return SUCCESS;
 }
 
+/* 401 get_program_array */
+static int get_program_array(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysGetProgramArray()");
+
+	return SUCCESS;
+}
+
+/* 402 get_program_content */
+static int get_program_content(const cJSON *data_json, char *content)
+{
+	cJSON *program_name = cJSON_GetObjectItem(data_json, "program_name");
+
+	if (program_name == NULL || program_name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "TorqueSysGetProgramContent(%s)", program_name->valuestring);
+
+	return SUCCESS;
+}
+
+/* 403 save_program */
+static int save_program(const cJSON *data_json, char *content)
+{
+	char *buf = NULL;
+
+	buf = cJSON_Print(data_json);
+	if (buf == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "TorqueSysSaveProgram(%s)", buf);
+	free(buf);
+	buf = NULL;
+
+	return SUCCESS;
+}
+
+/* 404 upload_program */
+static int upload_program(const cJSON *data_json, char *content)
+{
+	cJSON *program_name = cJSON_GetObjectItem(data_json, "program_name");
+
+	if (program_name == NULL || program_name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "TorqueSysUploadProgram(%s)", program_name->valuestring);
+
+	return SUCCESS;
+}
+
+/* 405 get_control_mode */
+static int get_control_mode(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysGetControlMode()");
+
+	return SUCCESS;
+}
+
+/* 406 set_control_mode */
+static int set_control_mode(const cJSON *data_json, char *content)
+{
+	cJSON *control_mode = cJSON_GetObjectItem(data_json, "control_mode");
+
+	if (control_mode == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "TorqueSysSetControlMode(%d)", control_mode->valueint);
+
+	return SUCCESS;
+}
+
+/* 407 test_tighten */
+static int test_tighten(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysTestTighten()");
+
+	return SUCCESS;
+}
+
+/* 408 test_unscrew */
+static int test_unscrew(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysTestUnscrew()");
+
+	return SUCCESS;
+}
+
+/* 409 test_free */
+static int test_free(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysTestFree()");
+
+	return SUCCESS;
+}
+
+/* 410 test_stop */
+static int test_stop(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysTestStop()");
+
+	return SUCCESS;
+}
+
+/* 411 set_on_off */
+static int set_on_off(const cJSON *data_json, char *content)
+{
+	cJSON *enable = cJSON_GetObjectItem(data_json, "enable");
+
+	if (enable == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(content, "TorqueSysSetOnOff(%d)", enable->valueint);
+
+	return SUCCESS;
+}
+
+/* 412 get_on_off */
+static int get_on_off(const cJSON *data_json, char *content)
+{
+	strcpy(content, "TorqueSysGetOnOff()");
+
+	return SUCCESS;
+}
+
 /* get lua content size */
 static int get_lua_content_size(const cJSON *data_json)
 {
@@ -1827,7 +2028,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2897,6 +3098,90 @@ void set(Webs *wp)
 		strcpy(en_log_content, "Get the controller software version");
 		strcpy(jap_log_content, "コントローラソフトウェアのバージョンを取得します");
 		ret = copy_content(data_json, content);
+		break;
+	case 401:
+		port = cmdport;
+		strcpy(log_content, "获取电批程序名数组");
+		strcpy(en_log_content, "Gets an array of batch program names");
+		strcpy(jap_log_content, "電子バッチのプログラム名の配列を取得します");
+		ret = get_program_array(data_json, content);
+		break;
+	case 402:
+		port = cmdport;
+		strcpy(log_content, "获取电批程序内容");
+		strcpy(en_log_content, "Gets the contents of the telegram batch program");
+		strcpy(jap_log_content, "電気バッチのプログラム内容を入手する");
+		ret = get_program_content(data_json, content);
+		break;
+	case 403:
+		port = cmdport;
+		strcpy(log_content, "程序编辑确认修改");
+		strcpy(en_log_content, "Program editors confirm the changes");
+		strcpy(jap_log_content, "プログラム編集者が修正を確認する");
+		ret = save_program(data_json, content);
+		break;
+	case 404:
+		port = cmdport;
+		strcpy(log_content, "程序下发");
+		strcpy(en_log_content, "Upload program");
+		strcpy(jap_log_content, "プログラム交付");
+		ret = upload_program(data_json, content);
+		break;
+	case 405:
+		port = cmdport;
+		strcpy(log_content, "获取当前扭矩控制模式");
+		strcpy(en_log_content, "Gets the current torque control mode");
+		strcpy(jap_log_content, "現在のトルク制御モードを取得します");
+		ret = get_control_mode(data_json, content);
+		break;
+	case 406:
+		port = cmdport;
+		strcpy(log_content, "设置扭矩控制模式");
+		strcpy(en_log_content, "Set torque control mode");
+		strcpy(jap_log_content, "トルク制御モードを設定します");
+		ret = set_control_mode(data_json, content);
+		break;
+	case 407:
+		port = cmdport;
+		strcpy(log_content, "测试拧紧");
+		strcpy(en_log_content, "Test on tight");
+		strcpy(jap_log_content, "締め付けをテストする");
+		ret = test_tighten(data_json, content);
+		break;
+	case 408:
+		port = cmdport;
+		strcpy(log_content, "测试反松");
+		strcpy(en_log_content, "Test the loose");
+		strcpy(jap_log_content, "反マツをテストする");
+		ret = test_unscrew(data_json, content);
+		break;
+	case 409:
+		port = cmdport;
+		strcpy(log_content, "测试自由");
+		strcpy(en_log_content, "Test free");
+		strcpy(jap_log_content, "自由を試す");
+		ret = test_free(data_json, content);
+		break;
+	case 410:
+		port = cmdport;
+		strcpy(log_content, "测试停止");
+		strcpy(en_log_content, "Test stop");
+		strcpy(jap_log_content, "テスト停止");
+		ret = test_stop(data_json, content);
+		break;
+	case 411:
+		port = cmdport;
+		strcpy(log_content, "设置扭矩系统开关");
+		strcpy(en_log_content, "Set torque system On-Off");
+		strcpy(jap_log_content, "トルク系スイッチをセットします");
+		ret = set_on_off(data_json, content);
+		break;
+	case 412:
+		port = cmdport;
+		strcpy(log_content, "获取扭矩系统开关");
+		strcpy(en_log_content, "Get torque system On-Off");
+		strcpy(jap_log_content, "トルクシステムのスイッチを取得します");
+		ret = get_on_off(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */
 		port = cmdport;

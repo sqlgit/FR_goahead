@@ -22,6 +22,7 @@
 #define STATUS_PORT 8061
 #define FILE_PORT 8062
 #define STATE_FEEDBACK_PORT 8063
+#define TORQUE_PORT 8064
 #define VIR_CMD_PORT 8070
 #define VIR_STATUS_PORT 8071
 #define VIR_FILE_PORT 8072
@@ -41,6 +42,7 @@
 #define MAXGRIPPER 8
 #define MAXSLAVES 8
 
+#pragma pack(push, 1)
 /** 外部轴状态结构体 */
 typedef struct _EXTERNALAXIS_STATU
 {
@@ -57,6 +59,7 @@ typedef struct _EXTERNALAXIS_STATU
 	unsigned char exAxisOFLIN;	//通信超时，控制卡与控制箱板485通信超时
 	uint8_t	exAxisHomeStatus;	//外部轴回零状态
 }EXTERNALAXIS_STATUS;
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 /** 运动控制器状态结构体 */
@@ -171,6 +174,24 @@ typedef struct _GRIPPERS_CONFIG_INFO
 } GRIPPERS_CONFIG_INFO;
 #pragma pack(pop)
 
+/** 扭矩管理系统状态 */
+#pragma pack(push, 1)
+typedef struct _TORQUE_SYS_STATE
+{
+	uint16_t motion_state;		/** 运动状态 0-停止，1-运动 */
+	uint16_t input_io_state;	/** 输入IO状态, 4pin In:[0,0,0,0]{拧紧、反松、自由、备用} */
+	uint16_t output_io_state;	/** 输出IO状态, 4pin Out:[0,0,0,0]{BUSY、OK、ERR（浮高、滑牙和驱动器故障等）、备用} */
+	uint16_t lock_result;		/** 锁附结果 */
+	uint16_t error_code;		/** 故障码 */
+	uint16_t task_runtime;		/** 任务执行时间 */
+	int16_t feed_turns;			/** 反馈圈数 单位：0.01r */
+	int16_t feed_rev;			/** 反馈转速 单位：rpm/min */
+	int16_t feed_torque;		/** 反馈扭矩 单位：mN.m */
+	uint16_t work_state;		/** 工作状态 0-停止，1-拧紧，2-反松，3-自由 */
+	uint16_t btn_state;			/** 按钮状态 仅适用于手动款，[0,0]{0-拧紧/1-反松、0-停止/1-启动} */
+} TORQUE_SYS_STATE;
+#pragma pack(pop)
+
 /** 状态查询结构体 */
 typedef struct _STATE_FEEDBACK
 {
@@ -181,6 +202,13 @@ typedef struct _STATE_FEEDBACK
 	int index;						    // state feedback index "最大为 100"
 	char *buf;						    // state feedback buf 缓存数据
 } STATE_FEEDBACK;
+
+/** 扭矩管理系统结构体 */
+typedef struct _TORQUE_SYS
+{
+	int enable;
+	pthread_t t_socket_TORQUE_SYS;
+} TORQUE_SYS;
 
 /* socket 相关信息结构体 */
 typedef struct _SOCKET_INFO
@@ -206,7 +234,9 @@ typedef struct _SOCKET_INFO
 
 void *socket_thread(void *arg);
 void *socket_status_thread(void *arg);
+void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
+void init_torquesys();
 
 #endif
