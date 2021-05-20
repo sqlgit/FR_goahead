@@ -178,7 +178,8 @@ int quene_recv_result(const QElemType node, const LinkQuene q, char *recv_conten
 					}
 #endif
 			//	}
-				delay(10);
+				//delay(10);
+				usleep(10*1000);
 			}
 		}
 		p = p->next;

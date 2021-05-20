@@ -380,8 +380,6 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
 	cJSON *newitem = NULL;
 	cJSON *root_json = NULL;
-	cJSON *data_json = NULL;
-	cJSON *enable_json = NULL;
 	char recvbuf[MAX_BUF] = {0};
 	char **array = NULL;
 	int recv_len = 0;
@@ -451,6 +449,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -483,6 +485,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -524,6 +530,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -555,6 +565,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -584,6 +598,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -613,6 +631,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -660,6 +682,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -688,6 +714,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -716,6 +746,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
@@ -725,46 +759,38 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			}
 			string_list_free(msg_array, size_content);
 		} else if (atoi(array[2]) == 412) {
-			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
+			root_json = cJSON_CreateObject();
+			cJSON_AddNumberToObject(root_json, "enable", (atoi(array[4])-10));
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(array, size_package);
-				/* cjson delete */
-				cJSON_Delete(data_json);
-				data_json = NULL;
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
 
 				continue;
 			}
-
-			data_json = cJSON_Parse(array[4]);
-			if (data_json == NULL || data_json->type != cJSON_Object) {
-				string_list_free(array, size_package);
-
-				continue;
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
 			}
-			enable_json = cJSON_GetObjectItem(data_json, "enable");
-			if (enable_json == NULL) {
-				string_list_free(array, size_package);
-				/* cjson delete */
-				cJSON_Delete(data_json);
-				data_json = NULL;
 
-				continue;
-			}
 			/* 开启 socket thread */
-			if (enable_json->valueint == 1 && torquesys.enable == 0) {
+			if (atoi(array[4]) == 11 && torquesys.enable == 0) {
 				torquesys.enable = 1;
 
 				/* create socket PCI thread */
 				if (pthread_create(&torquesys.t_socket_TORQUE_SYS, NULL, (void*)&socket_TORQUE_SYS_thread, (void *)TORQUE_PORT)) {
 					string_list_free(array, size_package);
-					/* cjson delete */
-					cJSON_Delete(data_json);
-					data_json = NULL;
 
 					continue;
 				}
 			}
 			/* 关闭 socket thread */
-			if (enable_json->valueint == 0 && torquesys.enable == 1) {
+			if (atoi(array[4]) == 10 && torquesys.enable == 1) {
 				torquesys.enable = 0;
 
 				printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
@@ -777,9 +803,6 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				}
 				printf("end\n");
 			}
-			/* cjson delete */
-			cJSON_Delete(data_json);
-			data_json = NULL;
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);
@@ -868,7 +891,8 @@ static void *socket_send_thread(void *arg)
 			//}
 		}
 
-		delay(1);
+		//delay(1);
+		usleep(1000);
 	}
 }
 
@@ -934,7 +958,8 @@ void *socket_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(sock->fd);
-			delay(1000);
+			//delay(1000);
+			sleep(1);
 
 			continue;
 		}
@@ -1069,7 +1094,8 @@ void *socket_status_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(sock->fd);
-			delay(1000);
+			//delay(1000);
+			sleep(1);
 
 			continue;
 		}
@@ -1186,7 +1212,8 @@ void *socket_TORQUE_SYS_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(sock->fd);
-			delay(1000);
+			//delay(1000);
+			sleep(1);
 
 			continue;
 		}
@@ -1303,7 +1330,7 @@ void *socket_state_feedback_thread(void *arg)
 			/* connect fail */
 			perror("socket connect fail");
 			close(sock->fd);
-			delay(1000);
+			sleep(1);
 
 			continue;
 		}
