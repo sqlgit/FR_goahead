@@ -111,13 +111,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(torquesys_json, "lock_result", torque_sys_state.lock_result);
 	cJSON_AddNumberToObject(torquesys_json, "error_code", torque_sys_state.error_code);
 	cJSON_AddNumberToObject(torquesys_json, "task_runtime", torque_sys_state.task_runtime);
-	cJSON_AddNumberToObject(torquesys_json, "feed_turns", torque_sys_state.feed_turns);
-	cJSON_AddNumberToObject(torquesys_json, "feed_rev", torque_sys_state.feed_rev);
-	cJSON_AddNumberToObject(torquesys_json, "feed_torque", torque_sys_state.feed_torque);
+	cJSON_AddNumberToObject(torquesys_json, "feed_turns", double_round(torque_sys_state.feed_turns, 2));
+	cJSON_AddNumberToObject(torquesys_json, "feed_rev", double_round(torque_sys_state.feed_rev, 2));
+	cJSON_AddNumberToObject(torquesys_json, "feed_torque", double_round(torque_sys_state.feed_torque, 2));
 	cJSON_AddNumberToObject(torquesys_json, "work_state", torque_sys_state.work_state);
 	memset(array, 0, sizeof(array));
 	uint16_to_array(torque_sys_state.btn_state, array);
-	cJSON_AddItemToObject(torquesys_json, "btn_state", cJSON_CreateIntArray(array, 2));
+	cJSON_AddNumberToObject(torquesys_json, "control_mode", torque_sys_state.control_mode);
+	cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
