@@ -28,6 +28,7 @@ extern int language;
 extern ACCOUNT_INFO cur_account;
 static int test_index = 0;
 extern TORQUE_SYS_STATE torque_sys_state;
+extern TORQUE_SYS torquesys;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -101,24 +102,26 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 
 	/** 扭矩管理系统状态反馈 */
-	cJSON_AddNumberToObject(torquesys_json, "motion_state", torque_sys_state.motion_state);
-	memset(array, 0, sizeof(array));
-	uint16_to_array(torque_sys_state.input_io_state, array);
-	cJSON_AddItemToObject(torquesys_json, "input_io_state", cJSON_CreateIntArray(array, 4));
-	memset(array, 0, sizeof(array));
-	uint16_to_array(torque_sys_state.output_io_state, array);
-	cJSON_AddItemToObject(torquesys_json, "output_io_state", cJSON_CreateIntArray(array, 4));
-	cJSON_AddNumberToObject(torquesys_json, "lock_result", torque_sys_state.lock_result);
-	cJSON_AddNumberToObject(torquesys_json, "error_code", torque_sys_state.error_code);
-	cJSON_AddNumberToObject(torquesys_json, "task_runtime", torque_sys_state.task_runtime);
-	cJSON_AddNumberToObject(torquesys_json, "feed_turns", double_round(torque_sys_state.feed_turns, 2));
-	cJSON_AddNumberToObject(torquesys_json, "feed_rev", double_round(torque_sys_state.feed_rev, 2));
-	cJSON_AddNumberToObject(torquesys_json, "feed_torque", double_round(torque_sys_state.feed_torque, 2));
-	cJSON_AddNumberToObject(torquesys_json, "work_state", torque_sys_state.work_state);
-	memset(array, 0, sizeof(array));
-	uint16_to_array(torque_sys_state.btn_state, array);
-	cJSON_AddNumberToObject(torquesys_json, "control_mode", torque_sys_state.control_mode);
-	cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
+	if (torquesys.enable == 1) {
+		cJSON_AddNumberToObject(torquesys_json, "motion_state", torque_sys_state.motion_state);
+		memset(array, 0, sizeof(array));
+		uint16_to_array(torque_sys_state.input_io_state, array);
+		cJSON_AddItemToObject(torquesys_json, "input_io_state", cJSON_CreateIntArray(array, 4));
+		memset(array, 0, sizeof(array));
+		uint16_to_array(torque_sys_state.output_io_state, array);
+		cJSON_AddItemToObject(torquesys_json, "output_io_state", cJSON_CreateIntArray(array, 4));
+		cJSON_AddNumberToObject(torquesys_json, "lock_result", torque_sys_state.lock_result);
+		cJSON_AddNumberToObject(torquesys_json, "error_code", torque_sys_state.error_code);
+		cJSON_AddNumberToObject(torquesys_json, "task_runtime", torque_sys_state.task_runtime);
+		cJSON_AddNumberToObject(torquesys_json, "feed_turns", double_round(torque_sys_state.feed_turns, 2));
+		cJSON_AddNumberToObject(torquesys_json, "feed_rev", double_round(torque_sys_state.feed_rev, 2));
+		cJSON_AddNumberToObject(torquesys_json, "feed_torque", double_round(torque_sys_state.feed_torque, 2));
+		cJSON_AddNumberToObject(torquesys_json, "work_state", torque_sys_state.work_state);
+		memset(array, 0, sizeof(array));
+		uint16_to_array(torque_sys_state.btn_state, array);
+		cJSON_AddNumberToObject(torquesys_json, "control_mode", torque_sys_state.control_mode);
+		cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
+	}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
@@ -3509,6 +3512,66 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pre_state->alarm_reboot_rebot = 0;
 	}
 
+	if (state->ts_web_state_com_error == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(error_json, "key", "扭矩：WEB-TM 状态反馈，通信失败");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", "Torque: WEB-TM state feedback, communication failure");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "トルク:web-tm状態フィードバック、通信失敗");
+		}
+		if (pre_state->ts_web_state_com_error != 1) {
+			my_syslog("错误", "扭矩：WEB-TM 状态反馈，通信失败", cur_account.username);
+			my_en_syslog("error", "Torque: WEB-TM state feedback, communication failure", cur_account.username);
+			my_jap_syslog("さくご", "トルク:web-tm状態フィードバック、通信失敗", cur_account.username);
+			pre_state->ts_web_state_com_error = 1;
+		}
+	} else {
+		pre_state->ts_web_state_com_error = 0;
+	}
+
+	if (state->ts_tm_cmd_com_error == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(error_json, "key", "扭矩：TM-扭矩 指令下发，通信失败");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", "Torque: TM- Torque command issued, communication failed");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "トルク:tm -トルク指令が出され、通信が失敗する");
+		}
+		if (pre_state->ts_tm_cmd_com_error != 1) {
+			my_syslog("错误", "扭矩：TM-扭矩 指令下发，通信失败", cur_account.username);
+			my_en_syslog("error", "Torque: TM- Torque command issued, communication failed", cur_account.username);
+			my_jap_syslog("さくご", "トルク:tm -トルク指令が出され、通信が失敗する", cur_account.username);
+			pre_state->ts_tm_cmd_com_error = 1;
+		}
+	} else {
+		pre_state->ts_tm_cmd_com_error = 0;
+	}
+
+	if (state->ts_tm_state_com_error == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(error_json, "key", "扭矩：TM-扭矩 状态反馈，通信失败");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", "Torque: TM- Torque status feedback, communication failure");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "トルク:tm -トルク状態フィードバック、通信失敗");
+		}
+		if (pre_state->ts_tm_state_com_error != 1) {
+			my_syslog("错误", "扭矩：TM-扭矩 状态反馈，通信失败", cur_account.username);
+			my_en_syslog("error", "Torque: TM- Torque status feedback, communication failure", cur_account.username);
+			my_jap_syslog("さくご", "トルク:tm -トルク状態フィードバック、通信失敗", cur_account.username);
+			pre_state->ts_tm_state_com_error = 1;
+		}
+	} else {
+		pre_state->ts_tm_state_com_error = 0;
+	}
+
 	buf = cJSON_Print(root_json);
 	//printf("basic buf = %s\n", buf);
 	strcpy(ret_status, buf);
@@ -3785,11 +3848,6 @@ end:
 	//websWrite(wp, ret_status);
 	websWrite(wp, "fail");
 	websDone(wp);
-	/* free ret_status */
-	if (ret_status != NULL) {
-		free(ret_status);
-		ret_status = NULL;
-	}
 	return;
 }
 

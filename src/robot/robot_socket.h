@@ -160,6 +160,9 @@ typedef struct _CTRL_STATE
 	uint8_t	   curEncoderType[6]; 		/** 当前各轴编码器类型,0:光编,1:磁编 */
 	uint8_t    alarm_check_emerg_stop_btn; /** 1-通信异常,检查急停按钮是否松开 */
 	uint8_t    alarm_reboot_rebot; 		/** 1-断电重启机器人 */
+	uint8_t    ts_web_state_com_error; 	/** 扭矩：WEB-TM 状态反馈，通信失败 */
+	uint8_t    ts_tm_cmd_com_error; 	/** 扭矩：TM-扭矩 指令下发，通信失败 */
+	uint8_t    ts_tm_state_com_error; 	/** 扭矩：TM-扭矩 状态反馈，通信失败 */
 } CTRL_STATE;
 #pragma pack(pop)
 
