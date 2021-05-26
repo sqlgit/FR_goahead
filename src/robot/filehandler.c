@@ -309,6 +309,7 @@ static int update_config(char *filename)
 
 void upload(Webs *wp)
 {
+	//printf("__FUNC__ = %s, __LINE__ = %d\n", __FUNCTION__, __LINE__);
 	WebsKey         *s;
 	WebsUpload      *up;
 	SOCKET_INFO *sock_cmd = NULL;
@@ -337,12 +338,15 @@ void upload(Webs *wp)
 		for (s = hashFirst(wp->files); s; s = hashNext(wp->files, s)) {
 			up = s->content.value.symbol;
 			/* close printf */
-			/*websWrite(wp, "FILE: %s\r\n", s->name.value.string);
+		/*	websWrite(wp, "FILE: %s\r\n", s->name.value.string);
 			websWrite(wp, "FILENAME=%s\r\n", up->filename);
 			websWrite(wp, "CLIENT=%s\r\n", up->clientFilename);
 			websWrite(wp, "TYPE=%s\r\n", up->contentType);
 			websWrite(wp, "SIZE=%d\r\n", up->size);*/
-			/*printf("FILE: %s\r\n", s->name.value.string);
+		/*	printf("wp->uploadTmp = %s\n", wp->uploadTmp);
+			printf("wp->uploadVar = %s\n", wp->uploadVar);
+
+			printf("FILE: %s\r\n", s->name.value.string);
 		    printf("FILENAME=%s\r\n", up->filename);
 			printf("CLIENT=%s\r\n", up->clientFilename);
 			printf("TYPE=%s\r\n", up->contentType);
@@ -357,9 +361,9 @@ void upload(Webs *wp)
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
-				my_syslog("普通操作", "导入用户程序文件成功", cur_account.username);
-				my_en_syslog("normal operation", "Imported user program file successfully", cur_account.username);
-				my_jap_syslog("普通の操作", "インポートユーザープログラム 文書が成功する", cur_account.username);
+				my_syslog("普通操作", "导入 lua 文件成功", cur_account.username);
+				my_en_syslog("normal operation", "Imported lua file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "luaファイルのインポートに成功", cur_account.username);
 			/* web Tool model file */
 			} else if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
 				upfile = sfmt("%s%s", UPLOAD_TOOL_MODEL, up->clientFilename);

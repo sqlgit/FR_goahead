@@ -796,6 +796,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE0_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE0_RTIME = ", "");
 			cJSON_AddStringToObject(item0, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE0_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE0_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item0, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE1_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE1_TYPE = ", "");
 			cJSON_AddStringToObject(item1, "type", strline);
@@ -811,6 +814,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE1_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE1_RTIME = ", "");
 			cJSON_AddStringToObject(item1, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE1_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE1_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item1, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE2_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE2_TYPE = ", "");
 			cJSON_AddStringToObject(item2, "type", strline);
@@ -826,6 +832,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE2_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE2_RTIME = ", "");
 			cJSON_AddStringToObject(item2, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE2_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE2_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item2, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE3_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE3_TYPE = ", "");
 			cJSON_AddStringToObject(item3, "type", strline);
@@ -841,6 +850,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE3_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE3_RTIME = ", "");
 			cJSON_AddStringToObject(item3, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE3_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE3_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item3, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE4_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE4_TYPE = ", "");
 			cJSON_AddStringToObject(item4, "type", strline);
@@ -856,6 +868,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE4_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE4_RTIME = ", "");
 			cJSON_AddStringToObject(item4, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE4_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE4_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item4, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE5_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE5_TYPE = ", "");
 			cJSON_AddStringToObject(item5, "type", strline);
@@ -871,6 +886,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE5_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE5_RTIME = ", "");
 			cJSON_AddStringToObject(item5, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE5_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE5_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item5, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE6_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE6_TYPE = ", "");
 			cJSON_AddStringToObject(item6, "type", strline);
@@ -886,6 +904,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE6_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE6_RTIME = ", "");
 			cJSON_AddStringToObject(item6, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE6_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE6_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item6, "circleratio", strline);
 		} else if(!strncmp(strline, "WEAVE7_TYPE = ", 14)) {
 			strrpc(strline, "WEAVE7_TYPE = ", "");
 			cJSON_AddStringToObject(item7, "type", strline);
@@ -901,6 +922,9 @@ static int get_weave(char **ret_f_content)
 		} else if(!strncmp(strline, "WEAVE7_RTIME = ", 15)) {
 			strrpc(strline, "WEAVE7_RTIME = ", "");
 			cJSON_AddStringToObject(item7, "rtime", strline);
+		} else if(!strncmp(strline, "WEAVE7_CIRCLERATIO = ", 21)) {
+			strrpc(strline, "WEAVE7_CIRCLERATIO = ", "");
+			cJSON_AddStringToObject(item7, "circleratio", strline);
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}

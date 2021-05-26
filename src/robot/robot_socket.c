@@ -1192,6 +1192,7 @@ void *socket_TORQUE_SYS_thread(void *arg)
 	char sec_buf_memory[BUFFSIZE] = {0};
 	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
 	char recvbuf[STATE_SIZE] = {0};
+	int i = 0;
 
 	sock = &socket_torquesys;
 	/* init socket */
@@ -1225,7 +1226,13 @@ void *socket_TORQUE_SYS_thread(void *arg)
 		while (torquesys.enable == 1) {
 			bzero(recvbuf, STATE_SIZE);
 			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
-			printf("sock status recv_len = %d\n", recv_len);
+			//printf("recvbuf = %s\n", recvbuf);
+			/*printf("recvbuf = ");
+			for (i = 0; i < recv_len; i++) {
+				printf("%x ", recvbuf[i]);
+			}
+			printf("\n");
+			printf("sock status recv_len = %d\n", recv_len);*/
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				printf("sock status recv_len : %d\n", recv_len);
@@ -1237,14 +1244,31 @@ void *socket_TORQUE_SYS_thread(void *arg)
 				break;
 			}
 			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(BUFFSIZE), 清空 buf_memory
-			if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
+		/*	if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
 				bzero(buf_memory, BUFFSIZE);
 			}
 			memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
+			printf("sizeof(TORQUE_SYS_STATE)+14 = %d\n", (sizeof(TORQUE_SYS_STATE)+14));
 			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
-			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) == sizeof(TORQUE_SYS_STATE)+14) {
+			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) == (sizeof(TORQUE_SYS_STATE)+14)) {
+				printf("frame = ");
+				for (i = 0; i < recv_len; i++) {
+					printf("%x ", recvbuf[i]);
+				}
+				printf("\n");
 				bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
 				memcpy(&torque_sys_state, (frame+7), (strlen(frame)-14));
+			}*/
+			if (recv_len == (sizeof(TORQUE_SYS_STATE) + 14)) {
+				/*printf("frame = ");
+				for (i = 0; i < recv_len; i++) {
+					printf("%x ", recvbuf[i]);
+				}
+				printf("\n");*/
+				bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
+				memcpy(&torque_sys_state, (recvbuf + 7), (recv_len - 14));
+				//printf("torque_sys_state.task_runtime = %d\n", torque_sys_state.task_runtime);
+				//printf("torque_sys_state.feed_turns = %.2lf\n", torque_sys_state.feed_turns);
 			}
 		}
 		/* socket disconnected */

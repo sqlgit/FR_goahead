@@ -191,7 +191,7 @@ typedef struct _TORQUE_SYS_STATE
 	double feed_rev;			/** 反馈转速 单位：rpm/min */
 	double feed_torque;		/** 反馈扭矩 单位：mN.m */
 	uint16_t work_state;		/** 工作状态 0-停止，1-拧紧，2-反松，3-自由 */
-	uint16_t btn_state;			/** 按钮状态 仅适用于手动款，[0,0]{0-拧紧/1-反松、0-停止/1-启动} */
+	//uint16_t btn_state;			/** 按钮状态 仅适用于手动款，[0,0]{0-拧紧/1-反松、0-停止/1-启动} */
 	uint8_t control_mode;		/** 当前控制方式 0-软件控制，1-IO控制 */
 	uint8_t current_unit;		/** 当前单位 0-mN·m，1-kgf·cm */
 } TORQUE_SYS_STATE;

@@ -12,7 +12,8 @@ USEFILE=
 
 #===== EXTRA_INCVPATH - a space-separated list of directories to search for include files.
 EXTRA_INCVPATH+=$(PROJECT_ROOT)/src  \
-	$(PROJECT_ROOT)/src/osdep $(PROJECT_ROOT)/src/robot
+	$(PROJECT_ROOT)/src/osdep $(PROJECT_ROOT)/src/robot  \
+	$(PROJECT_ROOT)/lua
 
 #===== EXTRA_SRCVPATH - a space-separated list of directories to search for source files.
 EXTRA_SRCVPATH+=$(PROJECT_ROOT)/src  \
@@ -22,8 +23,10 @@ EXTRA_SRCVPATH+=$(PROJECT_ROOT)/src  \
 LIBS+=m socks socket
 
 include $(MKFILES_ROOT)/qmacros.mk
+
 #===== EXTRA_OBJS - object files and libraries contributed additionaly on link/archive step
-EXTRA_OBJS+=$(PROJECT_ROOT)/src/sqlite3_so/libsqlite3.so
+EXTRA_OBJS+=$(PROJECT_ROOT)/src/sqlite3_so/libsqlite3.so  \
+	$(PROJECT_ROOT)/lua/liblua.so
 
 ifndef QNX_INTERNAL
 QNX_INTERNAL=$(PROJECT_ROOT)/.qnx_internal.mk

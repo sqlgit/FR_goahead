@@ -117,8 +117,8 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		cJSON_AddNumberToObject(torquesys_json, "feed_rev", double_round(torque_sys_state.feed_rev, 2));
 		cJSON_AddNumberToObject(torquesys_json, "feed_torque", double_round(torque_sys_state.feed_torque, 2));
 		cJSON_AddNumberToObject(torquesys_json, "work_state", torque_sys_state.work_state);
-		memset(array, 0, sizeof(array));
-		uint16_to_array(torque_sys_state.btn_state, array);
+	//	memset(array, 0, sizeof(array));
+	//	uint16_to_array(torque_sys_state.btn_state, array);
 		cJSON_AddNumberToObject(torquesys_json, "control_mode", torque_sys_state.control_mode);
 		cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
 	}

@@ -134,12 +134,12 @@ void fb_print_node_num(FB_LinkQuene q)
 	FB_Qnode *p = q.front->next;
 
 	int len = 0;
-	printf("print quene node num:");
+	//printf("print quene node num:");
 	while (p != NULL) {
 		p = p->next;
 		len++;
 	}
-	printf("%d\n", len);
+	//printf("%d\n", len);
 
 	return;
 }
