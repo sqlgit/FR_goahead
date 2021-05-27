@@ -11,6 +11,8 @@
 
 /********************************* Defines ************************************/
 
+lua_State *luaEnv = NULL;
+char error_info[1024] = "";
 char lua_filename[FILENAME_SIZE] = "";
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
@@ -28,7 +30,7 @@ extern ACCOUNT_INFO cur_account;
 
 /********************************* Function declaration ***********************/
 
-static int check_lua_file(char *filename, char *error_info);
+static int check_lua_file();
 static int copy_content(const cJSON *data_json, char *content);
 static int program_start(const cJSON *data_json, char *content);
 static int program_stop(const cJSON *data_json, char *content);
@@ -36,7 +38,7 @@ static int program_pause(const cJSON *data_json, char *content);
 static int program_resume(const cJSON *data_json, char *content);
 static int sendfilename(const cJSON *data_json, char *content);
 static int parse_lua_cmd(char *lua_cmd, int len, char *file_content);
-static int sendfile(const cJSON *data_json, int content_len, char *content, char *error_info);
+static int sendfile(const cJSON *data_json, int content_len, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
@@ -68,7 +70,7 @@ static int MoveJ(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	printf("argc = %d\n", argc);
+	//printf("argc = %d\n", argc);
 	if (argc != 28 && argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
@@ -906,12 +908,12 @@ static int CalPoseTrans(lua_State* L)
 	return 1;
 }
 
-static int check_lua_file(char *filename, char *error_info)
+static int pcall_lua(void *arg)
 {
 	int error;
 	int result;
 
-	lua_State *luaEnv = luaL_newstate();; /* opens Lua */
+	luaEnv = luaL_newstate();; /* opens Lua */
 	luaL_openlibs(luaEnv);
 
 	lua_register(luaEnv, "MoveJ", MoveJ);
@@ -1005,19 +1007,23 @@ static int check_lua_file(char *filename, char *error_info)
 	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
 	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
 
-	result = luaL_loadfile(luaEnv, filename);
+
+	//printf("lua_filename = %s\n", lua_filename);
+
+	result = luaL_loadfile(luaEnv, lua_filename);
 
 	printf("result = %d\n", result);
 
 	if (result != LUA_OK) {
-		printf("lua file is not exist\n");
-		strcpy(error_info, "lua file is not exist");
+		//printf("lua file is not exist or illegal character exists in file\n");
+		strcpy(error_info, "lua file is not exist or illegal character exists in file");
 
 		lua_close(luaEnv);
 		return FAIL;
 	}
 
 	error = lua_pcall(luaEnv, 0, 0, 0);
+	//error = lua_pcall (luaEnv, 0, LUA_MULTRET, 0);
 
 	printf("error = %d\n", error);
 
@@ -1032,7 +1038,74 @@ static int check_lua_file(char *filename, char *error_info)
 		return FAIL;
 	}
 
+	strcpy(error_info, "success");
 	lua_close(luaEnv);
+
+	return SUCCESS;
+}
+
+static void timeout_break(lua_State* L, lua_Debug* ar)
+{
+	lua_sethook(L, NULL, 0, 0);
+	// 钩子从设置到执行, 需要一段时间, 所以要检测是否仍在执行那个超时的脚本
+	luaL_error(L, "timeout");
+	//luaL_error(L, "success");
+}
+
+static int check_lua_file()
+{
+	pthread_t t_pcall_lua;
+	int mask = 0;
+	int i = 0;
+	//clock_t time_now,  time_begin;
+
+	//time_begin = clock();
+	//printf("time_begin = %d\n", time_begin);
+
+	strcpy(error_info, "");
+
+	/* create pcall lua thread */
+	if (pthread_create(&t_pcall_lua, NULL, (void *)&pcall_lua, NULL)) {
+		perror("pthread_create");
+	}
+
+	for (i = 0; i < 10; i++) {
+		if (strcmp(error_info, "") != 0) {
+			//printf("before join pcall 1 \n");
+			/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
+			if (pthread_join(t_pcall_lua, NULL)) {
+				perror("pthread_join");
+			}
+			printf("error_info = %s\n", error_info);
+			//printf("error_info 1 = %s\n", error_info);
+
+			if (strcmp(error_info, "success") == 0) {
+
+				return SUCCESS;
+			} else {
+
+				return FAIL ;
+			}
+		}
+		//printf("i = %d\n", i);
+
+		//delay(100);
+		usleep(100000);
+
+		//time_now = clock();
+		//printf("time_now = %d\n", time_now);
+		//printf("spend time: %lf\n", (double)((time_now - time_begin)/CLOCKS_PER_SEC));
+	}
+
+    mask = LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE | LUA_MASKCOUNT;
+    lua_sethook(luaEnv, timeout_break, mask, 1);
+
+	//printf("before join pcall 2 \n");
+	/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
+	if (pthread_join(t_pcall_lua, NULL)) {
+		perror("pthread_join");
+	}
+	//printf("error_info 2 = %s\n", error_info);
 
 	return SUCCESS;
 }
@@ -2175,7 +2248,7 @@ end:
 }
 
 /* 106 sendFile */
-static int sendfile(const cJSON *data_json, int content_len, char *content, char *error_info)
+static int sendfile(const cJSON *data_json, int content_len, char *content)
 {
 	const char s[2] = "\n";
 	char *token = NULL;
@@ -2216,7 +2289,8 @@ static int sendfile(const cJSON *data_json, int content_len, char *content, char
 	}
 
 	/** 检查 lua 文件内容合法性 */
-	return check_lua_file(lua_filename, error_info);
+	return check_lua_file();
+	//return SUCCESS;
 }
 
 /* 1001 step over */
@@ -2986,7 +3060,6 @@ void set(Webs *wp)
 	char log_content[1024] = {0};
 	char en_log_content[1024] = {0};
 	char jap_log_content[1024] = {0};
-	char error_info[1024] = "";
 
 	/** virtual robot */
 	if (robot_type == 0) {
@@ -3037,7 +3110,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415) {
+	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -3060,7 +3133,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content_len, content, error_info);
+		ret = sendfile(data_json, content_len, content);
 		break;
 	case 101:
 		port = cmdport;
@@ -3121,7 +3194,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content_len, content, error_info);
+		ret = sendfile(data_json, content_len, content);
 		break;
 	case 201:
 		port = cmdport;
@@ -4212,6 +4285,27 @@ void set(Webs *wp)
 		strcpy(en_log_content, "Set torque system units");
 		strcpy(jap_log_content, "トルク系単位を設定します");
 		ret = set_torque_unit(data_json, content);
+		break;
+	case 422:
+		port = cmdport;
+		strcpy(log_content, "设置激光数据使用方式");
+		strcpy(en_log_content, "Set the laser data usage mode");
+		strcpy(jap_log_content, "レーザーデータの使用方法を設定する");
+		ret = copy_content(data_json, content);
+		break;
+	case 423:
+		port = cmdport;
+		strcpy(log_content, "获取从站硬件版本");
+		strcpy(en_log_content, "Gets the slave hardware version");
+		strcpy(jap_log_content, "スレーブステーションのハードウェアバージョンを取得する");
+		ret = copy_content(data_json, content);
+		break;
+	case 424:
+		port = cmdport;
+		strcpy(log_content, "获取从站固件版本");
+		strcpy(en_log_content, "Gets the slave firmware version");
+		strcpy(jap_log_content, "ステーションファームウェアのバージョンを取得します");
+		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */
 		port = cmdport;

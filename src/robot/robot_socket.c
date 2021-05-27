@@ -792,6 +792,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			/* 关闭 socket thread */
 			if (atoi(array[4]) == 10 && torquesys.enable == 1) {
 				torquesys.enable = 0;
+				/** TODO cancel pthread */
+				//pthread_cancel(torquesys.t_socket_TORQUE_SYS);
 
 				printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
 				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
@@ -803,6 +805,65 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				}
 				printf("end\n");
 			}
+		} else if (atoi(array[2]) == 423) {//获取从站硬件版本
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 8) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+
+				continue;
+			}
+
+			root_json = cJSON_CreateStringArray(msg_array, 8);
+			msg_content = cJSON_Print(root_json);
+			//printf("msg_content = %s\n", msg_content);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 424) {//获取从站固件版本
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 8) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+
+				continue;
+			}
+
+			root_json = cJSON_CreateStringArray(msg_array, 8);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);
@@ -977,6 +1038,9 @@ void *socket_thread(void *arg)
 		pthread_mutex_init(&sock->im_mute, NULL);
 		pthread_mutex_init(&sock->ret_mute, NULL);
 		//pthread_cond_init(&cond_cmd, NULL);
+
+		/* 初始化扭矩系统 */
+		init_torquesys();
 
 		/* create socket_cmd_send thread */
 		if(pthread_create(&sock->t_socket_send, NULL, (void *)&socket_send_thread, (void *)sock)) {
@@ -1225,14 +1289,15 @@ void *socket_TORQUE_SYS_thread(void *arg)
 
 		while (torquesys.enable == 1) {
 			bzero(recvbuf, STATE_SIZE);
+			//printf("before recvbuf");
 			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
 			//printf("recvbuf = %s\n", recvbuf);
 			/*printf("recvbuf = ");
 			for (i = 0; i < recv_len; i++) {
 				printf("%x ", recvbuf[i]);
 			}
-			printf("\n");
-			printf("sock status recv_len = %d\n", recv_len);*/
+			printf("\n");*/
+			//printf("after recvbuf : sock status recv_len = %d\n", recv_len);
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				printf("sock status recv_len : %d\n", recv_len);
