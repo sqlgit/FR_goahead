@@ -3,8 +3,8 @@
 
 #include 	"goahead.h"
 #include	"cJSON.h"
-#include 	"tools.h"
 #include 	"robot_socket.h"
+#include 	"tools.h"
 
 /********************************* Defines ************************************/
 
@@ -1087,5 +1087,19 @@ char *my_strlwr(char * str)   //定义一个my_strlwr函数,大写字符串转�
 			str++;
 	}
 	return ret;       //返回该字符串数组的首地址
+}
+
+int local_now_time(char *time_now)
+{
+	struct tm *my_local;
+	time_t t;
+
+	t = time(NULL);
+	my_local = localtime(&t);
+	bzero(time_now, 100);
+	sprintf(time_now, "%d/%d/%d %d:%d:%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday, my_local->tm_hour, my_local->tm_min, my_local->tm_sec);
+	//printf("time_now = %s\n", time_now);
+
+	return SUCCESS;
 }
 

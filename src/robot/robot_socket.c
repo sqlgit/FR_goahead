@@ -4,6 +4,7 @@
 #include 	"goahead.h"
 #include	"cJSON.h"
 #include 	"tools.h"
+#include 	"check_lua_file.h"
 #include 	"robot_socket.h"
 
 /********************************* Defines ************************************/
@@ -12,6 +13,7 @@ SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
 SOCKET_INFO socket_state;
+SOCKET_SERVER_INFO socket_upper_computer;
 SOCKET_INFO socket_torquesys;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
@@ -23,8 +25,10 @@ CTRL_STATE pre_ctrl_state;
 CTRL_STATE pre_vir_ctrl_state;
 FB_LinkQuene fb_quene;
 extern int robot_type;
+extern char error_info[ERROR_SIZE];
 TORQUE_SYS torquesys;
 TORQUE_SYS_STATE torque_sys_state;
+char lua_filename[FILENAME_SIZE] = "";
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -34,7 +38,9 @@ TORQUE_SYS_STATE torque_sys_state;
 
 static void state_feedback_init(STATE_FEEDBACK *fb);
 static void socket_init(SOCKET_INFO *sock, const int port);
+static void socket_server_init(SOCKET_SERVER_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
+static int socket_server_create(SOCKET_SERVER_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
 static int socket_pkg_handle(char *buf_memory, char *sec_buf_memory, char *frame, int buf_size, int frame_size);
@@ -42,6 +48,10 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node);
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
 static void *socket_send_thread(void *arg);
 static void *socket_recv_thread(void *arg);
+static int socket_bind_listen(SOCKET_SERVER_INFO *sock);
+static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
+static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock);
+static void init_torquesys();
 /*
 static void *socket_cmd_send_thread(void *arg);
 static void *socket_cmd_recv_thread(void *arg);
@@ -78,10 +88,35 @@ static void socket_init(SOCKET_INFO *sock, const int port)
 	sock->msghead = 0;
 }
 
+/* socket server init */
+static void socket_server_init(SOCKET_SERVER_INFO *sock, const int port)
+{
+	bzero(sock, sizeof(SOCKET_SERVER_INFO));
+
+	sock->serv_fd = 0;
+	sock->clnt_fd = 0;
+	strcpy(sock->server_ip, SERVER_IP);
+	sock->server_port = port;
+	sock->connect_status = 0;
+	sock->msghead = 0;
+}
+
 /* socket create */
 static int socket_create(SOCKET_INFO *sock)
 {
 	if ((sock->fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+
+		return FAIL;
+	}
+	//printf("sock->fd = %d\n", sock->fd);
+
+	return SUCCESS;
+}
+
+/* socket server create */
+static int socket_server_create(SOCKET_SERVER_INFO *sock)
+{
+	if ((sock->serv_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
 
 		return FAIL;
 	}
@@ -279,7 +314,7 @@ static int socket_pkg_handle(char *buf_memory, char *sec_buf_memory, char *frame
 static int socket_send(SOCKET_INFO *sock, QElemType *node)
 {
 	char *sendbuf = NULL;
-	char buf[MAX_BUF+1] = {0};
+	//char buf[MAX_BUF+1] = {0};
 	int send_len = 0;
 	int send_index = 0;
 
@@ -782,12 +817,15 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (atoi(array[4]) == 11 && torquesys.enable == 0) {
 				torquesys.enable = 1;
 
+				//printf("before pthread_create\n");
 				/* create socket PCI thread */
 				if (pthread_create(&torquesys.t_socket_TORQUE_SYS, NULL, (void*)&socket_TORQUE_SYS_thread, (void *)TORQUE_PORT)) {
+					perror("pthread_create");
 					string_list_free(array, size_package);
 
 					continue;
 				}
+				//printf("after pthread_create\n");
 			}
 			/* 关闭 socket thread */
 			if (atoi(array[4]) == 10 && torquesys.enable == 1) {
@@ -795,7 +833,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				/** TODO cancel pthread */
 				//pthread_cancel(torquesys.t_socket_TORQUE_SYS);
 
-				printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
+				//printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
 				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
 				if (pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)) {
 					perror("pthread_join");
@@ -803,7 +841,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 					continue;
 				}
-				printf("end\n");
+				//printf("after pthread_join\n");
 			}
 		} else if (atoi(array[2]) == 423) {//获取从站硬件版本
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 8) {
@@ -847,6 +885,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 			root_json = cJSON_CreateStringArray(msg_array, 8);
 			msg_content = cJSON_Print(root_json);
+			//printf("msg_content = %s\n", msg_content);
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
@@ -940,6 +979,8 @@ static void *socket_send_thread(void *arg)
 		if (p != NULL) {
 			/* 处于等待发送的初始状态 */
 			//if (p->data.state == 0) {
+				//printf("before send:");
+				//printquene(sock->quene);
 				if (socket_send(sock, &p->data) == FAIL) {
 					perror("socket send");
 				} else {
@@ -947,6 +988,8 @@ static void *socket_send_thread(void *arg)
 					pthread_mutex_lock(&sock->mute);
 					dequene(&sock->quene, p->data);
 					pthread_mutex_unlock(&sock->mute);
+					//printf("after dequene:");
+					//printquene(sock->quene);
 				}
 		//		break; //发送完一个非即时指令后，立刻重新进入 while 循环,看是否有即时指令需要下发
 			//}
@@ -1039,9 +1082,6 @@ void *socket_thread(void *arg)
 		pthread_mutex_init(&sock->ret_mute, NULL);
 		//pthread_cond_init(&cond_cmd, NULL);
 
-		/* 初始化扭矩系统 */
-		init_torquesys();
-
 		/* create socket_cmd_send thread */
 		if(pthread_create(&sock->t_socket_send, NULL, (void *)&socket_send_thread, (void *)sock)) {
 			perror("pthread_create");
@@ -1050,6 +1090,12 @@ void *socket_thread(void *arg)
 		if(pthread_create(&sock->t_socket_recv, NULL, (void *)&socket_recv_thread, (void *)sock)) {
 			perror("pthread_create");
 		}
+
+		if (port == CMD_PORT) {
+			/* 初始化扭矩系统 */
+			init_torquesys();
+		}
+
 		/* 等待线程退出 */
 		if (pthread_join(sock->t_socket_send, NULL)) {
 			perror("pthread_join");
@@ -1659,6 +1705,224 @@ void *socket_state_feedback_thread(void *arg)
 	state_fb.buf = NULL;
 }
 
+/* socket bind/listen */
+static int socket_bind_listen(SOCKET_SERVER_INFO *sock)
+{
+	//描述服务器的socket
+	struct sockaddr_in serverAddr;
+
+	printf("sock->server_port = %d\n", sock->server_port);
+	printf("sock->server_ip = %s\n",sock->server_ip);
+
+	memset(&serverAddr, 0, sizeof(struct sockaddr_in));
+	serverAddr.sin_family = AF_INET;
+	serverAddr.sin_port = htons(sock->server_port);
+	//inet_addr()函数，将点分十进制IP转换成网络字节序IP
+	serverAddr.sin_addr.s_addr = inet_addr(sock->server_ip);
+
+	if (bind(sock->serv_fd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+		printf("bind socket error: %s(errno: %d)\n", strerror(errno), errno);
+
+		return FAIL;
+	}
+
+	if (listen(sock->serv_fd, 10) == -1) {
+		printf("listen socket error: %s(errno: %d)\n", strerror(errno), errno);
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* socket_upper_computer_send */
+static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content)
+{
+	char *sendbuf = NULL;
+	int send_len = 0;
+
+	if (sock->msghead >= MAX_MSGHEAD) {
+		sock->msghead = 1;
+	} else {
+		sock->msghead++;
+	}
+	send_len = 4 + 3 + get_n_len(sock->msghead) + 3 + get_n_len(cmd_id) + 3 + get_n_len(data_len) + 3 + data_len + 3 + 4 + 1; // +1 to save '\0
+	sendbuf = (char *)calloc(1, sizeof(char)*(send_len));
+	if (sendbuf == NULL) {
+		perror("calloc\n");
+
+		return FAIL;
+	}
+	/* sprintf 会在 sendbuf 最后自动添加一个 '\0' 作为字符串结束的标识符 */
+	sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", sock->msghead, cmd_id, data_len, data_content);
+
+	printf("send_len = %d\n", send_len);
+	printf("send data to socket server is: %s\n", sendbuf);
+
+	/* send normal (low) 1024 bytes */
+	if (send(sock->clnt_fd, sendbuf, send_len, 0) != send_len) {
+		perror("send");
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+		free(sendbuf);
+		sendbuf = NULL;
+
+		return FAIL;
+	}
+	free(sendbuf);
+	sendbuf = NULL;
+
+	return SUCCESS;
+}
+
+static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
+{
+	char buf_memory[BUFFSIZE] = {0};
+	char sec_buf_memory[BUFFSIZE] = {0};
+	char recvbuf[MAX_BUF] = {0};
+	char **array = NULL;
+	int recv_len = 0;
+	char *msg_content = NULL;
+	int size_package = 0;
+	char frame[BUFFSIZE] = {0};//提取出一帧, 存放buf
+	int check_result = 0;
+	char data_content[1024] = "";
+
+	while (1) {
+		//printf("buf_memory content = %s\n", buf_memory);
+		/* socket 连接已经断开 */
+		if (sock->connect_status == 0) {
+
+			break;
+		}
+		recv_len = recv(sock->clnt_fd, recvbuf, MAX_BUF, 0);
+		//printf("recv_len = %d\n", recv_len);
+		if (recv_len <= 0) {
+			printf("sock->clnt_fd = %d\n", sock->clnt_fd);
+			printf("sock cmd/file recv_len : %d\n", recv_len);
+			/* 认为连接已经断开 */
+			printf("sock cmd/file errno : %d\n", errno);
+			printf("sock cmd/file strerror : %s\n", strerror(errno));
+			perror("sock cmd/file perror recv :");
+			/* set socket status: disconnected */
+			sock->connect_status = 0;
+
+			continue;
+		}
+
+		printf("recv data from socket client is: %s\n", recvbuf);
+		// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(BUFFSIZE 8192), 清空 buf_memory
+		if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
+			bzero(buf_memory, BUFFSIZE);
+		}
+		memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
+
+		/* 对于"粘包"，"断包"进行处理 */
+		while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, BUFFSIZE) != 0) {
+			//printf("frame is : %s\n", frame);
+			/* 把接收到的包按照分割符"III"进行分割 */
+			if (string_to_string_list(frame, "III", &size_package, &array) == 0 || size_package != 6) {
+				perror("string to string list");
+				string_list_free(array, size_package);
+
+				continue;
+			}
+			/** 接收文件名 */
+			if (atoi(array[2]) == 105) {
+				socket_enquene(&socket_file, 105, array[4], 1);
+				bzero(lua_filename, FILENAME_SIZE);
+				strcpy(lua_filename, array[4]);
+				strcpy(data_content, "1");
+			/** 接收文件内容 */
+			} else if (atoi(array[2]) == 106) {
+				if (write_file(lua_filename, array[4]) == FAIL) {
+					perror("write file");
+
+					continue;
+				}
+
+				/** 检查 lua 文件内容合法性 */
+				check_result = check_lua_file();
+				//printf("check_result = %d\n", check_result);
+				strcpy(data_content, error_info);
+			/** START */
+			} else if (atoi(array[2]) == 101) {
+				socket_enquene(&socket_cmd, 101, "START", 0);
+				strcpy(data_content, "1");
+			/** STOP */
+			} else if (atoi(array[2]) == 102) {
+				socket_enquene(&socket_cmd, 102, "STOP", 0);
+				strcpy(data_content, "1");
+			/** PAUSE */
+			} else if (atoi(array[2]) == 103) {
+				socket_enquene(&socket_cmd, 103, "PAUSE", 0);
+				strcpy(data_content, "1");
+			/** PESUME */
+			} else if (atoi(array[2]) == 104) {
+				socket_enquene(&socket_cmd, 104, "RESUME", 0);
+				strcpy(data_content, "1");
+			}
+			/* send recv info to upper computer */
+			socket_upper_computer_send(sock, atoi(array[2]), strlen(data_content), data_content);
+			string_list_free(array, size_package);
+		}
+	}
+}
+
+void *socket_upper_computer_thread(void* arg)
+{
+	SOCKET_SERVER_INFO* sock = NULL;
+	int port = (int)arg;
+	printf("port = %d\n", port);
+
+	sock = &socket_upper_computer;
+
+	while (1) {
+		/* init socket */
+		socket_server_init(sock, port);
+		/* do socket connect */
+		/* create socket */
+		if (socket_server_create(sock) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+
+			continue;
+		}
+		/* socket bind listen */
+		if (socket_bind_listen(sock) == FAIL) {
+			perror("socket bind listen fail");
+
+			sleep(1);
+			continue;
+		}
+		printf("====== waiting for client's request ======\n");
+		while (1) {
+			//接收客户端请求
+			struct sockaddr_in clnt_addr;
+			socklen_t clnt_addr_size = sizeof(clnt_addr);
+			/* socket accepted */
+			//if ((sock->clnt_fd = accept(sock->serv_fd, (struct sockaddr*)NULL, NULL)) == -1) {
+			if ((sock->clnt_fd = accept(sock->serv_fd, (struct sockaddr*)&clnt_addr, &clnt_addr_size)) == -1) {
+				printf("accept socket error: %s(errno: %d)", strerror(errno), errno);
+
+				continue;
+			}
+			/* set socket status: connected */
+			sock->connect_status = 1;
+			printf("Client online\n");
+
+			socket_upper_computer_recv_send(sock);
+
+			/* close clnt socket fd */
+			close(sock->clnt_fd);
+			/* set socket status: disconnected */
+			sock->connect_status = 0;
+		}
+		/* close serv socket fd */
+		close(sock->serv_fd);
+	}
+}
+
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type)
 {
 	//int ret = FAIL;
@@ -1708,7 +1972,7 @@ int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const 
 	return SUCCESS;
 }
 
-void init_torquesys()
+static void init_torquesys()
 {
 	/** init torquesys on off status */
 	torquesys.enable = 0;

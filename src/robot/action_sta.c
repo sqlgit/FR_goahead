@@ -10,6 +10,8 @@
 /********************************* Defines ************************************/
 
 timer_t timerid;
+char time_now[100] = "";
+int basic_index = 0;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern CTRL_STATE pre_ctrl_state;
@@ -100,6 +102,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "conveyor_speed", state->conveyor_speed);
 	cJSON_AddNumberToObject(root_json, "btn_box_stop_signal", state->btn_box_stop_signal);
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
+	if (basic_index%10 == 0) {
+		local_now_time(time_now);
+	}
+	//printf("basic_index = %d\n", basic_index);
+	basic_index++;
+	cJSON_AddStringToObject(root_json, "time_now", time_now);
 
 	/** 扭矩管理系统状态反馈 */
 	if (torquesys.enable == 1) {
@@ -2221,6 +2229,23 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->ioError = 10;
 			}
 			break;
+		case 11:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "传送带IO检测超时");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "IO detection of conveyor belt has expired");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤーioがタイムアウトを検出する");
+			}
+			if (pre_state->ioError != 11) {
+				my_syslog("错误", "传送带IO检测超时", cur_account.username);
+				my_en_syslog("error", "IO detection of conveyor belt has expired", cur_account.username);
+				my_jap_syslog("さくご", "ベルトコンベヤーioがタイムアウトを検出する", cur_account.username);
+				pre_state->ioError = 11;
+			}
+			break;
 		default:
 			pre_state->ioError = 0;
 			break;
@@ -2574,12 +2599,46 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->paraError = 13;
 			}
 			break;
+		case 14:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "工件号超限错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Workpiece number out of limit error");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "工作物番号が間違っている");
+			}
+			if (pre_state->paraError != 14) {
+				my_syslog("错误", "工件号超限错误", cur_account.username);
+				my_en_syslog("error", "Workpiece number out of limit error", cur_account.username);
+				my_jap_syslog("さくご", "工作物番号が間違っている", cur_account.username);
+				pre_state->paraError = 14;
+			}
+			break;
+		case 15:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "外部轴号超限错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "External shaft number overrun error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "外軸号がエラーオーバー");
+			}
+			if (pre_state->paraError != 15) {
+				my_syslog("错误", "外部轴号超限错误", cur_account.username);
+				my_en_syslog("error", "External shaft number overrun error", cur_account.username);
+				my_jap_syslog("さくご", "外軸号がエラーオーバー", cur_account.username);
+				pre_state->paraError = 15;
+			}
+			break;
 		default:
 			pre_state->paraError = 0;
 			break;
 	}
-//printf("state->exAxisExSoftLimitError = %d\n", state->exAxisExSoftLimitError);
-	switch(state->exAxisExSoftLimitError)
+//printf("state->exaxis_out_slimit_error = %d\n", state->exaxis_out_slimit_error);
+	switch(state->exaxis_out_slimit_error)
 	{
 		case 1:
 			if (language == 0) { 
@@ -2591,11 +2650,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 					cJSON_AddStringToObject(error_json, "key", "外軸1軸がソフトリミットを超えるトラブル");
 			}
-			if (pre_state->exAxisExSoftLimitError != 1) {
+			if (pre_state->exaxis_out_slimit_error != 1) {
 				my_syslog("错误", "外部轴1轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 1 axis out of soft limit fault", cur_account.username);
 				my_jap_syslog("さくご", "外軸1軸がソフトリミットを超えるトラブル", cur_account.username);
-				pre_state->exAxisExSoftLimitError = 1;
+				pre_state->exaxis_out_slimit_error = 1;
 			}
 			break;
 		case 2:
@@ -2608,11 +2667,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 					cJSON_AddStringToObject(error_json, "key", "外軸2軸がソフトリミットを超えるトラブル");
 			}
-			if (pre_state->exAxisExSoftLimitError != 2) {
+			if (pre_state->exaxis_out_slimit_error != 2) {
 				my_syslog("错误", "外部轴2轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 2 axis out of soft limit fault", cur_account.username);
 				my_jap_syslog("さくご", "外軸2軸がソフトリミットを超えるトラブル", cur_account.username);
-				pre_state->exAxisExSoftLimitError = 2;
+				pre_state->exaxis_out_slimit_error = 2;
 			}
 			break;
 		case 3:
@@ -2625,11 +2684,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 					cJSON_AddStringToObject(error_json, "key", "外軸3軸がソフトリミットを超えるトラブル");
 			}
-			if (pre_state->exAxisExSoftLimitError != 3) {
+			if (pre_state->exaxis_out_slimit_error != 3) {
 				my_syslog("错误", "外部轴3轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 3 axis out of soft limit fault", cur_account.username);
 				my_jap_syslog("さくご", "外軸3軸がソフトリミットを超えるトラブル", cur_account.username);
-				pre_state->exAxisExSoftLimitError = 3;
+				pre_state->exaxis_out_slimit_error = 3;
 			}
 			break;
 		case 4:
@@ -2642,15 +2701,15 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 					cJSON_AddStringToObject(error_json, "key", "外軸4軸がソフトリミットを超えるトラブル");
 			}
-			if (pre_state->exAxisExSoftLimitError != 4) {
+			if (pre_state->exaxis_out_slimit_error != 4) {
 				my_syslog("错误", "外部轴4轴超出软限位故障", cur_account.username);
 				my_en_syslog("error", "External axis 4 axis out of soft limit fault", cur_account.username);
 				my_jap_syslog("さくご", "外軸4軸がソフトリミットを超えるトラブル", cur_account.username);
-				pre_state->exAxisExSoftLimitError = 4;
+				pre_state->exaxis_out_slimit_error = 4;
 			}
 			break;
 		default:
-			pre_state->exAxisExSoftLimitError = 0;
+			pre_state->exaxis_out_slimit_error = 0;
 			break;
 	}
 	switch(state->alarm) {
@@ -2724,86 +2783,86 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			break;
 		case 5:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "WaitDI 等待超时");
+				cJSON_AddStringToObject(error_json, "key", "警告: WaitDI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "WaitDI wait for a timeout");
+				cJSON_AddStringToObject(error_json, "key", "Warning: WaitDI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "waitdiタイムアウトを待つ");
+					cJSON_AddStringToObject(error_json, "key", "戒告する: waitdiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", " WaitDI 等待超时", cur_account.username);
-				my_en_syslog("error", "WaitDI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "waitdiタイムアウトを待つ", cur_account.username);
+				my_syslog("错误", "警告: WaitDI 等待超时", cur_account.username);
+				my_en_syslog("error", "Warning: WaitDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "戒告する: waitdiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "WaitAI 等待超时");
+				cJSON_AddStringToObject(error_json, "key", "警告: WaitAI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "WaitAI wait for a timeout");
+				cJSON_AddStringToObject(error_json, "key", "Warning: WaitAI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "waitaiタイムアウト待ち");
+					cJSON_AddStringToObject(error_json, "key", "戒告する: waitaiタイムアウト待ち");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "WaitAI 等待超时", cur_account.username);
-				my_en_syslog("error", "WaitAI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "waitaiタイムアウト待ち", cur_account.username);
+				my_syslog("错误", "警告: WaitAI 等待超时", cur_account.username);
+				my_en_syslog("error", "Warning: WaitAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "戒告する: waitaiタイムアウト待ち", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 7:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "WaitToolDI 等待超时");
+				cJSON_AddStringToObject(error_json, "key", "警告: WaitToolDI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "WaitToolDI wait for a timeout");
+				cJSON_AddStringToObject(error_json, "key", "Warning: WaitToolDI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "waittooldiタイムアウトを待つ");
+					cJSON_AddStringToObject(error_json, "key", "戒告する: waittooldiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "WaitToolDI 等待超时", cur_account.username);
-				my_en_syslog("error", "WaitToolDI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "waittooldiタイムアウトを待つ", cur_account.username);
+				my_syslog("错误", "警告: WaitToolDI 等待超时", cur_account.username);
+				my_en_syslog("error", "Warning: WaitToolDI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "戒告する: waittooldiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "WaitToolAI 等待超时");
+				cJSON_AddStringToObject(error_json, "key", "警告: WaitToolAI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "WaitToolAI wait for a timeout");
+				cJSON_AddStringToObject(error_json, "key", "Warning: WaitToolAI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "waittoolaiタイムアウトを待つ");
+					cJSON_AddStringToObject(error_json, "key", "戒告する: waittoolaiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "WaitToolAI 等待超时", cur_account.username);
-				my_en_syslog("error", "WaitToolAI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "waittoolaiタイムアウトを待つ", cur_account.username);
+				my_syslog("错误", "警告: WaitToolAI 等待超时", cur_account.username);
+				my_en_syslog("error", "Warning: WaitToolAI wait for a timeout", cur_account.username);
+				my_jap_syslog("さくご", "戒告する: waittoolaiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "起弧成功 DI 未配置");
+				cJSON_AddStringToObject(error_json, "key", "警告: 起弧成功 DI 未配置");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Arcing success DI is not configured");
+				cJSON_AddStringToObject(error_json, "key", "Warning: Arcing success DI is not configured");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "起弧成功di未配置");
+					cJSON_AddStringToObject(error_json, "key", "戒告する: 起弧成功di未配置");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "起弧成功 DI 未配置", cur_account.username);
-				my_en_syslog("error", "Arcing success DI is not configured", cur_account.username);
-				my_jap_syslog("さくご", "起弧成功di未配置", cur_account.username);
+				my_syslog("错误", "警告: 起弧成功 DI 未配置", cur_account.username);
+				my_en_syslog("error", "Warning: Arcing success DI is not configured", cur_account.username);
+				my_jap_syslog("さくご", "戒告する: 起弧成功di未配置", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
@@ -2957,9 +3016,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		memset(content, 0, sizeof(content));
 		memset(en_content, 0, sizeof(en_content));
 		memset(jap_content, 0, sizeof(jap_content));
-		sprintf(content, "%d 轴超出软限位故障", (int)state->out_sflimit_err);
-		sprintf(en_content, "%d axis out of soft limit fault", (int)state->out_sflimit_err);
-		sprintf(jap_content, "%d シャフトがソフトリミットを超えて故障する", (int)state->out_sflimit_err);
+		sprintf(content, "%d 轴超出软限位故障, 可复位", (int)state->out_sflimit_err);
+		sprintf(en_content, "%d axis out of soft limit fault, can be reset", (int)state->out_sflimit_err);
+		sprintf(jap_content, "%d シャフトがソフトリミットを超えて故障する, リセット可能", (int)state->out_sflimit_err);
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", content);
 		}
@@ -3091,9 +3150,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		memset(content, 0, sizeof(content));
 		memset(en_content, 0, sizeof(en_content));
 		memset(jap_content, 0, sizeof(jap_content));
-		sprintf(content, "%d 轴碰撞故障", (int)state->collision_err);
-		sprintf(en_content, "%d axis impact fault", (int)state->collision_err);
-		sprintf(jap_content, "%d 軸衝突故障", (int)state->collision_err);
+		sprintf(content, "%d 轴碰撞故障, 可复位", (int)state->collision_err);
+		sprintf(en_content, "%d axis impact fault, can be reset", (int)state->collision_err);
+		sprintf(jap_content, "%d 軸衝突故障, リセット可能", (int)state->collision_err);
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", content);
 		}

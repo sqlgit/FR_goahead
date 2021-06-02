@@ -23,6 +23,7 @@
 #define FILE_PORT 8062
 #define STATE_FEEDBACK_PORT 8063
 #define TORQUE_PORT 8064
+#define UPPER_COMPUTER_PORT 2000
 #define VIR_CMD_PORT 8070
 #define VIR_STATUS_PORT 8071
 #define VIR_FILE_PORT 8072
@@ -114,13 +115,13 @@ typedef struct _CTRL_STATE
 	double     jt_cur_vol[6];           /**< 关节当前电压                   */
 	uint8_t	   cl_dgt_output_h;          /**< 控制箱数字输出15-8             */
 	uint8_t     cl_dgt_output_l;	        /**< 控制箱数字输出7-0              */
-	uint8_t     tl_dgt_output_h;			/**< 末端工具数字输出15-8     */
-	uint8_t     tl_dgt_output_l;			/**< 末端工具数字输出7-0     */
+	uint8_t     tl_dgt_output_h;			/**< 末端工具数字输出15-8 (暂未使用)     */
+	uint8_t     tl_dgt_output_l;			/**< 末端工具数字输出7-0 (bit0-bit1有效)     */
 	uint8_t     tmp_dgt_output3;			/**< 空闲                           */
 	uint8_t     tmp_dgt_output4;			/**< 空闲                           */
 	uint8_t     tmp_dgt_output5;			/**< 空闲                           */
 	uint8_t     tmp_dgt_output6;			/**< 空闲                           */
-	uint16_t   analog_output[6];         /**< 模拟输出,四个控制箱,2个工具    */
+	uint16_t   analog_output[6];         /**< 模拟输出,四个控制箱,1个工具(当前只引出一路)    */
 	uint8_t     program_state;           /**< 程序状态1:停止,2:运行,3：暂停,4：拖动                       */
 	int        line_number;             /**< 自动运行程序执行到某一指令行号 */
 	double     elbow_vel[5];            /**< 肘速度                         */
@@ -133,7 +134,7 @@ typedef struct _CTRL_STATE
 	uint8_t    gripperError;            /** 夹爪错误 */
 	uint8_t    fileError;               /** 文件错误 */
 	uint8_t    paraError;               /** 参数错误 */
-	uint8_t	   exAxisExSoftLimitError;  /** 外部轴超出软限位错误*/
+	uint8_t	   exaxis_out_slimit_error;  /** 外部轴超出软限位故障 */
 	EXTERNALAXIS_STATUS  exaxis_status[4];	/** 外部轴状态反馈结构体*/
 	uint8_t    exAxisActiveFlag;		/** 外部轴激活标志*/
 	uint8_t    alarm;                   /** 警告 */
@@ -235,13 +236,31 @@ typedef struct _SOCKET_INFO
 	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
 } SOCKET_INFO;
 
+/* socket server 相关信息结构体 */
+typedef struct _SOCKET_SERVER_INFO
+{
+	int serv_fd;
+	int clnt_fd;
+	char server_ip[20];
+	int server_port;
+	uint8_t connect_status; // socket 连接状态
+	int msghead; // 当前有记录的消息头
+	LinkQuene quene; //指令队列
+	LinkQuene ret_quene; //指令执行结果反馈队列
+	pthread_t t_socket_send;
+	pthread_t t_socket_recv;
+	pthread_mutex_t mut; // socket 锁
+	pthread_mutex_t mute;//指令队列锁
+	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
+} SOCKET_SERVER_INFO;
+
 /********************************* Function declaration ***********************/
 
 void *socket_thread(void *arg);
 void *socket_status_thread(void *arg);
 void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
+void *socket_upper_computer_thread(void* arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
-void init_torquesys();
 
 #endif

@@ -115,5 +115,6 @@ int authority_management(const char *cmd_type);
 void delete_timer();
 int clear_plugin_config(char *plugin_name);
 char *my_strlwr(char * str);
+int local_now_time(char *time_now);
 
 #endif

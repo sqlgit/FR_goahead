@@ -4,16 +4,13 @@
 #include	"cJSON.h"
 #include 	"tools.h"
 #include 	"robot_socket.h"
+#include 	"check_lua_file.h"
 #include	"action_set.h"
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 /********************************* Defines ************************************/
 
-lua_State *luaEnv = NULL;
-char error_info[1024] = "";
-char lua_filename[FILENAME_SIZE] = "";
+extern char error_info[ERROR_SIZE];
+extern char lua_filename[FILENAME_SIZE];
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern FB_LinkQuene fb_quene;
@@ -25,12 +22,12 @@ extern SOCKET_INFO socket_vir_file;
 extern int robot_type;
 extern STATE_FEEDBACK state_fb;
 extern ACCOUNT_INFO cur_account;
+extern TORQUE_SYS torquesys;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
 /********************************* Function declaration ***********************/
 
-static int check_lua_file();
 static int copy_content(const cJSON *data_json, char *content);
 static int program_start(const cJSON *data_json, char *content);
 static int program_stop(const cJSON *data_json, char *content);
@@ -64,1051 +61,6 @@ static int set_torque_unit(const cJSON *data_json, char *content);
 static int get_lua_content_size(const cJSON *data_json);
 
 /*********************************** Code *************************************/
-
-//待Lua调用的C注册函数。
-static int MoveJ(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	//printf("argc = %d\n", argc);
-	if (argc != 28 && argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	//返回值用于提示该C函数的返回值数量，即压入栈中的返回值数量。
-	return 1;
-}
-
-static int SplinePTP(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 17) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ExtAxisMoveJ(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 6 & argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int MoveC(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 37) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SplineCIRC(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 33) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int MoveL(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 9 && argc != 29 && argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SplineLINE(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 17) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetDO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetToolDO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetToolDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetAO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetToolAO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetToolAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WaitDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 4) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WaitToolDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 4) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WaitAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 5) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WaitToolAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 5) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int MoveTPD(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int MoveGripper(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 5) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetToolList(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 7) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetWobjList(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 7) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetExToolList(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 13) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WeaveStart(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WeaveEnd(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ARCStart(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ARCEnd(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int LTLaserOn(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int LTSearchStart(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 4) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int PostureAdjustOn(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 17) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int PostureAdjustOff(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ConveyorIODetect(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int Mode(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SegmentWeldStart(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 6) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int RegisterVar(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc < 1 || argc > 6) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int LaserSensorRecord(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int LaserRecordPoint(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ExtAxisSetHoming(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 5) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCSetDO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCSetToolDO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCSetAO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCSetToolAO(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int StartJOG(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 6) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int ServoJ(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 11) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int Pause(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int Stop(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int VMoveJ(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 9) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int VMoveL(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 9) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCGetDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCGetToolDI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCGetAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 4) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SPLCGetToolAI(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 4) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int WaitMs(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetSpeed(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetLoadWeight(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetLoadCoord(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SetToolCoord(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 7) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SplineStart(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SplineEnd(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SocketOpen(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 3) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SocketClose(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SocketReadString(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SocketSendString(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int SocketReadAsciiFloat(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 2) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualJointPosDegree(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualJointPosRadian(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualJointSpeedsDegree(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualJointSpeedsRadian(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualTCPPose(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetActualToolFlangePose(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetInverseKin(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 8) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetForwardKin(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 6) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetJointTorques(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetTargetPayload(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetTargetPayloadCog(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetTargetTCPPose(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int GetTCPOffset(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPointDist(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 12) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPoseAdd(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 12) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPoseDist(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 12) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPoseInv(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 6) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPoseSub(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 12) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int CalPoseTrans(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 12) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int pcall_lua(void *arg)
-{
-	int error;
-	int result;
-
-	luaEnv = luaL_newstate();; /* opens Lua */
-	luaL_openlibs(luaEnv);
-
-	lua_register(luaEnv, "MoveJ", MoveJ);
-	lua_register(luaEnv, "SplinePTP", SplinePTP);
-	lua_register(luaEnv, "ExtAxisMoveJ", ExtAxisMoveJ);
-	lua_register(luaEnv, "MoveC", MoveC);
-	lua_register(luaEnv, "SplineCIRC", SplineCIRC);
-	lua_register(luaEnv, "MoveL", MoveL);
-	lua_register(luaEnv, "SplineLINE", SplineLINE);
-	lua_register(luaEnv, "SetDO", SetDO);
-	lua_register(luaEnv, "SetToolDO", SetToolDO);
-	lua_register(luaEnv, "GetDI", GetDI);
-	lua_register(luaEnv, "GetToolDI", GetToolDI);
-	lua_register(luaEnv, "SetAO", SetAO);
-	lua_register(luaEnv, "SetToolAO", SetToolAO);
-	lua_register(luaEnv, "GetAI", GetAI);
-	lua_register(luaEnv, "GetToolAI", GetToolAI);
-	lua_register(luaEnv, "WaitDI", WaitDI);
-	lua_register(luaEnv, "WaitToolDI", WaitToolDI);
-	lua_register(luaEnv, "WaitAI", WaitAI);
-	lua_register(luaEnv, "WaitToolAI", WaitToolAI);
-	lua_register(luaEnv, "MoveTPD", MoveTPD);
-	lua_register(luaEnv, "MoveGripper", MoveGripper);
-	lua_register(luaEnv, "SetToolList", SetToolList);
-	lua_register(luaEnv, "SetWobjList", SetWobjList);
-	lua_register(luaEnv, "SetExToolList", SetExToolList);
-	lua_register(luaEnv, "WeaveStart", WeaveStart);
-	lua_register(luaEnv, "WeaveEnd", WeaveEnd);
-	lua_register(luaEnv, "ARCStart", ARCStart);
-	lua_register(luaEnv, "ARCEnd", ARCEnd);
-	lua_register(luaEnv, "LTLaserOn", LTLaserOn);
-	lua_register(luaEnv, "LTSearchStart", LTSearchStart);
-	lua_register(luaEnv, "PostureAdjustOn", PostureAdjustOn);
-	lua_register(luaEnv, "PostureAdjustOff", PostureAdjustOff);
-	lua_register(luaEnv, "ConveyorIODetect", ConveyorIODetect);
-	lua_register(luaEnv, "Mode", Mode);
-	lua_register(luaEnv, "SegmentWeldStart", SegmentWeldStart);
-	lua_register(luaEnv, "RegisterVar", RegisterVar);
-	lua_register(luaEnv, "LaserSensorRecord", LaserSensorRecord);
-	lua_register(luaEnv, "LaserRecordPoint", LaserRecordPoint);
-	lua_register(luaEnv, "ExtAxisSetHoming", ExtAxisSetHoming);
-	lua_register(luaEnv, "SPLCSetDO", SPLCSetDO);
-	lua_register(luaEnv, "SPLCSetToolDO", SPLCSetToolDO);
-	lua_register(luaEnv, "SPLCSetAO", SPLCSetAO);
-	lua_register(luaEnv, "SPLCSetToolAO", SPLCSetToolAO);
-
-
-	lua_register(luaEnv, "ServoJ", ServoJ);
-	lua_register(luaEnv, "Pause", Pause);
-	lua_register(luaEnv, "Stop", Stop);
-	lua_register(luaEnv, "SplineStart", SplineStart);
-	lua_register(luaEnv, "SplineEnd", SplineEnd);
-	/** 机器人本地尚未实现 */
-	lua_register(luaEnv, "StartJOG", StartJOG);
-	lua_register(luaEnv, "VMoveJ", VMoveJ);
-	lua_register(luaEnv, "VMoveL", VMoveL);
-	lua_register(luaEnv, "SPLCGetDI", SPLCGetDI);
-	lua_register(luaEnv, "SPLCGetToolDI", SPLCGetToolDI);
-	lua_register(luaEnv, "SPLCGetAI", SPLCGetAI);
-	lua_register(luaEnv, "SPLCGetToolAI", SPLCGetToolAI);
-	lua_register(luaEnv, "WaitMs", WaitMs);
-	lua_register(luaEnv, "SetSpeed", SetSpeed);
-	lua_register(luaEnv, "SetLoadWeight", SetLoadWeight);
-	lua_register(luaEnv, "SetLoadCoord", SetLoadCoord);
-	lua_register(luaEnv, "SetToolCoord", SetToolCoord); /** SetToolList 一样的？ 用哪个？ */ 
-
-	lua_register(luaEnv, "SocketOpen", SocketOpen);
-	lua_register(luaEnv, "SocketClose", SocketClose);
-	lua_register(luaEnv, "SocketReadString", SocketReadString);
-	lua_register(luaEnv, "SocketSendString", SocketSendString);
-	lua_register(luaEnv, "SocketReadAsciiFloat", SocketReadAsciiFloat);
-
-	lua_register(luaEnv, "GetActualJointPosDegree", GetActualJointPosDegree);
-	lua_register(luaEnv, "GetActualJointPosRadian", GetActualJointPosRadian);
-	lua_register(luaEnv, "GetActualJointSpeedsDegree", GetActualJointSpeedsDegree);
-	lua_register(luaEnv, "GetActualJointSpeedsRadian", GetActualJointSpeedsRadian);
-	lua_register(luaEnv, "GetActualTCPPose", GetActualTCPPose);
-	lua_register(luaEnv, "GetActualToolFlangePose", GetActualToolFlangePose);
-	lua_register(luaEnv, "GetInverseKin", GetInverseKin);
-	lua_register(luaEnv, "GetForwardKin", GetForwardKin);
-	lua_register(luaEnv, "GetJointTorques", GetJointTorques);
-	lua_register(luaEnv, "GetTargetPayload", GetTargetPayload);
-	lua_register(luaEnv, "GetTargetPayloadCog", GetTargetPayloadCog);
-	lua_register(luaEnv, "GetTargetTCPPose", GetTargetTCPPose);
-	lua_register(luaEnv, "GetTCPOffset", GetTCPOffset);
-
-	lua_register(luaEnv, "CalPointDist", CalPointDist);
-	lua_register(luaEnv, "CalPoseAdd", CalPoseAdd);
-	lua_register(luaEnv, "CalPoseDist", CalPoseDist);
-	lua_register(luaEnv, "CalPoseInv", CalPoseInv);
-	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
-	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
-
-
-	//printf("lua_filename = %s\n", lua_filename);
-
-	result = luaL_loadfile(luaEnv, lua_filename);
-
-	printf("result = %d\n", result);
-
-	if (result != LUA_OK) {
-		//printf("lua file is not exist or illegal character exists in file\n");
-		strcpy(error_info, "lua file is not exist or illegal character exists in file");
-
-		lua_close(luaEnv);
-		return FAIL;
-	}
-
-	error = lua_pcall(luaEnv, 0, 0, 0);
-	//error = lua_pcall (luaEnv, 0, LUA_MULTRET, 0);
-
-	printf("error = %d\n", error);
-
-	if (error != LUA_OK) {
-		strcpy(error_info, lua_tostring(luaEnv, -1));
-
-		//fprintf(stderr, "%s", error_info);
-		//printf("error_info = %s\n", error_info);
-		lua_pop(luaEnv, 1); //pop error message from the stack
-
-		lua_close(luaEnv);
-		return FAIL;
-	}
-
-	strcpy(error_info, "success");
-	lua_close(luaEnv);
-
-	return SUCCESS;
-}
-
-static void timeout_break(lua_State* L, lua_Debug* ar)
-{
-	lua_sethook(L, NULL, 0, 0);
-	// 钩子从设置到执行, 需要一段时间, 所以要检测是否仍在执行那个超时的脚本
-	luaL_error(L, "timeout");
-	//luaL_error(L, "success");
-}
-
-static int check_lua_file()
-{
-	pthread_t t_pcall_lua;
-	int mask = 0;
-	int i = 0;
-	//clock_t time_now,  time_begin;
-
-	//time_begin = clock();
-	//printf("time_begin = %d\n", time_begin);
-
-	strcpy(error_info, "");
-
-	/* create pcall lua thread */
-	if (pthread_create(&t_pcall_lua, NULL, (void *)&pcall_lua, NULL)) {
-		perror("pthread_create");
-	}
-
-	for (i = 0; i < 10; i++) {
-		if (strcmp(error_info, "") != 0) {
-			//printf("before join pcall 1 \n");
-			/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
-			if (pthread_join(t_pcall_lua, NULL)) {
-				perror("pthread_join");
-			}
-			printf("error_info = %s\n", error_info);
-			//printf("error_info 1 = %s\n", error_info);
-
-			if (strcmp(error_info, "success") == 0) {
-
-				return SUCCESS;
-			} else {
-
-				return FAIL ;
-			}
-		}
-		//printf("i = %d\n", i);
-
-		//delay(100);
-		usleep(100000);
-
-		//time_now = clock();
-		//printf("time_now = %d\n", time_now);
-		//printf("spend time: %lf\n", (double)((time_now - time_begin)/CLOCKS_PER_SEC));
-	}
-
-    mask = LUA_MASKCALL | LUA_MASKRET | LUA_MASKLINE | LUA_MASKCOUNT;
-    lua_sethook(luaEnv, timeout_break, mask, 1);
-
-	//printf("before join pcall 2 \n");
-	/* 线程挂起, 主线程要等到创建的线程返回了，获取该线程的返回值后主线程才退出 */
-	if (pthread_join(t_pcall_lua, NULL)) {
-		perror("pthread_join");
-	}
-	//printf("error_info 2 = %s\n", error_info);
-
-	return SUCCESS;
-}
 
 /* copy json data to content */
 static int copy_content(const cJSON *data_json, char *content)
@@ -1166,6 +118,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	sprintf(content, "%s%s", DIR_FRUSER, name->valuestring);
+	bzero(lua_filename, FILENAME_SIZE);
 	strcpy(lua_filename, content);
 	//printf("content = %s\n", content);
 
@@ -2206,7 +1159,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 		strrpc(cmd_array[0], "SPLCSetAO:", "");
-		sprintf(tmp_content, "%sSPLCSetAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		sprintf(tmp_content, "%sSPLCSetAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
 	/* soft-PLC setToolAO */
 	} else if (!strncmp(lua_cmd, "SPLCSetToolAO:", 14)) {
@@ -2216,7 +1169,17 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 		strrpc(cmd_array[0], "SPLCSetToolAO:", "");
-		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
+		strcpy(file_content, tmp_content);
+	/* LoadSensorDriver */
+	} else if (!strncmp(lua_cmd, "LoadSensorDriver:", 17)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "LoadSensorDriver:", "");
+		sprintf(tmp_content, "%sLoadSensorDriver(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
@@ -2261,10 +1224,10 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 		return FAIL;
 	}
 	/** 如果是内嵌脚本 */
-//	if (is_in(lua_filename, "Embedded_") == 1) {
-//		strcpy(content, pgvalue->valuestring);
+	if (is_in(lua_filename, "Embedded_") == 1) {
+		strcpy(content, pgvalue->valuestring);
 	/** 如果是程序编辑脚本 */
-//	} else {
+	} else {
 		//printf("pgvalue->valuestring = %s\n", pgvalue->valuestring);
 		/* get first line */
 		token = strtok(pgvalue->valuestring, s);
@@ -2279,7 +1242,7 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 			/* get other line */
 			token = strtok(NULL, s);
 		}
-//	}
+	}
 	//printf("content = %s\n", content);
 	//printf("strlen content = %d\n", strlen(content));
 	if (write_file(lua_filename, content) == FAIL) {
@@ -2288,9 +1251,14 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 		return FAIL;
 	}
 
-	/** 检查 lua 文件内容合法性 */
-	return check_lua_file();
-	//return SUCCESS;
+	if (is_in(lua_filename, "Embedded_") == 1) {
+
+		/** 如果是内嵌脚本, 检查 lua 文件内容合法性 */
+		return check_lua_file();
+	} else {
+
+		return SUCCESS;
+	}
 }
 
 /* 1001 step over */
@@ -2401,6 +1369,12 @@ static int step_over(const cJSON *data_json, char *content)
 	/* LTSearchStop */
 	} else if (!strncmp(pgvalue->valuestring, "LTSearchStop", 12)) {
 		cmd = 260;
+	/* LoadSensorDriver */
+	} else if (!strncmp(pgvalue->valuestring, "LoadSensorDriver", 16)) {
+		cmd = 265;
+	/* UnloadSensorDriver */
+	} else if (!strncmp(pgvalue->valuestring, "UnloadSensorDriver", 18)) {
+		cmd = 266;
 	/* PostureAdjustOn */
 	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOn", 15)) {
 		cmd = 281;
@@ -2956,6 +1930,37 @@ static int set_on_off(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
+	if (enable->valueint == 0) {
+		/* 关闭 socket thread */
+		if (torquesys.enable == 1) {
+			torquesys.enable = 0;
+			/** TODO cancel pthread */
+			//pthread_cancel(torquesys.t_socket_TORQUE_SYS);
+			//printf("start pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)\n");
+			/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+			if (pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)) {
+				perror("pthread_join");
+
+				return FAIL;
+			}
+			//printf("after pthread_join\n");
+		}
+	}
+	if (enable->valueint == 1) {
+		/* 开启 socket thread */
+		if (torquesys.enable == 0) {
+			torquesys.enable = 1;
+			//printf("before pthread_create\n");
+			/* create socket PCI thread */
+			if (pthread_create(&torquesys.t_socket_TORQUE_SYS, NULL, (void*)&socket_TORQUE_SYS_thread, (void *)TORQUE_PORT)) {
+				perror("pthread_create");
+
+				return FAIL;
+			}
+			//printf("after pthread_create\n");
+		}
+
+	}
 	sprintf(content, "TorqueSysSetOnOff(%d)", enable->valueint);
 
 	return SUCCESS;
@@ -3103,14 +2108,22 @@ void set(Webs *wp)
 		goto end;
 	}
 	cmd = command->valueint;
+	// cmd_auth "0"
+	if (cmd == 302 || cmd == 308 || cmd == 309 || cmd == 312) {
+		if (!authority_management("0")) {
+			perror("authority_management");
+			goto auth_end;
+		}
+	}
 	// cmd_auth "1"
-	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 280 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 302 || cmd == 312 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
+	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 280 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 308 || cmd == 309 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424) {
+	}
+	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -4345,11 +3358,11 @@ void set(Webs *wp)
 
 	//printf("port = %d\n", port);
 	switch (port) {
-	/* send cmd to 8080 port */
+	/* send cmd to 8060 port */
 	case CMD_PORT:
 		ret = socket_enquene(&socket_cmd, cmd, content, cmd_type);
 		break;
-		/* send file cmd to 8082 port */
+		/* send file cmd to 8062 port */
 	case FILE_PORT:
 		if (cmd != 106) {
 			ret = socket_enquene(&socket_file, cmd, content, cmd_type);

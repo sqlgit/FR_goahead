@@ -237,10 +237,10 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	pthread_t t_socket_file;
 	pthread_t t_socket_status;
 	pthread_t t_socket_state_feedback;
+	pthread_t t_socket_upper_computer;
 	pthread_t t_socket_vir_cmd;
 	pthread_t t_socket_vir_file;
 	pthread_t t_socket_vir_status;
-
 
 #if recover_mode
 	/* create socket_cmd thread */
@@ -257,6 +257,10 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	}
 	/* create socket_state_feedback thread */
 	if (pthread_create(&t_socket_state_feedback, NULL, (void *)&socket_state_feedback_thread, (void *)STATE_FEEDBACK_PORT)) {
+		perror("pthread_create");
+	}
+	/* create socket_upper_computer thread */
+	if (pthread_create(&t_socket_upper_computer, NULL, (void *)&socket_upper_computer_thread, (void *)UPPER_COMPUTER_PORT)) {
 		perror("pthread_create");
 	}
 #endif
@@ -289,6 +293,9 @@ MAIN(goahead, int argc, char **argv, char **envp)
 		perror("pthread_join");
 	}
 	if (pthread_join(t_socket_state_feedback, NULL)) {
+		perror("pthread_join");
+	}
+	if (pthread_join(t_socket_upper_computer, NULL)) {
 		perror("pthread_join");
 	}
 #endif
