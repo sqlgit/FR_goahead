@@ -1181,6 +1181,16 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "LoadSensorDriver:", "");
 		sprintf(tmp_content, "%sLoadSensorDriver(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
+	/* ExtAxisServoOn */
+	} else if (!strncmp(lua_cmd, "ExtAxisServoOn:", 15)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "ExtAxisServoOn:", "");
+		sprintf(tmp_content, "%sExtAxisServoOn(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
+		strcpy(file_content, tmp_content);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1384,6 +1394,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* EXT_AXIS_SETHOMING */
 	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_SETHOMING", 18)) {
 		cmd = 290;
+	/* ExtAxisServoOn */
+	} else if (!strncmp(pgvalue->valuestring, "ExtAxisServoOn", 14)) {
+		cmd = 296;
 	/* EXT_AXIS_PTP */
 	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_PTP", 12)) {
 		cmd = 297;
