@@ -230,6 +230,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_LOG_EN);
 	create_dir(DIR_LOG_JAP);
 	create_dir(DIR_WELD);
+	create_dir(DIR_ROBOT_TYPE);
 	delete_log_file(0);
 #endif
 

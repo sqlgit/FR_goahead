@@ -1844,7 +1844,11 @@ static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
 				/** 检查 lua 文件内容合法性 */
 				check_result = check_lua_file();
 				//printf("check_result = %d\n", check_result);
-				strcpy(data_content, error_info);
+				if (check_result == SUCCESS) {
+					strcpy(data_content, "SUCCESS");
+				} else {
+					strcpy(data_content, error_info);
+				}
 			/** START */
 			} else if (atoi(array[2]) == 101) {
 				socket_enquene(&socket_cmd, 101, "START", 0);

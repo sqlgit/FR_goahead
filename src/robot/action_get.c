@@ -39,6 +39,7 @@ static int get_plugin_nav(char **ret_f_content);
 static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 static int get_DH_file(char **ret_f_content);
 static int get_robot_serialnumber(char **ret_f_content);
+static int get_robot_type(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1391,6 +1392,43 @@ static int get_robot_serialnumber(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get robot type and return to page */
+static int get_robot_type(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+
+	*ret_f_content = get_file_content(FILE_ROBOT_TYPE);
+	/* ret_f_content is NULL */
+	if (*ret_f_content == NULL) {
+		*ret_f_content = NULL;
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	/* file is not exist or empty */
+	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		perror("file is not exist or empty");
+		root_json = cJSON_CreateObject();
+		cJSON_AddNumberToObject(root_json, "type", 0);
+		cJSON_AddNumberToObject(root_json, "major_ver", 0);
+		cJSON_AddNumberToObject(root_json, "minor_ver", 0);
+		cJSON_AddNumberToObject(root_json, "load_range_max", 0);
+		*ret_f_content = cJSON_Print(root_json);
+		cJSON_Delete(root_json);
+		root_json = NULL;
+		if (*ret_f_content == NULL) {
+			perror("cJSON_Print");
+
+			return FAIL;
+		}
+
+		return SUCCESS;
+	}
+
+	return SUCCESS;
+}
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -1503,6 +1541,8 @@ void get(Webs *wp)
 		ret = get_DH_file(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_serialnumber")) {
 		ret = get_robot_serialnumber(&ret_f_content);
+	} else if(!strcmp(cmd, "get_robot_type")) {
+		ret = get_robot_type(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -44,6 +44,7 @@ static int clear_DH_file(const cJSON *data_json);
 static int save_DH_point(const cJSON *data_json);
 static int factory_reset(const cJSON *data_json);
 static int odm_password(const cJSON *data_json);
+static int save_robot_type(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -1073,6 +1074,25 @@ static int odm_password(const cJSON *data_json)
 	}
 }
 
+/** save robot type */
+static int save_robot_type(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_ROBOT_TYPE, buf);//write file
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -1122,7 +1142,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "0"
-	} else if (!strcmp(cmd, "save_accounts")) {
+	} else if (!strcmp(cmd, "save_accounts") || !strcmp(cmd, "save_robot_type")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1258,11 +1278,16 @@ void act(Webs *wp)
 		strcpy(log_content, "认证ODM密码");
 		strcpy(en_log_content, "Authenticate the ODM password");
 		strcpy(jap_log_content, "odmパスワードを認証する");
+	} else if (!strcmp(cmd, "save_robot_type")) {
+		ret = save_robot_type(data_json);
+		strcpy(log_content, "保存机器人型号");
+		strcpy(en_log_content, "Save the robot type");
+		strcpy(jap_log_content, "ロボット型保存");
 	} else {
 		perror("cmd not found");
 		goto end;
 	}
-	if(ret == FAIL){
+	if (ret == FAIL) {
 		perror("ret fail");
 		goto end;
 	}

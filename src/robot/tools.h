@@ -9,6 +9,7 @@
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
+#define PWD_FAIL -1
 #define ROBOT_CFG "/root/robot/user.config"
 #define EX_DEVICE_CFG "/root/robot/ex_device.config"
 #define EXAXIS_CFG "/root/robot/exaxis.config"
@@ -55,6 +56,7 @@
 #define DIR_ROBOT_CFG "/root/web/file/robotcfg/"
 #define DIR_STATEFB "/root/web/file/statefb/"
 #define DIR_FRUSER "/fruser/"
+#define DIR_ROBOT_TYPE "/root/RobotType/"
 #define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"
@@ -66,6 +68,7 @@
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
 #define UPLOAD_WEB_ODM "/root/web/frontend/file/odm.tar.gz"
 #define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
+#define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
 #define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
@@ -75,6 +78,7 @@
 #define LINE_LEN	1024
 #define FILENAME_SIZE	1024
 #define ODM_PASSWORD	"ODM"
+#define RTS_PASSWORD	"frrts2021"
 
 typedef unsigned char BYTE;
 

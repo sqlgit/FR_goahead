@@ -8,7 +8,7 @@
 #include 	"check_lua_file.h"
 
 lua_State *luaEnv = NULL;
-char error_info[ERROR_SIZE] = "";
+char error_info[ERROR_SIZE] = {0};
 static int pcall_lua(void *arg);
 static void timeout_break(lua_State* L, lua_Debug* ar);
 extern char lua_filename[FILENAME_SIZE];
@@ -1010,7 +1010,7 @@ int check_lua_file()
 	//time_begin = clock();
 	//printf("time_begin = %d\n", time_begin);
 
-	strcpy(error_info, "");
+	memset(error_info, 0, ERROR_SIZE);
 
 	/* create pcall lua thread */
 	if (pthread_create(&t_pcall_lua, NULL, (void *)&pcall_lua, NULL)) {

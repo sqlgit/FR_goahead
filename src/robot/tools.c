@@ -253,6 +253,7 @@ int write_file_append(const char *file_name, const char *file_content)
   参考：函数在操作 520000 字节数的文件时，耗时大约 10ms 左右
   RETURN:
 	malloc fail: NULL
+	no file: NO_FILE
 	empty file: Empty
 	Normal file: file content
 */

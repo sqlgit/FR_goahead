@@ -58,7 +58,9 @@ static int get_on_off(const cJSON *data_json, char *content);
 static int get_current_range(const cJSON *data_json, char *content);
 static int get_current_product(const cJSON *data_json, char *content);
 static int set_torque_unit(const cJSON *data_json, char *content);
+static int set_robot_type(const cJSON *data_json, char * content);
 static int get_lua_content_size(const cJSON *data_json);
+static int wait_cmd_feedback();
 
 /*********************************** Code *************************************/
 
@@ -2025,6 +2027,78 @@ static int set_torque_unit(const cJSON *data_json, char *content)
 	return SUCCESS;
 }
 
+/* 425 set robot type */
+static int set_robot_type(const cJSON *data_json, char * content)
+{
+	int robot_type = 0;
+	cJSON *password = NULL;
+	cJSON *content_json = NULL;
+	cJSON *type = NULL;
+	cJSON *major_ver = NULL;
+	cJSON *minor_ver = NULL;
+
+	password = cJSON_GetObjectItem(data_json, "pwd");
+	if (password == NULL || password->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	if (strcmp(password->valuestring, RTS_PASSWORD) == 0) {
+		content_json = cJSON_GetObjectItem(data_json, "content");
+		type = cJSON_GetObjectItem(content_json, "type");
+		major_ver = cJSON_GetObjectItem(content_json, "major_ver");
+		minor_ver = cJSON_GetObjectItem(content_json, "minor_ver");
+		if (type == NULL || major_ver == NULL || minor_ver == NULL) {
+			perror("json");
+
+			return FAIL;
+		}
+		robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + minor_ver->valueint;
+
+		sprintf(content, "SetRobotType(%d)", robot_type);
+
+		return SUCCESS;
+	} else {
+
+		return PWD_FAIL;
+	}
+}
+
+static int wait_cmd_feedback()
+{
+	Qnode *p = NULL;
+	int i = 0;
+	int ret = FAIL;
+
+	//printf("cmd = %d\n", cmd);
+	for (i = 0; i < 1000; i++) {
+		//printf("i = %d\n", i);
+		p = socket_cmd.ret_quene.front->next;
+		while (p != NULL) {
+			//printf("p->data.type = %d\n", p->data.type);
+			if (p->data.type == 425) {
+				//strcpy(p->data.msgcontent, "1");
+				//printf("p->data.msgcontent = %s\n", p->data.msgcontent);
+				if (strcmp(p->data.msgcontent, "1") == 0) {
+
+					ret = SUCCESS;
+				}
+				/* 删除结点信息 */
+				pthread_mutex_lock(&socket_cmd.ret_mute);
+				dequene(&socket_cmd.ret_quene, p->data);
+				pthread_mutex_unlock(&socket_cmd.ret_mute);
+
+				return ret;
+			}
+			p = p->next;
+		}
+		usleep(1000);
+	}
+
+	return ret;
+}
+
 /* get lua content size */
 static int get_lua_content_size(const cJSON *data_json)
 {
@@ -2079,6 +2153,7 @@ void set(Webs *wp)
 	char en_log_content[1024] = {0};
 	char jap_log_content[1024] = {0};
 
+	memset(error_info, 0, ERROR_SIZE);
 	/** virtual robot */
 	if (robot_type == 0) {
 		cmdport = VIR_CMD_PORT;
@@ -2122,7 +2197,7 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "0"
-	if (cmd == 302 || cmd == 308 || cmd == 309 || cmd == 312) {
+	if (cmd == 302 || cmd == 308 || cmd == 309 || cmd == 312 || cmd == 425) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 			goto auth_end;
@@ -3333,6 +3408,13 @@ void set(Webs *wp)
 		strcpy(jap_log_content, "ステーションファームウェアのバージョンを取得します");
 		ret = copy_content(data_json, content);
 		break;
+	case 425:
+		port = cmdport;
+		strcpy(log_content, "配置机器人型号");
+		strcpy(en_log_content, "Configuration robot model");
+		strcpy(jap_log_content, "構成ロボットのモデル");
+		ret = set_robot_type(data_json, content);
+		break;
 	case 1001:/* 内部定义指令 */
 		port = cmdport;
 		strcpy(log_content, "单步执行指令");
@@ -3352,11 +3434,15 @@ void set(Webs *wp)
 		goto end;
 	}
 
-	if (ret == FAIL && strcmp(error_info, "") != 0) {
-		printf("error info = %s\n", error_info);
+	if (ret == PWD_FAIL) {
+		perror("password fail");
+		goto pwderror_end;
+	}
+	//printf("strlen(error_info) = %d\n", strlen(error_info));
+	if (ret == FAIL && strlen(error_info) != 0) {
+		//printf("error info = %s\n", error_info);
 		goto end_error_info;
 	}
-
 	if (ret == FAIL) {
 		perror("content fail");
 		goto end;
@@ -3399,9 +3485,19 @@ void set(Webs *wp)
 		perror("port");
 		goto end;
 	}
+
 	if (ret == FAIL) {
 		perror("socket fail");
 		goto end;
+	}
+
+	/* wait 425 cmd feedback, 最多等待 1 秒 */
+	if (cmd == 425) {
+		ret = wait_cmd_feedback();
+		if (ret == FAIL) {
+			perror("cmd feedback fail");
+			goto end;
+		}
 	}
 
 	my_syslog("机器人操作", log_content, cur_account.username);
@@ -3470,6 +3566,23 @@ end_error_info:
 	websWriteHeaders(wp, -1, 0);
 	websWriteEndHeaders(wp);
 	websWrite(wp, error_info);
+	websDone(wp);
+	return;
+
+pwderror_end:
+	my_syslog("机器人操作", "密码检验错误", cur_account.username);
+	my_en_syslog("robot operation", "Password check error", cur_account.username);
+	my_jap_syslog("ロボット操作", "暗号検証エラー", cur_account.username);
+	/* free content */
+	free(content);
+	content = NULL;
+	/* cjson delete */
+	cJSON_Delete(data);
+	data = NULL;
+	websSetStatus(wp, 200);
+	websWriteHeaders(wp, -1, 0);
+	websWriteEndHeaders(wp);
+	websWrite(wp, "pwd_error");
 	websDone(wp);
 	return;
 }
