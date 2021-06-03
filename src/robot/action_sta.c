@@ -2045,13 +2045,30 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				cJSON_AddStringToObject(error_json, "key", "Belt tracking - starting point and reference point attitude change too much");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている");
+				cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている");
 			}
 			if (pre_state->cmdPointError != 29) {
 				my_syslog("错误", "传送带跟踪-起始点与参考点姿态变化过大", cur_account.username);
 				my_en_syslog("error", "Belt tracking - starting point and reference point attitude change too much", cur_account.username);
 				my_jap_syslog("さくご", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている", cur_account.username);
 				pre_state->cmdPointError = 29;
+			}
+			break;
+		case 30:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります");
+			}
+			if (pre_state->cmdPointError != 30) {
+				my_syslog("错误", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启", cur_account.username);
+				my_en_syslog("error", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart", cur_account.username);
+				my_jap_syslog("さくご", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります", cur_account.username);
+				pre_state->cmdPointError = 30;
 			}
 			break;
 		default:
