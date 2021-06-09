@@ -547,6 +547,7 @@ static int get_exaxis_cfg(char **ret_f_content)
 	char strline[LINE_LEN] = {0};
 	FILE *fp;
 	cJSON *root_json = NULL;
+	cJSON *axis_json = NULL;
 	cJSON *item1 = NULL;
 	cJSON *item2 = NULL;
 	cJSON *item3 = NULL;
@@ -557,15 +558,17 @@ static int get_exaxis_cfg(char **ret_f_content)
 
 		return FAIL;
 	}
-	root_json = cJSON_CreateArray();
+	root_json = cJSON_CreateObject();
+	axis_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "cfg", axis_json);
 	item1 = cJSON_CreateObject();
 	item2 = cJSON_CreateObject();
 	item3 = cJSON_CreateObject();
 	item4 = cJSON_CreateObject();
-	cJSON_AddItemToArray(root_json, item1);
-	cJSON_AddItemToArray(root_json, item2);
-	cJSON_AddItemToArray(root_json, item3);
-	cJSON_AddItemToArray(root_json, item4);
+	cJSON_AddItemToArray(axis_json, item1);
+	cJSON_AddItemToArray(axis_json, item2);
+	cJSON_AddItemToArray(axis_json, item3);
+	cJSON_AddItemToArray(axis_json, item4);
 	cJSON_AddStringToObject(item1, "axis_id", "1");
 	cJSON_AddStringToObject(item2, "axis_id", "2");
 	cJSON_AddStringToObject(item3, "axis_id", "3");
@@ -717,6 +720,9 @@ static int get_exaxis_cfg(char **ret_f_content)
 		} else if(!strncmp(strline, "EXTERNALAXIS4_ENCTYPE = ", 24)) {
 			strrpc(strline, "EXTERNALAXIS4_ENCTYPE = ", "");
 			cJSON_AddStringToObject(item4, "axis_enctype", strline);
+		} else if(!strncmp(strline, "EXTERNALAXIS_CMDDONETIME = ", 27)) {
+			strrpc(strline, "EXTERNALAXIS_CMDDONETIME = ", "");
+			cJSON_AddStringToObject(root_json, "cmddonetime", strline);
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
