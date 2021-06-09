@@ -10,8 +10,8 @@
 	//#define CLIENT_IP "127.0.0.1"
 	#define SERVER_IP "192.168.152.129" //sql
 	#define CLIENT_IP "192.168.152.129"
-//	#define SERVER_IP "192.168.172.128" //zjq
-//	#define CLIENT_IP "192.168.172.128" //zjq
+//	#define SERVER_IP "192.168.172.128" //zjq,gjc
+//	#define CLIENT_IP "192.168.172.128" //zjq,gjc
 //	#define SERVER_IP "192.168.121.129" //wsk
 //	#define CLIENT_IP "192.168.121.129"
 #else
@@ -39,6 +39,7 @@
 //#define STATEFB_FILESIZE 100*8000*2 /** 100(num)*4(sizeof(float))*100(row)*20(column)*2 */
 #define STATEFB_PERPKG_NUM 100
 #define STATEFB_ID_MAXNUM 20
+#define TORQUE_SYS_SIZE 1024
 #define STATEFB_MAX 100 /** state feedback quene, node max number */
 #define MAXGRIPPER 8
 #define MAXSLAVES 8

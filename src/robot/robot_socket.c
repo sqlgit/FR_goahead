@@ -44,6 +44,7 @@ static int socket_server_create(SOCKET_SERVER_INFO *sock);
 static int socket_connect(SOCKET_INFO *sock);
 static int socket_timeout(SOCKET_INFO *sock);
 static int socket_pkg_handle(char *buf_memory, char *sec_buf_memory, char *frame, int buf_size, int frame_size);
+static int buf_memory_handle(char *buf_memory, int buf_size, int *buf_memory_len, char *frame, int frame_size);
 static int socket_send(SOCKET_INFO *sock, QElemType *node);
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
 static void *socket_send_thread(void *arg);
@@ -1293,15 +1294,113 @@ void *socket_status_thread(void *arg)
 	}
 }
 
+/**
+	function : 数据包收包后对于“粘包”，“断包”，“残包”，“错包”的处理
+
+	buf_memory[IN] : 待处理数据缓冲区
+
+	buf_size : 分配的数据缓存区大小
+
+	*buf_memory_len[IN]：buf 中已存储的数据，所占字节长度
+
+	frame[out]：获取到的完整一帧数据包
+
+	frame_size : 分配的一帧数据存储的大小
+
+	return: 如果有完整一帧数据包，返回数据帧实际长度，否则返回 0 for error
+ */
+static int buf_memory_handle(char *buf_memory, int buf_size, int *buf_memory_len, char *frame, int frame_size)
+{
+	assert(buf_memory != NULL);
+
+	char *head_str = "/f/b";
+	char *tail_str = "/b/f";
+	int head = -1;
+	int tail = -1;
+	int frame_len = 0;   	// 一帧数据的实际长度
+	char *ptr_buf = NULL; 	// 内圈循环 buf
+	int i;
+
+	/** calloc buf */
+	ptr_buf = (char *)calloc(1, sizeof(char)*buf_size);
+	if (ptr_buf == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
+
+	/** 如果缓冲区中为空，则可以直接进行下一轮tcp请求 */
+	while (*buf_memory_len != 0) {
+		memcpy(ptr_buf, buf_memory, *buf_memory_len);
+		/** 循环找包头 */
+		for (i = 0; i < *buf_memory_len; i++) {
+			if (memcmp((ptr_buf + i), head_str, strlen(head_str)) == 0) {
+				head = i;
+				break;
+			}
+		}
+		/** 循环找包尾 */
+		for (i = 1; i < *buf_memory_len; i++) {
+			if (memcmp((ptr_buf + i), tail_str, strlen(tail_str)) == 0) {
+				tail = i + strlen(tail_str);
+				break;
+			}
+		}
+		/** 断包(有头无尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据 */
+		if (head != -1 && tail == -1) {
+		//	perror("Broken package");
+
+			break;
+		}
+		/** 找到了包头包尾，则提取出一帧 */
+		if (head != -1 && tail != -1 && head < tail) {
+			/* 取出整包数据, save to frame */
+			frame_len = tail - head;
+			memset(frame, 0, frame_size);
+			memcpy(frame, (ptr_buf + head), frame_len);
+
+			/* 清空缓冲区, 并把包尾后的内容推入缓冲区 */
+			memset(buf_memory, 0, buf_size);
+			*buf_memory_len = *buf_memory_len - tail;
+			memcpy(buf_memory, (ptr_buf + tail), *buf_memory_len);
+
+			break;
+		}
+
+		/** 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据 */
+		if ((head == -1 && tail != -1) || (head == -1 && tail == -1)) {
+			perror("Incomplete package!");
+			/** 清空缓冲区, 直接跳出内圈循环，到外圈循环里 */
+			memset(buf_memory, 0, buf_size);
+			*buf_memory_len = 0;
+
+			break;
+		}
+
+		/** 包头在包尾后面，则扔掉缓冲区中包头之前的多余字节, 继续内圈循环 */
+		if (head != -1 && tail != -1 && head > tail) {
+			perror("Error package");
+			/* 清空缓冲区, 并把包头后的内容推入缓冲区 */
+			memset(buf_memory, 0, buf_size);
+			*buf_memory_len = *buf_memory_len - head;
+			memcpy(buf_memory, (ptr_buf + head), *buf_memory_len);
+		}
+	}
+	free(ptr_buf);
+	ptr_buf = NULL;
+
+	return frame_len;
+}
+
 void *socket_TORQUE_SYS_thread(void *arg)
 {
 	SOCKET_INFO *sock = NULL;
 	int port = (int)arg;
 	int recv_len = 0;
-	char buf_memory[BUFFSIZE] = {0};
-	char sec_buf_memory[BUFFSIZE] = {0};
-	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
-	char recvbuf[STATE_SIZE] = {0};
+	char buf_memory[BUFFSIZE] = { 0 }; /** 保存所有的已接收的数据 */
+	int buf_memory_len = 0; /** buf 中已存储的数据，所占字节长度 */
+	char frame[TORQUE_SYS_SIZE] = { 0 };
+	char recvbuf[TORQUE_SYS_SIZE] = { 0 };
 	int i = 0;
 
 	sock = &socket_torquesys;
@@ -1333,17 +1432,17 @@ void *socket_TORQUE_SYS_thread(void *arg)
 		sock->connect_status = 1;
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
 
+		memset(buf_memory, 0, BUFFSIZE);
+		buf_memory_len = 0;
 		while (torquesys.enable == 1) {
-			bzero(recvbuf, STATE_SIZE);
+			bzero(recvbuf, TORQUE_SYS_SIZE);
 			//printf("before recvbuf");
-			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
-			//printf("recvbuf = %s\n", recvbuf);
-			/*printf("recvbuf = ");
-			for (i = 0; i < recv_len; i++) {
-				printf("%x ", recvbuf[i]);
-			}
-			printf("\n");*/
-			//printf("after recvbuf : sock status recv_len = %d\n", recv_len);
+			recv_len = recv(sock->fd, recvbuf, TORQUE_SYS_SIZE, 0);
+			/*
+			printf("after recvbuf\n");
+			printf("sock status recv_len = %d\n", recv_len);
+			printf("recvbuf = %s\n", recvbuf);
+			*/
 			/* recv timeout or error */
 			if (recv_len <= 0) {
 				printf("sock status recv_len : %d\n", recv_len);
@@ -1354,23 +1453,23 @@ void *socket_TORQUE_SYS_thread(void *arg)
 
 				break;
 			}
-			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(BUFFSIZE), 清空 buf_memory
-		/*	if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
-				bzero(buf_memory, BUFFSIZE);
+			/*
+			printf("recvbuf = ");
+			for (i = 0; i < recv_len; i++) {
+				printf("%x ", recvbuf[i]);
 			}
-			memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
-			printf("sizeof(TORQUE_SYS_STATE)+14 = %d\n", (sizeof(TORQUE_SYS_STATE)+14));
-			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
-			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) == (sizeof(TORQUE_SYS_STATE)+14)) {
-				printf("frame = ");
-				for (i = 0; i < recv_len; i++) {
-					printf("%x ", recvbuf[i]);
-				}
-				printf("\n");
-				bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
-				memcpy(&torque_sys_state, (frame+7), (strlen(frame)-14));
-			}*/
-			if (recv_len == (sizeof(TORQUE_SYS_STATE) + 14)) {
+			printf("\n");
+			*/
+			// 如果收到的数据包长度加上已有 buf_memory_len, 已经超过 buf_memory 定义空间大小(BUFFSIZE), 清空 buf_memory
+			if ((buf_memory_len + recv_len) > BUFFSIZE) {
+				memset(buf_memory, 0, BUFFSIZE);
+				buf_memory_len = 0;
+			}
+			memcpy((buf_memory + buf_memory_len), recvbuf, recv_len);
+			buf_memory_len = buf_memory_len + recv_len;
+			/** 获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等） */
+			//printf("sizeof(TORQUE_SYS_STATE)+14 = %d\n", (sizeof(TORQUE_SYS_STATE)+14)); /* Now struct is 30 bytes, +14 = 54 */
+			while (buf_memory_handle(buf_memory, BUFFSIZE, &buf_memory_len, frame, TORQUE_SYS_SIZE) == (sizeof(TORQUE_SYS_STATE) + 14)) {
 				/*printf("frame = ");
 				for (i = 0; i < recv_len; i++) {
 					printf("%x ", recvbuf[i]);

@@ -374,7 +374,7 @@ static int save_point(const cJSON *data_json)
 		return FAIL;
 	}
 	for (i = 0; i < 6; i++) {
-		sprintf(joint_value_string[i], "%.3lf", state->jt_cur_pos[i]); //数据库存储
+		sprintf(joint_value_string[i], "%.3lf", state->jt_cur_pos[i]);
 	}
 	for (i = 0; i < 6; i++) {
 		sprintf(tcp_value_string[i], "%.3lf", state->tl_cur_pos[i]);
