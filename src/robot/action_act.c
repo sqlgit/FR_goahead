@@ -45,6 +45,9 @@ static int save_DH_point(const cJSON *data_json);
 static int factory_reset(const cJSON *data_json);
 static int odm_password(const cJSON *data_json);
 static int save_robot_type(const cJSON *data_json);
+static int torque_save_cfg(const cJSON *data_json);
+static int torque_ensure_points(const cJSON *data_json);
+static int rename_var(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -1093,6 +1096,77 @@ static int save_robot_type(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/** torque save cfg */
+static int torque_save_cfg(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_TORQUE_CFG, buf);//write file
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/** torque ensure points */
+static int torque_ensure_points(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+	cJSON *content = NULL;
+
+	content = cJSON_GetObjectItem(data_json, "content");
+	if (content == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	buf = cJSON_Print(content);
+	write_ret = write_file(FILE_TORQUE_POINTS, buf);//write file
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* rename var */
+static int rename_var(const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	cJSON *name = NULL;
+	cJSON *id = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	id = cJSON_GetObjectItem(data_json, "id");
+	if (name == NULL || id == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(sql, "update sysvar set name='%s', id=%d where id=%d;", name->valuestring, id->valueint, id->valueint);
+	if (change_info_sqlite3(DB_SYSVAR, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -1130,13 +1204,13 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "rename_var")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1283,6 +1357,21 @@ void act(Webs *wp)
 		strcpy(log_content, "保存机器人型号");
 		strcpy(en_log_content, "Save the robot type");
 		strcpy(jap_log_content, "ロボット型保存");
+	} else if (!strcmp(cmd, "torque_save_cfg")) {
+		ret = torque_save_cfg(data_json);
+		strcpy(log_content, "设置扭矩参数");
+		strcpy(en_log_content, "Set torque parameters");
+		strcpy(jap_log_content, "トルクパラメータを設定する");
+	} else if (!strcmp(cmd, "torque_ensure_points")) {
+		ret = torque_ensure_points(data_json);
+		strcpy(log_content, "确认扭矩示教点");
+		strcpy(en_log_content, "Ensure torque teaching points");
+		strcpy(jap_log_content, "トルク表示点を確認する");
+	} else if (!strcmp(cmd, "rename_var")) {
+		ret = rename_var(data_json);
+		strcpy(log_content, "变量重命名");
+		strcpy(en_log_content, "variable renaming");
+		strcpy(jap_log_content, "変数の名前変更");
 	} else {
 		perror("cmd not found");
 		goto end;

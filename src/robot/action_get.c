@@ -40,6 +40,10 @@ static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 static int get_DH_file(char **ret_f_content);
 static int get_robot_serialnumber(char **ret_f_content);
 static int get_robot_type(char **ret_f_content);
+static int torque_get_cfg(char **ret_f_content);
+static int torque_get_points(char **ret_f_content);
+static int get_varlist(char **ret_f_content);
+static int get_checkvar(char **ret_f_content, const cJSON *data_json);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1435,6 +1439,136 @@ static int get_robot_type(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get torque cfg and return to page */
+static int torque_get_cfg(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+
+	*ret_f_content = get_file_content(FILE_TORQUE_CFG);
+	/* ret_f_content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	/* file is not exist or empty */
+	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		perror("file is not exist or empty");
+		root_json = cJSON_CreateObject();
+		*ret_f_content = cJSON_Print(root_json);
+		cJSON_Delete(root_json);
+		root_json = NULL;
+		if (*ret_f_content == NULL) {
+			perror("cJSON_Print");
+
+			return FAIL;
+		}
+
+		return SUCCESS;
+	}
+
+	return SUCCESS;
+}
+
+/* get torque points and return to page */
+static int torque_get_points(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+
+	*ret_f_content = get_file_content(FILE_TORQUE_POINTS);
+	/* ret_f_content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	/* file is not exist or empty */
+	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		perror("file is not exist or empty");
+		root_json = cJSON_CreateArray();
+		*ret_f_content = cJSON_Print(root_json);
+		cJSON_Delete(root_json);
+		root_json = NULL;
+		if (*ret_f_content == NULL) {
+			perror("cJSON_Print");
+
+			return FAIL;
+		}
+
+		return SUCCESS;
+	}
+
+	return SUCCESS;
+}
+
+/* get varlist */
+static int get_varlist(char **ret_f_content)
+{
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+
+	sprintf(sql, "select * from sysvar");
+	if (select_info_nokey_json_sqlite3(DB_SYSVAR, sql, &json_data) == -1) {
+		perror("select points");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* check var result */
+static int get_checkvar(char **ret_f_content, const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	cJSON *name = NULL;
+	cJSON *root_json = NULL;
+	cJSON *json_data = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	root_json = cJSON_CreateObject();
+	sprintf(sql, "select * from sysvar where name = \'%s\';", name->valuestring);
+	if (select_info_json_sqlite3(DB_SYSVAR, sql, &json_data) == -1) {
+		printf("check sysvar result : not exist!");
+		cJSON_AddStringToObject(root_json, "result", "0");
+	} else {
+		printf("check sysvar result : exist!");
+		cJSON_AddStringToObject(root_json, "result", "1");
+	}
+	cJSON_Delete(json_data);
+	json_data = NULL;
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -1549,6 +1683,19 @@ void get(Webs *wp)
 		ret = get_robot_serialnumber(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_type")) {
 		ret = get_robot_type(&ret_f_content);
+	} else if(!strcmp(cmd, "torque_get_cfg")) {
+		ret = torque_get_cfg(&ret_f_content);
+	} else if(!strcmp(cmd, "torque_get_points")) {
+		ret = torque_get_points(&ret_f_content);
+	} else if(!strcmp(cmd, "get_varlist")) {
+		ret = get_varlist(&ret_f_content);
+	} else if(!strcmp(cmd, "get_checkvar")) {
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = get_checkvar(&ret_f_content, data_json);
 	} else {
 		perror("cmd not found");
 		goto end;

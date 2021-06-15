@@ -231,6 +231,8 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_LOG_JAP);
 	create_dir(DIR_WELD);
 	create_dir(DIR_ROBOT_TYPE);
+	create_dir(DIR_TORQUESYS);
+	create_dir(DIR_SYSVAR);
 	delete_log_file(0);
 #endif
 

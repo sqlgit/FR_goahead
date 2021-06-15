@@ -102,6 +102,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "conveyor_speed", state->conveyor_speed);
 	cJSON_AddNumberToObject(root_json, "btn_box_stop_signal", state->btn_box_stop_signal);
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
+	cJSON_AddNumberToObject(root_json, "pause_parameter", state->pause_parameter);
 	if (basic_index%10 == 0) {
 		local_now_time(time_now);
 	}
@@ -2387,6 +2388,23 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				my_en_syslog("error", "exaxis the configuration file failed to load", cur_account.username);
 				my_jap_syslog("さくご", "exaxisプロファイルのロードに失敗しました", cur_account.username);
 				pre_state->fileError = 6;
+			}
+			break;
+		case 7:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "机器人型号不一致，需要重新设置-不可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Robot models are inconsistent and need to be reset - not reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ロボットの型番が一致していないので再設定が必要-リセット不可");
+			}
+			if (pre_state->fileError != 7) {
+				my_syslog("错误", "机器人型号不一致，需要重新设置-不可复位", cur_account.username);
+				my_en_syslog("error", "Robot models are inconsistent and need to be reset - not reset", cur_account.username);
+				my_jap_syslog("さくご", "ロボットの型番が一致していないので再設定が必要-リセット不可", cur_account.username);
+				pre_state->fileError = 7;
 			}
 			break;
 		default:

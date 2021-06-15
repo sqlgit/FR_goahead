@@ -133,7 +133,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	//printf("lua cmd = %s\n", lua_cmd);
 	char sql[1024] = {0};
 	char **cmd_array = NULL;
+	char **cmd_array_2 = NULL;
 	int size = 0;
+	int size_2 = 0;
 	char *tmp_content = NULL;
 	tmp_content = (char *)calloc(1, sizeof(char)*(len));
 	if (tmp_content == NULL) {
@@ -208,6 +210,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *ry_3 = NULL;
 	cJSON *rz_3 = NULL;
 	cJSON *ext_axis_ptp = NULL;
+	cJSON *var = NULL;
 
 	if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 		perror("string to string list");
@@ -1093,7 +1096,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sRegisterVar(", file_content);
 		strcpy(file_content, tmp_content);
 		int i = 0;
-		for (i = 0; i < (size - 1); i++){
+		for (i = 0; i < (size - 1); i++) {
 			memset(tmp_content, 0, sizeof(char)*(len));
 			sprintf(tmp_content, "%s\"%s\",", file_content, cmd_array[i]);
 			strcpy(file_content, tmp_content);
@@ -1193,6 +1196,71 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "ExtAxisServoOn:", "");
 		sprintf(tmp_content, "%sExtAxisServoOn(%s,%s)\n", file_content, cmd_array[0], cmd_array[1]);
 		strcpy(file_content, tmp_content);
+	/* SetSysVarValue */
+	} else if (!strncmp(lua_cmd, "SetSysVarValue:", 15)) {
+		if (size != 2) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "SetSysVarValue:", "");
+		/* open and get sysvar.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from sysvar;");
+		if (select_info_json_sqlite3(DB_SYSVAR, sql, &f_json) == -1) {
+			perror("select sysvar");
+
+			goto end;
+		}
+		var = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[0]);
+		if (var == NULL || var->type != cJSON_Object) {
+
+			goto end;
+		}
+		id = cJSON_GetObjectItem(var, "id");
+		if (id == NULL) {
+
+			goto end;
+		}
+		sprintf(tmp_content, "%sSetSysVarValue(%s,%s)\n", file_content, id->valuestring, cmd_array[1]);
+		strcpy(file_content, tmp_content);
+	/* GetSysVarValue */
+	} else if (is_in(lua_cmd, "GetSysVarValue:") == 1) {
+		//printf("enter is in\n");
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		//printf("cmd_array[0] = %s\n", cmd_array[0]);
+		if (string_to_string_list(cmd_array[0], ":", &size_2, &cmd_array_2) == 0 || size_2 != 2) {
+			perror("string to string list");
+			string_list_free(cmd_array_2, size_2);
+
+			goto end;
+		}
+
+		/* open and get sysvar.db content */
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "select * from sysvar;");
+		if (select_info_json_sqlite3(DB_SYSVAR, sql, &f_json) == -1) {
+			perror("select sysvar");
+
+			goto end;
+		}
+		var = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array_2[1]);
+		if (var == NULL || var->type != cJSON_Object) {
+
+			goto end;
+		}
+		id = cJSON_GetObjectItem(var, "id");
+		if (id == NULL) {
+
+			goto end;
+		}
+		sprintf(tmp_content, "%s%s(%s)\n", file_content, cmd_array_2[0], id->valuestring);
+		strcpy(file_content, tmp_content);
+		string_list_free(cmd_array_2, size_2);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1468,6 +1536,12 @@ static int step_over(const cJSON *data_json, char *content)
 	/* soft-PLC setToolAO */
 	} else if (!strncmp(pgvalue->valuestring, "SPLCSetToolAO", 13)) {
 		cmd = 397;
+	/* SetSysVarValue */
+	} else if (!strncmp(pgvalue->valuestring, "SetSysVarValue", 14)) {
+		cmd = 427;
+	/* GetSysVarValue */
+	} else if (is_in(pgvalue->valuestring, "GetSysVarValue:") == 1) {
+		cmd = 428;
 	/* error */
 	} else {
 		return FAIL;
@@ -2211,7 +2285,7 @@ void set(Webs *wp)
 		}
 	// cmd_auth "2"
 	}
-	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426) {
+	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 377 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -3427,6 +3501,13 @@ void set(Webs *wp)
 		strcpy(log_content, "设置停止/暂停后输出是否复位");
 		strcpy(en_log_content, "Sets whether the output is reset after stopping/pausing");
 		strcpy(jap_log_content, "停止/一時停止後に出力をリセットするかどうかを設定します");
+		ret = copy_content(data_json, content);
+		break;
+	case 427:
+		port = cmdport;
+		strcpy(log_content, "设置系统变量");
+		strcpy(en_log_content, "Setting System Variables");
+		strcpy(jap_log_content, "システム変数を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */

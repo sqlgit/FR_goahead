@@ -165,6 +165,7 @@ typedef struct _CTRL_STATE
 	uint8_t    ts_web_state_com_error; 	/** 扭矩：WEB-TM 状态反馈，通信失败 */
 	uint8_t    ts_tm_cmd_com_error; 	/** 扭矩：TM-扭矩 指令下发，通信失败 */
 	uint8_t    ts_tm_state_com_error; 	/** 扭矩：TM-扭矩 状态反馈，通信失败 */
+	uint8_t	   pause_parameter; 		/** pause 参数 */
 } CTRL_STATE;
 #pragma pack(pop)
 
