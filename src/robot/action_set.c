@@ -2128,7 +2128,8 @@ static int set_robot_type(const cJSON *data_json, char * content)
 
 			return FAIL;
 		}
-		robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + minor_ver->valueint;
+		/** 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9) */
+		robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
 
 		sprintf(content, "SetRobotType(%d)", robot_type);
 
