@@ -1092,6 +1092,13 @@ static int save_robot_type(const cJSON *data_json)
 
 		return FAIL;
 	}
+	/**
+		代码中调用 write/read 等文件系统函数时,
+	    看似程序已经返回文件写入或读取成功，
+		实际硬盘上的文件尚未更改，
+		需要一定的等待时间
+	*/
+	sleep(10);
 
 	return SUCCESS;
 }

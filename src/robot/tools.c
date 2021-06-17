@@ -284,8 +284,7 @@ char *get_file_content(const char *file_path)
 	}
 	fseek(fp, 0, SEEK_END);
 	file_size = ftell(fp);
-	if(file_size == 0)
-	{
+	if (file_size == 0) {
 		fclose(fp);
 		return "Empty";
 	}

@@ -1390,8 +1390,8 @@ static int step_over(const cJSON *data_json, char *content)
 	} else if (!strncmp(pgvalue->valuestring, "GetToolAI:", 10)) {
 		cmd = 215;
 	/* moveTPD */
-	} else if (!strncmp(pgvalue->valuestring, "MoveTPD:", 8)) {
-		cmd = 217;
+	/*} else if (!strncmp(pgvalue->valuestring, "MoveTPD:", 8)) {
+		cmd = 217;*/
 	/* waitDI */
 	} else if (!strncmp(pgvalue->valuestring, "WaitDI:", 7)) {
 		cmd = 218;
