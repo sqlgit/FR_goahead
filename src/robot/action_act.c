@@ -709,8 +709,6 @@ static int set_ODM_cfg(const cJSON *data_json)
 	cJSON_Delete(cfg_json);
 	cfg_json = NULL;
 
-	delete_log_file(0);
-
 	return ret;
 }
 
@@ -1080,9 +1078,40 @@ static int odm_password(const cJSON *data_json)
 /** save robot type */
 static int save_robot_type(const cJSON *data_json)
 {
+	cJSON *type_json = NULL;
 	char *buf = NULL;
 	int write_ret = FAIL;
+	cJSON *root_json = NULL;
 
+	type_json = cJSON_GetObjectItem(data_json, "type");
+	if (type_json == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	root_json = cJSON_CreateObject();
+	if (type_json->valueint == 1) {
+		cJSON_AddStringToObject(root_json, "robot_model", "FR3");
+	} else if (type_json->valueint == 2) {
+		cJSON_AddStringToObject(root_json, "robot_model", "FR5");
+	} else if (type_json->valueint == 3) {
+		cJSON_AddStringToObject(root_json, "robot_model", "FR10");
+	}
+	/** 写入 odm/cfg.txt 文件 */
+	buf = cJSON_Print(root_json);
+	write_ret = write_file(FILE_ODM_CFG, buf);//write file
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	/** 写入RobotType.txt 文件 */
 	buf = cJSON_Print(data_json);
 	write_ret = write_file(FILE_ROBOT_TYPE, buf);//write file
 	free(buf);

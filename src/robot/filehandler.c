@@ -482,6 +482,9 @@ void upload(Webs *wp)
 		/** 更新 exaxis.config 文件 */
 		update_config(EXAXIS_CFG);
 
+		/** 文件写入硬盘需要一定时间，等待 1 秒 */
+		sleep(1);
+
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
 		//sprintf(cmd, "sh %s", SHELL_WEBTARCP);
@@ -491,6 +494,8 @@ void upload(Webs *wp)
 #endif
 		do {
 			system(cmd);
+			/** 文件写入硬盘需要一定时间，等待 5 秒 */
+			sleep(5);
 		} while (check_version(README_WEB_NOW, README_WEB_UP) == FAIL);
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 		my_en_syslog("normal operation", "Successed to upgrade webapp", cur_account.username);
@@ -505,6 +510,8 @@ void upload(Webs *wp)
 #endif
 		do {
 			system(cmd);
+			/** 文件写入硬盘需要一定时间，等待 1 秒 */
+			sleep(1);
 		} while (check_version(README_CTL_NOW, README_CTL_UP) == FAIL);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 		my_en_syslog("normal operation", "Controller software upgrade successful", cur_account.username);

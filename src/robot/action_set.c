@@ -1354,58 +1354,58 @@ static int step_over(const cJSON *data_json, char *content)
 	}
 	//printf("upload lua cmd:%s\n", pgvalue->valuestring);
 	/* PTP */
-	if (!strncmp(pgvalue->valuestring, "PTP:", 4)) {
+	if (!strncmp(pgvalue->valuestring, "PTP", 3)) {
 		cmd = 201;
 	/* ARC */
-	} else if (!strncmp(pgvalue->valuestring, "ARC:", 4)) {
+	} else if (!strncmp(pgvalue->valuestring, "ARC", 3)) {
 		cmd = 202;
 	/* Lin */
-	} else if (!strncmp(pgvalue->valuestring, "Lin:", 4)) {
+	} else if (!strncmp(pgvalue->valuestring, "Lin", 3)) {
 		cmd = 203;
 	/* set DO */
-	} else if (!strncmp(pgvalue->valuestring, "SetDO:", 6)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetDO", 5)) {
 		cmd = 204;
 	/* wait time*/
-	} else if (!strncmp(pgvalue->valuestring, "WaitTime:", 9)) {
+	} else if (!strncmp(pgvalue->valuestring, "WaitTime", 8)) {
 		cmd = 207;
 	/* set AO */
-	} else if (!strncmp(pgvalue->valuestring, "SetAO:", 6)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetAO", 5)) {
 		cmd = 209;
 	/* set ToolDO */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolDO:", 10)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetToolDO", 9)) {
 		cmd = 210;
 	/* set ToolAO */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolAO:", 10)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetToolAO", 9)) {
 		cmd = 211;
 	/* get DI */
-	} else if (!strncmp(pgvalue->valuestring, "GetDI:", 6)) {
+	} else if (!strncmp(pgvalue->valuestring, "GetDI", 5)) {
 		cmd = 212;
 	/* get ToolDI */
-	} else if (!strncmp(pgvalue->valuestring, "GetToolDI:", 10)) {
+	} else if (!strncmp(pgvalue->valuestring, "GetToolDI", 9)) {
 		cmd = 213;
 	/* get AI */
-	} else if (!strncmp(pgvalue->valuestring, "GetAI:", 6)) {
+	} else if (!strncmp(pgvalue->valuestring, "GetAI", 5)) {
 		cmd = 214;
 	/* get ToolAI */
-	} else if (!strncmp(pgvalue->valuestring, "GetToolAI:", 10)) {
+	} else if (!strncmp(pgvalue->valuestring, "GetToolAI", 9)) {
 		cmd = 215;
 	/* moveTPD */
 	/*} else if (!strncmp(pgvalue->valuestring, "MoveTPD:", 8)) {
 		cmd = 217;*/
 	/* waitDI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitDI:", 7)) {
+	} else if (!strncmp(pgvalue->valuestring, "WaitDI:", 6)) {
 		cmd = 218;
 	/* waitToolDI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitToolDI:", 11)) {
+	} else if (!strncmp(pgvalue->valuestring, "WaitToolDI:", 10)) {
 		cmd = 219;
 	/* waitAI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitAI:", 7)) {
+	} else if (!strncmp(pgvalue->valuestring, "WaitAI", 6)) {
 		cmd = 220;
 		/* waitToolDI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitToolAI:", 11)) {
+	} else if (!strncmp(pgvalue->valuestring, "WaitToolAI", 10)) {
 		cmd = 221;
 	/* MoveGripper */
-	} else if (!strncmp(pgvalue->valuestring, "MoveGripper:", 12)) {
+	} else if (!strncmp(pgvalue->valuestring, "MoveGripper", 11)) {
 		cmd = 228;
 	/* SprayStart */
 	} else if (!strncmp(pgvalue->valuestring, "SprayStart", 10)) {
@@ -1474,13 +1474,13 @@ static int step_over(const cJSON *data_json, char *content)
 	} else if (!strncmp(pgvalue->valuestring, "Mode:", 5)) {
 		cmd = 303;
 	/* SetToolList */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolList:", 12)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetToolList", 11)) {
 		cmd = 319;
 	/* SetWobjList */
-	} else if (!strncmp(pgvalue->valuestring, "SetWobjList:", 12)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetWobjList", 11)) {
 		cmd = 383 ;
 	/* SetExToolCoord */
-	} else if (!strncmp(pgvalue->valuestring, "SetExToolList:", 14)) {
+	} else if (!strncmp(pgvalue->valuestring, "SetExToolList", 13)) {
 		cmd = 331;
 	/* SplineStart */
 	} else if (!strncmp(pgvalue->valuestring, "SplineStart", 11)) {
@@ -1538,10 +1538,10 @@ static int step_over(const cJSON *data_json, char *content)
 		cmd = 397;
 	/* SetSysVarValue */
 	} else if (!strncmp(pgvalue->valuestring, "SetSysVarValue", 14)) {
-		cmd = 427;
+		cmd = 511;
 	/* GetSysVarValue */
-	} else if (is_in(pgvalue->valuestring, "GetSysVarValue:") == 1) {
-		cmd = 428;
+	} else if (is_in(pgvalue->valuestring, "GetSysVarValue") == 1) {
+		cmd = 512;
 	/* error */
 	} else {
 		return FAIL;
@@ -3504,7 +3504,7 @@ void set(Webs *wp)
 		strcpy(jap_log_content, "停止/一時停止後に出力をリセットするかどうかを設定します");
 		ret = copy_content(data_json, content);
 		break;
-	case 427:
+	case 511:
 		port = cmdport;
 		strcpy(log_content, "设置系统变量");
 		strcpy(en_log_content, "Setting System Variables");
