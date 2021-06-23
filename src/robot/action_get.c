@@ -1410,7 +1410,6 @@ static int get_robot_type(char **ret_f_content)
 	*ret_f_content = get_file_content(FILE_ROBOT_TYPE);
 	/* ret_f_content is NULL */
 	if (*ret_f_content == NULL) {
-		*ret_f_content = NULL;
 		perror("get file content");
 
 		return FAIL;

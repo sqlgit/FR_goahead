@@ -689,6 +689,17 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				char cmd[128] = {0};
 				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
 				system(cmd);
+
+				/**
+					发送 set rebot type 指令,
+					确保 robot type 正确，
+					特别在恢复出厂值时，需要发送此指令
+				*/
+				if (send_cmd_set_robot_type() == FAIL) {
+					perror("send cmd set robot type!");
+
+					return FAIL;
+				}
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);
@@ -2081,5 +2092,42 @@ static void init_torquesys()
 	torquesys.enable = 0;
 	/** send get_on_off to TaskManagement */
 	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
+}
+
+int send_cmd_set_robot_type()
+{
+	cJSON *type = NULL;
+	cJSON *major_ver = NULL;
+	cJSON *minor_ver = NULL;
+	cJSON *content_json = NULL;
+	char *file_content = NULL;
+	char cmd_content[100] = "";
+	int robot_type = 0;
+
+	file_content = get_file_content(FILE_ROBOT_TYPE);
+	/* content_json is NULL */
+	if (file_content == NULL || strcmp(file_content, "NO_FILE") == 0 || strcmp(file_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	content_json = cJSON_Parse(file_content);
+	free(file_content);
+	file_content = NULL;
+
+	type = cJSON_GetObjectItem(content_json, "type");
+	major_ver = cJSON_GetObjectItem(content_json, "major_ver");
+	minor_ver = cJSON_GetObjectItem(content_json, "minor_ver");
+	if (type == NULL || major_ver == NULL || minor_ver == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	/** 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9) */
+	robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
+	sprintf(cmd_content, "SetRobotType(%d)", robot_type);
+	socket_enquene(&socket_cmd, 425, cmd_content, 1);
+
+	return SUCCESS;
 }
 

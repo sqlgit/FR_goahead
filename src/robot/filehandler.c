@@ -254,8 +254,10 @@ static int update_config(char *filename)
 			if (array_up[0] != NULL) {// 出现左边的 key 值
 				//  now config file is not exist
 				if ((fp_now = fopen(now_filename, "r")) == NULL) {
-					fclose(fp_up);
 					perror("now user.config : open file");
+					fclose(fp_up);
+					string_list_free(array_up, size_up);
+
 					sprintf(cmd, "cp %s %s", upgrade_filename, now_filename);
 					system(cmd);
 
@@ -270,6 +272,7 @@ static int update_config(char *filename)
 						perror("string to string list");
 						fclose(fp_up);
 						fclose(fp_now);
+						string_list_free(array_up, size_up);
 						string_list_free(array_now, size_now);
 
 						return FAIL;
@@ -306,6 +309,78 @@ static int update_config(char *filename)
 	return write_file(now_filename, write_content);
 }
 
+/**
+  check robot type
+*/
+static int check_robot_type()
+{
+	FILE *fp_up = NULL;
+	char strline_up[LINE_LEN] = {0};
+	char **array_up = NULL;
+	int size_up = 0;
+	FILE *fp_now = NULL;
+	char strline_now[LINE_LEN] = {0};
+	char **array_now = NULL;
+	int size_now = 0;
+	char cmd[128] = {0};
+	char robot_type_now[100] = "";
+	char robot_type_up[100] = "";
+
+	if ((fp_up = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
+		perror("user.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
+		if (is_in(strline_up, "ROBOT_TYPE = ") == 1) {
+			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
+				perror("string to string list");
+				fclose(fp_up);
+				string_list_free(array_up, size_up);
+
+				return FAIL;
+			}
+			strcpy(robot_type_up, array_up[1]);
+			string_list_free(array_up, size_up);
+
+			break;
+		}
+		bzero(strline_up, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp_up);
+
+	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("now user.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline_now, LINE_LEN, fp_now) != NULL) {
+		if (is_in(strline_now, "ROBOT_TYPE = ") == 1) {
+			if (string_to_string_list(strline_now, " = ", &size_now, &array_now) == 0 || size_now != 2) {
+				perror("string to string list");
+				fclose(fp_now);
+				string_list_free(array_now, size_now);
+
+				return FAIL;
+			}
+			strcpy(robot_type_now, array_now[1]);
+			string_list_free(array_now, size_now);
+
+			break;
+		}
+		bzero(strline_now, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp_now);
+
+	if (strcmp(robot_type_now, robot_type_up) == 0) {
+
+		return SUCCESS;
+	} else {
+		perror("robot type is not same!");
+
+		return FAIL;
+	}
+}
 
 void upload(Webs *wp)
 {
@@ -398,6 +473,7 @@ void upload(Webs *wp)
 				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import of controller user profile successfully", cur_account.username);
 				my_jap_syslog("普通の操作", "コントローラ側のユーザプロファイルのインポートが成功しました", cur_account.username);
+				strcpy(filename, upfile);
 			/* webapp upgrade file */
 		/*	} else if (strcmp(up->clientFilename, "webapp.tar.gz") == 0) {
 				upfile = sfmt("%s", UPGRADE_WEBAPP);
@@ -449,11 +525,23 @@ void upload(Webs *wp)
 	//printf("filename = %s\n", filename);
 	if (strcmp(filename, FILE_CFG) == 0) {
 		delete_log_file(0);
+	} else if (strcmp(filename, WEB_ROBOT_CFG) == 0) {
+		//printf("before check robot type\n");
+		if (check_robot_type() == FAIL) {
+			perror("check_robot_type");
+
+			goto end;
+		}
 	} else if (strcmp(filename, FILE_USERDATA) == 0) {
 		system("rm -rf /root/web/file");
 		system("rm -f /root/robot/exaxis.config");
 		system("rm -f /root/robot/ex_device.config");
 		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
+		if (check_robot_type() == FAIL) {
+			perror("check_robot_type");
+
+			goto end;
+		}
 		//system("rm -f /root/fr_user_data.tar.gz");
 	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
 		system("cd /tmp && tar -zxvf software.tar.gz");
@@ -477,6 +565,12 @@ void upload(Webs *wp)
 		}
 		/** 更新 user.config 文件 */
 		update_config(ROBOT_CFG);
+		/* 下发 set rebot type 指令，确保 robot type 正确 */
+		if (send_cmd_set_robot_type() == FAIL) {
+			perror("send cmd set robot type!");
+
+			goto end;
+		}
 		/** 更新 ex_device.config 文件 */
 		update_config(EX_DEVICE_CFG);
 		/** 更新 exaxis.config 文件 */
