@@ -163,6 +163,8 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	cJSON *rx = NULL;
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
+	cJSON *type = NULL;
+	cJSON *installation_site = NULL;
 
 	name = cJSON_GetObjectItem(data_json, "name");
 	id = cJSON_GetObjectItem(data_json, "id");
@@ -172,14 +174,16 @@ static int modify_tool_cdsystem(const cJSON *data_json)
 	rx = cJSON_GetObjectItem(data_json, "rx");
 	ry = cJSON_GetObjectItem(data_json, "ry");
 	rz = cJSON_GetObjectItem(data_json, "rz");
-	if(name == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL|| rz == NULL || name->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+	type = cJSON_GetObjectItem(data_json, "type");
+	installation_site = cJSON_GetObjectItem(data_json, "installation_site");
+	if (name == NULL || id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || type == NULL || installation_site == NULL || name->valuestring == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
 
-	sprintf(sql, "insert into coordinate_system(name,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s');"\
-					, name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+	//sprintf(sql, "insert into coordinate_system(name,id,x,y,z,rx,ry,rz,type,installation_site) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring);
+	sprintf(sql, "update coordinate_system set name='%s', id='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s', type='%s', installation_site='%s' where id='%s';", name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring, id->valuestring);
 
 	if (change_info_sqlite3(DB_CDSYSTEM, sql) == -1) {
 		perror("database");
@@ -217,8 +221,8 @@ static int modify_wobj_tool_cdsystem(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(sql, "insert into wobj_coordinate_system(name,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s');"\
-					, name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+	sprintf(sql, "update wobj_coordinate_system set name='%s', id='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s' where id='%s';", name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, id->valuestring);
+	//sprintf(sql, "insert into wobj_coordinate_system(name,id,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 
 	if (change_info_sqlite3(DB_WOBJ_CDSYSTEM, sql) == -1) {
 		perror("database");
@@ -270,10 +274,8 @@ static int modify_ex_tool_cdsystem(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(sql,"insert into et_coordinate_system(name,user_name,id,ex,ey,ez,erx,ery,erz,tx,ty,tz,trx,try,trz) "\
-						"values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
-						,name->valuestring, user_name->valuestring, id->valuestring, ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring,\
-						tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
+	sprintf(sql, "update et_coordinate_system set name='%s', user_name='%s', id='%s', ex='%s', ey='%s', ez='%s', erx='%s', ery='%s', erz='%s', tx='%s', ty='%s', tz='%s', trx='%s', try='%s', trz='%s' where id='%s';", name->valuestring, user_name->valuestring, id->valuestring, ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring, id->valuestring);
+	//sprintf(sql, "insert into et_coordinate_system(name,user_name,id,ex,ey,ez,erx,ery,erz,tx,ty,tz,trx,try,trz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, user_name->valuestring, id->valuestring, ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
 
 	if (change_info_sqlite3(DB_ET_CDSYSTEM, sql) == -1) {
 		perror("database");
@@ -315,8 +317,8 @@ static int modify_exaxis_cdsystem(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
-					, name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
+	sprintf(sql, "update exaxis_coordinate_system set name='%s', exaxisid='%s', id='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s', flag='%s' where id='%s';", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring, id->valuestring);
+	//sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
 
 	if (change_info_sqlite3( DB_EXAXIS_CDSYSTEM, sql) == -1) {
 		perror("database");

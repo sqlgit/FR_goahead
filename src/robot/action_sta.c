@@ -215,6 +215,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		cJSON_AddNumberToObject(joints_json, joint, joint_value);
 	}
 	for (i = 0; i < 6; i++) {
+		//printf("state->tl_cur_pos[%d] = %lf\n", i, state->tl_cur_pos[i]);
 		tcp_value[i] = double_round(state->tl_cur_pos[i], 3);
 	}
 	cJSON_AddNumberToObject(tcp_json, "x", tcp_value[0]);

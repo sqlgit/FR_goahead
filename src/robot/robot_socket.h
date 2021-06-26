@@ -77,7 +77,7 @@ typedef struct _CTRL_STATE
 	double     jt_cur_pos[6];           /**< 关节1-6当前位置                */
 	double     jt_cur_vel[6]; 			/**< 关节1-6当前速度                */
 	double     jt_cur_cur[6];			/**< 关节1-6当前电流 		        */
-	double     jt_ctl_cur[6];			/**< 关节1-6当前扭矩                */
+	double     jt_cur_tor[6];			/**< 关节1-6当前扭矩                */
 	double     tl_cur_pos[6];			/**< 工具当前位置DKR		        */
 	double	   tl_cur_vel[6];			/**< 工具当前速度DKR                */
 	double     tl_jtforce[6];			/**< 工具合力DKR			        */

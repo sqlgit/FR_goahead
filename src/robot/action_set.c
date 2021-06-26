@@ -211,6 +211,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *rz_3 = NULL;
 	cJSON *ext_axis_ptp = NULL;
 	cJSON *var = NULL;
+	cJSON *installation_site = NULL;
 
 	if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 		perror("string to string list");
@@ -832,17 +833,18 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 
 		id = cJSON_GetObjectItem(cd, "id");
+		installation_site = cJSON_GetObjectItem(cd, "installation_site");
 		x = cJSON_GetObjectItem(cd, "x");
 		y = cJSON_GetObjectItem(cd, "y");
 		z = cJSON_GetObjectItem(cd, "z");
 		rx = cJSON_GetObjectItem(cd, "rx");
 		ry = cJSON_GetObjectItem(cd, "ry");
 		rz = cJSON_GetObjectItem(cd, "rz");
-		if (id == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		if (id == NULL || installation_site == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, installation_site->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SetWobjList */
 	} else if (!strncmp(lua_cmd, "SetWobjList:", 12)) {
@@ -969,15 +971,25 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "LTLaserOn:", "");
 		sprintf(tmp_content, "%sLTLaserOn(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
+	/* LTTrackOn */
+	} else if(!strncmp(lua_cmd, "LTTrackOn:", 10)) {
+		if (size != 1) {
+			perror("string to string list");
+
+			goto end;
+		}
+		strrpc(cmd_array[0], "LTTrackOn:", "");
+		sprintf(tmp_content, "%sLTTrackOn(%s)\n", file_content, cmd_array[0]);
+		strcpy(file_content, tmp_content);
 	/* LTSearchStart */
 	} else if(!strncmp(lua_cmd, "LTSearchStart:", 14)) {
-		if (size != 4) {
+		if (size != 5) {
 			perror("string to string list");
 
 			goto end;
 		}
 		strrpc(cmd_array[0], "LTSearchStart:", "");
-		sprintf(tmp_content, "%sLTSearchStart(%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
+		sprintf(tmp_content, "%sLTSearchStart(%s,%s,%s,%s,%s)\n", file_content, cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOn */
 	} else if(!strncmp(lua_cmd, "PostureAdjustOn:", 16)) {
@@ -2286,7 +2298,7 @@ void set(Webs *wp)
 		}
 	// cmd_auth "2"
 	}
-	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 107 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 275 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427) {
+	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 107 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2767,13 +2779,6 @@ void set(Webs *wp)
 		strcpy(log_content, "八点法计算激光跟踪传感器位姿");
 		strcpy(en_log_content, "Eight point method is used to calculate the position and pose of laser tracking sensor");
 		strcpy(jap_log_content, "8点法でレーザートラッキングセンサの姿勢を計算します");
-		ret = copy_content(data_json, content);
-		break;
-	case 275:
-		port = cmdport;
-		strcpy(log_content, "激光跟踪传感器安装位置");
-		strcpy(en_log_content, "Laser tracking sensor installation position");
-		strcpy(jap_log_content, "レーザートラッキングセンサの設置場所");
 		ret = copy_content(data_json, content);
 		break;
 	case 276:
