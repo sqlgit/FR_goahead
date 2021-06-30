@@ -522,27 +522,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if(!strncmp(lua_cmd, "Lin:", 4)) {
-	/*	if (size != 5) {
-			perror("string to string list");
-
-			goto end;
-		}*/
-	/*	strrpc(lua_cmd, "Lin:", "");
-		if(is_in(lua_cmd, "seamPos") == 1) {
-			if(separate_string_to_array(lua_cmd, ",", 5, 20, &cmd_array) != 5) {
-				perror("separate recv");
-
-				return FAIL;
-			}
-		} else {
-			if(separate_string_to_array(lua_cmd, ",", 3, 20, &cmd_array) != 3) {
-				perror("separate recv");
-
-				return FAIL;
-			}
-		}*/
 		strrpc(cmd_array[0], "Lin:", "");
-
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -557,6 +537,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		/* seamPos 下发参数为6个, 第6个参数为偏置，暂时不处理 */
 		if (strcmp(cmd_array[0], "seamPos") == 0) {
 			speed = cJSON_GetObjectItem(lin, "speed");
 			acc = cJSON_GetObjectItem(lin, "acc");
@@ -1188,15 +1169,15 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		strrpc(cmd_array[0], "SPLCSetToolAO:", "");
 		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%.2f)\n", file_content, cmd_array[0], (float)(atoi(cmd_array[1])*40.95));
 		strcpy(file_content, tmp_content);
-	/* LoadSensorDriver */
-	} else if (!strncmp(lua_cmd, "LoadSensorDriver:", 17)) {
+	/* LoadPosSensorDriver */
+	} else if (!strncmp(lua_cmd, "LoadPosSensorDriver:", 20)) {
 		if (size != 1) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strrpc(cmd_array[0], "LoadSensorDriver:", "");
-		sprintf(tmp_content, "%sLoadSensorDriver(%s)\n", file_content, cmd_array[0]);
+		strrpc(cmd_array[0], "LoadPosSensorDriver:", "");
+		sprintf(tmp_content, "%sLoadPosSensorDriver(%s)\n", file_content, cmd_array[0]);
 		strcpy(file_content, tmp_content);
 	/* ExtAxisServoOn */
 	} else if (!strncmp(lua_cmd, "ExtAxisServoOn:", 15)) {
@@ -1343,14 +1324,14 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 		return FAIL;
 	}
 
-	if (is_in(lua_filename, "Embedded_") == 1) {
+	/** 如果是内嵌脚本, 检查 lua 文件内容合法性 */
+//	if (is_in(lua_filename, "Embedded_") == 1) {
 
-		/** 如果是内嵌脚本, 检查 lua 文件内容合法性 */
 		return check_lua_file();
-	} else {
-
-		return SUCCESS;
-	}
+//	} else {
+//
+//		return SUCCESS;
+//	}
 }
 
 /* 1001 step over */
@@ -1461,11 +1442,11 @@ static int step_over(const cJSON *data_json, char *content)
 	/* LTSearchStop */
 	} else if (!strncmp(pgvalue->valuestring, "LTSearchStop", 12)) {
 		cmd = 260;
-	/* LoadSensorDriver */
-	} else if (!strncmp(pgvalue->valuestring, "LoadSensorDriver", 16)) {
+	/* LoadPosSensorDriver */
+	} else if (!strncmp(pgvalue->valuestring, "LoadPosSensorDriver", 19)) {
 		cmd = 265;
-	/* UnloadSensorDriver */
-	} else if (!strncmp(pgvalue->valuestring, "UnloadSensorDriver", 18)) {
+	/* UnloadPosSensorDriver */
+	} else if (!strncmp(pgvalue->valuestring, "UnloadPosSensorDriver", 21)) {
 		cmd = 266;
 	/* PostureAdjustOn */
 	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOn", 15)) {
@@ -1473,8 +1454,8 @@ static int step_over(const cJSON *data_json, char *content)
 	/* PostureAdjustOff */
 	} else if (!strncmp(pgvalue->valuestring, "PostureAdjustOff", 16)) {
 		cmd = 282;
-	/* EXT_AXIS_SETHOMING */
-	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_SETHOMING", 18)) {
+	/* ExtAxisSetHoming */
+	} else if (!strncmp(pgvalue->valuestring, "ExtAxisSetHoming", 16)) {
 		cmd = 290;
 	/* ExtAxisServoOn */
 	} else if (!strncmp(pgvalue->valuestring, "ExtAxisServoOn", 14)) {
@@ -1522,11 +1503,11 @@ static int step_over(const cJSON *data_json, char *content)
 	} else if (!strncmp(pgvalue->valuestring, "ConveyorTrackEnd", 16)) {
 		cmd = 366;
 	/* SegmentWeldStart */
-	} else if (!strncmp(pgvalue->valuestring, "SegmentWeldStart", 16)) {
-		cmd = 373;
+	/*} else if (!strncmp(pgvalue->valuestring, "SegmentWeldStart", 16)) {
+		cmd = 373;*/
 	/* SegmentWeldEnd */
-	} else if (!strncmp(pgvalue->valuestring, "SegmentWeldEnd", 14)) {
-		cmd = 374;
+	/*} else if (!strncmp(pgvalue->valuestring, "SegmentWeldEnd", 14)) {
+		cmd = 374;*/
 	/* Pause */
 	} else if (!strncmp(pgvalue->valuestring, "Pause", 5)) {
 		cmd = 378;

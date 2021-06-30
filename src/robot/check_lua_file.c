@@ -230,7 +230,7 @@ static int SetToolList(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 7) {
+	if (argc != 8) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -306,11 +306,31 @@ static int LTLaserOn(lua_State* L)
 	return 1;
 }
 
+static int LTLaserOff(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int LTSearchStart(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 4) {
+	if (argc != 5) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int LTSearchStop(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -356,6 +376,7 @@ static int Mode(lua_State* L)
 	return 1;
 }
 
+/*
 static int SegmentWeldStart(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -365,12 +386,33 @@ static int SegmentWeldStart(lua_State* L)
 	}
 	return 1;
 }
+*/
 
 static int RegisterVar(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
 	if (argc < 1 || argc > 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int LTTrackOn(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int LTTrackOff(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -401,6 +443,16 @@ static int ExtAxisSetHoming(lua_State* L)
 	int argc = lua_gettop(L);
 
 	if (argc != 5) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ExtAxisServoOn(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -446,6 +498,116 @@ static int SPLCSetToolAO(lua_State* L)
 	return 1;
 }
 
+static int SprayStart(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SprayStop(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int PowerCleanStart(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int PowerCleanStop(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int LoadPosSensorDriver(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int UnloadPosSensorDriver(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ConveyorGetTrackData(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ConveyorTrackStart(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ConveyorTrackEnd(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetSysVarValue(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetSysVarValue(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int StartJOG(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -470,7 +632,7 @@ static int Pause(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 0) {
+	if (argc != 1) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -893,20 +1055,36 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ARCStart", ARCStart);
 	lua_register(luaEnv, "ARCEnd", ARCEnd);
 	lua_register(luaEnv, "LTLaserOn", LTLaserOn);
+	lua_register(luaEnv, "LTLaserOff", LTLaserOff);
 	lua_register(luaEnv, "LTSearchStart", LTSearchStart);
+	lua_register(luaEnv, "LTSearchStop", LTSearchStop);
 	lua_register(luaEnv, "PostureAdjustOn", PostureAdjustOn);
 	lua_register(luaEnv, "PostureAdjustOff", PostureAdjustOff);
 	lua_register(luaEnv, "ConveyorIODetect", ConveyorIODetect);
 	lua_register(luaEnv, "Mode", Mode);
-	lua_register(luaEnv, "SegmentWeldStart", SegmentWeldStart);
+	//lua_register(luaEnv, "SegmentWeldStart", SegmentWeldStart);
 	lua_register(luaEnv, "RegisterVar", RegisterVar);
+	lua_register(luaEnv, "LTTrackOn", LTTrackOn);
+	lua_register(luaEnv, "LTTrackOff", LTTrackOff);
 	lua_register(luaEnv, "LaserSensorRecord", LaserSensorRecord);
 	lua_register(luaEnv, "LaserRecordPoint", LaserRecordPoint);
 	lua_register(luaEnv, "ExtAxisSetHoming", ExtAxisSetHoming);
+	lua_register(luaEnv, "ExtAxisServoOn", ExtAxisServoOn);
 	lua_register(luaEnv, "SPLCSetDO", SPLCSetDO);
 	lua_register(luaEnv, "SPLCSetToolDO", SPLCSetToolDO);
 	lua_register(luaEnv, "SPLCSetAO", SPLCSetAO);
 	lua_register(luaEnv, "SPLCSetToolAO", SPLCSetToolAO);
+	lua_register(luaEnv, "SprayStart", SprayStart);
+	lua_register(luaEnv, "SprayStop", SprayStop);
+	lua_register(luaEnv, "PowerCleanStart", PowerCleanStart);
+	lua_register(luaEnv, "PowerCleanStop", PowerCleanStop);
+	lua_register(luaEnv, "LoadPosSensorDriver", LoadPosSensorDriver);
+	lua_register(luaEnv, "UnloadPosSensorDriver", UnloadPosSensorDriver);
+	lua_register(luaEnv, "ConveyorGetTrackData", ConveyorGetTrackData);
+	lua_register(luaEnv, "ConveyorTrackStart", ConveyorTrackStart);
+	lua_register(luaEnv, "ConveyorTrackEnd", ConveyorTrackEnd);
+	lua_register(luaEnv, "GetSysVarValue", GetSysVarValue);
+	lua_register(luaEnv, "SetSysVarValue", SetSysVarValue);
 
 
 	lua_register(luaEnv, "ServoJ", ServoJ);

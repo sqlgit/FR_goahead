@@ -81,7 +81,8 @@ static int get_tool_cdsystem(char **ret_f_content)
 	cJSON *json_data = NULL;
 
 	sprintf(sql, "select * from coordinate_system order by id ASC");
-	if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
+	if (select_info_nokey_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
+	//if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");
 
 		return FAIL;
