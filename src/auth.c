@@ -509,6 +509,31 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
         trace(2, "Password does not match");
         return 0;
     }
+
+	/**
+		sql:
+		出厂设置时只允许 admin 账户登录, 不允许其他账户登录
+	*/
+	char *f_content = NULL;
+
+	f_content = get_file_content(FILE_ROBOT_TYPE);
+	if (f_content == NULL) {
+		trace(2, "Error, forbid login");
+
+		return 0;
+	}
+	if (strcmp(f_content, "NO_FILE") == 0 || strcmp(f_content, "Empty") == 0) {
+		if (strcmp(username, "admin") != 0) {
+			printf("Only the admin account is allowed to log in at the factory setting, and no other accounts are allowed to log in\n");
+			trace(2, "Error, forbid login");
+
+			return 0;
+		}
+	} else {
+		free(f_content);
+		f_content = NULL;
+	}
+
 	/**
 		sql:
 		增加判断 SessionCount 计数是否大于0，
@@ -527,12 +552,15 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
 		} else {
 			printf("exist webs login user before\n");
 			trace(2, "exist sessiond id, forbid login");
+
 			return 0;
 		}
 	}
+
     trace(2, "Login successful for %s", username);
     websCreateSession(wp);
     websSetSessionVar(wp, WEBS_SESSION_USERNAME, wp->username);
+
     return 1;
 }
 
