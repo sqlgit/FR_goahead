@@ -212,6 +212,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *ext_axis_ptp = NULL;
 	cJSON *var = NULL;
 	cJSON *installation_site = NULL;
+	cJSON *type = NULL;
 
 	if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 		perror("string to string list");
@@ -814,6 +815,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 
 		id = cJSON_GetObjectItem(cd, "id");
+		type = cJSON_GetObjectItem(cd, "type");
 		installation_site = cJSON_GetObjectItem(cd, "installation_site");
 		x = cJSON_GetObjectItem(cd, "x");
 		y = cJSON_GetObjectItem(cd, "y");
@@ -821,11 +823,11 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		rx = cJSON_GetObjectItem(cd, "rx");
 		ry = cJSON_GetObjectItem(cd, "ry");
 		rz = cJSON_GetObjectItem(cd, "rz");
-		if (id == NULL || installation_site == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || id->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
+		if (id == NULL || type == NULL || installation_site == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || id->valuestring == NULL || type->valuestring == NULL || installation_site->valuestring == NULL  || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL) {
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, installation_site->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SetWobjList */
 	} else if (!strncmp(lua_cmd, "SetWobjList:", 12)) {

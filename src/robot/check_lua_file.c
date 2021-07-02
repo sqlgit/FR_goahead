@@ -230,7 +230,7 @@ static int SetToolList(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 8) {
+	if (argc != 9) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -748,16 +748,6 @@ static int SetLoadCoord(lua_State* L)
 	return 1;
 }
 
-static int SetToolCoord(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 7) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
 static int SplineStart(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1104,7 +1094,6 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "SetSpeed", SetSpeed);
 	lua_register(luaEnv, "SetLoadWeight", SetLoadWeight);
 	lua_register(luaEnv, "SetLoadCoord", SetLoadCoord);
-	lua_register(luaEnv, "SetToolCoord", SetToolCoord); /** SetToolList 一样的？ 用哪个？ */ 
 
 	lua_register(luaEnv, "SocketOpen", SocketOpen);
 	lua_register(luaEnv, "SocketClose", SocketClose);
