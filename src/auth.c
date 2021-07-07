@@ -537,6 +537,13 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
 			printf("Only the admin account is allowed to log in at the factory setting, and no other accounts are allowed to log in\n");
 			trace(2, "Error, forbid login");
 
+			/* return 403 Forbidden, 服务器理解客户端的请求，但是拒绝执行此请求 */
+			websSetStatus(wp, HTTP_CODE_FORBIDDEN);
+			websWriteHeaders(wp, -1, 0);
+			websWriteEndHeaders(wp);
+			websWrite(wp,(char *)"Fail");
+			websDone(wp);
+
 			return 0;
 		}
 	} else {
@@ -562,6 +569,13 @@ PUBLIC bool websLoginUser(Webs *wp, cchar *username, cchar *password)
 		} else {
 			printf("exist webs login user before\n");
 			trace(2, "exist sessiond id, forbid login");
+
+			/* return 402 Payment Required */
+			websSetStatus(wp, HTTP_CODE_PAYMENT_REQUIRED);
+			websWriteHeaders(wp, -1, 0);
+			websWriteEndHeaders(wp);
+			websWrite(wp,(char *)"Fail");
+			websDone(wp);
 
 			return 0;
 		}
@@ -600,7 +614,6 @@ PUBLIC bool websLogoutUser(Webs *wp)
 
     return 1;
 }
-
 
 /**
 	sql:

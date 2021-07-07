@@ -689,17 +689,6 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				char cmd[128] = {0};
 				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
 				system(cmd);
-
-				/**
-					发送 set rebot type 指令,
-					确保 robot type 正确，
-					特别在恢复出厂值时，需要发送此指令
-				*/
-				if (send_cmd_set_robot_type() == FAIL) {
-					perror("send cmd set robot type!");
-
-					return FAIL;
-				}
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);

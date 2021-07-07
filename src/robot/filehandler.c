@@ -566,11 +566,11 @@ void upload(Webs *wp)
 		/** 更新 user.config 文件 */
 		update_config(ROBOT_CFG);
 		/* 下发 set rebot type 指令，确保 robot type 正确 */
-		if (send_cmd_set_robot_type() == FAIL) {
+		/*if (send_cmd_set_robot_type() == FAIL) {
 			perror("send cmd set robot type!");
 
 			goto end;
-		}
+		}*/
 		/** 更新 ex_device.config 文件 */
 		update_config(EX_DEVICE_CFG);
 		/** 更新 exaxis.config 文件 */

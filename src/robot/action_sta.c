@@ -2760,7 +2760,7 @@ static int vardata_feedback(char *ret_status)
 		pthread_mutex_lock(&socket_state.mute);
 		fb_dequene(&fb_quene);
 		pthread_mutex_unlock(&socket_state.mute);*/
-	fb_print_node_num(fb_quene);
+	//fb_print_node_num(fb_quene);
 	root_json = cJSON_CreateObject();
 	if (state_fb.overflow == 0) {
 		if (fb_get_node_num(fb_quene) >= 10) {
