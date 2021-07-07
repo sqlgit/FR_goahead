@@ -2083,6 +2083,7 @@ static void init_torquesys()
 	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
 }
 
+/*
 int send_cmd_set_robot_type()
 {
 	cJSON *type = NULL;
@@ -2094,7 +2095,6 @@ int send_cmd_set_robot_type()
 	int robot_type = 0;
 
 	file_content = get_file_content(FILE_ROBOT_TYPE);
-	/* content_json is NULL */
 	if (file_content == NULL || strcmp(file_content, "NO_FILE") == 0 || strcmp(file_content, "Empty") == 0) {
 		perror("get file content");
 
@@ -2112,11 +2112,14 @@ int send_cmd_set_robot_type()
 
 		return FAIL;
 	}
-	/** 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9) */
+	// 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9)
 	robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
 	sprintf(cmd_content, "SetRobotType(%d)", robot_type);
 	socket_enquene(&socket_cmd, 425, cmd_content, 1);
 
+	cJSON_Delete(content_json);
+	content_json = NULL;
+
 	return SUCCESS;
 }
-
+*/

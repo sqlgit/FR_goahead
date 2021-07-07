@@ -1035,11 +1035,19 @@ static int factory_reset(const cJSON *data_json)
 	memset(cmd, 0, 128);
 	sprintf(cmd, "rm -rf %s*", DIR_FILE);
 	system(cmd);
-
+/*
 	memset(cmd, 0, 128);
 	sprintf(cmd, "rm -rf %s*", DIR_LOG);
 	system(cmd);
 
+	memset(cmd, 0, 128);
+	sprintf(cmd, "rm -rf %s*", DIR_LOG_EN);
+	system(cmd);
+
+	memset(cmd, 0, 128);
+	sprintf(cmd, "rm -rf %s*", DIR_LOG_JAP);
+	system(cmd);
+*/
 	memset(cmd, 0, 128);
 	sprintf(cmd, "cp -r %s* %s", DIR_FACTORY, DIR_FILE);
 	system(cmd);
@@ -1054,20 +1062,10 @@ static int factory_reset(const cJSON *data_json)
 	sprintf(cmd, "cp %s %s", WEB_EXAXIS_CFG, EXAXIS_CFG);
 	system(cmd);
 
-	/* 下发去使能指令 */
-	socket_enquene(&socket_cmd, 302, "RobotEnable(0)", 1);
-
 	/**
-		发送 set rebot type 指令
-		确保 robot type 正确
+		update user.config robot_type
 	*/
-	if (send_cmd_set_robot_type() == FAIL) {
-		perror("send cmd set robot type!");
-
-		return FAIL;
-	}
-
-	return SUCCESS;
+	return update_userconfig_robottype();
 }
 
 /** odm_password */

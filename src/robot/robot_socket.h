@@ -264,6 +264,6 @@ void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
 void *socket_upper_computer_thread(void* arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
-int send_cmd_set_robot_type();
+//int send_cmd_set_robot_type();
 
 #endif

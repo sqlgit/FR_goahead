@@ -81,6 +81,7 @@
 #define MD5_SIZE		16
 #define MD5_STR_LEN		(MD5_SIZE * 2)
 #define LINE_LEN	1024
+#define LEN_100	100
 #define FILENAME_SIZE	1024
 #define ODM_PASSWORD	"ODM"
 #define RTS_PASSWORD	"frrts2021"
@@ -125,5 +126,6 @@ void delete_timer();
 int clear_plugin_config(char *plugin_name);
 char *my_strlwr(char * str);
 int local_now_time(char *time_now);
+int update_userconfig_robottype();
 
 #endif

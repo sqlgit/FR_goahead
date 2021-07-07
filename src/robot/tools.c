@@ -1103,3 +1103,79 @@ int local_now_time(char *time_now)
 	return SUCCESS;
 }
 
+/**
+	update user.config robot_type
+*/
+int update_userconfig_robottype()
+{
+	FILE *fp = NULL;
+	char **array = NULL;
+	int size = 0;
+	char strline[LEN_100] = {0};
+	char write_line[LEN_100] = {0};
+	char write_content[LEN_100*100] = {0};
+	char cmd[128] = {0};
+	cJSON *type = NULL;
+	cJSON *major_ver = NULL;
+	cJSON *minor_ver = NULL;
+	cJSON *content_json = NULL;
+	char *file_content = NULL;
+	int robot_type = 0;
+
+	if ((fp = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
+		perror("user.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LEN_100, fp) != NULL) {
+		bzero(write_line, sizeof(char)*LEN_100);
+		strcpy(write_line, strline);
+		if (is_in(strline, "ROBOT_TYPE = ") == 1) {
+			if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
+				perror("string to string list");
+				fclose(fp);
+				string_list_free(array, size);
+
+				return FAIL;
+			}
+			//printf("strline = %s\n", strline);
+			file_content = get_file_content(FILE_ROBOT_TYPE);
+			/* NULL */
+			if (file_content == NULL || strcmp(file_content, "NO_FILE") == 0 || strcmp(file_content, "Empty") == 0) {
+				perror("get file content");
+
+				return FAIL;
+			}
+			content_json = cJSON_Parse(file_content);
+			free(file_content);
+			file_content = NULL;
+
+			type = cJSON_GetObjectItem(content_json, "type");
+			major_ver = cJSON_GetObjectItem(content_json, "major_ver");
+			minor_ver = cJSON_GetObjectItem(content_json, "minor_ver");
+			if (type == NULL || major_ver == NULL || minor_ver == NULL) {
+				perror("json");
+
+				return FAIL;
+			}
+			/** 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9) */
+			robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
+			bzero(write_line, sizeof(char)*LEN_100);
+			sprintf(write_line, "ROBOT_TYPE = %d\n", robot_type);
+			/* cjson delete */
+			cJSON_Delete(content_json);
+			content_json = NULL;
+
+			string_list_free(array, size);
+		}
+		bzero(strline, sizeof(char)*LEN_100);
+		strcat(write_content, write_line);
+	}
+	fclose(fp);
+
+	//printf("write_content len = %d\n", strlen(write_content));
+	//printf("write_content = %s\n", write_content);
+
+	return write_file(WEB_ROBOT_CFG, write_content);
+}
+
