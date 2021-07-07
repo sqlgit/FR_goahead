@@ -1283,7 +1283,7 @@ void *socket_status_thread(void *arg)
 
 					//time_5 = clock();
 					//printf("time_5, %d\n", time_5);
-				/*	printf("state->program_state d = %d\n", state->program_state);
+				/*	printf("state->program_state = %d\n", state->program_state);
 					printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
 					printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
 					*/

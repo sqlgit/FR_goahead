@@ -95,6 +95,8 @@ PUBLIC bool websAuthenticate(Webs *wp)
     assert(wp->route);
     route = wp->route;
 
+	//printf("wp->url = %s\n", wp->url);
+	//printf("wp->path = %s\n", wp->path);
     if (!route || !route->authType || autoLogin) {
         /* Authentication not required */
         return 1;
@@ -124,6 +126,14 @@ PUBLIC bool websAuthenticate(Webs *wp)
             if (route->askLogin) {
                 (route->askLogin)(wp);
             }
+			/**
+				sql:
+				action/get is not need Authenticate when login, to get current language
+			*/
+			if (strcmp(wp->path, "/action/get") == 0) {
+
+				return 1;
+			}
 			websRedirectByStatus(wp, HTTP_CODE_UNAUTHORIZED);
             return 0;
         }
