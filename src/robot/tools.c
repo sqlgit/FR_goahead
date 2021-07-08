@@ -582,6 +582,42 @@ int is_in(char *s, char *c)
 	return flag;
 }
 
+/*
+	判断一个字符串是否包含另一个字符串
+	返回值：
+	若目标字符串是源字符串的子串，则返回目标字符串在原字符串中的首次出现的位置加上目标字符串长度；
+	如果目标字符串不是源字符串的子串，则返回 -1
+	Ext：
+	SrcStr: XXXPTP(aaa,bb)
+	DestStr: PTP
+	Return: 6
+*/
+int is_in_srclen(char *s, char *c)
+{
+	assert(s != NULL);
+	assert(c != NULL);
+
+	int i = 0;
+	int j = 0;
+	int srclen = -1;
+
+	while (i < strlen(s) && j < strlen(c)) {
+		if (s[i] == c[j]) {//如果字符相同则两个字符都增加
+			i++;
+			j++;
+		} else {
+			i = i - j + 1; //主串字符回到比较最开始比较的后一个字符
+			j = 0;     //字串字符重新开始
+		}
+		if (j == strlen(c)) { //如果匹配成功
+			srclen = i;  //字串出现, 返回 srclen
+			break;
+		}
+	}
+
+	return srclen;
+}
+
 /* 毫秒定时器 */
 void delay_ms(const int timeout)
 {

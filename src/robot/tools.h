@@ -110,6 +110,7 @@ int check_dir_filename(const char *dir_path, const char *filename);
 char *get_dir_filename_txt(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);
 int is_in(char *s, char *c);
+int is_in_srclen(char *s, char *c);
 void delay_ms(const int timeout);
 double double_round(double dVal, int iPlaces);
 void uint8_to_array(int n1, int n2, int *array);

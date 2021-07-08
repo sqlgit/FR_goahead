@@ -215,6 +215,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *var = NULL;
 	cJSON *installation_site = NULL;
 	cJSON *type = NULL;
+	int srclen = 0;
 
 	if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 		perror("string to string list");
@@ -223,13 +224,14 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		return FAIL;
 	}
 	/* PTP */
-	if(!strncmp(lua_cmd, "PTP", 3)) {
+	if ((srclen = is_in_srclen(lua_cmd, "PTP")) > 0) {
 		if (size != 9 && size != 3) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 4), (strlen(cmd_array[0]) - 4));
+		//printf("srclen = %d\n", srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -279,23 +281,23 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		strcpy(file_content, tmp_content);
 	/* laserPTP */
-	} else if(!strncmp(lua_cmd, "laserPTP", 8)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "laserPTP")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 9), (strlen(cmd_array[0]) - 9));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		sprintf(tmp_content, "%sMoveJ(%s,%s\n", file_content, first_ptr, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* SPL */
-	} else if(!strncmp(lua_cmd, "SPL", 3)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SPL")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 4), (strlen(cmd_array[0]) - 4));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -336,13 +338,13 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* EXT_AXIS_PTP */
-	} else if(!strncmp(lua_cmd, "EXT_AXIS_PTP", 12)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "EXT_AXIS_PTP")) > 0) {
 		if (size != 3) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 13), (strlen(cmd_array[0]) - 13));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		if (strcmp(cmd_array[1], "seamPos") == 0) {
 			sprintf(tmp_content,"%sExtAxisMoveJ(%s,\"%s\",%s\n", file_content, first_ptr, cmd_array[1], cmd_array[2]);
 			strcpy(file_content, tmp_content);
@@ -375,13 +377,13 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			strcpy(file_content, tmp_content);
 		}
 	/* ARC */
-	} else if(!strncmp(lua_cmd, "ARC", 3)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "ARC")) > 0) {
 		if (size != 3) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 4), (strlen(cmd_array[0]) - 4));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -453,13 +455,13 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* SCIRC */
-	} else if(!strncmp(lua_cmd, "SCIRC", 5)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SCIRC")) > 0) {
 		if (size != 3) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 6), (strlen(cmd_array[0]) - 6));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -526,9 +528,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sSplineCIRC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* Lin */
-	} else if(!strncmp(lua_cmd, "Lin", 3)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "Lin")) > 0) {
 		//strrpc(cmd_array[0], "Lin:", "");
-		strncpy(first_ptr, (cmd_array[0] + 4), (strlen(cmd_array[0]) - 4));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -601,23 +603,23 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		strcpy(file_content, tmp_content);
 	/* laserLin */
-	} else if(!strncmp(lua_cmd, "laserLin", 8)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "laserLin")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 9), (strlen(cmd_array[0]) - 9));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		sprintf(tmp_content, "%sMoveL(%s,%s\n", file_content, first_ptr, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* SLIN */
-	} else if(!strncmp(lua_cmd, "SLIN", 4)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SLIN")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 5), (strlen(cmd_array[0]) - 5));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -656,35 +658,35 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sSplineLINE(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* set AO */
-	} else if(!strncmp(lua_cmd, "SetAO", 5)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetAO")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 6), (strlen(cmd_array[0]) - 6));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 		sprintf(tmp_content, "%sSetAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolAO */
-	} else if(!strncmp(lua_cmd, "SetToolAO", 9)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetToolAO")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 10), (strlen(cmd_array[0]) - 10));
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 		sprintf(tmp_content, "%sSetToolAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* Wait Time */
-	} else if(!strncmp(lua_cmd, "WaitTime", 8)) {
-		strncpy(first_ptr, (lua_cmd + 9), (strlen(lua_cmd) - 10));
+	} else if ((srclen = is_in_srclen(lua_cmd, "WaitTime")) > 0) {
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
 		sprintf(tmp_content, "%sWaitMs(%s)\n", file_content, first_ptr);
 		strcpy(file_content, tmp_content);
 	/* set ToolList */
-	} else if(!strncmp(lua_cmd, "SetToolList", 11)) {
-		strncpy(first_ptr, (lua_cmd + 12), (strlen(lua_cmd) - 13));
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetToolList")) > 0) {
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from coordinate_system;");
 		if(select_info_json_sqlite3(DB_CDSYSTEM, sql, &f_json) == -1) {
@@ -715,8 +717,8 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SetWobjList */
-	} else if (!strncmp(lua_cmd, "SetWobjList", 11)) {
-		strncpy(first_ptr, (lua_cmd + 12), (strlen(lua_cmd) - 13));
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetWobjList")) > 0) {
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from wobj_coordinate_system;");
 		if(select_info_json_sqlite3(DB_WOBJ_CDSYSTEM, sql, &f_json) == -1) {
@@ -744,9 +746,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		sprintf(tmp_content, "%sSetWobjList(%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 		strcpy(file_content, tmp_content);
-	/* SetExToolCoord */
-	} else if(!strncmp(lua_cmd, "SetExToolList", 13)) {
-		strncpy(first_ptr, (lua_cmd + 14), (strlen(lua_cmd) - 15));
+	/* SetExToolList */
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetExToolList")) > 0) {
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from et_coordinate_system;");
 		if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &f_json) == -1) {
@@ -779,13 +781,13 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sSetExToolList(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOn */
-	} else if(!strncmp(lua_cmd, "PostureAdjustOn", 15)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "PostureAdjustOn")) > 0) {
 		if (size != 11) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 16), (strlen(cmd_array[0]) - 16));
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -834,7 +836,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, first_ptr, rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10]);
 		strcpy(file_content, tmp_content);
 	/* RegisterVar */
-	} else if(!strncmp(lua_cmd, "RegisterVar", 11)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "RegisterVar")) > 0) {
 		if (size < 1 || size > 6) {
 			perror("string to string list");
 
@@ -842,20 +844,20 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 		}
 		/* 一个参数时 */
 		if (size == 1) {
-			strncpy(first_ptr, (cmd_array[0] + 12), (strlen(cmd_array[0]) - 13));
+			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
 			memset(tmp_content, 0, sizeof(char)*(len));
 			sprintf(tmp_content, "%sRegisterVar(\"%s\")\n", file_content, first_ptr);
 			strcpy(file_content, tmp_content);
 		/* 两个参数时 */
 		} else if (size == 2) {
-			strncpy(first_ptr, (cmd_array[0] + 12), (strlen(cmd_array[0]) - 12));
+			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 			strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 			memset(tmp_content, 0, sizeof(char)*(len));
 			sprintf(tmp_content, "%sRegisterVar(\"%s\",\"%s\")\n", file_content, first_ptr, last_ptr);
 			strcpy(file_content, tmp_content);
 		/* 多个参数时 */
 		} else {
-			strncpy(first_ptr, (cmd_array[0] + 12), (strlen(cmd_array[0]) - 12));
+			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 			memset(tmp_content, 0, sizeof(char)*(len));
 			sprintf(tmp_content, "%sRegisterVar(\"%s\",", file_content, first_ptr);
 			strcpy(file_content, tmp_content);
@@ -871,35 +873,35 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			strcpy(file_content, tmp_content);
 		}
 	/* soft-PLC setAO */
-	} else if (!strncmp(lua_cmd, "SPLCSetAO", 9)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SPLCSetAO")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 10), (strlen(cmd_array[0]) - 10));
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 		sprintf(tmp_content, "%sSPLCSetAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* soft-PLC setToolAO */
-	} else if (!strncmp(lua_cmd, "SPLCSetToolAO", 13)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SPLCSetToolAO")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 14), (strlen(cmd_array[0]) - 14));
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* SetSysVarValue */
-	} else if (!strncmp(lua_cmd, "SetSysVarValue", 14)) {
+	} else if ((srclen = is_in_srclen(lua_cmd, "SetSysVarValue")) > 0) {
 		if (size != 2) {
 			perror("string to string list");
 
 			goto end;
 		}
-		strncpy(first_ptr, (cmd_array[0] + 15), (strlen(cmd_array[0]) - 15));
+		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
 		/* open and get sysvar.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from sysvar;");
