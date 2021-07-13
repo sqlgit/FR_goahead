@@ -572,7 +572,7 @@ static int ConveyorTrackStart(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 0) {
+	if (argc != 1) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;

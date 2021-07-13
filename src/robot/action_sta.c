@@ -31,6 +31,7 @@ extern ACCOUNT_INFO cur_account;
 static int test_index = 0;
 extern TORQUE_SYS_STATE torque_sys_state;
 extern TORQUE_SYS torquesys;
+extern POINT_HOME_INFO point_home_info;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -59,6 +60,9 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *error_json = NULL;
 	cJSON *feedback_json = NULL;
 	cJSON *torquesys_json = NULL;
+	cJSON *jiabao_torquesys_json = NULL;
+	cJSON *leftstation_json = NULL;
+	cJSON *rightstation_json = NULL;
 	cJSON *array_exAxisPos = NULL;
 	cJSON *array_exAxisRDY = NULL;
 	cJSON *array_exAxisINPOS = NULL;
@@ -87,9 +91,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	feedback_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
 	torquesys_json = cJSON_CreateObject();
+	jiabao_torquesys_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "torque_sys_state", torquesys_json);
+	cJSON_AddItemToObject(root_json, "jiabao_torque_sys_state", jiabao_torquesys_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
 	cJSON_AddNumberToObject(root_json, "encoder_type_flag", state->encoder_type_flag);
 	cJSON_AddItemToObject(root_json, "curencodertype", curencodertype_json);
@@ -131,6 +137,22 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		cJSON_AddNumberToObject(torquesys_json, "control_mode", torque_sys_state.control_mode);
 		cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
 	}
+
+	/** 嘉宝扭矩系统状态反馈 */
+	//if () {
+	leftstation_json = cJSON_CreateObject();
+	rightstation_json = cJSON_CreateObject();
+	cJSON_AddItemToObject(jiabao_torquesys_json, "left_station", leftstation_json);
+	cJSON_AddItemToObject(jiabao_torquesys_json, "right_station", rightstation_json);
+	cJSON_AddNumberToObject(leftstation_json, "workpiece_index", 0);
+	cJSON_AddNumberToObject(leftstation_json, "product_count", 100);
+	cJSON_AddNumberToObject(leftstation_json, "NG_count", 10);
+	cJSON_AddNumberToObject(leftstation_json, "work_time", 40);
+	cJSON_AddNumberToObject(rightstation_json, "workpiece_index", 1);
+	cJSON_AddNumberToObject(rightstation_json, "product_count", 100);
+	cJSON_AddNumberToObject(rightstation_json, "NG_count", 10);
+	cJSON_AddNumberToObject(rightstation_json, "work_time", 40);
+	//}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));
@@ -258,6 +280,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pthread_mutex_lock(&sock_cmd->ret_mute);
 		dequene(&sock_cmd->ret_quene, p->data);
 		pthread_mutex_unlock(&sock_cmd->ret_mute);
+
 		p = sock_cmd->ret_quene.front->next;
 	}
 
@@ -277,6 +300,26 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 
 	//printf("sta language = %d\n", language);
+
+	if (point_home_info.error_flag == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(error_json, "key", "原点已发生改变，需要重新设置原点");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", "The origin point has changed and needs to reset origin point");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "原点が変わったので、原点をリセットする必要があります");
+		}
+		if (point_home_info.pre_error_flag != 1) {
+			my_syslog("错误", "原点已发生改变，需要重新设置原点", cur_account.username);
+			my_en_syslog("error", "The origin point has changed and needs to reset origin point", cur_account.username);
+			my_jap_syslog("さくご", "原点が変わったので、原点をリセットする必要があります", cur_account.username);
+			point_home_info.pre_error_flag = 1;
+		}
+	} else {
+		point_home_info.pre_error_flag = 0;
+	}
 
 	if (state->btn_box_stop_signal == 1) {
 		if (language == 0) {

@@ -23,6 +23,7 @@ extern int robot_type;
 extern STATE_FEEDBACK state_fb;
 extern ACCOUNT_INFO cur_account;
 extern TORQUE_SYS torquesys;
+extern POINT_HOME_INFO point_home_info;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -131,13 +132,12 @@ static int sendfilename(const cJSON *data_json, char *content)
 static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 {
 	//printf("lua cmd = %s\n", lua_cmd);
+	char head_ptr[1024] = { 0 };
 	char first_ptr[1024] = { 0 };
 	char last_ptr[1024] = { 0 };
 	char sql[1024] = {0};
 	char **cmd_array = NULL;
-	char **cmd_array_2 = NULL;
 	int size = 0;
-	int size_2 = 0;
 	char *tmp_content = NULL;
 	tmp_content = (char *)calloc(1, sizeof(char)*(len));
 	if (tmp_content == NULL) {
@@ -216,6 +216,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 	cJSON *installation_site = NULL;
 	cJSON *type = NULL;
 	int srclen = 0;
+	char joint_value[6][10] = { 0 };
+	char *joint_value_ptr[6];
+	int i = 0;
 
 	if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 		perror("string to string list");
@@ -231,6 +234,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 		//printf("srclen = %d\n", srclen);
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("PTP"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -272,12 +276,32 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		if (atoi(cmd_array[2]) == 1) {
-			sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8]);
+
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(first_ptr, POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
+		/* 参数个数为 9 时，即存在偏移 */
+		if (size == 9) {
+			sprintf(tmp_content,"%s%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8]);
 		} else {
-			/* 去掉最后一个） */
-			strncpy(last_ptr, cmd_array[2], (strlen(cmd_array[2]) - 1));
-			sprintf(tmp_content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, last_ptr);
+			sprintf(tmp_content,"%s%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring);
 		}
 		strcpy(file_content, tmp_content);
 	/* laserPTP */
@@ -287,8 +311,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("laserPTP"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
-		sprintf(tmp_content, "%sMoveJ(%s,%s\n", file_content, first_ptr, cmd_array[1]);
+		sprintf(tmp_content, "%s%sMoveJ(%s,%s\n", file_content, head_ptr, first_ptr, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* SPL */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SPL")) > 0) {
@@ -297,6 +322,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("SPL"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -334,8 +360,27 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(first_ptr, POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
 
-		sprintf(tmp_content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
+		sprintf(tmp_content,"%s%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* EXT_AXIS_PTP */
 	} else if ((srclen = is_in_srclen(lua_cmd, "EXT_AXIS_PTP")) > 0) {
@@ -344,9 +389,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("EXT_AXIS_PTP"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		if (strcmp(cmd_array[1], "seamPos") == 0) {
-			sprintf(tmp_content,"%sExtAxisMoveJ(%s,\"%s\",%s\n", file_content, first_ptr, cmd_array[1], cmd_array[2]);
+			sprintf(tmp_content,"%s%sExtAxisMoveJ(%s,\"%s\",%s\n", file_content, head_ptr, first_ptr, cmd_array[1], cmd_array[2]);
 			strcpy(file_content, tmp_content);
 		} else {
 			/* open and get point.db content */
@@ -373,7 +419,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 				goto end;
 			}
 
-			sprintf(tmp_content,"%sExtAxisMoveJ(%s,%s,%s,%s,%s,%s\n", file_content, first_ptr, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2]);
+			sprintf(tmp_content,"%s%sExtAxisMoveJ(%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, first_ptr, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2]);
 			strcpy(file_content, tmp_content);
 		}
 	/* ARC */
@@ -383,6 +429,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("ARC"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -420,6 +467,26 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(first_ptr, POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
 		point_2 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
 
@@ -452,7 +519,30 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 
-		sprintf(tmp_content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2]);
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[1], POINT_HOME) == 0) {
+			for (i = 0; i < 6; i++) {
+				memset(joint_value[i], 0, 10);
+			}
+			sprintf(joint_value[0], "%.1lf", atof(j1_2->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2_2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3_2->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4_2->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5_2->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6_2->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
+		sprintf(tmp_content, "%s%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* SCIRC */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SCIRC")) > 0) {
@@ -461,6 +551,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("SCIRC"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -497,6 +588,26 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(first_ptr, POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
 		point_2 = cJSON_GetObjectItemCaseSensitive(f_json, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
 
@@ -525,11 +636,35 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 
-		sprintf(tmp_content, "%sSplineCIRC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[1], POINT_HOME) == 0) {
+			for (i = 0; i < 6; i++) {
+				memset(joint_value[i], 0, 10);
+			}
+			sprintf(joint_value[0], "%.1lf", atof(j1_2->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2_2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3_2->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4_2->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5_2->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6_2->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
+		sprintf(tmp_content, "%s%sSplineCIRC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2]);
 		strcpy(file_content, tmp_content);
 	/* Lin */
 	} else if ((srclen = is_in_srclen(lua_cmd, "Lin")) > 0) {
 		//strrpc(cmd_array[0], "Lin:", "");
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("Lin"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -546,7 +681,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 			goto end;
 		}
 		/* seamPos 下发参数为6个, 第6个参数为偏置，暂时不处理 */
-		if (strcmp(first_ptr, "seamPos") == 0) {
+		if (strcmp(first_ptr, "seamPos") == 0 && size == 6) {
 			speed = cJSON_GetObjectItem(lin, "speed");
 			acc = cJSON_GetObjectItem(lin, "acc");
 			toolnum = cJSON_GetObjectItem(lin, "toolnum");
@@ -555,8 +690,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 				goto end;
 			}
-			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, cmd_array[0], toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
-		} else if (strcmp(first_ptr, "cvrCatchPoint") == 0 || strcmp(first_ptr, "cvrRaisePoint") == 0) {
+			sprintf(tmp_content, "%s%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, head_ptr, first_ptr, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4]);
+		/* cvrCatchPoint 和 cvrRaisePoint 下发参数为 4 个, 第 4 个参数为偏置，暂时不处理 */
+		} else if ((strcmp(first_ptr, "cvrCatchPoint") == 0 || strcmp(first_ptr, "cvrRaisePoint") == 0) && size == 4) {
 			speed = cJSON_GetObjectItem(lin, "speed");
 			acc = cJSON_GetObjectItem(lin, "acc");
 			toolnum = cJSON_GetObjectItem(lin, "toolnum");
@@ -565,10 +701,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 				goto end;
 			}
-			/* 去掉最后一个） */
-			strncpy(last_ptr, cmd_array[2], (strlen(cmd_array[2]) - 1));
-			sprintf(tmp_content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,0,0)\n", file_content, first_ptr, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], last_ptr);
-		} else {
+			sprintf(tmp_content, "%s%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,0,0)\n", file_content, head_ptr, first_ptr, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2]);
+		/* 正常 Lin 指令下发参数为 4 或者 10 个, 第 4 个参数为偏置位 */
+		} else if (size == 4 || size == 10) {
 			j1 = cJSON_GetObjectItem(lin, "j1");
 			j2 = cJSON_GetObjectItem(lin, "j2");
 			j3 = cJSON_GetObjectItem(lin, "j3");
@@ -593,12 +728,32 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 				goto end;
 			}
-			if (atoi(cmd_array[3]) == 1) {
-				sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9]);
+
+			/* 当点为 pHOME 原点时，进行检查 */
+			if (strcmp(first_ptr, POINT_HOME) == 0) {
+				sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+				sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+				sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+				sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+				sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+				sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+				for (i = 0; i < 6; i++) {
+					joint_value_ptr[i] = joint_value[i];
+				}
+				/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+				if (check_pointhome_data(joint_value_ptr) == FAIL) {
+					point_home_info.error_flag = 1;
+
+					goto end;
+				}
+				point_home_info.error_flag = 0;
+			}
+
+			/* 参数个数为 10 时，即存在偏移 */
+			if (size == 10) {
+				sprintf(tmp_content, "%s%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9]);
 			} else {
-				/* 去掉最后一个） */
-				strncpy(last_ptr, cmd_array[3], (strlen(cmd_array[3]) - 1));
-				sprintf(tmp_content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, last_ptr);
+				sprintf(tmp_content, "%s%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring);
 			}
 		}
 		strcpy(file_content, tmp_content);
@@ -609,8 +764,9 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("laserLin"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
-		sprintf(tmp_content, "%sMoveL(%s,%s\n", file_content, first_ptr, cmd_array[1]);
+		sprintf(tmp_content, "%s%sMoveL(%s,%s\n", file_content, head_ptr, first_ptr, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* SLIN */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SLIN")) > 0) {
@@ -619,6 +775,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen - strlen("SLIN"));
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
@@ -655,7 +812,28 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSplineLINE(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
+
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(first_ptr, POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+
+		sprintf(tmp_content, "%s%sSplineLINE(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* set AO */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetAO")) > 0) {
@@ -664,9 +842,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen);
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
-		sprintf(tmp_content, "%sSetAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
+		sprintf(tmp_content, "%s%s(%s,%.2f)\n", file_content, head_ptr, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolAO */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetToolAO")) > 0) {
@@ -675,18 +854,15 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen);
 		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
-		sprintf(tmp_content, "%sSetToolAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
-		strcpy(file_content, tmp_content);
-	/* Wait Time */
-	} else if ((srclen = is_in_srclen(lua_cmd, "WaitTime")) > 0) {
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
-		sprintf(tmp_content, "%sWaitMs(%s)\n", file_content, first_ptr);
+		sprintf(tmp_content, "%s%s(%s,%.2f)\n", file_content, head_ptr, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* set ToolList */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetToolList")) > 0) {
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from coordinate_system;");
 		if(select_info_json_sqlite3(DB_CDSYSTEM, sql, &f_json) == -1) {
@@ -714,11 +890,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring);
+		sprintf(tmp_content, "%s%s(%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, head_ptr, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SetWobjList */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetWobjList")) > 0) {
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from wobj_coordinate_system;");
 		if(select_info_json_sqlite3(DB_WOBJ_CDSYSTEM, sql, &f_json) == -1) {
@@ -744,11 +921,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetWobjList(%s,%s,%s,%s,%s,%s,%s)\n", file_content, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
+		sprintf(tmp_content, "%s%s(%s,%s,%s,%s,%s,%s,%s)\n", file_content, head_ptr, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring);
 		strcpy(file_content, tmp_content);
 	/* SetExToolList */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetExToolList")) > 0) {
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - 1 - srclen));
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from et_coordinate_system;");
 		if (select_info_json_sqlite3(DB_ET_CDSYSTEM, sql, &f_json) == -1) {
@@ -778,7 +956,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetExToolList(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
+		sprintf(tmp_content, "%s%s(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)\n", file_content, head_ptr, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring);
 		strcpy(file_content, tmp_content);
 	/* PostureAdjustOn */
 	} else if ((srclen = is_in_srclen(lua_cmd, "PostureAdjustOn")) > 0) {
@@ -787,7 +965,8 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get point.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from points;");
@@ -833,7 +1012,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, first_ptr, rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10]);
+		sprintf(tmp_content, "%s%s(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n", file_content, head_ptr, first_ptr, rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10]);
 		strcpy(file_content, tmp_content);
 	/* RegisterVar */
 	} else if ((srclen = is_in_srclen(lua_cmd, "RegisterVar")) > 0) {
@@ -842,24 +1021,25 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
+		strncpy(head_ptr, cmd_array[0], srclen);
 		/* 一个参数时 */
 		if (size == 1) {
-			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - 1 - srclen));
+			strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - 1 - srclen));
 			memset(tmp_content, 0, sizeof(char)*(len));
-			sprintf(tmp_content, "%sRegisterVar(\"%s\")\n", file_content, first_ptr);
+			sprintf(tmp_content, "%s%s(\"%s\")\n", file_content, head_ptr, first_ptr);
 			strcpy(file_content, tmp_content);
 		/* 两个参数时 */
 		} else if (size == 2) {
-			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+			strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 			strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
 			memset(tmp_content, 0, sizeof(char)*(len));
-			sprintf(tmp_content, "%sRegisterVar(\"%s\",\"%s\")\n", file_content, first_ptr, last_ptr);
+			sprintf(tmp_content, "%s%s(\"%s\",\"%s\")\n", file_content, head_ptr, first_ptr, last_ptr);
 			strcpy(file_content, tmp_content);
 		/* 多个参数时 */
 		} else {
-			strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+			strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 			memset(tmp_content, 0, sizeof(char)*(len));
-			sprintf(tmp_content, "%sRegisterVar(\"%s\",", file_content, first_ptr);
+			sprintf(tmp_content, "%s%s(\"%s\",", file_content, head_ptr, first_ptr);
 			strcpy(file_content, tmp_content);
 			int i = 1;
 			for (i = 1; i < (size - 1); i++) {
@@ -879,9 +1059,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
-		sprintf(tmp_content, "%sSPLCSetAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
+		sprintf(tmp_content, "%s%s(%s,%.2f)\n", file_content, head_ptr, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* soft-PLC setToolAO */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SPLCSetToolAO")) > 0) {
@@ -890,9 +1071,10 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		strncpy(last_ptr, cmd_array[1], (strlen(cmd_array[1]) - 1));
-		sprintf(tmp_content, "%sSPLCSetToolAO(%s,%.2f)\n", file_content, first_ptr, (float)(atoi(last_ptr)*40.95));
+		sprintf(tmp_content, "%s%s(%s,%.2f)\n", file_content, head_ptr, first_ptr, (float)(atoi(last_ptr)*40.95));
 		strcpy(file_content, tmp_content);
 	/* SetSysVarValue */
 	} else if ((srclen = is_in_srclen(lua_cmd, "SetSysVarValue")) > 0) {
@@ -901,7 +1083,8 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		strncpy(first_ptr, (lua_cmd + 1 + srclen), (strlen(lua_cmd) - 1 - srclen));
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - srclen));
 		/* open and get sysvar.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from sysvar;");
@@ -920,17 +1103,12 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%sSetSysVarValue(%s,%s\n", file_content, id->valuestring, cmd_array[1]);
+		sprintf(tmp_content, "%s%s(%s,%s\n", file_content, head_ptr, id->valuestring, cmd_array[1]);
 		strcpy(file_content, tmp_content);
 	/* GetSysVarValue */
-	} else if (is_in(lua_cmd, "GetSysVarValue") == 1) {
-		if (string_to_string_list(lua_cmd, "(", &size_2, &cmd_array_2) == 0 || size_2 != 2) {
-			perror("string to string list");
-			string_list_free(cmd_array_2, size_2);
-
-			goto end;
-		}
-
+	} else if ((srclen = is_in_srclen(lua_cmd, "GetSysVarValue")) > 0) {
+		strncpy(head_ptr, cmd_array[0], srclen);
+		strncpy(first_ptr, (cmd_array[0] + 1 + srclen), (strlen(cmd_array[0]) - 1 - 1 - srclen));
 		/* open and get sysvar.db content */
 		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "select * from sysvar;");
@@ -939,8 +1117,7 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		strncpy(last_ptr, cmd_array_2[1], (strlen(cmd_array_2[1]) - 1));
-		var = cJSON_GetObjectItemCaseSensitive(f_json, last_ptr);
+		var = cJSON_GetObjectItemCaseSensitive(f_json, first_ptr);
 		if (var == NULL || var->type != cJSON_Object) {
 
 			goto end;
@@ -950,9 +1127,8 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content)
 
 			goto end;
 		}
-		sprintf(tmp_content, "%s%s(%s)\n", file_content, cmd_array_2[0], id->valuestring);
+		sprintf(tmp_content, "%s%s(%s)\n", file_content, head_ptr, id->valuestring);
 		strcpy(file_content, tmp_content);
-		string_list_free(cmd_array_2, size_2);
 	/* other code send without processing */
 	} else {
 		sprintf(tmp_content, "%s%s\n", file_content, lua_cmd);
@@ -1046,115 +1222,115 @@ static int step_over(const cJSON *data_json, char *content)
 	}
 	//printf("upload lua cmd:%s\n", pgvalue->valuestring);
 	/* PTP */
-	if (!strncmp(pgvalue->valuestring, "PTP", 3)) {
+	if (strstr(pgvalue->valuestring, "PTP")) {
 		cmd = 201;
 	/* ARC */
-	} else if (!strncmp(pgvalue->valuestring, "ARC", 3)) {
+	} else if (strstr(pgvalue->valuestring, "ARC")) {
 		cmd = 202;
 	/* Lin */
-	} else if (!strncmp(pgvalue->valuestring, "Lin", 3)) {
+	} else if (strstr(pgvalue->valuestring, "Lin")) {
 		cmd = 203;
 	/* set DO */
-	} else if (!strncmp(pgvalue->valuestring, "SetDO", 5)) {
+	} else if (strstr(pgvalue->valuestring, "SetDO")) {
 		cmd = 204;
-	/* wait time*/
-	} else if (!strncmp(pgvalue->valuestring, "WaitTime", 8)) {
+	/* wait ms */
+	} else if (strstr(pgvalue->valuestring, "WaitMs")) {
 		cmd = 207;
 	/* set AO */
-	} else if (!strncmp(pgvalue->valuestring, "SetAO", 5)) {
+	} else if (strstr(pgvalue->valuestring, "SetAO")) {
 		cmd = 209;
 	/* set ToolDO */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolDO", 9)) {
+	} else if (strstr(pgvalue->valuestring, "SetToolDO")) {
 		cmd = 210;
 	/* set ToolAO */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolAO", 9)) {
+	} else if (strstr(pgvalue->valuestring, "SetToolAO")) {
 		cmd = 211;
 	/* waitDI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitDI", 6)) {
+	} else if (strstr(pgvalue->valuestring, "WaitDI")) {
 		cmd = 218;
 	/* waitToolDI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitToolDI", 10)) {
+	} else if (strstr(pgvalue->valuestring, "WaitToolDI")) {
 		cmd = 219;
 	/* waitAI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitAI", 6)) {
+	} else if (strstr(pgvalue->valuestring, "WaitAI")) {
 		cmd = 220;
 	/* waitToolAI */
-	} else if (!strncmp(pgvalue->valuestring, "WaitToolAI", 10)) {
+	} else if (strstr(pgvalue->valuestring, "WaitToolAI")) {
 		cmd = 221;
 	/* MoveGripper */
-	} else if (!strncmp(pgvalue->valuestring, "MoveGripper", 11)) {
+	} else if (strstr(pgvalue->valuestring, "MoveGripper")) {
 		cmd = 228;
 	/* SprayStart */
-	} else if (!strncmp(pgvalue->valuestring, "SprayStart", 10)) {
+	} else if (strstr(pgvalue->valuestring, "SprayStart")) {
 		cmd = 236;
 	/* SprayStop */
-	} else if (!strncmp(pgvalue->valuestring, "SprayStop", 9)) {
+	} else if (strstr(pgvalue->valuestring, "SprayStop")) {
 		cmd = 237;
 	/* PowerCleanStart */
-	} else if (!strncmp(pgvalue->valuestring, "PowerCleanStart", 15)) {
+	} else if (strstr(pgvalue->valuestring, "PowerCleanStart")) {
 		cmd = 238;
 	/* PowerCleanStop */
-	} else if (!strncmp(pgvalue->valuestring, "PowerCleanStop", 14)) {
+	} else if (strstr(pgvalue->valuestring, "PowerCleanStop")) {
 		cmd = 239;
 	/* ARCStart */
-	} else if (!strncmp(pgvalue->valuestring, "ARCStart", 8)) {
+	} else if (strstr(pgvalue->valuestring, "ARCStart")) {
 		cmd = 247;
 	/* ARCEnd */
-	} else if (!strncmp(pgvalue->valuestring, "ARCEnd", 6)) {
+	} else if (strstr(pgvalue->valuestring, "ARCEnd")) {
 		cmd = 248;
 	/* LTLaserOn */
-	} else if (!strncmp(pgvalue->valuestring, "LTLaserOn", 9)) {
+	} else if (strstr(pgvalue->valuestring, "LTLaserOn")) {
 		cmd = 255;
 	/* LTLaserOff */
-	} else if (!strncmp(pgvalue->valuestring, "LTLaserOff", 10)) {
+	} else if (strstr(pgvalue->valuestring, "LTLaserOff")) {
 		cmd = 256;
 	/* LoadPosSensorDriver */
-	} else if (!strncmp(pgvalue->valuestring, "LoadPosSensorDriver", 19)) {
+	} else if (strstr(pgvalue->valuestring, "LoadPosSensorDriver")) {
 		cmd = 265;
 	/* UnloadPosSensorDriver */
-	} else if (!strncmp(pgvalue->valuestring, "UnloadPosSensorDriver", 21)) {
+	} else if (strstr(pgvalue->valuestring, "UnloadPosSensorDriver")) {
 		cmd = 266;
 	/* ExtAxisSetHoming */
-	} else if (!strncmp(pgvalue->valuestring, "ExtAxisSetHoming", 16)) {
+	} else if (strstr(pgvalue->valuestring, "ExtAxisSetHoming")) {
 		cmd = 290;
 	/* ExtAxisServoOn */
-	} else if (!strncmp(pgvalue->valuestring, "ExtAxisServoOn", 14)) {
+	} else if (strstr(pgvalue->valuestring, "ExtAxisServoOn")) {
 		cmd = 296;
 	/* EXT_AXIS_PTP */
-	} else if (!strncmp(pgvalue->valuestring, "EXT_AXIS_PTP", 12)) {
+	} else if (strstr(pgvalue->valuestring, "EXT_AXIS_PTP")) {
 		cmd = 297;
 	/* Mode */
-	} else if (!strncmp(pgvalue->valuestring, "Mode:", 5)) {
+	} else if (strstr(pgvalue->valuestring, "Mode")) {
 		cmd = 303;
 	/* SetToolList */
-	} else if (!strncmp(pgvalue->valuestring, "SetToolList", 11)) {
+	} else if (strstr(pgvalue->valuestring, "SetToolList")) {
 		cmd = 319;
 	/* SetWobjList */
-	} else if (!strncmp(pgvalue->valuestring, "SetWobjList", 11)) {
+	} else if (strstr(pgvalue->valuestring, "SetWobjList")) {
 		cmd = 383 ;
 	/* SetExToolCoord */
-	} else if (!strncmp(pgvalue->valuestring, "SetExToolList", 13)) {
+	} else if (strstr(pgvalue->valuestring, "SetExToolList")) {
 		cmd = 331;
 	/* Pause */
-	} else if (!strncmp(pgvalue->valuestring, "Pause", 5)) {
+	} else if (strstr(pgvalue->valuestring, "Pause")) {
 		cmd = 378;
 	/* soft-PLC setDO */
-	} else if (!strncmp(pgvalue->valuestring, "SPLCSetDO", 9)) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetDO")) {
 		cmd = 394;
 	/* soft-PLC setToolDO */
-	} else if (!strncmp(pgvalue->valuestring, "SPLCSetToolDO", 13)) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetToolDO")) {
 		cmd = 395;
 	/* soft-PLC setAO */
-	} else if (!strncmp(pgvalue->valuestring, "SPLCSetAO", 9)) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetAO")) {
 		cmd = 396;
 	/* soft-PLC setToolAO */
-	} else if (!strncmp(pgvalue->valuestring, "SPLCSetToolAO", 13)) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetToolAO")) {
 		cmd = 397;
 	/* SetSysVarValue */
-	} else if (!strncmp(pgvalue->valuestring, "SetSysVarValue", 14)) {
+	} else if (strstr(pgvalue->valuestring, "SetSysVarValue")) {
 		cmd = 511;
 	/* GetSysVarValue */
-	} else if (is_in(pgvalue->valuestring, "GetSysVarValue") == 1) {
+	} else if (strstr(pgvalue->valuestring, "GetSysVarValue")) {
 		cmd = 512;
 	/* error */
 	} else {
@@ -1759,11 +1935,17 @@ static int wait_cmd_feedback()
 	Qnode *p = NULL;
 	int i = 0;
 	int ret = FAIL;
+	SOCKET_INFO *sock_cmd = NULL;
 
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 	//printf("cmd = %d\n", cmd);
 	for (i = 0; i < 1000; i++) {
 		//printf("i = %d\n", i);
-		p = socket_cmd.ret_quene.front->next;
+		p = sock_cmd->ret_quene.front->next;
 		while (p != NULL) {
 			//printf("p->data.type = %d\n", p->data.type);
 			if (p->data.type == 425) {
@@ -1774,9 +1956,9 @@ static int wait_cmd_feedback()
 					ret = SUCCESS;
 				}
 				/* 删除结点信息 */
-				pthread_mutex_lock(&socket_cmd.ret_mute);
-				dequene(&socket_cmd.ret_quene, p->data);
-				pthread_mutex_unlock(&socket_cmd.ret_mute);
+				pthread_mutex_lock(&sock_cmd->ret_mute);
+				dequene(&sock_cmd->ret_quene, p->data);
+				pthread_mutex_unlock(&sock_cmd->ret_mute);
 
 				return ret;
 			}
@@ -3110,6 +3292,13 @@ void set(Webs *wp)
 		strcpy(log_content, "设置停止/暂停后输出是否复位");
 		strcpy(en_log_content, "Sets whether the output is reset after stopping/pausing");
 		strcpy(jap_log_content, "停止/一時停止後に出力をリセットするかどうかを設定します");
+		ret = copy_content(data_json, content);
+		break;
+	case 429:
+		port = cmdport;
+		strcpy(log_content, "获取机器人作业原点");
+		strcpy(en_log_content, "Obtain the origin of robot operation");
+		strcpy(jap_log_content, "ロボット作業の原点を取得する");
 		ret = copy_content(data_json, content);
 		break;
 	case 511:

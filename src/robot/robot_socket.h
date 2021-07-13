@@ -32,7 +32,8 @@
 #define MAX_MSGHEAD 10000
 //#define BUFFSIZE 1300000*2
 #define BUFFSIZE 8192
-#define STATE_SIZE 4096
+#define STATE_BUFFSIZE 16384
+#define STATE_SIZE 8192
 #define STATEFB_SIZE 25000 /** 4(sizeof(float))*100(row)*20(column)*3 + 1000(包头包尾分隔符等) */
 #define STATEFB_BUFSIZE 2400000 /** 4(sizeof(float))*100(row)*20(column)*3*100(num) */
 //#define STATEFB_WRITESIZE 10*8000*2 /** 10(num)*4(sizeof(float))*100(row)*20(column)*2 */
@@ -43,6 +44,7 @@
 #define STATEFB_MAX 100 /** state feedback quene, node max number */
 #define MAXGRIPPER 8
 #define MAXSLAVES 8
+#define TM_SYS_VAR_NUM 20
 
 #pragma pack(push, 1)
 /** 外部轴状态结构体 */
@@ -166,6 +168,7 @@ typedef struct _CTRL_STATE
 	uint8_t    ts_tm_cmd_com_error; 	/** 扭矩：TM-扭矩 指令下发，通信失败 */
 	uint8_t    ts_tm_state_com_error; 	/** 扭矩：TM-扭矩 状态反馈，通信失败 */
 	uint8_t	   pause_parameter; 		/** pause 参数 */
+	float	   sys_var[TM_SYS_VAR_NUM]; /** 系统变量 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -256,6 +259,13 @@ typedef struct _SOCKET_SERVER_INFO
 	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
 } SOCKET_SERVER_INFO;
 
+/* point home 相关信息 */
+typedef struct _POINT_HOME_INFO
+{
+	int error_flag;			// 0: 初始值，代表正常， 1：检查 homepoint 发现出错
+	int pre_error_flag;
+} POINT_HOME_INFO;
+
 /********************************* Function declaration ***********************/
 
 void *socket_thread(void *arg);
@@ -264,6 +274,7 @@ void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
 void *socket_upper_computer_thread(void* arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
+int check_pointhome_data(char *arr[]);
 //int send_cmd_set_robot_type();
 
 #endif

@@ -40,7 +40,9 @@ static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 static int get_DH_file(char **ret_f_content);
 static int get_robot_serialnumber(char **ret_f_content);
 static int get_robot_type(char **ret_f_content);
-static int torque_get_cfg(char **ret_f_content);
+static int get_TSP_flg(char **ret_f_content);
+static int torque_get_wpname_list(char **ret_f_content);
+static int torque_get_cfg(char **ret_f_content, const cJSON *data_json);
 static int torque_get_points(char **ret_f_content);
 static int get_varlist(char **ret_f_content);
 static int get_checkvar(char **ret_f_content, const cJSON *data_json);
@@ -1439,33 +1441,102 @@ static int get_robot_type(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get torque cfg and return to page */
-static int torque_get_cfg(char **ret_f_content)
+/* get TSP flg and return to page */
+static int get_TSP_flg(char **ret_f_content)
 {
-	cJSON *root_json = NULL;
-
-	*ret_f_content = get_file_content(FILE_TORQUE_CFG);
-	/* ret_f_content is NULL */
-	if (*ret_f_content == NULL) {
+	*ret_f_content = get_file_content(FILE_TORQUE_PAGEFLAG);
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
 		perror("get file content");
 
 		return FAIL;
 	}
 
-	/* file is not exist or empty */
-	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
-		perror("file is not exist or empty");
-		root_json = cJSON_CreateObject();
-		*ret_f_content = cJSON_Print(root_json);
-		cJSON_Delete(root_json);
-		root_json = NULL;
-		if (*ret_f_content == NULL) {
-			perror("cJSON_Print");
+	return SUCCESS;
+}
 
-			return FAIL;
+/* get torque wpname list and return to page */
+static int torque_get_wpname_list(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+	char sql[1024] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	int i = 0;
+
+	sprintf(sql, "select * from torquesys_cfg");
+	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+
+	root_json = cJSON_CreateArray();
+	for (i = 0; i < nrow; i++) {
+		if (resultp[(i + 1) * ncloumn] != NULL) {
+			cJSON_AddItemToArray(root_json, cJSON_CreateString(resultp[(i + 1) * ncloumn]));
 		}
+	}
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	sqlite3_free_table(resultp); //释放结果集
 
-		return SUCCESS;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get torque cfg and return to page */
+static int torque_get_cfg(char **ret_f_content, const cJSON *data_json)
+{
+	cJSON *root_json = NULL;
+	cJSON *name = NULL;
+	char sql[1024] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	int j = 0;
+
+	name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(sql, "select * from torquesys_cfg where workpiece_name = '%s'", name->valuestring);
+	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+
+	root_json = cJSON_CreateObject();
+	for (j = 0; j < ncloumn; j++) {
+		if (resultp[ncloumn + j] != NULL) {
+			if (j == 0) {
+				cJSON_AddStringToObject(root_json, resultp[j], resultp[ncloumn + j]);
+			} else {
+				cJSON_AddNumberToObject(root_json, resultp[j], atoi(resultp[ncloumn + j]));
+			}
+		}
+	}
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	sqlite3_free_table(resultp); //释放结果集
+
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
 	}
 
 	return SUCCESS;
@@ -1683,8 +1754,17 @@ void get(Webs *wp)
 		ret = get_robot_serialnumber(&ret_f_content);
 	} else if(!strcmp(cmd, "get_robot_type")) {
 		ret = get_robot_type(&ret_f_content);
+	} else if(!strcmp(cmd, "get_TSP_flg")) {
+		ret = get_TSP_flg(&ret_f_content);
+	} else if(!strcmp(cmd, "torque_get_wpname_list")) {
+		ret = torque_get_wpname_list(&ret_f_content);
 	} else if(!strcmp(cmd, "torque_get_cfg")) {
-		ret = torque_get_cfg(&ret_f_content);
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = torque_get_cfg(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "torque_get_points")) {
 		ret = torque_get_points(&ret_f_content);
 	} else if(!strcmp(cmd, "get_varlist")) {

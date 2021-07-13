@@ -592,7 +592,7 @@ int is_in(char *s, char *c)
 	DestStr: PTP
 	Return: 6
 */
-int is_in_srclen(char *s, char *c)
+int is_in_srclen(const char *s, const char *c)
 {
 	assert(s != NULL);
 	assert(c != NULL);
@@ -600,8 +600,12 @@ int is_in_srclen(char *s, char *c)
 	int i = 0;
 	int j = 0;
 	int srclen = -1;
+	int s_len = 0;
+	int c_len = 0;
 
-	while (i < strlen(s) && j < strlen(c)) {
+	s_len = strlen(s);
+	c_len = strlen(c);
+	while (i < s_len && j < c_len) {
 		if (s[i] == c[j]) {//如果字符相同则两个字符都增加
 			i++;
 			j++;
@@ -609,7 +613,7 @@ int is_in_srclen(char *s, char *c)
 			i = i - j + 1; //主串字符回到比较最开始比较的后一个字符
 			j = 0;     //字串字符重新开始
 		}
-		if (j == strlen(c)) { //如果匹配成功
+		if (j == c_len) { //如果匹配成功
 			srclen = i;  //字串出现, 返回 srclen
 			break;
 		}

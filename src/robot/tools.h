@@ -28,12 +28,14 @@
 #define UPGRADE_SOFTWARE "/tmp/software.tar.gz"
 #define UPGRADE_WEB "/tmp/software/web.tar.gz"
 #define UPGRADE_FR_CONTROL "/tmp/software/fr_control.tar.gz"
-#define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
+
 //#define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
+#define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
 #define SHELL_WEBTARCP "/root/web/webserver/shell/web_tar_cp.sh"
 #define SHELL_CRLUPGRADE "/root/web/webserver/shell/fr_control_upgrade.sh"
 #define SHELL_RECOVER_WEBTARCP "/root/web_recover/webserver/shell/web_tar_cp.sh"
 #define SHELL_RECOVER_CRLUPGRADE "/root/web_recover/webserver/shell/fr_control_upgrade.sh"
+
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_STATEFB10 "/root/web/file/statefb/statefb10.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"
@@ -41,8 +43,12 @@
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
 #define FILE_SN "/root/web/file/SN/SN.txt"
-#define FILE_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.txt"
+#define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
+#define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
+#define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
 #define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
+#define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
+
 #define DIR_SHELL "/root/web/webserver/shell/"
 #define DIR_FACTORY "/root/web/webserver/file_factory/"
 #define DIR_LOG "/root/web/log/"
@@ -61,7 +67,7 @@
 #define DIR_ROBOT_TYPE "/root/RobotType/"
 #define DIR_TORQUESYS "/root/web/file/torquesys/"
 #define DIR_SYSVAR "/root/web/file/sysvar/"
-#define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
+
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"
 #define DB_ET_CDSYSTEM "/root/web/file/cdsystem/et_coordinate_system.db"
@@ -69,11 +75,11 @@
 #define DB_EXAXIS_CDSYSTEM "/root/web/file/cdsystem/exaxis_coordinate_system.db"
 #define DB_ACCOUNT "/root/web/account/account.db"
 #define DB_SYSVAR "/root/web/file/sysvar/sysvar.db"
+#define DB_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.db"
+
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
 #define UPLOAD_WEB_ODM "/root/web/frontend/file/odm.tar.gz"
-#define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
-#define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
 #define LOAD_TOOL_MODEL "./data/toolmodel/"
 #define setbit(x,y) x|=(1<<(y-1)) //将X的第Y位置1
 #define clrbit(x,y) x&=~(1<<(y-1)) //将X的第Y位清0
@@ -85,6 +91,7 @@
 #define FILENAME_SIZE	1024
 #define ODM_PASSWORD	"ODM"
 #define RTS_PASSWORD	"frrts2021"
+#define POINT_HOME	"pHome"
 
 typedef unsigned char BYTE;
 
@@ -110,7 +117,7 @@ int check_dir_filename(const char *dir_path, const char *filename);
 char *get_dir_filename_txt(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);
 int is_in(char *s, char *c);
-int is_in_srclen(char *s, char *c);
+int is_in_srclen(const char *s, const char *c);
 void delay_ms(const int timeout);
 double double_round(double dVal, int iPlaces);
 void uint8_to_array(int n1, int n2, int *array);

@@ -16,6 +16,9 @@ extern int robot_type;
 extern int language;
 extern ACCOUNT_INFO cur_account;
 extern SOCKET_INFO socket_cmd;
+extern SOCKET_INFO socket_vir_cmd;
+extern int robot_type;
+extern POINT_HOME_INFO point_home_info;
 
 /********************************* Function declaration ***********************/
 
@@ -48,7 +51,10 @@ static int odm_password(const cJSON *data_json);
 static int save_robot_type(const cJSON *data_json);
 static int torque_save_cfg(const cJSON *data_json);
 static int torque_ensure_points(const cJSON *data_json);
+static int set_TSP_flg(const cJSON *data_json);
 static int rename_var(const cJSON *data_json);
+static int clear_product_info(const cJSON *data_json);
+static int move_to_home_point(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -361,10 +367,14 @@ static int save_point(const cJSON *data_json)
 	cJSON *rx = NULL;
 	cJSON *ry = NULL;
 	cJSON *rz = NULL;
+	char content[MAX_BUF] = "";
+	SOCKET_INFO *sock_cmd = NULL;
 
 	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
 		state = &ctrl_state;
 	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
 		state = &vir_ctrl_state;
 	}
 	name = cJSON_GetObjectItem(data_json, "name");
@@ -398,6 +408,12 @@ static int save_point(const cJSON *data_json)
 		perror("database");
 
 		return FAIL;
+	}
+
+	if (strcmp(name->valuestring, POINT_HOME) == 0) {
+		point_home_info.error_flag = 0;
+		sprintf(content, "SetRobotWorkHomePoint(%s,%s,%s,%s,%s,%s)", joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5]);
+		socket_enquene(sock_cmd, 428, content, 1);
 	}
 
 	return SUCCESS;
@@ -1149,15 +1165,38 @@ static int save_robot_type(const cJSON *data_json)
 /** torque save cfg */
 static int torque_save_cfg(const cJSON *data_json)
 {
-	char *buf = NULL;
-	int write_ret = FAIL;
+	char sql[1204] = {0};
+	cJSON *old_workpiece_name = NULL;
+	cJSON *new_workpiece_name = NULL;
+	cJSON *send_nail_mode = NULL;
+	cJSON *electric_screwdriver_mode = NULL;
+	cJSON *lockscrew_sum = NULL;
+	cJSON *screw_num = NULL;
+	cJSON *screw_time = NULL;
+	cJSON *screw_period = NULL;
+	cJSON *float_time = NULL;
+	cJSON *slip_time = NULL;
 
-	buf = cJSON_Print(data_json);
-	write_ret = write_file(FILE_TORQUE_CFG, buf);//write file
-	free(buf);
-	buf = NULL;
-	if (write_ret == FAIL) {
-		perror("write file");
+	old_workpiece_name = cJSON_GetObjectItem(data_json, "old_workpiece_name");
+	new_workpiece_name = cJSON_GetObjectItem(data_json, "new_workpiece_name");
+	send_nail_mode = cJSON_GetObjectItem(data_json, "send_nail_mode");
+	electric_screwdriver_mode = cJSON_GetObjectItem(data_json, "electric_screwdriver_mode");
+	lockscrew_sum = cJSON_GetObjectItem(data_json, "lockscrew_sum");
+	screw_num = cJSON_GetObjectItem(data_json, "screw_num");
+	screw_time = cJSON_GetObjectItem(data_json, "screw_time");
+	screw_period = cJSON_GetObjectItem(data_json, "screw_period");
+	float_time = cJSON_GetObjectItem(data_json, "float_time");
+	slip_time = cJSON_GetObjectItem(data_json, "slip_time");
+	if (old_workpiece_name == NULL || new_workpiece_name == NULL || send_nail_mode == NULL || electric_screwdriver_mode == NULL || lockscrew_sum == NULL || screw_num == NULL || screw_time == NULL || screw_period == NULL || float_time == NULL || slip_time == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(sql, "update torquesys_cfg set workpiece_name='%s', send_nail_mode=%d, electric_screwdriver_mode=%d, lockscrew_sum=%d, screw_num=%d, screw_time=%d, screw_period=%d, float_time=%d, slip_time=%d where workpiece_name='%s';", new_workpiece_name->valuestring, send_nail_mode->valueint, electric_screwdriver_mode->valueint, lockscrew_sum->valueint, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, old_workpiece_name->valuestring);
+
+	if (change_info_sqlite3(DB_TORQUE_CFG, sql) == -1) {
+		perror("database");
 
 		return FAIL;
 	}
@@ -1180,7 +1219,27 @@ static int torque_ensure_points(const cJSON *data_json)
 	}
 
 	buf = cJSON_Print(content);
-	write_ret = write_file(FILE_TORQUE_POINTS, buf);//write file
+	write_ret = write_file(FILE_TORQUE_POINTS, buf);
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/** torque set pageflag */
+static int set_TSP_flg(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+	cJSON *content = NULL;
+
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_TORQUE_PAGEFLAG, buf);
 	free(buf);
 	buf = NULL;
 	if (write_ret == FAIL) {
@@ -1216,6 +1275,117 @@ static int rename_var(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* clear product info */
+static int clear_product_info(const cJSON *data_json)
+{
+	// set sys value
+
+	return SUCCESS;
+}
+
+/* move to home point */
+static int move_to_home_point(const cJSON *data_json)
+{
+	cJSON *f_json = NULL;
+	cJSON *ovl = NULL;
+	cJSON *ptp = NULL;
+	cJSON *j1 = NULL;
+	cJSON *j2 = NULL;
+	cJSON *j3 = NULL;
+	cJSON *j4 = NULL;
+	cJSON *j5 = NULL;
+	cJSON *j6 = NULL;
+	cJSON *x = NULL;
+	cJSON *y = NULL;
+	cJSON *z = NULL;
+	cJSON *rx = NULL;
+	cJSON *ry = NULL;
+	cJSON *rz = NULL;
+	cJSON *speed = NULL;
+	cJSON *acc = NULL;
+	cJSON *toolnum = NULL;
+	cJSON *workpiecenum = NULL;
+	cJSON *E1 = NULL;
+	cJSON *E2 = NULL;
+	cJSON *E3 = NULL;
+	cJSON *E4 = NULL;
+	char sql[MAX_BUF] = "";
+	char content[MAX_BUF] = "";
+	SOCKET_INFO *sock_cmd = NULL;
+	char joint_value[6][10] = { 0 };
+	char *joint_value_ptr[6];
+	int i = 0;
+
+	ovl = cJSON_GetObjectItem(data_json, "ovl");
+	if (ovl == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(sql, "select * from points;");
+	if(select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+		perror("select ptp points");
+
+		return FAIL;
+	}
+	ptp = cJSON_GetObjectItemCaseSensitive(f_json, POINT_HOME);
+	if (ptp == NULL || ptp->type != cJSON_Object) {
+
+		return FAIL;
+	}
+	j1 = cJSON_GetObjectItem(ptp, "j1");
+	j2 = cJSON_GetObjectItem(ptp, "j2");
+	j3 = cJSON_GetObjectItem(ptp, "j3");
+	j4 = cJSON_GetObjectItem(ptp, "j4");
+	j5 = cJSON_GetObjectItem(ptp, "j5");
+	j6 = cJSON_GetObjectItem(ptp, "j6");
+	x = cJSON_GetObjectItem(ptp, "x");
+	y = cJSON_GetObjectItem(ptp, "y");
+	z = cJSON_GetObjectItem(ptp, "z");
+	rx = cJSON_GetObjectItem(ptp, "rx");
+	ry = cJSON_GetObjectItem(ptp, "ry");
+	rz = cJSON_GetObjectItem(ptp, "rz");
+	toolnum = cJSON_GetObjectItem(ptp, "toolnum");
+	workpiecenum = cJSON_GetObjectItem(ptp, "workpiecenum");
+	speed = cJSON_GetObjectItem(ptp, "speed");
+	acc = cJSON_GetObjectItem(ptp, "acc");
+	E1 = cJSON_GetObjectItem(ptp, "E1");
+	E2 = cJSON_GetObjectItem(ptp, "E2");
+	E3 = cJSON_GetObjectItem(ptp, "E3");
+	E4 = cJSON_GetObjectItem(ptp, "E4");
+	if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || E1 == NULL || E2 == NULL || E3 == NULL || E4 == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || E1->valuestring == NULL || E2->valuestring == NULL || E3->valuestring == NULL || E4->valuestring == NULL) {
+
+		return FAIL;
+	}
+
+	sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+	sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+	sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+	sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+	sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+	sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+	for (i = 0; i < 6; i++) {
+		joint_value_ptr[i] = joint_value[i];
+	}
+
+	/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+	if (check_pointhome_data(joint_value_ptr) == FAIL) {
+		point_home_info.error_flag = 1;
+
+		return FAIL;
+	}
+	point_home_info.error_flag = 0;
+
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)\n", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, ovl->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring);
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
+	socket_enquene(sock_cmd, 201, content, 1);
+
+	return SUCCESS;
+}
 
 /* do some user actions basic on web */
 void act(Webs *wp)
@@ -1254,13 +1424,13 @@ void act(Webs *wp)
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
 	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points")) {
+	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "rename_var")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1417,11 +1587,26 @@ void act(Webs *wp)
 		strcpy(log_content, "确认扭矩示教点");
 		strcpy(en_log_content, "Ensure torque teaching points");
 		strcpy(jap_log_content, "トルク表示点を確認する");
+	} else if (!strcmp(cmd, "set_TSP_flg")) {
+		ret = set_TSP_flg(data_json);
+		strcpy(log_content, "设置扭矩页面显示标志位");
+		strcpy(en_log_content, "Set the display flag bit on the torque page");
+		strcpy(jap_log_content, "トルク表示表示ビットを設定します");
 	} else if (!strcmp(cmd, "rename_var")) {
 		ret = rename_var(data_json);
 		strcpy(log_content, "变量重命名");
 		strcpy(en_log_content, "variable renaming");
 		strcpy(jap_log_content, "変数の名前変更");
+	} else if (!strcmp(cmd, "clear_product_info")) {
+		ret = clear_product_info(data_json);
+		strcpy(log_content, "生产数据清除");
+		strcpy(en_log_content, "Production data cleanup");
+		strcpy(jap_log_content, "生産データ消去");
+	} else if (!strcmp(cmd, "move_to_home_point")) {
+		ret = move_to_home_point(data_json);
+		strcpy(log_content, "移至原点");
+		strcpy(en_log_content, "Move to the origin point");
+		strcpy(jap_log_content, "原点に移す");
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -29,6 +29,10 @@ extern char error_info[ERROR_SIZE];
 TORQUE_SYS torquesys;
 TORQUE_SYS_STATE torque_sys_state;
 char lua_filename[FILENAME_SIZE] = "";
+POINT_HOME_INFO point_home_info = {
+	.error_flag = 0,
+	.pre_error_flag = 0,
+};
 //pthread_cond_t cond_cmd;
 //pthread_cond_t cond_file;
 //pthread_mutex_t mute_cmd;
@@ -424,7 +428,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	int size_package = 0;
 	int size_content = 0;
 	char **msg_array = NULL;
-	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
+	char frame[MAX_BUF] = {0};//提取出一帧, 存放buf
 	char sec_buf_memory[BUFFSIZE] = {0};
 	GRIPPERS_CONFIG_INFO grippers_config_info;
 
@@ -453,7 +457,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
 
 	/* 对于"粘包"，"断包"进行处理 */
-	while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) != 0) {
+	while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, MAX_BUF) != 0) {
 		//printf("frame is : %s\n", frame);
 		/* 把接收到的包按照分割符"III"进行分割 */
 		if (string_to_string_list(frame, "III", &size_package, &array) == 0 || size_package != 6) {
@@ -684,7 +688,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (strcmp(array[4], "0") == 0) {
 				//printf("fail！\n");
 			}
-			if (strcmp(array[4], "1") == 0) {
+			if (strcmp(array[4], "1") == 0) {//生效导入的机器人配置文件
 				//printf("success！\n");
 				char cmd[128] = {0};
 				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
@@ -695,7 +699,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 				continue;
 			}
-		} else if (atoi(array[2]) == 380) {//修改示教点数据
+		} else if (atoi(array[2]) == 380) {//获取控制器计算后,修改示教点数据
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
@@ -730,7 +734,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(msg_array, size_content);
-		} else if (atoi(array[2]) == 386) {//修改示教点数据
+		} else if (atoi(array[2]) == 386) {
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
 				perror("string to string list");
@@ -889,6 +893,46 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			//printf("msg_content = %s\n", msg_content);
 			cJSON_Delete(root_json);
 			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 429) {//获取机器人作业原点
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 7) {
+				perror("string to string list");
+				//printf("size_content = %d\n", size_content);
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+
+				continue;
+			}
+			cJSON *joints_json = NULL;
+
+			cJSON_AddStringToObject(root_json, "flag", msg_array[0]);
+			joints_json = cJSON_CreateObject();
+			cJSON_AddItemToObject(root_json, "joints", joints_json);
+			cJSON_AddStringToObject(joints_json, "j1", msg_array[1]);
+			cJSON_AddStringToObject(joints_json, "j2", msg_array[2]);
+			cJSON_AddStringToObject(joints_json, "j3", msg_array[3]);
+			cJSON_AddStringToObject(joints_json, "j4", msg_array[4]);
+			cJSON_AddStringToObject(joints_json, "j5", msg_array[5]);
+			cJSON_AddStringToObject(joints_json, "j6", msg_array[6]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			//printf("msg_content = %s\n", msg_content);
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
 				string_list_free(msg_array, size_content);
 				string_list_free(array, size_package);
@@ -1166,8 +1210,8 @@ void *socket_status_thread(void *arg)
 	CTRL_STATE *pre_state = NULL;
 	int port = (int)arg;
 	int recv_len = 0;
-	char buf_memory[BUFFSIZE] = {0};
-	char sec_buf_memory[BUFFSIZE] = {0};
+	char buf_memory[STATE_BUFFSIZE] = {0};
+	char sec_buf_memory[STATE_BUFFSIZE] = {0};
 	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
 	char recvbuf[STATE_SIZE] = {0};
 	char status_buf[STATE_SIZE] = {0};
@@ -1240,10 +1284,10 @@ void *socket_status_thread(void *arg)
 			//time_1 = clock();
 			//printf("time_1, %d\n", time_1);
 			//printf("strlen(buf_memory) + recv len = %d\n", (strlen(buf_memory)+recv_len));
-			//printf("BUFFSIZE = %d\n", BUFFSIZE);
-			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(BUFFSIZE), 清空 buf_memory
-			if ((strlen(buf_memory)+recv_len) > BUFFSIZE) {
-				bzero(buf_memory, BUFFSIZE);
+			//printf("STATE_BUFFSIZE = %d\n", STATE_BUFFSIZE);
+			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(STATE_BUFFSIZE), 清空 buf_memory
+			if ((strlen(buf_memory)+recv_len) > STATE_BUFFSIZE) {
+				bzero(buf_memory, STATE_BUFFSIZE);
 			}
 
 			memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
@@ -1252,7 +1296,7 @@ void *socket_status_thread(void *arg)
 			//printf("time_2, %d\n", time_2);
 
 			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
-			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, BUFFSIZE, STATE_SIZE) == sizeof(CTRL_STATE)*3+14) {
+			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, STATE_BUFFSIZE, STATE_SIZE) == sizeof(CTRL_STATE)*3+14) {
 				//time_3 = clock();
 				//printf("time_3, %d\n", time_3);
 				//printf("strlen frame = %d\n", strlen(frame));
@@ -1279,6 +1323,10 @@ void *socket_status_thread(void *arg)
 				/*	int i;
 					for (i = 0; i < 6; i++) {
 						printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
+					}*/
+				/*	int i;
+					for (i = 0; i < 20; i++) {
+						printf("state->sys_var[%d] = %.3f\n", i, state->sys_var[i]);
 					}*/
 				}
 				//printf("after StringToBytes\n");
@@ -2081,6 +2129,79 @@ static void init_torquesys()
 	torquesys.enable = 0;
 	/** send get_on_off to TaskManagement */
 	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
+}
+
+/**
+	下发获取原点指令，读取配置文件中的 pHome 数据，和数据库中数据进行比较, 比较小数点后一位小数
+	比较这两组数据内容，是否相同，如果不同，说明原点发生改变，需要添加异常错误到 sta 状态反馈 error_info 中
+	最多等待 1 秒钟获取指令反馈，否则超时报错
+*/
+int check_pointhome_data(char *arr[])
+{
+	Qnode *p = NULL;
+	int i = 0;
+	int ret = FAIL;
+	SOCKET_INFO *sock_cmd = NULL;
+	cJSON *msgcontent_json = NULL;
+	cJSON *joints_json = NULL;
+	cJSON *j1_json = NULL;
+	cJSON *j2_json = NULL;
+	cJSON *j3_json = NULL;
+	cJSON *j4_json = NULL;
+	cJSON *j5_json = NULL;
+	cJSON *j6_json = NULL;
+	char joint_value[6][10] = {0};
+	char content[MAX_BUF] = "";
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
+	sprintf(content, "GetRobotWorkHomePoint()");
+	socket_enquene(sock_cmd, 429, content, 1);
+	for (i = 0; i < 1000; i++) {
+		p = sock_cmd->ret_quene.front->next;
+		while (p != NULL) {
+			if (p->data.type == 429) {
+				msgcontent_json = cJSON_Parse(p->data.msgcontent);
+				if (msgcontent_json != NULL) {
+					joints_json = cJSON_GetObjectItem(msgcontent_json, "joints");
+					if (joints_json != NULL && joints_json->type == cJSON_Object) {
+						j1_json = cJSON_GetObjectItem(joints_json, "j1");
+						j2_json = cJSON_GetObjectItem(joints_json, "j2");
+						j3_json = cJSON_GetObjectItem(joints_json, "j3");
+						j4_json = cJSON_GetObjectItem(joints_json, "j4");
+						j5_json = cJSON_GetObjectItem(joints_json, "j5");
+						j6_json = cJSON_GetObjectItem(joints_json, "j6");
+						if (j1_json != NULL && j2_json != NULL && j3_json != NULL && j4_json != NULL && j5_json != NULL && j6_json != NULL) {
+							sprintf(joint_value[0], "%.1lf", atof(j1_json->valuestring));
+							sprintf(joint_value[1], "%.1lf", atof(j2_json->valuestring));
+							sprintf(joint_value[2], "%.1lf", atof(j3_json->valuestring));
+							sprintf(joint_value[3], "%.1lf", atof(j4_json->valuestring));
+							sprintf(joint_value[4], "%.1lf", atof(j5_json->valuestring));
+							sprintf(joint_value[5], "%.1lf", atof(j6_json->valuestring));
+
+							if (strcmp(joint_value[0], arr[0]) == 0 && strcmp(joint_value[1], arr[1]) == 0 && strcmp(joint_value[2], arr[2]) == 0 && strcmp(joint_value[3], arr[3]) == 0 && strcmp(joint_value[4], arr[4]) == 0 && strcmp(joint_value[5], arr[5]) == 0) {
+
+								ret = SUCCESS;
+							}
+						}
+					}
+				}
+				/* 删除结点信息 */
+				pthread_mutex_lock(&sock_cmd->ret_mute);
+				dequene(&sock_cmd->ret_quene, p->data);
+				pthread_mutex_unlock(&sock_cmd->ret_mute);
+
+				return ret;
+			}
+			p = p->next;
+		}
+		usleep(1000);
+	}
+
+	return ret;
 }
 
 /*
