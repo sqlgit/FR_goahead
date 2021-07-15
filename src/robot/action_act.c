@@ -51,6 +51,7 @@ static int odm_password(const cJSON *data_json);
 static int save_robot_type(const cJSON *data_json);
 static int torque_save_cfg(const cJSON *data_json);
 static int torque_ensure_points(const cJSON *data_json);
+static int set_DIO_cfg(const cJSON *data_json);
 static int set_TSP_flg(const cJSON *data_json);
 static int rename_var(const cJSON *data_json);
 static int clear_product_info(const cJSON *data_json);
@@ -1231,6 +1232,31 @@ static int torque_ensure_points(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/** torque set DIO cfg */
+static int set_DIO_cfg(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+
+	if (data_json == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_TORQUE_DIO, buf);
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /** torque set pageflag */
 static int set_TSP_flg(const cJSON *data_json)
 {
@@ -1430,7 +1456,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1587,6 +1613,11 @@ void act(Webs *wp)
 		strcpy(log_content, "确认扭矩示教点");
 		strcpy(en_log_content, "Ensure torque teaching points");
 		strcpy(jap_log_content, "トルク表示点を確認する");
+	} else if (!strcmp(cmd, "set_DIO_cfg")) {
+		ret = set_DIO_cfg(data_json);
+		strcpy(log_content, "设置 DIO 配置");
+		strcpy(en_log_content, "Setting the DIO configuration");
+		strcpy(jap_log_content, "dio構成の設定");
 	} else if (!strcmp(cmd, "set_TSP_flg")) {
 		ret = set_TSP_flg(data_json);
 		strcpy(log_content, "设置扭矩页面显示标志位");

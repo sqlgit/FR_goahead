@@ -44,6 +44,7 @@ static int get_TSP_flg(char **ret_f_content);
 static int torque_get_wpname_list(char **ret_f_content);
 static int torque_get_cfg(char **ret_f_content, const cJSON *data_json);
 static int torque_get_points(char **ret_f_content);
+static int get_DIO_cfg(char **ret_f_content);
 static int get_varlist(char **ret_f_content);
 static int get_checkvar(char **ret_f_content, const cJSON *data_json);
 //static int index_get_config = 0;
@@ -1574,6 +1575,29 @@ static int torque_get_points(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get torque DIO and return to page */
+static int get_DIO_cfg(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+
+	*ret_f_content = get_file_content(FILE_TORQUE_DIO);
+	/* ret_f_content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	/* file is not exist or empty */
+	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		perror("file is not exist or empty");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* get varlist */
 static int get_varlist(char **ret_f_content)
 {
@@ -1638,7 +1662,6 @@ static int get_checkvar(char **ret_f_content, const cJSON *data_json)
 
 	return SUCCESS;
 }
-
 
 /* get web data and return to page */
 void get(Webs *wp)
@@ -1767,6 +1790,8 @@ void get(Webs *wp)
 		ret = torque_get_cfg(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "torque_get_points")) {
 		ret = torque_get_points(&ret_f_content);
+	} else if(!strcmp(cmd, "get_DIO_cfg")) {
+		ret = get_DIO_cfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_varlist")) {
 		ret = get_varlist(&ret_f_content);
 	} else if(!strcmp(cmd, "get_checkvar")) {
