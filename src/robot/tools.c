@@ -33,6 +33,9 @@ extern SOCKET_INFO socket_vir_cmd;
 *
 *@description: 将传入的有固定分隔符的字符串分解后存入到二维字符串数组
 *
+*
+*效率较高：运行 100 万次大约耗时 2 秒
+
 	*******************************************************************/
 int string_to_string_list(char *src_str, char *delimiter, int *delimiter_count, char ***str_list)
 {
