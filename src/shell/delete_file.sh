@@ -78,3 +78,5 @@ if [ $? -eq 0 ];then
 		ls -tr 2* | head -$num | xargs -i -n1 rm -rf {}
 	fi
 fi
+
+wait

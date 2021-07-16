@@ -577,7 +577,7 @@ void upload(Webs *wp)
 		update_config(EXAXIS_CFG);
 
 		/** 文件写入硬盘需要一定时间，等待 1 秒 */
-		sleep(1);
+		//sleep(1);
 
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
@@ -589,7 +589,7 @@ void upload(Webs *wp)
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 5 秒 */
-			sleep(5);
+			//sleep(5);
 		} while (check_version(README_WEB_NOW, README_WEB_UP) == FAIL);
 		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
 		my_en_syslog("normal operation", "Successed to upgrade webapp", cur_account.username);
@@ -605,13 +605,16 @@ void upload(Webs *wp)
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 1 秒 */
-			sleep(1);
+			//sleep(1);
 		} while (check_version(README_CTL_NOW, README_CTL_UP) == FAIL);
 		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);
 		my_en_syslog("normal operation", "Controller software upgrade successful", cur_account.username);
 		my_jap_syslog("普通の操作", "コントローラソフトウェアのアップグレードに成功", cur_account.username);
 
 		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/fr_control && rm -rf /tmp/web && rm -rf /tmp/software");
+
+		/** 文件写入硬盘需要一定时间，等待 10 秒 */
+		sleep(10);
 
 	//	system("sleep 1 && shutdown -b &");
 

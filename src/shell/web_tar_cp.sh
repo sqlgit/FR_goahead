@@ -11,11 +11,13 @@ cp /tmp/software/README_WEB.txt /root/README/
 rm -rf /root/web/webserver/
 cp -R /tmp/web/webserver /root/web/
 
-sleep 1
-
 # update frontend
-cd /root/web/frontend/ && rm -rf !(file) && cd -
+cd /root/web/frontend/
+rm -rf !(file)
+cd -
 cp -R /tmp/web/frontend /root/web/
+
+wait
 
 # update system
 #sleep 1

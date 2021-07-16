@@ -115,4 +115,6 @@ echo "##### Upload fr_control upgrade file success!"
 #rm -rf /tmp/fr_control
 
 echo "##### need shutdown!"
+
+wait
 #shutdown -b

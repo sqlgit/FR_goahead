@@ -23,3 +23,5 @@ fi
 #shutdown now &
 
 echo "##### WebAPP upgrade success!"
+
+wait
