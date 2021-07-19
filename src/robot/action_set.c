@@ -48,8 +48,8 @@ static int program_resume(const cJSON *data_json, char *content);
 static int sendfilename(const cJSON *data_json, char *content);
 static int init_db_json(DB_JSON *p_db_json);
 static void db_json_delete(DB_JSON *p_db_json);
-static int parse_lua_cmd(char *lua_cmd, int len, char *file_content, DB_JSON *p_db_json);
-static int sendfile(const cJSON *data_json, int content_len, char *content);
+static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json);
+static int sendfile(const cJSON *data_json, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
@@ -208,7 +208,7 @@ static void db_json_delete(DB_JSON *p_db_json)
 }
 
 /* parse cmd of lua file */
-static int parse_lua_cmd(char *lua_cmd, int len, char *file_content, DB_JSON *p_db_json)
+static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 {
 	//printf("lua cmd = %s\n", lua_cmd);
 	char content[MAX_BUF] = { 0 }; // 存储 lua_cmd 解析转换后的内容
@@ -293,6 +293,48 @@ static int parse_lua_cmd(char *lua_cmd, int len, char *file_content, DB_JSON *p_
 	cJSON *var = NULL;
 	cJSON *installation_site = NULL;
 	cJSON *type = NULL;
+
+
+	/* 如果 lua 文件是旧版本格式，需要进行转换 */
+	char old_head[MAX_BUF] = { 0 }; // 存储 lua_cmd 中":", 之前的字符串内容
+	char *old_ptr = NULL;  // 指向 lua_cmd 中 ":" 之后的字符串指针
+	char old_ptr_comment[MAX_BUF] = { 0 }; // 存储 lua_cmd 中 "：" 到 "--"之间的字符串内容
+	char *old_comment = NULL; // 指向 lua_cmd 中 "--" 之后的字符串指针
+	char new_lua_cmd[MAX_BUF] = { 0 }; // 存储转换后的 new_lua_cmd 字符串内容
+
+	printf("lua_cmd = %s\n", lua_cmd);
+	if (old_ptr = strstr(lua_cmd, "WaitTime")) {
+		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
+		sprintf(new_lua_cmd, "%sWaitMs%s", old_head, (old_ptr + 8));
+		lua_cmd = new_lua_cmd;
+		printf("lua_cmd = %s\n", lua_cmd);
+	}
+	if (old_ptr = strstr(lua_cmd, "EXT_AXIS_SETHOMING")) {
+		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
+		sprintf(new_lua_cmd, "%sExtAxisSetHoming%s", old_head, (old_ptr + 18));
+		lua_cmd = new_lua_cmd;
+		printf("lua_cmd = %s\n", lua_cmd);
+	}
+	if ((old_ptr = strstr(lua_cmd, ":")) && (strstr(lua_cmd, "::") == NULL)) {
+		printf("old_ptr = %s\n", old_ptr);
+		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
+		printf("old_head = %s\n", old_head);
+		//strcpy(old_end, (old_ptr + 1));
+		if (old_comment = strstr(old_ptr, "--")) {
+			printf("old_comment = %s\n", old_comment);
+			strncpy(old_ptr_comment, (old_ptr + 1), (old_comment - old_ptr - 1));
+			printf("old_ptr_comment = %s\n", old_ptr_comment);
+			/* 去掉字符串结尾多余空格 */
+			//old_ptr_comment[strlen(old_ptr_comment)] = '\0';
+			//printf("old_ptr_comment = %s\n", old_ptr_comment);
+			sprintf(new_lua_cmd, "%s(%s)%s", old_head, old_ptr_comment, old_comment);
+		} else {
+			sprintf(new_lua_cmd, "%s(%s)", old_head, (old_ptr + 1));
+		}
+		lua_cmd = new_lua_cmd;
+		printf("lua_cmd = %s\n", lua_cmd);
+	}
+
 
 	/* laserPTP */
 	if (ptr = strstr(lua_cmd, "laserPTP")) {
@@ -1099,7 +1141,7 @@ end:
 }
 
 /* 106 sendFile */
-static int sendfile(const cJSON *data_json, int content_len, char *content)
+static int sendfile(const cJSON *data_json, char *content)
 {
 	const char s[2] = "\n";
 	char *token = NULL;
@@ -1142,7 +1184,7 @@ static int sendfile(const cJSON *data_json, int content_len, char *content)
 			//printf("i = %d\n", i);
 			//i++;
 			//printf("token = %s\n", token);
-			if (parse_lua_cmd(token, content_len, content, &db_json) == FAIL) {
+			if (parse_lua_cmd(token, content, &db_json) == FAIL) {
 				perror("parse lua cmd");
 				db_json_delete(&db_json);
 
@@ -1315,7 +1357,7 @@ static int step_over(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	if (parse_lua_cmd(pgvalue->valuestring, sizeof(char) * MAX_BUF, content, &db_json) == FAIL) {
+	if (parse_lua_cmd(pgvalue->valuestring, content, &db_json) == FAIL) {
 		perror("parse lua cmd");
 		db_json_delete(&db_json);
 
@@ -2088,7 +2130,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content_len, content);
+		ret = sendfile(data_json, content);
 		break;
 	case 101:
 		port = cmdport;
@@ -2149,7 +2191,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content_len, content);
+		ret = sendfile(data_json, content);
 		break;
 	case 107:
 		port = cmdport;

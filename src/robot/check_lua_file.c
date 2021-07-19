@@ -868,6 +868,16 @@ static int GetActualTCPPose(lua_State* L)
 	return 1;
 }
 
+static int GetActualTCPNum(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int GetActualToolFlangePose(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1106,6 +1116,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetActualJointSpeedsDegree", GetActualJointSpeedsDegree);
 	lua_register(luaEnv, "GetActualJointSpeedsRadian", GetActualJointSpeedsRadian);
 	lua_register(luaEnv, "GetActualTCPPose", GetActualTCPPose);
+	lua_register(luaEnv, "GetActualTCPNum", GetActualTCPNum);
 	lua_register(luaEnv, "GetActualToolFlangePose", GetActualToolFlangePose);
 	lua_register(luaEnv, "GetInverseKin", GetInverseKin);
 	lua_register(luaEnv, "GetForwardKin", GetForwardKin);

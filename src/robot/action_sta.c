@@ -106,6 +106,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "weldTrackSpeed", state->weldTrackSpeed);
 	cJSON_AddNumberToObject(root_json, "conveyor_encoder_pos", state->conveyor_encoder_pos);
 	cJSON_AddNumberToObject(root_json, "conveyor_speed", state->conveyor_speed);
+	cJSON_AddNumberToObject(root_json, "conveyorWorkPiecePos", state->conveyorWorkPiecePos);
 	cJSON_AddNumberToObject(root_json, "btn_box_stop_signal", state->btn_box_stop_signal);
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 	cJSON_AddNumberToObject(root_json, "pause_parameter", state->pause_parameter);
@@ -2067,6 +2068,40 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				my_en_syslog("error", "External shaft number overrun error", cur_account.username);
 				my_jap_syslog("さくご", "外軸号がエラーオーバー", cur_account.username);
 				pre_state->paraError = 15;
+			}
+			break;
+		case 16:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "传送带跟踪-编码器通道错误-可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Conveyor - encoder channel error - Reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ベルトトラッカー-エンコーダチャンネルエラー-リセット可能");
+			}
+			if (pre_state->paraError != 16) {
+				my_syslog("错误", "传送带跟踪-编码器通道错误-可复位", cur_account.username);
+				my_en_syslog("error", "Conveyor - encoder channel error - Reset", cur_account.username);
+				my_jap_syslog("さくご", "ベルトトラッカー-エンコーダチャンネルエラー-リセット可能", cur_account.username);
+				pre_state->paraError = 16;
+			}
+			break;
+		case 17:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "传送带跟踪-工件轴号错误-可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Conveyor - Workpiece Axis Number error - Reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤートラッキング-ワーク軸番号エラー-リセット可能");
+			}
+			if (pre_state->paraError != 17) {
+				my_syslog("错误", "传送带跟踪-工件轴号错误-可复位", cur_account.username);
+				my_en_syslog("error", "Conveyor - Workpiece Axis Number error - Reset", cur_account.username);
+				my_jap_syslog("さくご", "ベルトコンベヤートラッキング-ワーク軸番号エラー-リセット可能", cur_account.username);
+				pre_state->paraError = 17;
 			}
 			break;
 		default:

@@ -157,6 +157,7 @@ typedef struct _CTRL_STATE
 	double	   LoadIdentifyData[4];		/** 负载辨识结果 (weight, x, y, z) */
 	long	   conveyor_encoder_pos;	/** 传送带编码器位置 */
 	double	   conveyor_speed;			/** 传送带速度 mm/s */
+	double	   conveyorWorkPiecePos;	/** 传送带工件当前位置，单位mm */
 	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号, 1-按下急停 */
 	uint8_t	   motionAlarm;				/** 运动警告 */
 	double	   register_var[6];			/** 注册变量 */
