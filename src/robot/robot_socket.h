@@ -8,10 +8,10 @@
 #if local
 	//#define SERVER_IP "127.0.0.1"
 	//#define CLIENT_IP "127.0.0.1"
-//	#define SERVER_IP "192.168.152.129" //sql
-//	#define CLIENT_IP "192.168.152.129"
-	#define SERVER_IP "192.168.172.128" //zjq,gjc
-	#define CLIENT_IP "192.168.172.128" //zjq,gjc
+	#define SERVER_IP "192.168.152.129" //sql
+	#define CLIENT_IP "192.168.152.129"
+//	#define SERVER_IP "192.168.172.128" //zjq,gjc
+//	#define CLIENT_IP "192.168.172.128" //zjq,gjc
 //	#define SERVER_IP "192.168.121.129" //wsk
 //	#define CLIENT_IP "192.168.121.129"
 #else

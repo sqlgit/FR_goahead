@@ -1271,6 +1271,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* waitToolAI */
 	} else if (strstr(pgvalue->valuestring, "WaitToolAI")) {
 		cmd = 221;
+	/* ActGripper */
+	} else if (strstr(pgvalue->valuestring, "ActGripper")) {
+		cmd = 227;
 	/* MoveGripper */
 	} else if (strstr(pgvalue->valuestring, "MoveGripper")) {
 		cmd = 228;

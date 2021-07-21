@@ -234,6 +234,18 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_TORQUESYS);
 	create_dir(DIR_SYSVAR);
 	delete_log_file(0);
+
+	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
+	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {
+		printf("update file dir\n");
+		/** 更新 file 文件夹 */
+		if (update_file_dir() == SUCCESS) {
+			/* 更新完成，删除 “升级成功” 的标志文件夹 */
+			char cmd[128] = {0};
+			sprintf(cmd, "rm %s%s", DIR_FILE, FILENAME_UP_SUC);
+			system(cmd);
+		}
+	}
 #endif
 
 	pthread_t t_socket_cmd;

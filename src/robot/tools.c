@@ -454,7 +454,7 @@ char *get_dir_filename(const char *dir_path)
 }
 
 /*
-	open dir and judge dir's file name existed or not
+	open dir and judge dir's file name or dir's dir name existed or not
 	return "1" exist, "0" not exist
  */
 int check_dir_filename(const char *dir_path, const char *filename)

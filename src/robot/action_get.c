@@ -83,7 +83,9 @@ static int get_tool_cdsystem(char **ret_f_content)
 	char sql[1024] = {0};
 	cJSON *json_data = NULL;
 
-	sprintf(sql, "select * from coordinate_system order by id ASC");
+	// 此处的 ASC 排序不需要了， 数据库创建时已经以 id 为主键并设置了 ASC 排序
+	//sprintf(sql, "select * from coordinate_system order by id ASC");
+	sprintf(sql, "select * from coordinate_system");
 	if (select_info_nokey_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 	//if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");

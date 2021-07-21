@@ -202,6 +202,79 @@ static int check_version(const char *readme_now_path, const char *readme_up_path
 }
 
 /**
+  check robot type
+*/
+static int check_robot_type()
+{
+	FILE *fp_up = NULL;
+	char strline_up[LINE_LEN] = {0};
+	char **array_up = NULL;
+	int size_up = 0;
+	FILE *fp_now = NULL;
+	char strline_now[LINE_LEN] = {0};
+	char **array_now = NULL;
+	int size_now = 0;
+	char cmd[128] = {0};
+	char robot_type_now[100] = "";
+	char robot_type_up[100] = "";
+
+	if ((fp_up = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
+		perror("user.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
+		if (is_in(strline_up, "ROBOT_TYPE = ") == 1) {
+			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
+				perror("string to string list");
+				fclose(fp_up);
+				string_list_free(array_up, size_up);
+
+				return FAIL;
+			}
+			strcpy(robot_type_up, array_up[1]);
+			string_list_free(array_up, size_up);
+
+			break;
+		}
+		bzero(strline_up, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp_up);
+
+	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("now user.config : open file");
+
+		return FAIL;
+	}
+	while (fgets(strline_now, LINE_LEN, fp_now) != NULL) {
+		if (is_in(strline_now, "ROBOT_TYPE = ") == 1) {
+			if (string_to_string_list(strline_now, " = ", &size_now, &array_now) == 0 || size_now != 2) {
+				perror("string to string list");
+				fclose(fp_now);
+				string_list_free(array_now, size_now);
+
+				return FAIL;
+			}
+			strcpy(robot_type_now, array_now[1]);
+			string_list_free(array_now, size_now);
+
+			break;
+		}
+		bzero(strline_now, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp_now);
+
+	if (strcmp(robot_type_now, robot_type_up) == 0) {
+
+		return SUCCESS;
+	} else {
+		perror("robot type is not same!");
+
+		return FAIL;
+	}
+}
+
+/**
   update user.config/ex_device.config/exaxis.config
 */
 static int update_config(char *filename)
@@ -309,77 +382,94 @@ static int update_config(char *filename)
 	return write_file(now_filename, write_content);
 }
 
-/**
-  check robot type
-*/
-static int check_robot_type()
+int update_file_dir()
 {
-	FILE *fp_up = NULL;
-	char strline_up[LINE_LEN] = {0};
-	char **array_up = NULL;
-	int size_up = 0;
-	FILE *fp_now = NULL;
-	char strline_now[LINE_LEN] = {0};
-	char **array_now = NULL;
-	int size_now = 0;
+	char sql[MAX_BUF] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
 	char cmd[128] = {0};
-	char robot_type_now[100] = "";
-	char robot_type_up[100] = "";
 
-	if ((fp_up = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
-		perror("user.config : open file");
+	/**
+		更新 coordinate_system.db
+		V3.1.7 版本中增加 type，installation_site 两列
+	*/
+	memset(sql, MAX_BUF, 0);
+	sprintf(sql, "select * from coordinate_system");
+	if (select_info_sqlite3(DB_CDSYSTEM, sql, &resultp, &nrow, &ncloumn) == -1) {
+		perror("select");
+		sqlite3_free_table(resultp); //释放结果集
 
 		return FAIL;
 	}
-	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
-		if (is_in(strline_up, "ROBOT_TYPE = ") == 1) {
-			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
-				perror("string to string list");
-				fclose(fp_up);
-				string_list_free(array_up, size_up);
+	sqlite3_free_table(resultp); //释放结果集
+	if (ncloumn != 10) {
+		memset(sql, MAX_BUF, 0);
+		sprintf(sql, "\
+		PRAGMA foreign_keys = 0; \
+		CREATE TABLE sqlitestudio_temp_table AS SELECT *FROM coordinate_system; \
+		DROP TABLE coordinate_system; \
+		CREATE TABLE coordinate_system ( \
+				name              TEXT, \
+				id                INTEGER PRIMARY KEY ASC,\
+				x                 TEXT, \
+				y                 TEXT, \
+				z                 TEXT, \
+				rx                TEXT, \
+				ry                TEXT, \
+				rz                TEXT, \
+				type              TEXT    DEFAULT (0), \
+				installation_site TEXT    DEFAULT (0) \
+				); \
+		INSERT INTO coordinate_system ( \
+				name, \
+				id, \
+				x, \
+				y, \
+				z, \
+				rx, \
+				ry, \
+				rz \
+				) \
+			SELECT name, \
+				   id, \
+				   x, \
+				   y, \
+				   z, \
+				   rx, \
+				   ry, \
+				   rz \
+					   FROM sqlitestudio_temp_table; \
+		DROP TABLE sqlitestudio_temp_table; \
+		PRAGMA foreign_keys = 1; \
+		");
+		printf("strlen sql = %d\n", strlen(sql));
+		if (change_info_sqlite3(DB_CDSYSTEM, sql) == -1) {
+			perror("database");
 
-				return FAIL;
-			}
-			strcpy(robot_type_up, array_up[1]);
-			string_list_free(array_up, size_up);
-
-			break;
+			return FAIL;
 		}
-		bzero(strline_up, sizeof(char)*LINE_LEN);
 	}
-	fclose(fp_up);
 
-	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
-		perror("now user.config : open file");
-
-		return FAIL;
+	/**
+		如果 sysvar 文件夹下相关文件不存在， 更新 sysvar 系统变量文件夹
+	*/
+	if (check_dir_filename(DIR_SYSVAR, "sysvar.db") == 0) {
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cp -r %s/* %s", DIR_FACTORY_RESET_SYSVAR, DIR_SYSVAR);
+		system(cmd);
 	}
-	while (fgets(strline_now, LINE_LEN, fp_now) != NULL) {
-		if (is_in(strline_now, "ROBOT_TYPE = ") == 1) {
-			if (string_to_string_list(strline_now, " = ", &size_now, &array_now) == 0 || size_now != 2) {
-				perror("string to string list");
-				fclose(fp_now);
-				string_list_free(array_now, size_now);
 
-				return FAIL;
-			}
-			strcpy(robot_type_now, array_now[1]);
-			string_list_free(array_now, size_now);
-
-			break;
-		}
-		bzero(strline_now, sizeof(char)*LINE_LEN);
+	/**
+		如果 torquesys 文件夹下相关文件不存在， 更新 torquesys 扭矩文件夹
+	*/
+	if (check_dir_filename(DIR_TORQUESYS, "torquesys_cfg.db") == 0) {
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cp -r %s/* %s", DIR_FACTORY_RESET_TORQUESYS, DIR_TORQUESYS);
+		system(cmd);
 	}
-	fclose(fp_now);
 
-	if (strcmp(robot_type_now, robot_type_up) == 0) {
-
-		return SUCCESS;
-	} else {
-		perror("robot type is not same!");
-
-		return FAIL;
-	}
+	return SUCCESS;
 }
 
 void upload(Webs *wp)
@@ -544,6 +634,11 @@ void upload(Webs *wp)
 		}
 		//system("rm -f /root/fr_user_data.tar.gz");
 	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
+		/* 准备升级， 进入升级流程， 首先删除标志 “升级成功” 的文件（可能升级之前该文件就已经存在） */
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "rm %s%s", DIR_FILE, FILENAME_UP_SUC);
+		system(cmd);
+
 		system("cd /tmp && tar -zxvf software.tar.gz");
 		// md5 check && verison check
 		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL || check_upfile(UPGRADE_FR_CONTROL, README_CTL_NOW, README_CTL_UP) == FAIL) {
@@ -563,8 +658,16 @@ void upload(Webs *wp)
 			perror("uncompress fail!");
 			goto end;
 		}
+
+		/** 更新文件 */
 		/** 更新 user.config 文件 */
-		update_config(ROBOT_CFG);
+		if (update_config(ROBOT_CFG) == FAIL){
+			my_syslog("普通操作", "升级 user.config 失败", cur_account.username);
+			my_en_syslog("normal operation", "Failed to upgrade user.config", cur_account.username);
+			my_jap_syslog("普通の操作", "user.config のアップグレードに失敗", cur_account.username);
+			perror("user.config");
+			goto end;
+		}
 		/* 下发 set rebot type 指令，确保 robot type 正确 */
 		/*if (send_cmd_set_robot_type() == FAIL) {
 			perror("send cmd set robot type!");
@@ -572,13 +675,35 @@ void upload(Webs *wp)
 			goto end;
 		}*/
 		/** 更新 ex_device.config 文件 */
-		update_config(EX_DEVICE_CFG);
+		if (update_config(EX_DEVICE_CFG) == FAIL){
+			my_syslog("普通操作", "升级 ex_device.config 失败", cur_account.username);
+			my_en_syslog("normal operation", "Failed to upgrade ex_device.config", cur_account.username);
+			my_jap_syslog("普通の操作", "ex_device.config のアップグレードに失敗", cur_account.username);
+			perror("ex_device.config");
+			goto end;
+		}
 		/** 更新 exaxis.config 文件 */
-		update_config(EXAXIS_CFG);
+		if (update_config(EXAXIS_CFG) == FAIL){
+			my_syslog("普通操作", "升级 exaxis.config 失败", cur_account.username);
+			my_en_syslog("normal operation", "Failed to upgrade exaxis.config", cur_account.username);
+			my_jap_syslog("普通の操作", "exaxis.config のアップグレードに失敗", cur_account.username);
+			perror("exaxis.config");
+			goto end;
+		}
+
+		/** 更新 file 文件夹 */
+		/*if (update_file_dir() == FAIL){
+			my_syslog("普通操作", "升级 FAILDIR 失败", cur_account.username);
+			my_en_syslog("normal operation", "Failed to upgrade FAILDIR", cur_account.username);
+			my_jap_syslog("普通の操作", "FAILDIR のアップグレードに失敗", cur_account.username);
+			perror("FAILDIR");
+			goto end;
+		}*/
 
 		/** 文件写入硬盘需要一定时间，等待 1 秒 */
 		//sleep(1);
 
+		/** 更新 webserver 文件夹 */
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
 		//sprintf(cmd, "sh %s", SHELL_WEBTARCP);
@@ -595,6 +720,8 @@ void upload(Webs *wp)
 		my_en_syslog("normal operation", "Successed to upgrade webapp", cur_account.username);
 		my_jap_syslog("普通の操作", "webappのアップグレードに成功", cur_account.username);
 
+
+		/** 更新 control 相关文件 */
 		bzero(cmd, sizeof(cmd));
 #if recover_mode
 		//sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
@@ -612,6 +739,11 @@ void upload(Webs *wp)
 		my_jap_syslog("普通の操作", "コントローラソフトウェアのアップグレードに成功", cur_account.username);
 
 		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/fr_control && rm -rf /tmp/web && rm -rf /tmp/software");
+
+		/* 创建标志 “升级成功” 的文件 */
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "touch %s%s", DIR_FILE, FILENAME_UP_SUC);
+		system(cmd);
 
 		/** 文件写入硬盘需要一定时间，等待 10 秒 */
 		sleep(10);

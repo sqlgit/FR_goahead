@@ -1,6 +1,7 @@
 #ifndef filehandler_h
 #define filehandler_h
 
+int update_file_dir();
 /*upload*/
 void upload(Webs *wp);
 /*download*/

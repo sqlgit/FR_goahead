@@ -768,6 +768,16 @@ static int SplineEnd(lua_State* L)
 	return 1;
 }
 
+static int ActGripper(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1085,14 +1095,14 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ConveyorTrackEnd", ConveyorTrackEnd);
 	lua_register(luaEnv, "GetSysVarValue", GetSysVarValue);
 	lua_register(luaEnv, "SetSysVarValue", SetSysVarValue);
-
-
 	lua_register(luaEnv, "ServoJ", ServoJ);
 	lua_register(luaEnv, "Pause", Pause);
 	lua_register(luaEnv, "Stop", Stop);
 	lua_register(luaEnv, "SplineStart", SplineStart);
 	lua_register(luaEnv, "SplineEnd", SplineEnd);
-	/** 机器人本地尚未实现 */
+	lua_register(luaEnv, "ActGripper", ActGripper);
+
+	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);
 	lua_register(luaEnv, "VMoveJ", VMoveJ);
 	lua_register(luaEnv, "VMoveL", VMoveL);

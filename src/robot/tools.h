@@ -49,6 +49,7 @@
 #define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
+#define FILENAME_UP_SUC "upgrade_success.txt"
 
 #define DIR_SHELL "/root/web/webserver/shell/"
 #define DIR_FACTORY "/root/web/webserver/file_factory/"
@@ -67,7 +68,9 @@
 #define DIR_FRUSER "/fruser/"
 #define DIR_ROBOT_TYPE "/root/RobotType/"
 #define DIR_TORQUESYS "/root/web/file/torquesys/"
+#define DIR_FACTORY_RESET_TORQUESYS "/root/web/webserver/file_factory/torquesys/"
 #define DIR_SYSVAR "/root/web/file/sysvar/"
+#define DIR_FACTORY_RESET_SYSVAR "/root/web/webserver/file_factory/sysvar/"
 
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"
