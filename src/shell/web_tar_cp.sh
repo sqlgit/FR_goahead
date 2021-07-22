@@ -2,7 +2,6 @@
 
 echo "##### CP web upgrade file"
 
-echo "##### Upload web upgrade file success!"
 cp /tmp/software/README_WEB.txt /root/README/
 
 #tar -zxvf /tmp/webapp/web.tar.gz -C /root/
@@ -16,6 +15,8 @@ cd /root/web/frontend/
 rm -rf !(file)
 cd -
 cp -R /tmp/web/frontend /root/web/
+
+echo "##### Upload web upgrade file success!"
 
 wait
 

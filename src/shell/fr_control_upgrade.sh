@@ -114,6 +114,14 @@ echo "##### Upload fr_control upgrade file success!"
 #echo "##### rm temporary file in the TMP directory"
 #rm -rf /tmp/fr_control
 
+# 创建标志 “升级成功” 的文件
+touch /root/web/file/upgrade_success.txt
+
+echo "#### sleep 10 "
+
+# 文件写入硬盘需要一定时间，等待 15 秒
+sleep 15
+
 echo "##### need shutdown!"
 
 wait

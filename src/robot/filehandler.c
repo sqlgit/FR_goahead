@@ -741,12 +741,12 @@ void upload(Webs *wp)
 		system("rm -f /tmp/software.tar.gz && rm -rf /tmp/fr_control && rm -rf /tmp/web && rm -rf /tmp/software");
 
 		/* 创建标志 “升级成功” 的文件 */
-		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "touch %s%s", DIR_FILE, FILENAME_UP_SUC);
-		system(cmd);
+	//	bzero(cmd, sizeof(cmd));
+	//	sprintf(cmd, "touch %s%s", DIR_FILE, FILENAME_UP_SUC);
+	//	system(cmd);
 
 		/** 文件写入硬盘需要一定时间，等待 10 秒 */
-		sleep(10);
+	//	sleep(10);
 
 	//	system("sleep 1 && shutdown -b &");
 
