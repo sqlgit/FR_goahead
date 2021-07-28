@@ -1041,7 +1041,8 @@ static void *socket_send_thread(void *arg)
 		}
 
 		//delay(1);
-		usleep(1000);
+		// 延迟 20 ms
+		usleep(20000);
 	}
 }
 

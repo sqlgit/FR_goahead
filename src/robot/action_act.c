@@ -1304,7 +1304,29 @@ static int rename_var(const cJSON *data_json)
 /* clear product info */
 static int clear_product_info(const cJSON *data_json)
 {
+	SOCKET_INFO *sock_cmd = NULL;
+	cJSON *station = NULL;
+
+	station = cJSON_GetObjectItem(data_json, "station");
 	// set sys value
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
+
+	/* 左工位清除 */
+	if (station->valueint == 0) {
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(12, 0)", 1);
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(13, 0)", 1);
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(14, 0)", 1);
+	}
+	/* 右工位清除 */
+	if (station->valueint == 1) {
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(17, 0)", 1);
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(18, 0)", 1);
+		socket_enquene(sock_cmd, 511, "SetSysVarValue(19, 0)", 1);
+	}
 
 	return SUCCESS;
 }

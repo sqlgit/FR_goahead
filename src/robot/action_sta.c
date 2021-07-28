@@ -2659,18 +2659,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->motionAlarm == 1) {
 		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "LIN 指令姿态变化过大");
+			cJSON_AddStringToObject(error_json, "key", "警告： LIN 指令姿态变化过大");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "The LIN command posture has changed too much");
+			cJSON_AddStringToObject(error_json, "key", "Warning: The LIN command posture has changed too much");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "linコマンドの姿勢変化が大きすぎる");
+			cJSON_AddStringToObject(error_json, "key", "戒告する: linコマンドの姿勢変化が大きすぎる");
 		}
 		if (pre_state->motionAlarm != 1) {
-			my_syslog("错误", "LIN指令姿态变化过大", cur_account.username);
-			my_en_syslog("error", "The LIN command posture has changed too much", cur_account.username);
-			my_jap_syslog("さくご", "linコマンドの姿勢変化が大きすぎる", cur_account.username);
+			my_syslog("错误", "警告： LIN指令姿态变化过大", cur_account.username);
+			my_en_syslog("error", "Warning: The LIN command posture has changed too much", cur_account.username);
+			my_jap_syslog("さくご", "戒告する: linコマンドの姿勢変化が大きすぎる", cur_account.username);
 			pre_state->motionAlarm = 1;
 		}
 	} else {

@@ -485,7 +485,7 @@ static int get_robot_cfg(char **ret_f_content)
 	fclose(fp);
 	//clock_gettime(CLOCK_REALTIME, &end);
 	//printf("after fclose, %d, %ld\n", end.tv_sec, end.tv_nsec);
-	printf("line_num = %d\n", line_num);
+	//printf("line_num = %d\n", line_num);
 	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
@@ -538,7 +538,7 @@ static int get_ex_device_cfg(char **ret_f_content)
 		line_num++;
 	}
 	fclose(fp);
-	printf("line_num = %d\n", line_num);
+	//printf("line_num = %d\n", line_num);
 	*ret_f_content = cJSON_Print(root_json);
 	cJSON_Delete(root_json);
 	root_json = NULL;
