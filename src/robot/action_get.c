@@ -1592,6 +1592,7 @@ static int get_DIO_cfg(char **ret_f_content)
 
 	/* file is not exist or empty */
 	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
 		perror("file is not exist or empty");
 
 		return FAIL;
@@ -1821,8 +1822,10 @@ void get(Webs *wp)
 	websWrite(wp, ret_f_content);
 	websDone(wp);
 	/* free ret_f_content */
-	free(ret_f_content);
-	ret_f_content = NULL;
+	if (ret_f_content != NULL) {
+		free(ret_f_content);
+		ret_f_content = NULL;
+	}
 
 	return;
 

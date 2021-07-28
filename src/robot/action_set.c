@@ -294,7 +294,6 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	cJSON *installation_site = NULL;
 	cJSON *type = NULL;
 
-
 	/* 如果 lua 文件是旧版本格式，需要进行转换 */
 	char old_head[MAX_BUF] = { 0 }; // 存储 lua_cmd 中":", 之前的字符串内容
 	char *old_ptr = NULL;  // 指向 lua_cmd 中 ":" 之后的字符串指针
@@ -302,28 +301,28 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	char *old_comment = NULL; // 指向 lua_cmd 中 "--" 之后的字符串指针
 	char new_lua_cmd[MAX_BUF] = { 0 }; // 存储转换后的 new_lua_cmd 字符串内容
 
-	printf("lua_cmd = %s\n", lua_cmd);
+	//printf("lua_cmd = %s\n", lua_cmd);
 	if (old_ptr = strstr(lua_cmd, "WaitTime")) {
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
 		sprintf(new_lua_cmd, "%sWaitMs%s", old_head, (old_ptr + 8));
 		lua_cmd = new_lua_cmd;
-		printf("lua_cmd = %s\n", lua_cmd);
+		//printf("lua_cmd = %s\n", lua_cmd);
 	}
 	if (old_ptr = strstr(lua_cmd, "EXT_AXIS_SETHOMING")) {
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
 		sprintf(new_lua_cmd, "%sExtAxisSetHoming%s", old_head, (old_ptr + 18));
 		lua_cmd = new_lua_cmd;
-		printf("lua_cmd = %s\n", lua_cmd);
+		//printf("lua_cmd = %s\n", lua_cmd);
 	}
 	if ((old_ptr = strstr(lua_cmd, ":")) && (strstr(lua_cmd, "::") == NULL)) {
-		printf("old_ptr = %s\n", old_ptr);
+		//printf("old_ptr = %s\n", old_ptr);
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
-		printf("old_head = %s\n", old_head);
+		//printf("old_head = %s\n", old_head);
 		//strcpy(old_end, (old_ptr + 1));
 		if (old_comment = strstr(old_ptr, "--")) {
-			printf("old_comment = %s\n", old_comment);
+			//printf("old_comment = %s\n", old_comment);
 			strncpy(old_ptr_comment, (old_ptr + 1), (old_comment - old_ptr - 1));
-			printf("old_ptr_comment = %s\n", old_ptr_comment);
+			//printf("old_ptr_comment = %s\n", old_ptr_comment);
 			/* 去掉字符串结尾多余空格 */
 			//old_ptr_comment[strlen(old_ptr_comment)] = '\0';
 			//printf("old_ptr_comment = %s\n", old_ptr_comment);
@@ -332,12 +331,12 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(new_lua_cmd, "%s(%s)", old_head, (old_ptr + 1));
 		}
 		lua_cmd = new_lua_cmd;
-		printf("lua_cmd = %s\n", lua_cmd);
+		//printf("lua_cmd = %s\n", lua_cmd);
 	}
 
 
 	/* laserPTP */
-	if (ptr = strstr(lua_cmd, "laserPTP")) {
+	if ((ptr = strstr(lua_cmd, "laserPTP(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 9), (end_ptr - ptr - 10));
@@ -349,7 +348,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sMoveJ(%s,%s)%s\n", head, cmd_array[0], cmd_array[1], end_ptr);
 		strcat(file_content, content);
 	/* EXT_AXIS_PTP */
-	} else if (ptr = strstr(lua_cmd, "EXT_AXIS_PTP")) {
+	} else if ((ptr = strstr(lua_cmd, "EXT_AXIS_PTP(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 13), (end_ptr - ptr - 14));
@@ -378,7 +377,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		strcat(file_content, content);
 	/* PTP */
-	} else if (ptr = strstr(lua_cmd, "PTP")) {
+	} else if ((ptr = strstr(lua_cmd, "PTP(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
@@ -442,8 +441,8 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, end_ptr);
 		}
 		strcat(file_content, content);
-	/* SPL */
-	} else if (ptr = strstr(lua_cmd, "SPL")) {
+	/* SPTP */
+	} else if ((ptr = strstr(lua_cmd, "SPTP(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
@@ -499,7 +498,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], end_ptr);
 		strcat(file_content, content);
 	/* laserLin */
-	} else if (ptr = strstr(lua_cmd, "laserLin")) {
+	} else if ((ptr = strstr(lua_cmd, "laserLin(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 9), (end_ptr - ptr - 10));
@@ -511,7 +510,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sMoveL(%s,%s)%s\n", head, cmd_array[0], cmd_array[1], end_ptr);
 		strcat(file_content, content);
 	/* SLIN */
-	} else if (ptr = strstr(lua_cmd, "SLIN")) {
+	} else if ((ptr = strstr(lua_cmd, "SLIN(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 5), (end_ptr - ptr - 6));
@@ -567,9 +566,19 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSplineLINE(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], end_ptr);
 		strcat(file_content, content);
 	/* Lin */
-	} else if (ptr = strstr(lua_cmd, "Lin")) {
+	} else if ((ptr = strstr(lua_cmd, "Lin(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
+		/*
+		printf("end_ptr = %s\n", end_ptr);
+		printf("ptr = %s\n", ptr);
+		printf("ptr - lua_cmd = %d\n", (ptr - lua_cmd));
+		*/
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
+		/*
+		printf("head = %s\n", head);
+		printf("end_ptr - ptr - 5 = %d\n", (end_ptr - ptr - 5));
+		printf("ptr + 4 = %s\n", (ptr + 4));
+		*/
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
 			perror("string to string list");
@@ -657,7 +666,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		strcat(file_content, content);
 	/* ARC */
-	} else if (ptr = strstr(lua_cmd, "ARC")) {
+	} else if ((ptr = strstr(lua_cmd, "ARC(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
@@ -764,7 +773,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], end_ptr);
 		strcat(file_content, content);
 	/* SCIRC */
-	} else if (ptr = strstr(lua_cmd, "SCIRC")) {
+	} else if ((ptr = strstr(lua_cmd, "SCIRC(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 6), (end_ptr - ptr - 7));
@@ -867,7 +876,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSplineCIRC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2], end_ptr);
 		strcat(file_content, content);
 	/* set AO */
-	} else if (ptr = strstr(lua_cmd, "SetAO")) {
+	} else if ((ptr = strstr(lua_cmd, "SetAO(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 6), (end_ptr - ptr - 7));
@@ -879,7 +888,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetAO(%s,%.2f)%s\n", head, cmd_array[0], (float)(atoi(cmd_array[1])*40.95), end_ptr);
 		strcat(file_content, content);
 	/* set ToolAO */
-	} else if (ptr = strstr(lua_cmd, "SetToolAO")) {
+	} else if ((ptr = strstr(lua_cmd, "SetToolAO(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 10), (end_ptr - ptr - 11));
@@ -891,7 +900,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetToolAO(%s,%.2f)%s\n", head, cmd_array[0], (float)(atoi(cmd_array[1])*40.95), end_ptr);
 		strcat(file_content, content);
 	/* soft-PLC setAO */
-	} else if (ptr = strstr(lua_cmd, "SPLCSetAO")) {
+	} else if ((ptr = strstr(lua_cmd, "SPLCSetAO(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 10), (end_ptr - ptr - 11));
@@ -903,7 +912,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSPLCSetAO(%s,%.2f)%s\n", head, cmd_array[0], (float)(atoi(cmd_array[1])*40.95), end_ptr);
 		strcat(file_content, content);
 	/* soft-PLC setToolAO */
-	} else if (ptr = strstr(lua_cmd, "SPLCSetToolAO")) {
+	} else if ((ptr = strstr(lua_cmd, "SPLCSetToolAO(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 14), (end_ptr - ptr - 15));
@@ -915,7 +924,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSPLCSetToolAO(%s,%.2f)%s\n", head, cmd_array[0], (float)(atoi(cmd_array[1])*40.95), end_ptr);
 		strcat(file_content, content);
 	/* set ToolList */
-	} else if (ptr = strstr(lua_cmd, "SetToolList")) {
+	} else if ((ptr = strstr(lua_cmd, "SetToolList(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
@@ -945,7 +954,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetToolList(%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, type->valuestring, installation_site->valuestring, end_ptr);
 		strcat(file_content, content);
 	/* SetWobjList */
-	} else if (ptr = strstr(lua_cmd, "SetWobjList")) {
+	} else if ((ptr = strstr(lua_cmd, "SetWobjList(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
@@ -973,7 +982,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetWobjList(%s,%s,%s,%s,%s,%s,%s)%s\n", head, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, end_ptr);
 		strcat(file_content, content);
 	/* SetExToolList */
-	} else if (ptr = strstr(lua_cmd, "SetExToolList")) {
+	} else if ((ptr = strstr(lua_cmd, "SetExToolList(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 14), (end_ptr - ptr - 15));
@@ -1007,7 +1016,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetExToolList(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, (atoi(id->valuestring) + 14), ex->valuestring, ey->valuestring, ez->valuestring, erx->valuestring, ery->valuestring, erz->valuestring, tx->valuestring, ty->valuestring, tz->valuestring, trx->valuestring, try->valuestring, trz->valuestring, end_ptr);
 		strcat(file_content, content);
 	/* PostureAdjustOn */
-	} else if (ptr = strstr(lua_cmd, "PostureAdjustOn")) {
+	} else if ((ptr = strstr(lua_cmd, "PostureAdjustOn(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 16), (end_ptr - ptr - 17));
@@ -1055,7 +1064,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10], end_ptr);
 		strcat(file_content, content);
 	/* RegisterVar */
-	} else if (ptr = strstr(lua_cmd, "RegisterVar")) {
+	} else if ((ptr = strstr(lua_cmd, "RegisterVar(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
@@ -1082,7 +1091,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		strcat(file_content, content);
 	/* SetSysVarValue */
-	} else if (ptr = strstr(lua_cmd, "SetSysVarValue")) {
+	} else if ((ptr = strstr(lua_cmd, "SetSysVarValue(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 15), (end_ptr - ptr - 16));
@@ -1104,7 +1113,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sSetSysVarValue(%s,%s)%s\n", head, id->valuestring, cmd_array[1], end_ptr);
 		strcat(file_content, content);
 	/* GetSysVarValue */
-	} else if (ptr = strstr(lua_cmd, "GetSysVarValue")) {
+	} else if ((ptr = strstr(lua_cmd, "GetSysVarValue(")) && strstr(lua_cmd, ")")) {
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 15), (end_ptr - ptr - 16));

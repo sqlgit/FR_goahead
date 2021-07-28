@@ -145,14 +145,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	rightstation_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(jiabao_torquesys_json, "left_station", leftstation_json);
 	cJSON_AddItemToObject(jiabao_torquesys_json, "right_station", rightstation_json);
-	cJSON_AddNumberToObject(leftstation_json, "workpiece_index", 0);
-	cJSON_AddNumberToObject(leftstation_json, "product_count", 100);
-	cJSON_AddNumberToObject(leftstation_json, "NG_count", 10);
-	cJSON_AddNumberToObject(leftstation_json, "work_time", 40);
-	cJSON_AddNumberToObject(rightstation_json, "workpiece_index", 1);
-	cJSON_AddNumberToObject(rightstation_json, "product_count", 100);
-	cJSON_AddNumberToObject(rightstation_json, "NG_count", 10);
-	cJSON_AddNumberToObject(rightstation_json, "work_time", 40);
+	cJSON_AddNumberToObject(leftstation_json, "workpiece_index", state->sys_var[10]);
+	cJSON_AddNumberToObject(leftstation_json, "product_count", state->sys_var[11]);
+	cJSON_AddNumberToObject(leftstation_json, "NG_count", state->sys_var[12]);
+	cJSON_AddNumberToObject(leftstation_json, "work_time", state->sys_var[13]);
+	cJSON_AddNumberToObject(rightstation_json, "workpiece_index", state->sys_var[15]);
+	cJSON_AddNumberToObject(rightstation_json, "product_count", state->sys_var[16]);
+	cJSON_AddNumberToObject(rightstation_json, "NG_count", state->sys_var[17]);
+	cJSON_AddNumberToObject(rightstation_json, "work_time", state->sys_var[18]);
 	//}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
