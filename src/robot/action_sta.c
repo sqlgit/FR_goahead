@@ -110,6 +110,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "btn_box_stop_signal", state->btn_box_stop_signal);
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 	cJSON_AddNumberToObject(root_json, "pause_parameter", state->pause_parameter);
+	cJSON_AddNumberToObject(root_json, "tpd_record_state", state->tpd_record_state);
 	if (basic_index%10 == 0) {
 		local_now_time(time_now);
 	}
@@ -2782,6 +2783,26 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	} else {
 		pre_state->ts_tm_state_com_error = 0;
+	}
+
+	if (state->interfereAlarm == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(error_json, "key", "警告：进入干涉区");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(error_json, "key", "Warning: Entering interference zone");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(error_json, "key", "警告:干渉領域に入る");
+		}
+		if (pre_state->interfereAlarm != 1) {
+			my_syslog("错误", "警告：进入干涉区", cur_account.username);
+			my_en_syslog("error", "Warning: Entering interference zone", cur_account.username);
+			my_jap_syslog("さくご", "警告:干渉領域に入る", cur_account.username);
+			pre_state->interfereAlarm = 1;
+		}
+	} else {
+		pre_state->interfereAlarm = 0;
 	}
 
 	buf = cJSON_Print(root_json);

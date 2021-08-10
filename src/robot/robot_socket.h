@@ -160,6 +160,7 @@ typedef struct _CTRL_STATE
 	double	   conveyorWorkPiecePos;	/** 传送带工件当前位置，单位mm */
 	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号, 1-按下急停 */
 	uint8_t	   motionAlarm;				/** 运动警告 */
+	uint8_t	   interfereAlarm;			/** 进入干涉区警告 */
 	double	   register_var[6];			/** 注册变量 */
 	uint8_t	   encoder_type_flag;		/** 编码器类型切换完成标志,0:未完成,1:完成,2:超时 */
 	uint8_t	   curEncoderType[6]; 		/** 当前各轴编码器类型,0:光编,1:磁编 */
@@ -170,6 +171,7 @@ typedef struct _CTRL_STATE
 	uint8_t    ts_tm_state_com_error; 	/** 扭矩：TM-扭矩 状态反馈，通信失败 */
 	uint8_t	   pause_parameter; 		/** pause 参数 */
 	float	   sys_var[TM_SYS_VAR_NUM]; /** 系统变量 */
+	uint8_t	   tpd_record_state;		/** TPD记录状态， 1-记录中， 0-不记录 */
 } CTRL_STATE;
 #pragma pack(pop)
 

@@ -326,7 +326,7 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 	send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
 	sendbuf = (char *)calloc(1, sizeof(char)*(send_len));
 	if (sendbuf == NULL) {
-		perror("calloc\n");
+		perror("calloc");
 
 		return FAIL;
 	}
@@ -1563,7 +1563,7 @@ void *socket_state_feedback_thread(void *arg)
 //	char *frame = NULL;//提取出一帧, 存放buf
 	char frame[STATEFB_SIZE] = {0};
 	int recv_len = 0;
-	char **array = NULL;
+	//char **array = NULL;
 	int varnum = 0;
 	int varnum_len = 0;
 	printf("port = %d\n", port);
@@ -1765,8 +1765,8 @@ void *socket_state_feedback_thread(void *arg)
 						strcat(state_fb.buf, pkg_content);
 						//free(pkg_content);
 						//pkg_content = NULL;
-						printf("state_fb.buf strlen = %d\n", strlen(state_fb.buf));
-						printf("state_fb.index = %d\n", state_fb.index);
+						//printf("state_fb.buf strlen = %d\n", strlen(state_fb.buf));
+						//printf("state_fb.index = %d\n", state_fb.index);
 						state_fb.index++;
 						//time_5 = clock();
 						//printf("time_5, %d\n", time_5);
@@ -1831,7 +1831,7 @@ void *socket_state_feedback_thread(void *arg)
 						state_fb.index++;*/
 					}
 				}
-				string_list_free(array, size);
+				//string_list_free(array, size);
 				//printf("after StringToBytes\n");
 			}
 		}

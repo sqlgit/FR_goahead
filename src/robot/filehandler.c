@@ -443,7 +443,7 @@ int update_file_dir()
 		DROP TABLE sqlitestudio_temp_table; \
 		PRAGMA foreign_keys = 1; \
 		");
-		printf("strlen sql = %d\n", strlen(sql));
+		//printf("strlen sql = %d\n", strlen(sql));
 		if (change_info_sqlite3(DB_CDSYSTEM, sql) == -1) {
 			perror("database");
 
@@ -452,6 +452,7 @@ int update_file_dir()
 	}
 
 	/**
+	    V3.1.8 版本
 		如果 sysvar 文件夹下相关文件不存在， 更新 sysvar 系统变量文件夹
 	*/
 	if (check_dir_filename(DIR_SYSVAR, "sysvar.db") == 0) {
@@ -461,9 +462,14 @@ int update_file_dir()
 	}
 
 	/**
+	    V3.1.8 版本:
+		增加了 torquesys_cfg.db torquesys_DIO.txt torquesys_pageflag.txt 文件
+	    V3.1.9 版本:
+		增加了 torquesys_points.db 文件
+
 		如果 torquesys 文件夹下相关文件不存在， 更新 torquesys 扭矩文件夹
 	*/
-	if (check_dir_filename(DIR_TORQUESYS, "torquesys_cfg.db") == 0) {
+	if (check_dir_filename(DIR_TORQUESYS, "torquesys_points.db") == 0) {
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cp -r %s/* %s", DIR_FACTORY_RESET_TORQUESYS, DIR_TORQUESYS);
 		system(cmd);

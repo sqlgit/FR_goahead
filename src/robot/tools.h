@@ -46,7 +46,7 @@
 #define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
 #define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
 #define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
-#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
+//#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
 #define FILENAME_UP_SUC "upgrade_success.txt"
@@ -80,6 +80,7 @@
 #define DB_ACCOUNT "/root/web/account/account.db"
 #define DB_SYSVAR "/root/web/file/sysvar/sysvar.db"
 #define DB_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.db"
+#define DB_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.db"
 
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
@@ -117,6 +118,7 @@ char *get_file_content(const char *file_path);
 char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);
 char *get_dir_filename(const char *dir_path);
+char *get_dir_filename_strhead(const char *dir_path, const char *str);
 int check_dir_filename(const char *dir_path, const char *filename);
 char *get_dir_filename_txt(const char *dir_path);
 char *strrpc(char *str, const char *oldstr, const char *newstr);

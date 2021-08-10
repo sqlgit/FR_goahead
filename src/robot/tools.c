@@ -453,6 +453,54 @@ char *get_dir_filename(const char *dir_path)
 	return content;
 }
 
+/* open dir and return dir's file name or dir's dir name, filename head with str */
+// Ext:["ptemp_1.lua","ptemp_2.lua"]
+char *get_dir_filename_strhead(const char *dir_path, const char *str)
+{
+	DIR *dir = NULL;
+	struct dirent *ptr = NULL;
+	char *content = NULL;
+	char *buf = NULL;
+	cJSON *root_json = NULL;
+
+	root_json = cJSON_CreateArray();
+	dir = opendir(dir_path);
+	if (dir == NULL) {
+		perror("opendir");
+
+		return NULL;
+	}
+	while ((ptr = readdir(dir)) != NULL) {
+		/* current dir OR parrent dir */
+		if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
+			continue;
+		//printf("ptr->d_name = %s\n", ptr->d_name);
+		//cJSON_AddStringToObject(root_json, "key", ptr->d_name);
+		//cJSON_AddItemToArray(root_json, cJSON_CreateString(ptr->d_name));
+		if (strncmp(ptr->d_name, str, strlen(str)) == 0) {
+			cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
+		}
+	}
+	buf = cJSON_Print(root_json);
+	//printf("buf = %s\n", buf);
+	content = (char *)calloc(1, strlen(buf)+1);
+	if(content != NULL) {
+		strcpy(content, buf);
+	} else {
+		perror("calloc");
+	}
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (dir != NULL) {
+		closedir(dir);
+		dir = NULL;
+	}
+
+	return content;
+}
+
 /*
 	open dir and judge dir's file name or dir's dir name existed or not
 	return "1" exist, "0" not exist

@@ -43,10 +43,13 @@ static int get_robot_type(char **ret_f_content);
 static int get_TSP_flg(char **ret_f_content);
 static int torque_get_wpname_list(char **ret_f_content);
 static int torque_get_cfg(char **ret_f_content, const cJSON *data_json);
-static int torque_get_points(char **ret_f_content);
+static int torque_get_points(char **ret_f_content, const cJSON *data_json);
 static int get_DIO_cfg(char **ret_f_content);
 static int get_varlist(char **ret_f_content);
 static int get_checkvar(char **ret_f_content, const cJSON *data_json);
+static int torque_get_wkpoints(char **ret_f_content, const cJSON *data_json);
+static int torque_get_ptemp_list(char **ret_f_content);
+static int torque_get_main_list(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -84,8 +87,8 @@ static int get_tool_cdsystem(char **ret_f_content)
 	cJSON *json_data = NULL;
 
 	// 此处的 ASC 排序不需要了， 数据库创建时已经以 id 为主键并设置了 ASC 排序
-	//sprintf(sql, "select * from coordinate_system order by id ASC");
-	sprintf(sql, "select * from coordinate_system");
+	sprintf(sql, "select * from coordinate_system order by id ASC");
+	//sprintf(sql, "select * from coordinate_system");
 	if (select_info_nokey_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 	//if (select_info_json_sqlite3(DB_CDSYSTEM, sql, &json_data) == -1) {
 		perror("select coordinate_system");
@@ -1546,32 +1549,89 @@ static int torque_get_cfg(char **ret_f_content, const cJSON *data_json)
 }
 
 /* get torque points and return to page */
-static int torque_get_points(char **ret_f_content)
+static int torque_get_points(char **ret_f_content, const cJSON *data_json)
 {
 	cJSON *root_json = NULL;
+	cJSON *left_workstation_json = NULL;
+	cJSON *right_workstation_json = NULL;
+	cJSON *item = NULL;
+	cJSON *name = NULL;
+	char sql[1024] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	int i = 0;
 
-	*ret_f_content = get_file_content(FILE_TORQUE_POINTS);
-	/* ret_f_content is NULL */
-	if (*ret_f_content == NULL) {
-		perror("get file content");
+	root_json = cJSON_CreateObject();
+	name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	if (name == NULL || name->valuestring == NULL) {
+		perror("json");
 
 		return FAIL;
 	}
 
-	/* file is not exist or empty */
-	if (strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
-		perror("file is not exist or empty");
-		root_json = cJSON_CreateArray();
-		*ret_f_content = cJSON_Print(root_json);
-		cJSON_Delete(root_json);
-		root_json = NULL;
-		if (*ret_f_content == NULL) {
-			perror("cJSON_Print");
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select * from sqlite_master where type = 'table' and name like '%s%';", name->valuestring);
+	/** 如果工件已配置 */
+	if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) != -1) {
+		sqlite3_free_table(resultp);
+		/** 获取工件在左工位上的示教点 */
+		memset(sql, 0, 1024);
+		sprintf(sql, "select * from %s_left;", name->valuestring);
+		if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 			return FAIL;
 		}
+		left_workstation_json = cJSON_CreateArray();
+		for (i = 0; i < nrow; i++) {
+			if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {
+				item = cJSON_CreateObject();
+				cJSON_AddStringToObject(item, resultp[0], resultp[(i + 1) * ncloumn]);
+				cJSON_AddNumberToObject(item, resultp[1], atoi(resultp[(i + 1) * ncloumn + 1]));
+				cJSON_AddItemToArray(left_workstation_json, item);
+			}
+		}
+		cJSON_AddItemToObject(root_json, "left_workstation", left_workstation_json);
+		sqlite3_free_table(resultp); //释放结果集
 
-		return SUCCESS;
+		/** 获取工件在右工位上的示教点 */
+		memset(sql, 0, 1024);
+		sprintf(sql, "select * from %s_right;", name->valuestring);
+		if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+			return FAIL;
+		}
+		right_workstation_json = cJSON_CreateArray();
+		for (i = 0; i < nrow; i++) {
+			if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {
+				item = cJSON_CreateObject();
+				cJSON_AddStringToObject(item, resultp[0], resultp[(i + 1) * ncloumn]);
+				cJSON_AddNumberToObject(item, resultp[1], atoi(resultp[(i + 1) * ncloumn + 1]));
+				cJSON_AddItemToArray(right_workstation_json, item);
+			}
+		}
+		cJSON_AddItemToObject(root_json, "right_workstation", right_workstation_json);
+		sqlite3_free_table(resultp); //释放结果集
+
+		/** 获取工件的示教点配置信息 */
+		memset(sql, 0, 1024);
+		sprintf(sql, "select * from %s_cfg;", name->valuestring);
+		if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+			return FAIL;
+		}
+		cJSON_AddStringToObject(root_json, resultp[0], resultp[ncloumn]);
+		cJSON_AddNumberToObject(root_json, resultp[1], atoi(resultp[ncloumn + 1]));
+	}
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
 	}
 
 	return SUCCESS;
@@ -1662,6 +1722,76 @@ static int get_checkvar(char **ret_f_content, const cJSON *data_json)
 		return FAIL;
 	}
 	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
+/* torque get wkpoints file content */
+static int torque_get_wkpoints(char **ret_f_content, const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	int nrow = 0;
+	int ncloumn = 0;
+	int i = 0;
+	char **resultp = NULL;
+	cJSON *json_data = NULL;
+	cJSON *workpiece_name = NULL;
+
+	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	if (workpiece_name == NULL || workpiece_name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	json_data = cJSON_CreateArray();
+	sprintf(sql, "select name from points where name like '%s%';", workpiece_name->valuestring);
+	if (select_info_sqlite3(DB_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	for (i = 0; i < nrow; i++) {
+		cJSON_AddItemToArray(json_data, cJSON_CreateString(resultp[ncloumn * (i + 1)]));
+	}
+	sqlite3_free_table(resultp); //释放结果集
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get torque ptemp list */
+static int torque_get_ptemp_list(char **ret_f_content)
+{
+	*ret_f_content = get_dir_filename_strhead(DIR_TEMPLATE, "ptemp");
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get torque main list */
+static int torque_get_main_list(char **ret_f_content)
+{
+	*ret_f_content = get_dir_filename_strhead(DIR_TEMPLATE, "main");
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
+
+		return FAIL;
+	}
 
 	return SUCCESS;
 }
@@ -1792,7 +1922,12 @@ void get(Webs *wp)
 		}
 		ret = torque_get_cfg(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "torque_get_points")) {
-		ret = torque_get_points(&ret_f_content);
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = torque_get_points(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_DIO_cfg")) {
 		ret = get_DIO_cfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_varlist")) {
@@ -1804,6 +1939,17 @@ void get(Webs *wp)
 			goto end;
 		}
 		ret = get_checkvar(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "torque_get_wkpoints")) {
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = torque_get_wkpoints(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "torque_get_ptemp_list")) {
+		ret = torque_get_ptemp_list(&ret_f_content);
+	} else if(!strcmp(cmd, "torque_get_main_list")) {
+		ret = torque_get_main_list(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;

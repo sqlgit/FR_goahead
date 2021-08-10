@@ -50,12 +50,14 @@ static int factory_reset(const cJSON *data_json);
 static int odm_password(const cJSON *data_json);
 static int save_robot_type(const cJSON *data_json);
 static int torque_save_cfg(const cJSON *data_json);
+static int generate_luafile(const cJSON *data_json);
 static int torque_ensure_points(const cJSON *data_json);
 static int set_DIO_cfg(const cJSON *data_json);
 static int set_TSP_flg(const cJSON *data_json);
 static int rename_var(const cJSON *data_json);
 static int clear_product_info(const cJSON *data_json);
 static int move_to_home_point(const cJSON *data_json);
+static int torque_generate_program(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -585,7 +587,7 @@ static int remove_points(const cJSON *data_json)
 		if (strcmp(name_index->valuestring, "seamPos") == 0) {
 			continue;
 		}
-		memset(sql,0,sizeof(sql));
+		memset(sql, 0, sizeof(sql));
 		sprintf(sql, "delete from points where name = \'%s\'", name_index->valuestring);
 		if (change_info_sqlite3(DB_POINTS, sql) == -1) {
 			perror("database");
@@ -1169,32 +1171,28 @@ static int torque_save_cfg(const cJSON *data_json)
 	char sql[1204] = {0};
 	cJSON *old_workpiece_name = NULL;
 	cJSON *new_workpiece_name = NULL;
-	cJSON *send_nail_mode = NULL;
-	cJSON *electric_screwdriver_mode = NULL;
-	cJSON *lockscrew_sum = NULL;
 	cJSON *screw_num = NULL;
 	cJSON *screw_time = NULL;
 	cJSON *screw_period = NULL;
 	cJSON *float_time = NULL;
 	cJSON *slip_time = NULL;
+	cJSON *dispensing_time = NULL;
 
 	old_workpiece_name = cJSON_GetObjectItem(data_json, "old_workpiece_name");
 	new_workpiece_name = cJSON_GetObjectItem(data_json, "new_workpiece_name");
-	send_nail_mode = cJSON_GetObjectItem(data_json, "send_nail_mode");
-	electric_screwdriver_mode = cJSON_GetObjectItem(data_json, "electric_screwdriver_mode");
-	lockscrew_sum = cJSON_GetObjectItem(data_json, "lockscrew_sum");
 	screw_num = cJSON_GetObjectItem(data_json, "screw_num");
 	screw_time = cJSON_GetObjectItem(data_json, "screw_time");
 	screw_period = cJSON_GetObjectItem(data_json, "screw_period");
 	float_time = cJSON_GetObjectItem(data_json, "float_time");
 	slip_time = cJSON_GetObjectItem(data_json, "slip_time");
-	if (old_workpiece_name == NULL || new_workpiece_name == NULL || send_nail_mode == NULL || electric_screwdriver_mode == NULL || lockscrew_sum == NULL || screw_num == NULL || screw_time == NULL || screw_period == NULL || float_time == NULL || slip_time == NULL) {
+	dispensing_time = cJSON_GetObjectItem(data_json, "dispensing_time");
+	if (old_workpiece_name == NULL || new_workpiece_name == NULL || screw_num == NULL || screw_time == NULL || screw_period == NULL || float_time == NULL || slip_time == NULL || dispensing_time == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
 
-	sprintf(sql, "update torquesys_cfg set workpiece_name='%s', send_nail_mode=%d, electric_screwdriver_mode=%d, lockscrew_sum=%d, screw_num=%d, screw_time=%d, screw_period=%d, float_time=%d, slip_time=%d where workpiece_name='%s';", new_workpiece_name->valuestring, send_nail_mode->valueint, electric_screwdriver_mode->valueint, lockscrew_sum->valueint, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, old_workpiece_name->valuestring);
+	sprintf(sql, "update torquesys_cfg set workpiece_name='%s', screw_num=%d, screw_time=%d, screw_period=%d, float_time=%d, slip_time=%d, dispensing_time=%d where workpiece_name='%s';", new_workpiece_name->valuestring, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, dispensing_time->valueint, old_workpiece_name->valuestring);
 
 	if (change_info_sqlite3(DB_TORQUE_CFG, sql) == -1) {
 		perror("database");
@@ -1205,31 +1203,311 @@ static int torque_save_cfg(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/** torque ensure points */
-static int torque_ensure_points(const cJSON *data_json)
+/** 生成示教点文件 */
+static int generate_luafile(const cJSON *data_json)
 {
-	char *buf = NULL;
-	int write_ret = FAIL;
-	cJSON *content = NULL;
+	cJSON *workpiece_name = NULL;
+	cJSON *ptemp = NULL;
+	cJSON *perscrew_pnum = NULL;
+	cJSON *left_workstation = NULL;
+	cJSON *right_workstation = NULL;
+	cJSON *item = NULL;
+	cJSON *name = NULL;
+	char cmd[1024] = "";
+	char ptemp_name[100] = "";
+	FILE *fp_ptemp = NULL;
+	char strline[100] = "";
+	char write_line[100] = "";
+	char *write_content = NULL;
+	char pointfile_name[100] = "";
+	char *strstr_ptr = NULL;
+	char strstr_head[100] = "";
+	char point[10] = "";
+	int screw_num = 0;
+	int i = 0;
+	int j = 0;
 
-	content = cJSON_GetObjectItem(data_json, "content");
-	if (content == NULL) {
+	write_content = (char *)calloc(1, sizeof(char)*20000);
+	if (write_content == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
+	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	ptemp = cJSON_GetObjectItem(data_json, "ptemp");
+	perscrew_pnum = cJSON_GetObjectItem(data_json, "perscrew_pnum");
+	left_workstation = cJSON_GetObjectItem(data_json, "left_workstation");
+	right_workstation = cJSON_GetObjectItem(data_json, "right_workstation");
+	if (workpiece_name == NULL || ptemp == NULL || perscrew_pnum == NULL || left_workstation == NULL || left_workstation->type != cJSON_Array || right_workstation == NULL || right_workstation->type != cJSON_Array) {
 		perror("json");
 
 		return FAIL;
 	}
 
-	buf = cJSON_Print(content);
-	write_ret = write_file(FILE_TORQUE_POINTS, buf);
-	free(buf);
-	buf = NULL;
-	if (write_ret == FAIL) {
-		perror("write file");
+	/* 清空旧的工件示教点文件 */
+	memset(cmd, 0, 1024);
+	sprintf(cmd, "rm -f /root/web/file/user/point_%s*", workpiece_name->valuestring);
+	system(cmd);
+
+	sprintf(ptemp_name, "%s%s", DIR_TEMPLATE, ptemp->valuestring);
+
+	/*
+	   锁附单个螺丝所需示教点个数
+	   吹气式: 2
+	   点胶加磁吸：6
+	*/
+	/* 左工位 */
+	screw_num = cJSON_GetArraySize(left_workstation) / perscrew_pnum->valueint;
+	for (i = 1; i <= screw_num; i++) {
+		memset(write_content, 0, 20000);
+		/* 根据选择的工件示教点模板文件，生成新的工件示教点 lua 文件 */
+		if ((fp_ptemp = fopen(ptemp_name, "r")) == NULL) {
+			perror("open file");
+
+			return FAIL;
+		}
+		/* 每个螺丝生成一个示教点文件 */
+		while (fgets(strline, 100, fp_ptemp) != NULL) {
+			memset(write_line, 0, sizeof(char)*100);
+			strcpy(write_line, strline);
+
+			if (strstr_ptr = strstr(strline, "<id>")) {
+				memset(strstr_head, 0, 100);
+				strncpy(strstr_head, strline, (strstr_ptr - strline));
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "%s%d%s", strstr_head, i, (strstr_ptr + strlen("<id>")));
+				memset(strline, 0, sizeof(char)*100);
+				strcpy(strline, write_line);
+			}
+			if (strstr_ptr = strstr(strline, "<station>")) {
+				memset(strstr_head, 0, 100);
+				strncpy(strstr_head, strline, (strstr_ptr - strline));
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "%s%s%s", strstr_head, "left", (strstr_ptr + strlen("<station>")));
+				memset(strline, 0, sizeof(char)*100);
+				strcpy(strline, write_line);
+			}
+			for (j = 1; j <= perscrew_pnum->valueint; j++) {
+				memset(point, 0, 10);
+				sprintf(point, "<point%d>", j);
+				if (strstr_ptr = strstr(strline, point)) {
+					item = cJSON_GetArrayItem(left_workstation, ((i - 1) * perscrew_pnum->valueint + (j - 1)));
+					if (item != NULL) {
+						name = cJSON_GetObjectItem(item, "name");
+						memset(strstr_head, 0, 100);
+						strncpy(strstr_head, strline, (strstr_ptr - strline));
+						memset(write_line, 0, sizeof(char)*100);
+						sprintf(write_line, "%s%s%s", strstr_head, name->valuestring, (strstr_ptr + strlen(point)));
+						memset(strline, 0, sizeof(char)*100);
+						strcpy(strline, write_line);
+					}
+				}
+			}
+			//printf("write_line = %s\n", write_line);
+			strcat(write_content, write_line);
+			memset(strline, 0, sizeof(char)*100);
+		}
+		memset(pointfile_name, 0, 100);
+		sprintf(pointfile_name, "/root/web/file/user/point_%s_left_%d.lua", workpiece_name->valuestring, i);
+		//printf("pointfile_name = %s\n", pointfile_name);
+		//printf("write_content = %s\n", write_content);
+		//printf("strlen write_content = %d\n", strlen(write_content));
+		if (write_file(pointfile_name, write_content) == FAIL) {
+			perror("write file");
+			free(write_content);
+			write_content = NULL;
+
+			return FAIL;
+		}
+		fclose(fp_ptemp);
+	}
+
+	/* 右工位 */
+	screw_num = cJSON_GetArraySize(right_workstation) / perscrew_pnum->valueint;
+	for (i = 1; i <= screw_num; i++) {
+		memset(write_content, 0, 20000);
+		/* 根据选择的工件示教点模板文件，生成新的工件示教点 lua 文件 */
+		if ((fp_ptemp = fopen(ptemp_name, "r")) == NULL) {
+			perror("open file");
+
+			return FAIL;
+		}
+		/* 每个螺丝生成一个示教点文件 */
+		while (fgets(strline, 100, fp_ptemp) != NULL) {
+			memset(write_line, 0, sizeof(char)*100);
+			strcpy(write_line, strline);
+			if (strstr_ptr = strstr(strline, "<id>")) {
+				memset(strstr_head, 0, 100);
+				strncpy(strstr_head, strline, (strstr_ptr - strline));
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "%s%d%s", strstr_head, i, (strstr_ptr + strlen("<id>")));
+				memset(strline, 0, sizeof(char)*100);
+				strcpy(strline, write_line);
+			}
+			if (strstr_ptr = strstr(strline, "<station>")) {
+				memset(strstr_head, 0, 100);
+				strncpy(strstr_head, strline, (strstr_ptr - strline));
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "%s%s%s", strstr_head, "right", (strstr_ptr + strlen("<station>")));
+				memset(strline, 0, sizeof(char)*100);
+				strcpy(strline, write_line);
+			}
+			for (j = 1; j <= perscrew_pnum->valueint; j++) {
+				memset(point, 0, 10);
+				sprintf(point, "<point%d>", j);
+				if (strstr_ptr = strstr(strline, point)) {
+					item = cJSON_GetArrayItem(right_workstation, ((i - 1) * perscrew_pnum->valueint + (j - 1)));
+					if (item != NULL) {
+						name = cJSON_GetObjectItem(item, "name");
+						memset(strstr_head, 0, 100);
+						strncpy(strstr_head, strline, (strstr_ptr - strline));
+						memset(write_line, 0, sizeof(char)*100);
+						sprintf(write_line, "%s%s%s", strstr_head, name->valuestring, (strstr_ptr + strlen(point)));
+						memset(strline, 0, sizeof(char)*100);
+						strcpy(strline, write_line);
+					}
+				}
+			}
+			//printf("write_line = %s\n", write_line);
+			strcat(write_content, write_line);
+			memset(strline, 0, sizeof(char)*100);
+		}
+		memset(pointfile_name, 0, 100);
+		sprintf(pointfile_name, "/root/web/file/user/point_%s_right_%d.lua", workpiece_name->valuestring, i);
+		if (write_file(pointfile_name, write_content) == FAIL) {
+			perror("write file");
+			free(write_content);
+			write_content = NULL;
+
+			return FAIL;
+		}
+		fclose(fp_ptemp);
+	}
+
+	free(write_content);
+	write_content = NULL;
+
+	return SUCCESS;
+}
+
+/** torque ensure points */
+static int torque_ensure_points(const cJSON *data_json)
+{
+	cJSON *workpiece_name = NULL;
+	cJSON *ptemp = NULL;
+	cJSON *perscrew_pnum = NULL;
+	cJSON *left_workstation = NULL;
+	cJSON *right_workstation = NULL;
+	cJSON *item = NULL;
+	cJSON *name = NULL;
+	cJSON *id = NULL;
+	char sql[2048] = {0};
+	char temp[1024] = {0};
+	char wk_left[100] = "";
+	char wk_right[100] = "";
+	char wk_cfg[100] = "";
+	int array_size_left = 0;
+	int array_size_right = 0;
+	int i = 0;
+	char** resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+
+	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	ptemp = cJSON_GetObjectItem(data_json, "ptemp");
+	perscrew_pnum = cJSON_GetObjectItem(data_json, "perscrew_pnum");
+	left_workstation = cJSON_GetObjectItem(data_json, "left_workstation");
+	right_workstation = cJSON_GetObjectItem(data_json, "right_workstation");
+	if (workpiece_name == NULL || ptemp == NULL || perscrew_pnum == NULL || left_workstation == NULL || left_workstation->type != cJSON_Array || right_workstation == NULL || right_workstation->type != cJSON_Array) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(wk_left, "%s_left", workpiece_name->valuestring);
+	sprintf(wk_right, "%s_right", workpiece_name->valuestring);
+	sprintf(wk_cfg, "%s_cfg", workpiece_name->valuestring);
+
+	/** 保存 points 信息到数据库 */
+	/** 删除已有的工件数据表 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select name from sqlite_master where type = 'table' and name like '%s%';", workpiece_name->valuestring);
+	select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn);
+	for (i = 0; i < nrow; i++) {
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "drop table '%s';", resultp[(i + 1) * ncloumn]);
+		if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+			perror("database");
+
+			return FAIL;
+		}
+	}
+	sqlite3_free_table(resultp);
+
+	/** 创建 table */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table %s (name TEXT, id INTEGER primary key);", wk_left);
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table %s (name TEXT, id INTEGER primary key);", wk_right);
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table %s (ptemp TEXT, perscrew_pnum INTEGER);", wk_cfg);
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	/** 插入示教点信息 */
+	memset(sql, 0, sizeof(sql));
+	array_size_left = cJSON_GetArraySize(left_workstation);
+	for (i = 0; i < array_size_left; i++) {
+		item = cJSON_GetArrayItem(left_workstation, i);
+		name = cJSON_GetObjectItem(item, "name");
+		id = cJSON_GetObjectItem(item, "id");
+		memset(temp, 0, sizeof(temp));
+		sprintf(temp, "insert into %s values ('%s', %d); ", wk_left, name->valuestring, id->valueint);
+		strcat(sql, temp);
+	}
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("insert");
 
 		return FAIL;
 	}
 
-	return SUCCESS;
+	memset(sql, 0, sizeof(sql));
+	array_size_right = cJSON_GetArraySize(right_workstation);
+	for (i = 0; i < array_size_right; i++) {
+		item = cJSON_GetArrayItem(right_workstation, i);
+		name = cJSON_GetObjectItem(item, "name");
+		id = cJSON_GetObjectItem(item, "id");
+		memset(temp, 0, sizeof(temp));
+		sprintf(temp, "insert into %s values ('%s', %d); ", wk_right, name->valuestring, id->valueint);
+		strcat(sql, temp);
+	}
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("insert");
+
+		return FAIL;
+	}
+
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "insert into %s values ('%s', %d);", wk_cfg, ptemp->valuestring, perscrew_pnum->valueint);
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+		perror("insert");
+
+		return FAIL;
+	}
+
+	/** 生成示教点 lua 文件 */
+	return generate_luafile(data_json);
 }
 
 /** torque set DIO cfg */
@@ -1435,6 +1713,218 @@ static int move_to_home_point(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* torque generate program */
+static int torque_generate_program(const cJSON *data_json)
+{
+	int i = 0;
+	char sql[1024] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	FILE *fp = NULL;
+	char strline[100] = "";
+	char write_line[100] = "";
+	char *write_content = NULL;
+	char mainlua_name[100] = "";
+	char *strstr_ptr = NULL;
+	char strstr_head[100] = "";
+	char maintemp_name[100] = "";
+	int left_screw_time = 0;
+	int left_float_time = 0;
+	int left_slip_time = 0;
+	int left_dispensing_time = 0;
+	int right_screw_time = 0;
+	int right_float_time = 0;
+	int right_slip_time = 0;
+	int right_dispensing_time = 0;
+	cJSON *main_temp = NULL;
+	cJSON *left_wp = NULL;
+	cJSON *right_wp = NULL;
+	cJSON *gp_name = NULL;
+	cJSON *left_screw_array = NULL;
+	cJSON *right_screw_array = NULL;
+
+	write_content = (char *)calloc(1, sizeof(char)*(20000));
+	if (write_content == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
+	main_temp = cJSON_GetObjectItem(data_json, "main_temp");
+	left_wp = cJSON_GetObjectItem(data_json, "left_wp");
+	left_screw_array = cJSON_GetObjectItem(data_json, "left_screw_array");
+	right_wp = cJSON_GetObjectItem(data_json, "right_wp");
+	right_screw_array = cJSON_GetObjectItem(data_json, "right_screw_array");
+	gp_name = cJSON_GetObjectItem(data_json, "gp_name");
+	if (main_temp == NULL || left_wp == NULL || left_screw_array == NULL || right_wp == NULL || right_screw_array == NULL || gp_name == NULL || left_screw_array->type != cJSON_Array || right_screw_array->type != cJSON_Array) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	/* 获取左工位上工件信息 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select * from torquesys_cfg where workpiece_name = '%s'", left_wp->valuestring);
+	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	if (resultp[ncloumn + 2] != NULL) {
+		left_screw_time = atoi(resultp[ncloumn + 2]);
+	}
+	if (resultp[ncloumn + 4] != NULL) {
+		left_float_time = atoi(resultp[ncloumn + 4]);
+	}
+	if (resultp[ncloumn + 5] != NULL) {
+		left_slip_time = atoi(resultp[ncloumn + 5]);
+	}
+	if (resultp[ncloumn + 6] != NULL) {
+		left_dispensing_time = atoi(resultp[ncloumn + 6]);
+	}
+	sqlite3_free_table(resultp); //释放结果集
+
+	/* 获取右工位上工件信息 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select * from torquesys_cfg where workpiece_name = '%s'", right_wp->valuestring);
+	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	if (resultp[ncloumn + 2] != NULL) {
+		right_screw_time = atoi(resultp[ncloumn + 2]);
+	}
+	if (resultp[ncloumn + 4] != NULL) {
+		right_float_time = atoi(resultp[ncloumn + 4]);
+	}
+	if (resultp[ncloumn + 5] != NULL) {
+		right_slip_time = atoi(resultp[ncloumn + 5]);
+	}
+	if (resultp[ncloumn + 6] != NULL) {
+		right_dispensing_time = atoi(resultp[ncloumn + 6]);
+	}
+	sqlite3_free_table(resultp); //释放结果集
+
+	sprintf(maintemp_name, "%s%s", DIR_TEMPLATE, main_temp->valuestring);
+
+	/* 根据选择的 main 模板文件，生成程序 lua 文件 */
+	if ((fp = fopen(maintemp_name, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, 100, fp) != NULL) {
+		memset(write_line, 0, sizeof(char)*100);
+		strcpy(write_line, strline);
+
+		/* 生成左工位 call 示教点.lua */
+		if (strstr_ptr = strstr(strline, "<left_point>")) {
+			for (i = 0; i < cJSON_GetArraySize(left_screw_array); i++) {
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "Call:point_%s_left_%d.lua\n", left_wp->valuestring, cJSON_GetArrayItem(left_screw_array, i)->valueint);
+				strcat(write_content, write_line);
+				memset(strline, 0, sizeof(char)*100);
+			}
+			continue;
+		}
+
+		/* 生成右工位 call 示教点.lua */
+		if (strstr_ptr = strstr(strline, "<right_point>")) {
+			for (i = 0; i < cJSON_GetArraySize(right_screw_array); i++) {
+				memset(write_line, 0, sizeof(char)*100);
+				sprintf(write_line, "Call:point_%s_right_%d.lua\n", right_wp->valuestring, cJSON_GetArrayItem(right_screw_array, i)->valueint);
+				strcat(write_content, write_line);
+				memset(strline, 0, sizeof(char)*100);
+			}
+			continue;
+		}
+
+		/* 左工位工艺参数信息模板替换 */
+		if (strstr_ptr = strstr(strline, "<left_floattime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, left_float_time, (strstr_ptr + strlen("<left_floattime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<left_sliptime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, left_slip_time, (strstr_ptr + strlen("<left_sliptime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<left_reclaimtime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, left_screw_time, (strstr_ptr + strlen("<left_reclaimtime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<left_dispeningtime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, left_dispensing_time, (strstr_ptr + strlen("<left_dispeningtime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+
+		/* 右工位工艺参数信息模板替换 */
+		if (strstr_ptr = strstr(strline, "<right_floattime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, right_float_time, (strstr_ptr + strlen("<right_floattime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<right_sliptime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, right_slip_time, (strstr_ptr + strlen("<right_sliptime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<right_reclaimtime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, right_screw_time, (strstr_ptr + strlen("<right_reclaimtime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+		if (strstr_ptr = strstr(strline, "<right_dispeningtime>")) {
+			memset(strstr_head, 0, 100);
+			strncpy(strstr_head, strline, (strstr_ptr - strline));
+			memset(write_line, 0, sizeof(char)*100);
+			sprintf(write_line, "%s%d%s", strstr_head, right_dispensing_time, (strstr_ptr + strlen("<right_dispeningtime>")));
+			memset(strline, 0, sizeof(char)*100);
+			strcpy(strline, write_line);
+		}
+
+		strcat(write_content, write_line);
+		memset(strline, 0, sizeof(char)*100);
+	}
+
+	sprintf(mainlua_name, "/root/web/file/user/%s", gp_name->valuestring);
+	if (write_file(mainlua_name, write_content) == FAIL) {
+		perror("write file");
+		free(write_content);
+		write_content = NULL;
+
+		return FAIL;
+	}
+	free(write_content);
+	write_content = NULL;
+	fclose(fp);
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -1478,7 +1968,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -1660,6 +2150,11 @@ void act(Webs *wp)
 		strcpy(log_content, "移至原点");
 		strcpy(en_log_content, "Move to the origin point");
 		strcpy(jap_log_content, "原点に移す");
+	} else if (!strcmp(cmd, "torque_generate_program")) {
+		ret = torque_generate_program(data_json);
+		strcpy(log_content, "生成示教程序");
+		strcpy(en_log_content, "Generate the instruction program");
+		strcpy(jap_log_content, "表示手順を生成する");
 	} else {
 		perror("cmd not found");
 		goto end;
