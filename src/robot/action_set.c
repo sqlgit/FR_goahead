@@ -1337,9 +1337,6 @@ static int step_over(const cJSON *data_json, char *content)
 	/* SetExToolCoord */
 	} else if (strstr(pgvalue->valuestring, "SetExToolList")) {
 		cmd = 331;
-	/* Pause */
-	} else if (strstr(pgvalue->valuestring, "Pause")) {
-		cmd = 378;
 	/* soft-PLC setDO */
 	} else if (strstr(pgvalue->valuestring, "SPLCSetDO")) {
 		cmd = 394;

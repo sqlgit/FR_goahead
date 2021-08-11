@@ -81,6 +81,7 @@
 #define DB_SYSVAR "/root/web/file/sysvar/sysvar.db"
 #define DB_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.db"
 #define DB_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.db"
+#define DB_TORQUE_CUSTOM "/root/web/file/torquesys/torquesys_custom.db"
 
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"

@@ -453,7 +453,9 @@ int update_file_dir()
 
 	/**
 	    V3.1.8 版本
-		如果 sysvar 文件夹下相关文件不存在， 更新 sysvar 系统变量文件夹
+		增加了 sysvar 文件夹
+
+		如果 sysvar.db 文件不存在， 更新 sysvar 系统变量文件夹
 	*/
 	if (check_dir_filename(DIR_SYSVAR, "sysvar.db") == 0) {
 		bzero(cmd, sizeof(cmd));
@@ -465,9 +467,9 @@ int update_file_dir()
 	    V3.1.8 版本:
 		增加了 torquesys_cfg.db torquesys_DIO.txt torquesys_pageflag.txt 文件
 	    V3.1.9 版本:
-		增加了 torquesys_points.db 文件
+		增加了 torquesys_points.db, torquesys_custom.db 文件
 
-		如果 torquesys 文件夹下相关文件不存在， 更新 torquesys 扭矩文件夹
+		如果 torquesys 文件夹下相关文件不存在，更新 torquesys 扭矩文件夹
 	*/
 	if (check_dir_filename(DIR_TORQUESYS, "torquesys_points.db") == 0) {
 		bzero(cmd, sizeof(cmd));

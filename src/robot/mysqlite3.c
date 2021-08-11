@@ -84,6 +84,19 @@ cJSON *nokey_json_construction(char **resultp, int nrow, int ncloumn)
 	return forceast;
 }
 
+cJSON *single_json_construction(char **resultp, int nrow, int ncloumn)
+{
+	int i;
+	cJSON *object = NULL;
+
+	object = cJSON_CreateObject();
+	for (i = 0; i < ncloumn; i++) {
+		cJSON_AddStringToObject(object, resultp[i], resultp[ncloumn + i]);
+	}
+
+	return object;
+}
+
 int select_info_sqlite3(char *db_name, const char *sql, char ***resultp, int *nrow, int *ncloumn)
 {
 	int i = 0, j = 0;
@@ -173,6 +186,32 @@ int select_info_nokey_json_sqlite3(char *db_name, const char *sql, cJSON **JSON_
 	}
 
 	(*JSON_Data) = nokey_json_construction(resultp, nrow, ncloumn);
+
+	sqlite3_free_table(resultp); //释放结果集
+
+	return 0;
+}
+
+/*
+	获取数据库中某一行的数据内容，以单个 object 形式返回
+	Ex:
+	{
+		"id":"1",
+		"name":"test",
+		"content":"test"
+	}
+*/
+int select_info_json_sqlite3_single(char *db_name, const char *sql, cJSON **JSON_Data)
+{
+	int nrow = 0;
+	int ncloumn = 0;
+	char **resultp = NULL;
+
+	if (select_info_sqlite3(db_name, sql, &resultp, &nrow, &ncloumn) == -1) {
+		return -1;
+	}
+
+	(*JSON_Data) = single_json_construction(resultp, nrow, ncloumn);
 
 	sqlite3_free_table(resultp); //释放结果集
 

@@ -237,7 +237,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 
 	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
 	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {
-		printf("update file dir\n");
+		//printf("update file dir\n");
 		/** 更新 file 文件夹 */
 		if (update_file_dir() == SUCCESS) {
 			/* 更新完成，删除 “升级成功” 的标志文件夹 */

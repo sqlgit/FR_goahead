@@ -58,6 +58,7 @@ static int rename_var(const cJSON *data_json);
 static int clear_product_info(const cJSON *data_json);
 static int move_to_home_point(const cJSON *data_json);
 static int torque_generate_program(const cJSON *data_json);
+static int torque_save_custom_pause(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -1925,6 +1926,34 @@ static int torque_generate_program(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* save custom pause */
+static int torque_save_custom_pause(const cJSON *data_json)
+{
+	char sql[1204] = {0};
+	cJSON *id = NULL;
+	cJSON *title = NULL;
+	cJSON *content = NULL;
+
+	id = cJSON_GetObjectItem(data_json, "modal_func_id");
+	title = cJSON_GetObjectItem(data_json, "modal_title");
+	content = cJSON_GetObjectItem(data_json, "modal_content");
+	if (id == NULL || title == NULL || content == NULL || id->valuestring == NULL || title->valuestring == NULL || content->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(sql, "update torquesys_custom set modal_func_id='%s', modal_title='%s', modal_content='%s' where modal_func_id='%s';", id->valuestring, title->valuestring, content->valuestring, id->valuestring);
+
+	if (change_info_sqlite3(DB_TORQUE_CUSTOM, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -1968,7 +1997,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "save_custom_pause")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2152,9 +2181,14 @@ void act(Webs *wp)
 		strcpy(jap_log_content, "原点に移す");
 	} else if (!strcmp(cmd, "torque_generate_program")) {
 		ret = torque_generate_program(data_json);
-		strcpy(log_content, "生成示教程序");
-		strcpy(en_log_content, "Generate the instruction program");
-		strcpy(jap_log_content, "表示手順を生成する");
+		strcpy(log_content, "扭矩: 生成示教程序");
+		strcpy(en_log_content, "torque: Generate the instruction program");
+		strcpy(jap_log_content, "トルク: 表示手順を生成する");
+	} else if (!strcmp(cmd, "torque_save_custom_pause")) {
+		ret = torque_save_custom_pause(data_json);
+		strcpy(log_content, "扭矩: 保存自定义提示内容");
+		strcpy(en_log_content, "torque: Save the custom prompt content");
+		strcpy(jap_log_content, "トルク: カスタマイズのヒントを保存する");
 	} else {
 		perror("cmd not found");
 		goto end;

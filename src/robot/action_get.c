@@ -50,6 +50,8 @@ static int get_checkvar(char **ret_f_content, const cJSON *data_json);
 static int torque_get_wkpoints(char **ret_f_content, const cJSON *data_json);
 static int torque_get_ptemp_list(char **ret_f_content);
 static int torque_get_main_list(char **ret_f_content);
+static int torque_get_custom_pause(char **ret_f_content, const cJSON *data_json);
+static int torque_get_all_custom_pause(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1796,6 +1798,66 @@ static int torque_get_main_list(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* torque get custom pause */
+static int torque_get_custom_pause(char **ret_f_content, const cJSON *data_json)
+{
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+	cJSON *modal_func_id = NULL;
+
+	modal_func_id = cJSON_GetObjectItem(data_json, "modal_func_id");
+	if (modal_func_id == NULL || modal_func_id->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(sql, "select modal_title, modal_content from torquesys_custom where modal_func_id = '%s';", modal_func_id->valuestring);
+	if (select_info_json_sqlite3_single(DB_TORQUE_CUSTOM, sql, &json_data) == -1) {
+		perror("select");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* torque_get_all_custom_pause */
+static int torque_get_all_custom_pause(char **ret_f_content)
+{
+	char sql[1024] = {0};
+	cJSON *json_data = NULL;
+
+	sprintf(sql, "select * from torquesys_custom;");
+	if (select_info_json_sqlite3(DB_TORQUE_CUSTOM, sql, &json_data) == -1) {
+		perror("select");
+
+		return FAIL;
+	}
+
+	*ret_f_content = cJSON_Print(json_data);
+	cJSON_Delete(json_data);
+	json_data = NULL;
+	/* content is NULL */
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -1950,6 +2012,15 @@ void get(Webs *wp)
 		ret = torque_get_ptemp_list(&ret_f_content);
 	} else if(!strcmp(cmd, "torque_get_main_list")) {
 		ret = torque_get_main_list(&ret_f_content);
+	} else if(!strcmp(cmd, "torque_get_custom_pause")) {
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = torque_get_custom_pause(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "torque_get_all_custom_pause")) {
+		ret = torque_get_all_custom_pause(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
