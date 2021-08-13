@@ -219,6 +219,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 #endif
 
 #if recover_mode
+
 	create_dir(DIR_CDSYSTEM);
 	create_dir(DIR_CFG);
 	create_dir(DIR_POINTS);
@@ -246,6 +247,10 @@ MAIN(goahead, int argc, char **argv, char **envp)
 			system(cmd);
 		}
 	}
+
+	/* 更新控制器 IP */
+	update_server_ip();
+
 #endif
 
 	pthread_t t_socket_cmd;

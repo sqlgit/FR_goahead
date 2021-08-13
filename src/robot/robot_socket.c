@@ -9,6 +9,14 @@
 
 /********************************* Defines ************************************/
 
+char SERVER_IP[20] = "192.168.58.2";
+#if local
+	memset(SERVER_IP, 0, 20);
+	strcpy(SERVER_IP, "192.168.152.129"); //sql
+//	strcpy(SERVER_IP, "127.0.0.1");
+//	strcpy(SERVER_IP, "192.168.172.128"); //zjq,gjc
+//	strcpy(SERVER_IP, "192.168.121.129"); //wsk
+#endif
 SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
@@ -2203,6 +2211,50 @@ int check_pointhome_data(char *arr[])
 	}
 
 	return ret;
+}
+
+/**
+  update SERVER_IP
+*/
+int update_server_ip()
+{
+	printf("before SERVER_IP = %s\n", SERVER_IP);
+	FILE *fp = NULL;
+	int i = 0;
+	int j = 0;
+	char strline[LINE_LEN] = { 0 };
+	char *ptr = NULL;
+
+	if ((fp = fopen(FILE_ROBOTCFG, "r")) == NULL) {
+		perror("file");
+	
+		return FAIL;
+	}
+
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		/* without '\n' '\r' '\t' */
+		i = 0;
+		j = 0;
+		while (strline[i] != '\0') {
+			if (strline[i] != '\n' && strline[i] != '\r' && strline[i] !='\t') {
+				strline[j++] = strline[i];
+			}
+			i++;
+		}
+		strline[j] = '\0';
+
+		if (ptr = strstr(strline, "CTRL_IP = ")) {
+			memset(SERVER_IP, 0, 20);
+			strcpy(SERVER_IP, (ptr + 10));
+
+			break;
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp);
+
+	printf("after SERVER_IP = %s\n", SERVER_IP);
+	return SUCCESS;
 }
 
 /*

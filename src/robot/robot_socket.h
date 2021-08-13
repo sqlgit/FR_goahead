@@ -5,19 +5,6 @@
 #include    "statefb_quene.h"
 /********************************* Defines ************************************/
 
-#if local
-	//#define SERVER_IP "127.0.0.1"
-	//#define CLIENT_IP "127.0.0.1"
-	#define SERVER_IP "192.168.152.129" //sql
-	#define CLIENT_IP "192.168.152.129"
-//	#define SERVER_IP "192.168.172.128" //zjq,gjc
-//	#define CLIENT_IP "192.168.172.128" //zjq,gjc
-//	#define SERVER_IP "192.168.121.129" //wsk
-//	#define CLIENT_IP "192.168.121.129"
-#else
-	#define SERVER_IP "192.168.58.2"
-	#define CLIENT_IP "192.168.58.2"
-#endif
 #define CMD_PORT 8060
 #define STATUS_PORT 8061
 #define FILE_PORT 8062
@@ -172,6 +159,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   pause_parameter; 		/** pause 参数 */
 	float	   sys_var[TM_SYS_VAR_NUM]; /** 系统变量 */
 	uint8_t	   tpd_record_state;		/** TPD记录状态， 1-记录中， 0-不记录 */
+	uint8_t	   tpd_record_scale;		/** TPD记录进度百分比，0-100 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -278,6 +266,7 @@ void *socket_state_feedback_thread(void *arg);
 void *socket_upper_computer_thread(void* arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 int check_pointhome_data(char *arr[]);
+int update_server_ip();
 //int send_cmd_set_robot_type();
 
 #endif

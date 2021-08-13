@@ -46,6 +46,7 @@
 #define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
 #define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
 #define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
+#define FILE_ROBOTCFG "/root/robot/robot.config"
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"

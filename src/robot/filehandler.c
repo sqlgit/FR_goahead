@@ -758,56 +758,6 @@ void upload(Webs *wp)
 
 	//	system("sleep 1 && shutdown -b &");
 
-	/*} else if (strcmp(filename, UPGRADE_WEBAPP) == 0) {
-		system("cd /tmp && tar -zxvf webapp.tar.gz");
-		if (check_upfile(UPGRADE_WEB, README_WEB_NOW, README_WEB_UP) == FAIL) {
-			perror("md5 & version check fail!");
-			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
-			goto end;
-		}
-		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "openssl des3 -d -k frweb -salt -in %s | tar xzvf - -C /tmp/", UPGRADE_WEB);
-		if (system(cmd) != 0) {
-			my_syslog("普通操作", "升级 webapp 失败", cur_account.username);
-			perror("uncompress fail!");
-			goto end;
-		}*/
-
-	/**	bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "chmod 777 %s", SHELL_WEBUPGRADE);
-		system(cmd);
-	*/
-	/*	bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "sh %s", SHELL_WEBTARCP);
-		system(cmd);*/
-	//	bzero(cmd, sizeof(cmd));
-	//	sprintf(cmd, "nohup %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-	//	sprintf(cmd, "nohup sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-	//	sprintf(cmd, "sh %s %s", SHELL_WEBUPGRADE, CLIENT_IP);
-	//	sprintf(cmd, "sh %s %s &", SHELL_WEBUPGRADE, CLIENT_IP);
-	//	char *exec_argv[] = {"web_upgrade.sh", "192.168.58.2", NULL};
-	//	execv("/root/web/webserver/shell/web_upgrade.sh", exec_argv);
-	//	sleep(5);
-
-		/* send webappupgrade cmd to TM to do web_upgrade.sh shell */
-	/*	if (robot_type == 1) { // "1" 代表实体机器人
-			sock_cmd = &socket_cmd;
-		} else { // "0" 代表虚拟机器人
-			sock_cmd = &socket_vir_cmd;
-		}
-		socket_enquene(sock_cmd, 344, "WebAppUpgrade()", 1);
-		printf("webapp upgrade success!\n");
-		my_syslog("普通操作", "升级 webapp 成功", cur_account.username);
-	} else if (strcmp(filename, UPGRADE_CONTROL) == 0) {
-		system("cd /tmp && tar -zxvf control.tar.gz");
-		if (check_upfile(UPGRADE_FR_CONTROL, README_CTL_NOW, README_CTL_UP) == FAIL) {
-			my_syslog("普通操作", "升级控制器软件失败", cur_account.username);
-			goto end;
-		}
-		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
-		system(cmd);
-		my_syslog("普通操作", "升级控制器软件成功", cur_account.username);*/
 	} else if (is_in(up->clientFilename, "plugin") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
 		strncpy(plugin_name, up->clientFilename, (strlen(up->clientFilename)-7));
 		//printf("plugin_name = %s\n", plugin_name);

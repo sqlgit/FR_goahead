@@ -111,6 +111,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "line_number", state->line_number);
 	cJSON_AddNumberToObject(root_json, "pause_parameter", state->pause_parameter);
 	cJSON_AddNumberToObject(root_json, "tpd_record_state", state->tpd_record_state);
+	cJSON_AddNumberToObject(root_json, "tpd_record_scale", state->tpd_record_scale);
 	if (basic_index%10 == 0) {
 		local_now_time(time_now);
 	}

@@ -59,6 +59,7 @@ static int clear_product_info(const cJSON *data_json);
 static int move_to_home_point(const cJSON *data_json);
 static int torque_generate_program(const cJSON *data_json);
 static int torque_save_custom_pause(const cJSON *data_json);
+static int modify_ip(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -712,7 +713,6 @@ static int set_ODM_cfg(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
-	char *cfg_content = NULL;
 	cJSON *cfg_json = NULL;
 	cJSON *robot_model = NULL;
 
@@ -1954,6 +1954,40 @@ static int torque_save_custom_pause(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* modify ip */
+static int modify_ip(const cJSON *data_json)
+{
+	char w_buf[LINE_LEN] = "";
+	cJSON *ctrl_ip = NULL;
+	cJSON *user_ip = NULL;
+
+	ctrl_ip = cJSON_GetObjectItem(data_json, "ctrl_ip");
+	user_ip = cJSON_GetObjectItem(data_json, "user_ip");
+	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || user_ip == NULL || user_ip->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	sprintf(w_buf, "[RobotIP]\nCTRL_IP = %s\nUSER_IP = %s\n", ctrl_ip->valuestring, user_ip->valuestring);
+
+	if (write_file(FILE_ROBOTCFG, w_buf) == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	/**
+		代码中调用 write/read 等文件系统函数时,
+	    看似程序已经返回文件写入或读取成功，
+		实际硬盘上的文件尚未更改，
+		需要一定的等待时间
+	*/
+	sleep(10);
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -1997,13 +2031,13 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "save_custom_pause")) {
+	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "torque_save_custom_pause")) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
 		}
 	// cmd_auth "0"
-	} else if (!strcmp(cmd, "save_accounts") || !strcmp(cmd, "save_robot_type")) {
+	} else if (!strcmp(cmd, "save_accounts") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 			goto auth_end;
@@ -2189,6 +2223,11 @@ void act(Webs *wp)
 		strcpy(log_content, "扭矩: 保存自定义提示内容");
 		strcpy(en_log_content, "torque: Save the custom prompt content");
 		strcpy(jap_log_content, "トルク: カスタマイズのヒントを保存する");
+	} else if (!strcmp(cmd, "modify_ip")) {
+		ret = modify_ip(data_json);
+		strcpy(log_content, "修改控制器 IP 地址");
+		strcpy(en_log_content, "Change the CONTROLLER IP address");
+		strcpy(jap_log_content, "コントローラのIPアドレスを変更");
 	} else {
 		perror("cmd not found");
 		goto end;

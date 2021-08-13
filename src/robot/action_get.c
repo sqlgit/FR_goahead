@@ -52,6 +52,7 @@ static int torque_get_ptemp_list(char **ret_f_content);
 static int torque_get_main_list(char **ret_f_content);
 static int torque_get_custom_pause(char **ret_f_content, const cJSON *data_json);
 static int torque_get_all_custom_pause(char **ret_f_content);
+static int get_ip(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1858,6 +1859,57 @@ static int torque_get_all_custom_pause(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get ip */
+static int get_ip(char **ret_f_content)
+{
+	cJSON *root_json = NULL;
+	char strline[LINE_LEN] = { 0 };
+	FILE *fp;
+	char *ptr = NULL;
+	int i = 0;
+	int j = 0;
+
+	root_json = cJSON_CreateObject();
+	if ((fp = fopen(FILE_ROBOTCFG, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LINE_LEN, fp) != NULL) {
+		/* without '\n' '\r' '\t' */
+		i = 0;
+		j = 0;
+		while (strline[i] != '\0') {
+			if (strline[i] != '\n' && strline[i] != '\r' && strline[i] !='\t') {
+				strline[j++] = strline[i];
+			}
+			i++;
+		}
+		strline[j] = '\0';
+
+		if (ptr = strstr(strline, "CTRL_IP = ")) {
+			cJSON_AddStringToObject(root_json, "ctrl_ip", (ptr + 10));
+		}
+		if (ptr = strstr(strline, "USER_IP = ")) {
+			cJSON_AddStringToObject(root_json, "user_ip", (ptr + 10));
+		}
+		bzero(strline, sizeof(char)*LINE_LEN);
+	}
+	fclose(fp);
+
+	*ret_f_content = cJSON_Print(root_json);
+	cJSON_Delete(root_json);
+	root_json = NULL;
+	if (*ret_f_content == NULL) {
+		perror("cJSON_Print");
+
+		return FAIL;
+	}
+	//printf("*ret_f_content = %s\n", (*ret_f_content));
+
+	return SUCCESS;
+}
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -2021,6 +2073,8 @@ void get(Webs *wp)
 		ret = torque_get_custom_pause(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "torque_get_all_custom_pause")) {
 		ret = torque_get_all_custom_pause(&ret_f_content);
+	} else if(!strcmp(cmd, "get_ip")) {
+		ret = get_ip(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
