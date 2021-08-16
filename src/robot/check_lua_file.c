@@ -778,6 +778,46 @@ static int ActGripper(lua_State* L)
 	return 1;
 }
 
+static int FT_Guard(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 14) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_Control(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 20) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_Activate(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_SetRCS(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1101,6 +1141,10 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "SplineStart", SplineStart);
 	lua_register(luaEnv, "SplineEnd", SplineEnd);
 	lua_register(luaEnv, "ActGripper", ActGripper);
+	lua_register(luaEnv, "FT_Guard", FT_Guard);
+	lua_register(luaEnv, "FT_Control", FT_Control);
+	lua_register(luaEnv, "FT_Activate", FT_Activate);
+	lua_register(luaEnv, "FT_SetRCS", FT_SetRCS);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

@@ -160,6 +160,7 @@ typedef struct _CTRL_STATE
 	float	   sys_var[TM_SYS_VAR_NUM]; /** 系统变量 */
 	uint8_t	   tpd_record_state;		/** TPD记录状态， 1-记录中， 0-不记录 */
 	uint8_t	   tpd_record_scale;		/** TPD记录进度百分比，0-100 */
+	double	   FT_data[6];				/** 力/扭矩传感器数据，Fx,Fy,Fz,Tx,Ty,Tz */
 } CTRL_STATE;
 #pragma pack(pop)
 

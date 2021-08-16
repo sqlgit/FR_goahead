@@ -70,6 +70,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_exAxisHomeStatus = NULL;
 	cJSON *array_indentifydata = NULL;
 	cJSON *array_register_var = NULL;
+	cJSON *FT_data_json = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
 	int array[16] = {0};
@@ -2418,9 +2419,15 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		memset(content, 0, sizeof(content));
 		memset(en_content, 0, sizeof(en_content));
 		memset(jap_content, 0, sizeof(jap_content));
-		sprintf(content, "%d 轴碰撞故障, 可复位", (int)state->collision_err);
-		sprintf(en_content, "%d axis impact fault, can be reset", (int)state->collision_err);
-		sprintf(jap_content, "%d 軸衝突故障, リセット可能", (int)state->collision_err);
+		if ((int)state->collision_err == 7) {
+			sprintf(content, "末端碰撞故障, 可复位", (int)state->collision_err);
+			sprintf(en_content, "Terminal collision fault, can be reset", (int)state->collision_err);
+			sprintf(jap_content, "末端衝突障害, リセット可能", (int)state->collision_err);
+		} else {
+			sprintf(content, "%d 轴碰撞故障, 可复位", (int)state->collision_err);
+			sprintf(en_content, "%d axis impact fault, can be reset", (int)state->collision_err);
+			sprintf(jap_content, "%d 軸衝突故障, リセット可能", (int)state->collision_err);
+		}
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", content);
 		}
@@ -2645,19 +2652,29 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	//printf("LoadIdentifyData[3]: z = %lf\n", state->LoadIdentifyData[3]);
 	array_indentifydata = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "loadidentifydata", array_indentifydata);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[i], 3));
+	}
+	/*
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[0], 3));
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[1], 3));
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[2], 3));
 	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[3], 3));
+	*/
 
 	array_register_var = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "register_var", array_register_var);
+	for (i = 0; i < 6; i++) {
+		cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[i], 3));
+	}
+	/*
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[0], 3));
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[1], 3));
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[2], 3));
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[3], 3));
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[4], 3));
 	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[5], 3));
+	*/
 
 	if (state->motionAlarm == 1) {
 		if (language == 0) { 
@@ -2804,6 +2821,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 	} else {
 		pre_state->interfereAlarm = 0;
+	}
+
+	FT_data_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "FT_data", FT_data_json);
+	for (i = 0; i < 6; i++) {
+		cJSON_AddNumberToObject(FT_data_json, "key", double_round(state->FT_data[i], 3));
 	}
 
 	buf = cJSON_Print(root_json);
