@@ -19,7 +19,7 @@ static int MoveJ(lua_State* L)
 	int argc = lua_gettop(L);
 
 	//printf("argc = %d\n", argc);
-	if (argc != 28 && argc != 2) {
+	if (argc != 29 && argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	//返回值用于提示该C函数的返回值数量，即压入栈中的返回值数量。
@@ -798,26 +798,6 @@ static int FT_Control(lua_State* L)
 	return 1;
 }
 
-static int FT_Activate(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
-static int FT_SetRCS(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 1) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1143,8 +1123,6 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ActGripper", ActGripper);
 	lua_register(luaEnv, "FT_Guard", FT_Guard);
 	lua_register(luaEnv, "FT_Control", FT_Control);
-	lua_register(luaEnv, "FT_Activate", FT_Activate);
-	lua_register(luaEnv, "FT_SetRCS", FT_SetRCS);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

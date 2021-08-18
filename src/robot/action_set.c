@@ -434,11 +434,11 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			point_home_info.error_flag = 0;
 		}
-		/* 参数个数为 9 时，即存在偏移 */
-		if (size == 9) {
-			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], end_ptr);
+		/* 参数个数为 10 时，即存在偏移 */
+		if (size == 10 ) {
+			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], end_ptr);
 		} else {
-			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, end_ptr);
+			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], end_ptr);
 		}
 		strcat(file_content, content);
 	/* SPTP */
@@ -1355,12 +1355,6 @@ static int step_over(const cJSON *data_json, char *content)
 	/* GetSysVarValue */
 	} else if (strstr(pgvalue->valuestring, "GetSysVarValue")) {
 		cmd = 512;
-	/* FT_Activate */
-	} else if (strstr(pgvalue->valuestring, "FT_Activate")) {
-		cmd = 524;
-	/* FT_SetRCS */
-	} else if (strstr(pgvalue->valuestring, "FT_SetRCS")) {
-		cmd = 525;
 	/* error */
 	} else {
 		return FAIL;
@@ -1447,7 +1441,7 @@ static int movej(const cJSON *data_json, char *content)
 
 		return FAIL;
 	}
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%lf,%lf,%lf,%lf,0,0,0,0,0,0,0)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, state->workPieceNum, speed->valuestring, acc->valuestring, ovl->valuestring, double_round(state->exaxis_status[0].exAxisPos, 3), double_round(state->exaxis_status[1].exAxisPos, 3), double_round(state->exaxis_status[2].exAxisPos, 3), double_round(state->exaxis_status[3].exAxisPos, 3));
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%lf,%lf,%lf,%lf,0,0,0,0,0,0,0,0)", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, state->toolNum, state->workPieceNum, speed->valuestring, acc->valuestring, ovl->valuestring, double_round(state->exaxis_status[0].exAxisPos, 3), double_round(state->exaxis_status[1].exAxisPos, 3), double_round(state->exaxis_status[2].exAxisPos, 3), double_round(state->exaxis_status[3].exAxisPos, 3));
 
 	return SUCCESS;
 }
@@ -2122,7 +2116,7 @@ void set(Webs *wp)
 		}
 	// cmd_auth "2"
 	}
-	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 107 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 526 || cmd == 527) {
+	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 107 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 524 || cmd == 525 || cmd == 526 || cmd == 527) {
 		if (!authority_management("2")) {
 			perror("authority_management");
 			goto auth_end;
@@ -3402,6 +3396,20 @@ void set(Webs *wp)
 		strcpy(log_content, "牵引示教");
 		strcpy(en_log_content, "Traction teaching");
 		strcpy(jap_log_content, "けん引示教");
+		ret = copy_content(data_json, content);
+		break;
+	case 524:
+		port = cmdport;
+		strcpy(log_content, "复位激活");
+		strcpy(en_log_content, "Reset the activation");
+		strcpy(jap_log_content, "リセット起動");
+		ret = copy_content(data_json, content);
+		break;
+	case 525:
+		port = cmdport;
+		strcpy(log_content, "设置参考坐标系");
+		strcpy(en_log_content, "Set the reference frame");
+		strcpy(jap_log_content, "参照座標系を設定する");
 		ret = copy_content(data_json, content);
 		break;
 	case 526:
