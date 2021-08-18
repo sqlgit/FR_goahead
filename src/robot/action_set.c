@@ -381,7 +381,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strstr(lua_cmd, ")") + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 9 && size != 3)) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 10 && size != 4)) {
 			perror("string to string list");
 
 			goto end;
@@ -435,7 +435,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			point_home_info.error_flag = 0;
 		}
 		/* 参数个数为 10 时，即存在偏移 */
-		if (size == 10 ) {
+		if (size == 10) {
 			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], end_ptr);
 		} else {
 			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], end_ptr);
@@ -580,7 +580,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		printf("ptr + 4 = %s\n", (ptr + 4));
 		*/
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 6 && size != 4 && size != 10)) {
 			perror("string to string list");
 
 			goto end;
