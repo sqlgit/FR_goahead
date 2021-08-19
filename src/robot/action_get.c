@@ -458,7 +458,7 @@ static int get_robot_cfg(char **ret_f_content)
 	//printf("get config index : %d\n", index_get_config);
 	//clock_gettime(CLOCK_REALTIME, &start);
 	//printf("before fopen, %d, %ld\n", start.tv_sec, start.tv_nsec);
-	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+	if ((fp = fopen(USER_CFG, "r")) == NULL) {
 		perror("user.config : open file");
 
 		return FAIL;
@@ -771,7 +771,7 @@ static int get_weave(char **ret_f_content)
 	cJSON *item6 = NULL;
 	cJSON *item7 = NULL;
 
-	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+	if ((fp = fopen(USER_CFG, "r")) == NULL) {
 		perror("open file");
 
 		return FAIL;
@@ -1189,7 +1189,7 @@ static int get_plugin_config(char **ret_f_content, const cJSON *data_json)
 
 		return FAIL;
 	}
-	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+	if ((fp = fopen(USER_CFG, "r")) == NULL) {
 		perror("open file");
 
 		return FAIL;
@@ -1870,7 +1870,7 @@ static int get_ip(char **ret_f_content)
 	int j = 0;
 
 	root_json = cJSON_CreateObject();
-	if ((fp = fopen(FILE_ROBOTCFG, "r")) == NULL) {
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
 		perror("open file");
 
 		return FAIL;

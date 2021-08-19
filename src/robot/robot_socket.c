@@ -699,7 +699,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (strcmp(array[4], "1") == 0) {//生效导入的机器人配置文件
 				//printf("success！\n");
 				char cmd[128] = {0};
-				sprintf(cmd, "cp %s %s", WEB_ROBOT_CFG, ROBOT_CFG);
+				sprintf(cmd, "cp %s %s", WEB_USER_CFG, USER_CFG);
 				system(cmd);
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
@@ -2225,7 +2225,7 @@ int update_server_ip()
 	char strline[LINE_LEN] = { 0 };
 	char *ptr = NULL;
 
-	if ((fp = fopen(FILE_ROBOTCFG, "r")) == NULL) {
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
 		perror("file");
 	
 		return FAIL;

@@ -39,11 +39,6 @@ fi
 #	cp  /tmp/fr_control/user.config  /root/robot/
 #fi
 
-if test -x /tmp/fr_control/robot.config; then
-	rm  /root/robot/robot.config
-	cp  /tmp/fr_control/robot.config  /root/robot/
-fi
-
 if test -x /tmp/fr_control/zbt.config; then
 	rm  /root/robot/zbt.config
 	cp  /tmp/fr_control/zbt.config  /root/robot/

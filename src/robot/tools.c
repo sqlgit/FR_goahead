@@ -1213,7 +1213,7 @@ int update_userconfig_robottype()
 	char *file_content = NULL;
 	int robot_type = 0;
 
-	if ((fp = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
+	if ((fp = fopen(WEB_USER_CFG, "r")) == NULL) {
 		perror("user.config : open file");
 
 		return FAIL;
@@ -1252,7 +1252,7 @@ int update_userconfig_robottype()
 			/** 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9) */
 			robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
 			bzero(write_line, sizeof(char)*LEN_100);
-			sprintf(write_line, "ROBOT_TYPE = %d\n", robot_type);
+			sprintf(write_line, "ROBOT_TYPE = %f\n", (float)robot_type);
 			/* cjson delete */
 			cJSON_Delete(content_json);
 			content_json = NULL;
@@ -1267,6 +1267,6 @@ int update_userconfig_robottype()
 	//printf("write_content len = %d\n", strlen(write_content));
 	//printf("write_content = %s\n", write_content);
 
-	return write_file(WEB_ROBOT_CFG, write_content);
+	return write_file(WEB_USER_CFG, write_content);
 }
 

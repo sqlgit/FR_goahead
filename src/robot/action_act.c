@@ -1957,7 +1957,10 @@ static int torque_save_custom_pause(const cJSON *data_json)
 /* modify ip */
 static int modify_ip(const cJSON *data_json)
 {
-	char w_buf[LINE_LEN] = "";
+	FILE *fp = NULL;
+	char strline[LEN_100] = {0};
+	char write_line[LEN_100] = {0};
+	char write_content[LEN_100*100] = {0};
 	cJSON *ctrl_ip = NULL;
 	cJSON *user_ip = NULL;
 
@@ -1969,9 +1972,26 @@ static int modify_ip(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(w_buf, "[RobotIP]\nCTRL_IP = %s\nUSER_IP = %s\n", ctrl_ip->valuestring, user_ip->valuestring);
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("open file");
 
-	if (write_file(FILE_ROBOTCFG, w_buf) == FAIL) {
+		return FAIL;
+	}
+	while (fgets(strline, LEN_100, fp) != NULL) {
+		bzero(write_line, sizeof(char)*LEN_100);
+		strcpy(write_line, strline);
+
+		if (strstr(strline, "CTRL_IP = ")) {
+			bzero(write_line, sizeof(char)*LEN_100);
+			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
+		}
+
+		strcat(write_content, write_line);
+		bzero(strline, sizeof(char)*LEN_100);
+	}
+	fclose(fp);
+
+	if (write_file(ROBOT_CFG, write_content) == FAIL) {
 		perror("write file");
 
 		return FAIL;

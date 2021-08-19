@@ -218,7 +218,7 @@ static int check_robot_type()
 	char robot_type_now[100] = "";
 	char robot_type_up[100] = "";
 
-	if ((fp_up = fopen(WEB_ROBOT_CFG, "r")) == NULL) {
+	if ((fp_up = fopen(WEB_USER_CFG, "r")) == NULL) {
 		perror("user.config : open file");
 
 		return FAIL;
@@ -241,7 +241,7 @@ static int check_robot_type()
 	}
 	fclose(fp_up);
 
-	if ((fp_now = fopen(ROBOT_CFG, "r")) == NULL) {
+	if ((fp_now = fopen(USER_CFG, "r")) == NULL) {
 		perror("now user.config : open file");
 
 		return FAIL;
@@ -275,7 +275,7 @@ static int check_robot_type()
 }
 
 /**
-  update user.config/ex_device.config/exaxis.config
+  update user.config/ex_device.config/exaxis.config/robot.config
 */
 static int update_config(char *filename)
 {
@@ -294,21 +294,21 @@ static int update_config(char *filename)
 	char upgrade_filename[100] = "";
 	char now_filename[100] = "";
 
-	if (!strcmp(filename, ROBOT_CFG)) {
-		strcpy(upgrade_filename, UPGRADE_ROBOT_CFG);
-		strcpy(now_filename, ROBOT_CFG);
+	strcpy(now_filename, filename);
+	if (!strcmp(filename, USER_CFG)) {
+		strcpy(upgrade_filename, UPGRADE_USER_CFG);
 	} else if (!strcmp(filename, EX_DEVICE_CFG)) {
 		strcpy(upgrade_filename, UPGRADE_EX_DEVICE_CFG);
-		strcpy(now_filename, EX_DEVICE_CFG);
 	} else if (!strcmp(filename, EXAXIS_CFG)) {
 		strcpy(upgrade_filename, UPGRADE_EXAXIS_CFG);
-		strcpy(now_filename, EXAXIS_CFG);
+	} else if (!strcmp(filename, ROBOT_CFG)) {
+		strcpy(upgrade_filename, UPGRADE_ROBOT_CFG);
 	}
 	printf("upgrade_filename = %s\n", upgrade_filename);
 	printf("now_filename = %s\n", now_filename);
 
 	if ((fp_up = fopen(upgrade_filename, "r")) == NULL) {
-		perror("user.config : open file");
+		perror("config : open file");
 
 		return FAIL;
 	}
@@ -327,7 +327,7 @@ static int update_config(char *filename)
 			if (array_up[0] != NULL) {// 出现左边的 key 值
 				//  now config file is not exist
 				if ((fp_now = fopen(now_filename, "r")) == NULL) {
-					perror("now user.config : open file");
+					perror("now config : open file");
 					fclose(fp_up);
 					string_list_free(array_up, size_up);
 
@@ -567,7 +567,7 @@ void upload(Webs *wp)
 				strcpy(filename, upfile);
 			/* control user file */
 			} else if (strcmp(up->clientFilename, "user.config") == 0) {
-				upfile = sfmt("%s", WEB_ROBOT_CFG);
+				upfile = sfmt("%s", WEB_USER_CFG);
 				my_syslog("普通操作", "导入控制器端用户配置文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import of controller user profile successfully", cur_account.username);
 				my_jap_syslog("普通の操作", "コントローラ側のユーザプロファイルのインポートが成功しました", cur_account.username);
@@ -623,7 +623,7 @@ void upload(Webs *wp)
 	//printf("filename = %s\n", filename);
 	if (strcmp(filename, FILE_CFG) == 0) {
 		delete_log_file(0);
-	} else if (strcmp(filename, WEB_ROBOT_CFG) == 0) {
+	} else if (strcmp(filename, WEB_USER_CFG) == 0) {
 		//printf("before check robot type\n");
 		if (check_robot_type() == FAIL) {
 			perror("check_robot_type");
@@ -669,7 +669,7 @@ void upload(Webs *wp)
 
 		/** 更新文件 */
 		/** 更新 user.config 文件 */
-		if (update_config(ROBOT_CFG) == FAIL){
+		if (update_config(USER_CFG) == FAIL){
 			my_syslog("普通操作", "升级 user.config 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade user.config", cur_account.username);
 			my_jap_syslog("普通の操作", "user.config のアップグレードに失敗", cur_account.username);
@@ -696,6 +696,15 @@ void upload(Webs *wp)
 			my_en_syslog("normal operation", "Failed to upgrade exaxis.config", cur_account.username);
 			my_jap_syslog("普通の操作", "exaxis.config のアップグレードに失敗", cur_account.username);
 			perror("exaxis.config");
+			goto end;
+		}
+
+		/** 更新 robot.config 文件 */
+		if (update_config(ROBOT_CFG) == FAIL){
+			my_syslog("普通操作", "升级 robot.config 失败", cur_account.username);
+			my_en_syslog("normal operation", "Failed to upgrade robot.config", cur_account.username);
+			my_jap_syslog("普通の操作", "robot.config のアップグレードに失敗", cur_account.username);
+			perror("robot.config");
 			goto end;
 		}
 
@@ -946,7 +955,7 @@ static int avolfileHandler(Webs *wp)
 		return 1;
 	if (strcmp(pathfilename, FILE_USERDATA) == 0) {
 		char cmd[128] = {0};
-		sprintf(cmd, "cp %s %s", ROBOT_CFG, WEB_ROBOT_CFG);
+		sprintf(cmd, "cp %s %s", USER_CFG, WEB_USER_CFG);
 		system(cmd);
 		memset(cmd, 0, 128);
 		sprintf(cmd, "cp %s %s", EX_DEVICE_CFG, WEB_EX_DEVICE_CFG);
@@ -967,7 +976,7 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出 web 端系统配置文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of web system configure file successful", cur_account.username);
 		my_jap_syslog("普通の操作", "web側システムプロファイルのエクスポートに成功しました", cur_account.username);
-	} else if (strcmp(pathfilename, ROBOT_CFG) == 0) {
+	} else if (strcmp(pathfilename, USER_CFG) == 0) {
 		my_syslog("普通操作", "导出控制器端用户配置文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of controller side user configure file successful", cur_account.username);
 		my_jap_syslog("普通の操作", "コントローラ側のユーザプロファイルを成功裏にエクスポートする", cur_account.username);
