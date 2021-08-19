@@ -1477,6 +1477,108 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				pre_state->cmdPointError = 30;
 			}
 			break;
+		case 31:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-X方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-X方向に最大調整距離を超え、リセット可能");
+			}
+			if (pre_state->cmdPointError != 31) {
+				my_syslog("错误", "恒力控制-X方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-X方向に最大調整距離を超え、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 31;
+			}
+			break;
+		case 32:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-Y方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-Y方向が最大調整距離を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 32) {
+				my_syslog("错误", "恒力控制-Y方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-Y方向が最大調整距離を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 32;
+			}
+			break;
+		case 33:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-Z方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-Z方向最大調整距離を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 33) {
+				my_syslog("错误", "恒力控制-Z方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-Z方向最大調整距離を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 33;
+			}
+			break;
+		case 34:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RX方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-RX方向を最大調整角度以上、リセット可能");
+			}
+			if (pre_state->cmdPointError != 34) {
+				my_syslog("错误", "恒力控制-RX方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-RX方向を最大調整角度以上、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 34;
+			}
+			break;
+		case 35:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RY方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "力制御-RY方向が最大調整角度を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 35) {
+				my_syslog("错误", "恒力控制-RY方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "力制御-RY方向が最大調整角度を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 35;
+			}
+			break;
+		case 36:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RZ方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-RZ方向最大調整角度を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 36) {
+				my_syslog("错误", "恒力控制-RZ方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-RZ方向最大調整角度を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 36;
+			}
+			break;
 		default:
 			pre_state->cmdPointError = 0;
 			break;

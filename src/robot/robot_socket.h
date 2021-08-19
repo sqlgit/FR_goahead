@@ -119,7 +119,7 @@ typedef struct _CTRL_STATE
 	int        configStatus;            /**< 机器人关节配置状态  */
 	uint8_t    aliveSlaveNumError;    /**< 活动从站数量错误，1：数量错误；0：正常  */
 	uint8_t    slaveComError[MAXSLAVES];      /**< 从站错误，0：正常；1：从站掉线；2：从站状态与设置值不一致；3：从站未配置；4：从站配置错误；5：从站初始化错误；6：从站邮箱通信初始化错误 */
-	uint8_t    cmdPointError;      /**< 指令点关节位置与末端位姿不符错误，0：正常；1：直线指令错误；2：圆弧指令点错误；3：TPD指令工具与当前工具不符；4：TPD当前指令与下一条指令起始点偏差过大*/
+	uint8_t    cmdPointError;      /**< 指令点关节位置与末端位姿不符错误，0：正常；*/
 	uint8_t    ioError;                 /** IO错误 */
 	uint8_t    gripperError;            /** 夹爪错误 */
 	uint8_t    fileError;               /** 文件错误 */

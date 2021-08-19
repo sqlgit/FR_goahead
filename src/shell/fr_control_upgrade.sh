@@ -39,20 +39,25 @@ fi
 #	cp  /tmp/fr_control/user.config  /root/robot/
 #fi
 
+if test -x /tmp/fr_control/robot.config; then
+	rm  /root/robot/robot.config
+	cp  /tmp/fr_control/robot.config  /root/robot/
+fi
+
 if test -x /tmp/fr_control/zbt.config; then
 	rm  /root/robot/zbt.config
 	cp  /tmp/fr_control/zbt.config  /root/robot/
 fi
 
-if test -x /tmp/fr_control/ex_device.config; then
-	rm  /root/robot/ex_device.config
-	cp  /tmp/fr_control/ex_device.config  /root/robot/
-fi
+#if test -x /tmp/fr_control/ex_device.config; then
+#	rm  /root/robot/ex_device.config
+#	cp  /tmp/fr_control/ex_device.config  /root/robot/
+#fi
 
-if test -x /tmp/fr_control/exaxis.config; then
-	rm  /root/robot/exaxis.config
-	cp  /tmp/fr_control/exaxis.config  /root/robot/
-fi
+#if test -x /tmp/fr_control/exaxis.config; then
+#	rm  /root/robot/exaxis.config
+#	cp  /tmp/fr_control/exaxis.config  /root/robot/
+#fi
 
 #if test -x /tmp/fr_control/userSim.config; then
 #	rm  /root/robot/userSim.config
@@ -117,7 +122,7 @@ echo "##### Upload fr_control upgrade file success!"
 # 创建标志 “升级成功” 的文件
 touch /root/web/file/upgrade_success.txt
 
-echo "#### sleep 10 "
+echo "#### sleep 15 "
 
 # 文件写入硬盘需要一定时间，等待 15 秒
 sleep 15

@@ -2218,7 +2218,7 @@ int check_pointhome_data(char *arr[])
 */
 int update_server_ip()
 {
-	printf("before SERVER_IP = %s\n", SERVER_IP);
+	//printf("before SERVER_IP = %s\n", SERVER_IP);
 	FILE *fp = NULL;
 	int i = 0;
 	int j = 0;
@@ -2253,7 +2253,7 @@ int update_server_ip()
 	}
 	fclose(fp);
 
-	printf("after SERVER_IP = %s\n", SERVER_IP);
+	//printf("after SERVER_IP = %s\n", SERVER_IP);
 	return SUCCESS;
 }
 

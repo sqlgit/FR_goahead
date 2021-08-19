@@ -792,7 +792,7 @@ static int FT_Control(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 20) {
+	if (argc != 22) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;

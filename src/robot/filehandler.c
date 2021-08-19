@@ -713,12 +713,12 @@ void upload(Webs *wp)
 
 		/** 更新 webserver 文件夹 */
 		bzero(cmd, sizeof(cmd));
-#if recover_mode
+//#if recover_mode
 		//sprintf(cmd, "sh %s", SHELL_WEBTARCP);
 		sprintf(cmd, "sh %s", UPGRADE_WEBTARCP);
-#else
-		sprintf(cmd, "sh %s", SHELL_RECOVER_WEBTARCP);
-#endif
+//#else
+//		sprintf(cmd, "sh %s", SHELL_RECOVER_WEBTARCP);
+//#endif
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 5 秒 */
@@ -731,12 +731,12 @@ void upload(Webs *wp)
 
 		/** 更新 control 相关文件 */
 		bzero(cmd, sizeof(cmd));
-#if recover_mode
+//#if recover_mode
 		//sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
 		sprintf(cmd, "sh %s", UPGRADE_CRLUPGRADE);
-#else
-		sprintf(cmd, "sh %s", SHELL_RECOVER_CRLUPGRADE);
-#endif
+//#else
+//		sprintf(cmd, "sh %s", SHELL_RECOVER_CRLUPGRADE);
+//#endif
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 1 秒 */
