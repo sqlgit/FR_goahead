@@ -9,13 +9,13 @@
 
 /********************************* Defines ************************************/
 
-char SERVER_IP[20] = "192.168.58.2";
 #if local
-	memset(SERVER_IP, 0, 20);
-	strcpy(SERVER_IP, "192.168.152.129"); //sql
-//	strcpy(SERVER_IP, "127.0.0.1");
-//	strcpy(SERVER_IP, "192.168.172.128"); //zjq,gjc
-//	strcpy(SERVER_IP, "192.168.121.129"); //wsk
+//	char SERVER_IP[20] = "127.0.0.1";
+//	char SERVER_IP[20] = "192.168.152.129"; //sql
+	char SERVER_IP[20] = "192.168.172.128";	//zjq,gjc
+//	char SERVER_IP[20] = "192.168.121.129";	//wsk
+#else
+	char SERVER_IP[20] = "192.168.58.2";
 #endif
 SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
@@ -36,6 +36,7 @@ extern int robot_type;
 extern char error_info[ERROR_SIZE];
 TORQUE_SYS torquesys;
 TORQUE_SYS_STATE torque_sys_state;
+JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 char lua_filename[FILENAME_SIZE] = "";
 POINT_HOME_INFO point_home_info = {
 	.error_flag = 0,
@@ -65,6 +66,7 @@ static int socket_bind_listen(SOCKET_SERVER_INFO *sock);
 static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
 static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock);
 static void init_torquesys();
+static int init_torque_production_data();
 /*
 static void *socket_cmd_send_thread(void *arg);
 static void *socket_cmd_recv_thread(void *arg);
@@ -1148,6 +1150,8 @@ void *socket_thread(void *arg)
 		if (port == CMD_PORT) {
 			/* 初始化扭矩系统 */
 			init_torquesys();
+			/* 嘉宝项目：从生产数据数据库中读取生产数据，应用到系统变量中，并更新全局的结构体 */
+			init_torque_production_data();
 		}
 
 		/* 等待线程退出 */
@@ -1224,6 +1228,7 @@ void *socket_status_thread(void *arg)
 	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
 	char recvbuf[STATE_SIZE] = {0};
 	char status_buf[STATE_SIZE] = {0};
+	int i = 0;
 
 	printf("port = %d\n", port);
 	switch(port) {
@@ -1323,6 +1328,24 @@ void *socket_status_thread(void *arg)
 
 					StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
 
+					//for (i = 11; i <= 13; i++) {
+					//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
+					//}
+					//for (i = 16; i <= 18; i++) {
+					//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
+					//}
+					/* 系统变量发生改变时 */
+					if (jiabao_torque_pd_data.left_product_count != (int)state->sys_var[11] || jiabao_torque_pd_data.left_NG_count != (int)state->sys_var[12] || jiabao_torque_pd_data.left_work_time != (int)state->sys_var[13] || jiabao_torque_pd_data.right_product_count != (int)state->sys_var[16] || jiabao_torque_pd_data.right_NG_count != (int)state->sys_var[17] || jiabao_torque_pd_data.right_work_time != (int)state->sys_var[18]) {
+						/* 更新全局的结构体 */
+						jiabao_torque_pd_data.left_product_count = (int)state->sys_var[11];
+						jiabao_torque_pd_data.left_NG_count = (int)state->sys_var[12];
+						jiabao_torque_pd_data.left_work_time = (int)state->sys_var[13];
+						jiabao_torque_pd_data.right_product_count = (int)state->sys_var[16];
+						jiabao_torque_pd_data.right_NG_count = (int)state->sys_var[17];
+						jiabao_torque_pd_data.right_work_time = (int)state->sys_var[18];
+						/* 保存最新数据到生产数据数据库 */
+						update_torquesys_pd_data();
+					}
 					//time_5 = clock();
 					//printf("time_5, %d\n", time_5);
 				/*	printf("state->program_state = %d\n", state->program_state);
@@ -1983,8 +2006,13 @@ static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
 
 				continue;
 			}
+			/** 接收嘉宝的外部设备数据交互指令 */
+			if (atoi(array[2]) == 100) {
+				if (strcmp(array[4], "GetTorqueData()") == 0) {
+					sprintf(data_content, "%s,%d,%d,%d,%s,%d,%d,%d", jiabao_torque_pd_data.left_wk_id, jiabao_torque_pd_data.left_product_count, jiabao_torque_pd_data.left_NG_count, jiabao_torque_pd_data.left_work_time, jiabao_torque_pd_data.right_wk_id, jiabao_torque_pd_data.right_product_count, jiabao_torque_pd_data.right_NG_count, jiabao_torque_pd_data.right_work_time);
+				}
 			/** 接收文件名 */
-			if (atoi(array[2]) == 105) {
+			} else if (atoi(array[2]) == 105) {
 				socket_enquene(&socket_file, 105, array[4], 1);
 				bzero(lua_filename, FILENAME_SIZE);
 				strcpy(lua_filename, array[4]);
@@ -2257,43 +2285,64 @@ int update_server_ip()
 	return SUCCESS;
 }
 
-/*
-int send_cmd_set_robot_type()
+/**
+	嘉宝:
+	从生产数据数据库中读取生产数据，应用到系统变量中
+	更新全局的结构体
+*/
+static int init_torque_production_data()
 {
-	cJSON *type = NULL;
-	cJSON *major_ver = NULL;
-	cJSON *minor_ver = NULL;
-	cJSON *content_json = NULL;
-	char *file_content = NULL;
+	char sql[SQL_LEN] = {0};
+	char **resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
 	char cmd_content[100] = "";
-	int robot_type = 0;
+	SOCKET_INFO *sock_cmd = NULL;
 
-	file_content = get_file_content(FILE_ROBOT_TYPE);
-	if (file_content == NULL || strcmp(file_content, "NO_FILE") == 0 || strcmp(file_content, "Empty") == 0) {
-		perror("get file content");
-
-		return FAIL;
-	}
-	content_json = cJSON_Parse(file_content);
-	free(file_content);
-	file_content = NULL;
-
-	type = cJSON_GetObjectItem(content_json, "type");
-	major_ver = cJSON_GetObjectItem(content_json, "major_ver");
-	minor_ver = cJSON_GetObjectItem(content_json, "minor_ver");
-	if (type == NULL || major_ver == NULL || minor_ver == NULL) {
-		perror("json");
+	sprintf(sql, "select * from torquesys_pd_data;");
+	if (select_info_sqlite3(DB_TORQUE_PDDATA, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 		return FAIL;
 	}
-	// 主版本号预留 10 个 (1~10)，次版本号预留 10 个 (0~9)
-	robot_type = (type->valueint - 1) * 100 + (major_ver->valueint - 1) * 10 + (minor_ver->valueint + 1);
-	sprintf(cmd_content, "SetRobotType(%d)", robot_type);
-	socket_enquene(&socket_cmd, 425, cmd_content, 1);
+	memset(jiabao_torque_pd_data.left_wk_id, 0, 100);
+	strcpy(jiabao_torque_pd_data.left_wk_id, resultp[ncloumn]);
+	jiabao_torque_pd_data.left_product_count = atoi(resultp[ncloumn + 1]);
+	jiabao_torque_pd_data.left_NG_count = atoi(resultp[ncloumn + 2]);
+	jiabao_torque_pd_data.left_work_time = atoi(resultp[ncloumn + 3]);
+	memset(jiabao_torque_pd_data.right_wk_id, 0, 100);
+	strcpy(jiabao_torque_pd_data.right_wk_id, resultp[ncloumn + 4]);
+	jiabao_torque_pd_data.right_product_count = atoi(resultp[ncloumn + 5]);
+	jiabao_torque_pd_data.right_NG_count = atoi(resultp[ncloumn + 6]);
+	jiabao_torque_pd_data.right_work_time = atoi(resultp[ncloumn + 7]);
 
-	cJSON_Delete(content_json);
-	content_json = NULL;
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
+	/* 左工位系统变量更新 */
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(12, %d)", atoi(resultp[ncloumn + 1]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(13, %d)", atoi(resultp[ncloumn + 2]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(14, %d)", atoi(resultp[ncloumn + 3]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+
+	/* 右工位系统变量更新 */
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(17, %d)", atoi(resultp[ncloumn + 5]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(18, %d)", atoi(resultp[ncloumn + 6]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+	memset(cmd_content, 0, 100);
+	sprintf(cmd_content, "SetSysVarValue(19, %d)", atoi(resultp[ncloumn + 7]));
+	socket_enquene(sock_cmd, 511, cmd_content, 1);
+
+	sqlite3_free_table(resultp); //释放结果集
 
 	return SUCCESS;
 }
-*/

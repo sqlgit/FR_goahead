@@ -44,6 +44,10 @@ if test -x /tmp/fr_control/zbt.config; then
 	cp  /tmp/fr_control/zbt.config  /root/robot/
 fi
 
+if [ ! -f /tmp/fr_control/robot.config ]; then
+	cp  /tmp/fr_control/robot.config  /root/robot/
+fi
+
 #if test -x /tmp/fr_control/ex_device.config; then
 #	rm  /root/robot/ex_device.config
 #	cp  /tmp/fr_control/ex_device.config  /root/robot/

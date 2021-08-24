@@ -84,6 +84,7 @@
 #define DB_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.db"
 #define DB_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.db"
 #define DB_TORQUE_CUSTOM "/root/web/file/torquesys/torquesys_custom.db"
+#define DB_TORQUE_PDDATA "/root/web/file/torquesys/torquesys_pd_data.db"
 
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
@@ -95,6 +96,7 @@
 #define MD5_SIZE		16
 #define MD5_STR_LEN		(MD5_SIZE * 2)
 #define LINE_LEN	1024
+#define SQL_LEN		1024
 #define LEN_100	100
 #define FILENAME_SIZE	1024
 #define ODM_PASSWORD	"ODM"
@@ -144,5 +146,6 @@ int clear_plugin_config(char *plugin_name);
 char *my_strlwr(char * str);
 int local_now_time(char *time_now);
 int update_userconfig_robottype();
+int update_torquesys_pd_data();
 
 #endif

@@ -468,10 +468,12 @@ int update_file_dir()
 		增加了 torquesys_cfg.db torquesys_DIO.txt torquesys_pageflag.txt 文件
 	    V3.1.9 版本:
 		增加了 torquesys_points.db, torquesys_custom.db 文件
+		V3.2.0 版本：
+		增加了 torquesys_pd_data.db
 
 		如果 torquesys 文件夹下相关文件不存在，更新 torquesys 扭矩文件夹
 	*/
-	if (check_dir_filename(DIR_TORQUESYS, "torquesys_points.db") == 0) {
+	if (check_dir_filename(DIR_TORQUESYS, "torquesys_pd_data.db") == 0) {
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cp -r %s/* %s", DIR_FACTORY_RESET_TORQUESYS, DIR_TORQUESYS);
 		system(cmd);
@@ -669,7 +671,7 @@ void upload(Webs *wp)
 
 		/** 更新文件 */
 		/** 更新 user.config 文件 */
-		if (update_config(USER_CFG) == FAIL){
+		if (update_config(USER_CFG) == FAIL) {
 			my_syslog("普通操作", "升级 user.config 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade user.config", cur_account.username);
 			my_jap_syslog("普通の操作", "user.config のアップグレードに失敗", cur_account.username);
@@ -683,7 +685,7 @@ void upload(Webs *wp)
 			goto end;
 		}*/
 		/** 更新 ex_device.config 文件 */
-		if (update_config(EX_DEVICE_CFG) == FAIL){
+		if (update_config(EX_DEVICE_CFG) == FAIL) {
 			my_syslog("普通操作", "升级 ex_device.config 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade ex_device.config", cur_account.username);
 			my_jap_syslog("普通の操作", "ex_device.config のアップグレードに失敗", cur_account.username);
@@ -691,7 +693,7 @@ void upload(Webs *wp)
 			goto end;
 		}
 		/** 更新 exaxis.config 文件 */
-		if (update_config(EXAXIS_CFG) == FAIL){
+		if (update_config(EXAXIS_CFG) == FAIL) {
 			my_syslog("普通操作", "升级 exaxis.config 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade exaxis.config", cur_account.username);
 			my_jap_syslog("普通の操作", "exaxis.config のアップグレードに失敗", cur_account.username);
@@ -700,7 +702,7 @@ void upload(Webs *wp)
 		}
 
 		/** 更新 robot.config 文件 */
-		if (update_config(ROBOT_CFG) == FAIL){
+		if (update_config(ROBOT_CFG) == FAIL) {
 			my_syslog("普通操作", "升级 robot.config 失败", cur_account.username);
 			my_en_syslog("normal operation", "Failed to upgrade robot.config", cur_account.username);
 			my_jap_syslog("普通の操作", "robot.config のアップグレードに失敗", cur_account.username);

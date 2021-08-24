@@ -32,6 +32,7 @@ static int test_index = 0;
 extern TORQUE_SYS_STATE torque_sys_state;
 extern TORQUE_SYS torquesys;
 extern POINT_HOME_INFO point_home_info;
+extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -148,14 +149,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	rightstation_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(jiabao_torquesys_json, "left_station", leftstation_json);
 	cJSON_AddItemToObject(jiabao_torquesys_json, "right_station", rightstation_json);
-	cJSON_AddNumberToObject(leftstation_json, "workpiece_index", state->sys_var[10]);
-	cJSON_AddNumberToObject(leftstation_json, "product_count", state->sys_var[11]);
-	cJSON_AddNumberToObject(leftstation_json, "NG_count", state->sys_var[12]);
-	cJSON_AddNumberToObject(leftstation_json, "work_time", state->sys_var[13]);
-	cJSON_AddNumberToObject(rightstation_json, "workpiece_index", state->sys_var[15]);
-	cJSON_AddNumberToObject(rightstation_json, "product_count", state->sys_var[16]);
-	cJSON_AddNumberToObject(rightstation_json, "NG_count", state->sys_var[17]);
-	cJSON_AddNumberToObject(rightstation_json, "work_time", state->sys_var[18]);
+	cJSON_AddStringToObject(leftstation_json, "workpiece_id", jiabao_torque_pd_data.left_wk_id);
+	cJSON_AddNumberToObject(leftstation_json, "product_count", jiabao_torque_pd_data.left_product_count);
+	cJSON_AddNumberToObject(leftstation_json, "NG_count", jiabao_torque_pd_data.left_NG_count);
+	cJSON_AddNumberToObject(leftstation_json, "work_time", jiabao_torque_pd_data.left_work_time);
+	cJSON_AddStringToObject(rightstation_json, "workpiece_id", jiabao_torque_pd_data.right_wk_id);
+	cJSON_AddNumberToObject(rightstation_json, "product_count", jiabao_torque_pd_data.right_product_count);
+	cJSON_AddNumberToObject(rightstation_json, "NG_count", jiabao_torque_pd_data.right_NG_count);
+	cJSON_AddNumberToObject(rightstation_json, "work_time", jiabao_torque_pd_data.right_work_time);
 	//}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);

@@ -213,6 +213,19 @@ typedef struct _TORQUE_SYS
 	pthread_t t_socket_TORQUE_SYS;
 } TORQUE_SYS;
 
+/** 嘉宝--扭矩管理系统生产数据结构体 */
+typedef struct _JIABAO_TORQUE_PRODUCTION_DATA
+{
+	char left_wk_id[100]; 			/** 左工位工件编号 */
+	int left_product_count;			/** 左工位总生产量 */
+	int left_NG_count;				/** 左工位 NG 数量 */
+	int left_work_time;				/** 左工位工时 */
+	char right_wk_id[100];			/** 右工位工件编号 */
+	int right_product_count;		/** 右工位总生产量 */
+	int right_NG_count;				/** 右工位 NG 数量 */
+	int right_work_time;			/** 右工位工时 */
+} JIABAO_TORQUE_PRODUCTION_DATA;
+
 /* socket 相关信息结构体 */
 typedef struct _SOCKET_INFO
 {

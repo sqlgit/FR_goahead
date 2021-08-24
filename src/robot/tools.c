@@ -14,8 +14,7 @@ extern int robot_type;
 extern int language;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_vir_cmd;
-
-
+extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 
 /********************************************************************
 *@function: string_to_string_list
@@ -1268,5 +1267,28 @@ int update_userconfig_robottype()
 	//printf("write_content = %s\n", write_content);
 
 	return write_file(WEB_USER_CFG, write_content);
+}
+
+/* 更新生产数据数据库 */
+int update_torquesys_pd_data()
+{
+	char sql[SQL_LEN] = { 0 };
+	char del_sql[SQL_LEN] = { 0 };
+
+    sprintf(del_sql, "delete from torquesys_pd_data;");
+    if (change_info_sqlite3(DB_TORQUE_PDDATA, del_sql) == -1) {
+		perror("delete all");
+
+		return FAIL;
+    }
+
+	sprintf(sql, "insert into torquesys_pd_data values ('%s', %d, %d, %d, '%s', %d, %d, %d);", jiabao_torque_pd_data.left_wk_id, jiabao_torque_pd_data.left_product_count, jiabao_torque_pd_data.left_NG_count, jiabao_torque_pd_data.left_work_time, jiabao_torque_pd_data.right_wk_id, jiabao_torque_pd_data.right_product_count, jiabao_torque_pd_data.right_NG_count, jiabao_torque_pd_data.right_work_time);
+	if (change_info_sqlite3(DB_TORQUE_PDDATA, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
 }
 

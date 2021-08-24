@@ -19,6 +19,7 @@ extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_vir_cmd;
 extern int robot_type;
 extern POINT_HOME_INFO point_home_info;
+extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 
 /********************************* Function declaration ***********************/
 
@@ -330,7 +331,7 @@ static int modify_exaxis_cdsystem(const cJSON *data_json)
 	}
 
 	sprintf(sql, "update exaxis_coordinate_system set name='%s', exaxisid='%s', id='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s', flag='%s' where id='%s';", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring, id->valuestring);
-	//sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
+	//sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
 
 	if (change_info_sqlite3( DB_EXAXIS_CDSYSTEM, sql) == -1) {
 		perror("database");
@@ -404,7 +405,7 @@ static int save_point(const cJSON *data_json)
 	sprintf(E2, "%.3lf", state->exaxis_status[1].exAxisPos);
 	sprintf(E3, "%.3lf", state->exaxis_status[2].exAxisPos);
 	sprintf(E4, "%.3lf", state->exaxis_status[3].exAxisPos);
-	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
 				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
 				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring, workpiecenum->valuestring,\
 				joint_value_string[0], joint_value_string[1], joint_value_string[2], joint_value_string[3], joint_value_string[4], joint_value_string[5], E1, E2, E3, E4,\
@@ -481,7 +482,7 @@ static int save_laser_point(const cJSON *data_json)
 
 		return FAIL;
 	}
-	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
+	sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');"\
 				, name->valuestring, speed->valuestring, elbow_speed->valuestring,\
 				acc->valuestring, elbow_acc->valuestring, toolnum->valuestring, workpiecenum->valuestring,\
 				j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, E1_json->valuestring, E2_json->valuestring, E3_json->valuestring, E4_json->valuestring,\
@@ -1474,7 +1475,7 @@ static int torque_ensure_points(const cJSON *data_json)
 		name = cJSON_GetObjectItem(item, "name");
 		id = cJSON_GetObjectItem(item, "id");
 		memset(temp, 0, sizeof(temp));
-		sprintf(temp, "insert into %s values ('%s', %d); ", wk_left, name->valuestring, id->valueint);
+		sprintf(temp, "insert into %s values ('%s', %d);", wk_left, name->valuestring, id->valueint);
 		strcat(sql, temp);
 	}
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
@@ -1599,12 +1600,14 @@ static int clear_product_info(const cJSON *data_json)
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(12, 0)", 1);
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(13, 0)", 1);
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(14, 0)", 1);
+		memset(jiabao_torque_pd_data.left_wk_id, 0, 100);
 	}
 	/* 右工位清除 */
 	if (station->valueint == 1) {
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(17, 0)", 1);
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(18, 0)", 1);
 		socket_enquene(sock_cmd, 511, "SetSysVarValue(19, 0)", 1);
+		memset(jiabao_torque_pd_data.right_wk_id, 0, 100);
 	}
 
 	return SUCCESS;

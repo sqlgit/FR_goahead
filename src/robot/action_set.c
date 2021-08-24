@@ -25,6 +25,7 @@ extern STATE_FEEDBACK state_fb;
 extern ACCOUNT_INFO cur_account;
 extern TORQUE_SYS torquesys;
 extern POINT_HOME_INFO point_home_info;
+extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 //extern pthread_cond_t cond_cmd;
 //extern pthread_cond_t cond_file;
 
@@ -82,7 +83,7 @@ static int wait_cmd_feedback();
 static int copy_content(const cJSON *data_json, char *content)
 {
 	cJSON *data = cJSON_GetObjectItem(data_json, "content");
-	if(data == NULL || data->valuestring == NULL) {
+	if (data == NULL || data->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -127,8 +128,12 @@ static int program_resume(const cJSON *data_json, char *content)
 /* 105 sendFileName */
 static int sendfilename(const cJSON *data_json, char *content)
 {
-	cJSON *name = cJSON_GetObjectItem(data_json, "name");
-	if(name == NULL || name->valuestring == NULL) {
+	char **cmd_array = NULL;
+	int size = 0;
+	cJSON *name = NULL;
+
+	name = cJSON_GetObjectItem(data_json, "name");
+	if (name == NULL || name->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -136,6 +141,22 @@ static int sendfilename(const cJSON *data_json, char *content)
 	sprintf(content, "%s%s", DIR_FRUSER, name->valuestring);
 	bzero(lua_filename, FILENAME_SIZE);
 	strcpy(lua_filename, content);
+
+	if (strstr(lua_filename, "main")) {
+		if (string_to_string_list(lua_filename, "_", &size, &cmd_array) == 0 || size != 3) {
+			perror("string to string list");
+			string_list_free(cmd_array, size);
+
+			return FAIL;
+		}
+		memset(jiabao_torque_pd_data.left_wk_id, 0, 100);
+		strcpy(jiabao_torque_pd_data.left_wk_id, cmd_array[1]);
+		memset(jiabao_torque_pd_data.right_wk_id, 0, 100);
+		strncpy(jiabao_torque_pd_data.right_wk_id, cmd_array[2], (strlen(cmd_array[2]) - 4));
+		/* 保存最新数据到生产数据数据库 */
+		update_torquesys_pd_data();
+		string_list_free(cmd_array, size);
+	}
 	//printf("content = %s\n", content);
 
 	return SUCCESS;
@@ -286,6 +307,9 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	cJSON *point_1 = NULL;
 	cJSON *point_2 = NULL;
 	cJSON *point_3 = NULL;
+	cJSON *x_3 = NULL;
+	cJSON *y_3 = NULL;
+	cJSON *z_3 = NULL;
 	cJSON *rx_3 = NULL;
 	cJSON *ry_3 = NULL;
 	cJSON *rz_3 = NULL;
@@ -1133,6 +1157,54 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			goto end;
 		}
 		sprintf(content, "%sGetSysVarValue(%s)%s\n", head, id->valuestring, end_ptr);
+		strcat(file_content, content);
+	/* MultilayerOffsetTrsfToBase */
+	} else if ((ptr = strstr(lua_cmd, "MultilayerOffsetTrsfToBase(")) && strstr(lua_cmd, ")")) {
+		end_ptr = strstr(lua_cmd, ")") + 1;
+		strncpy(head, lua_cmd, (ptr - lua_cmd));
+		strncpy(cmd_arg, (ptr + 27), (end_ptr - ptr - 28));
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 6) {
+			perror("string to string list");
+
+			goto end;
+		}
+		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
+		if (point_1 == NULL || point_1->type != cJSON_Object) {
+
+			goto end;
+		}
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		if (x == NULL || y == NULL || z == NULL) {
+
+			goto end;
+		}
+		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
+		if (point_2 == NULL || point_2->type != cJSON_Object) {
+
+			goto end;
+		}
+		x_2 = cJSON_GetObjectItem(point_2, "x");
+		y_2 = cJSON_GetObjectItem(point_2, "y");
+		z_2 = cJSON_GetObjectItem(point_2, "z");
+		if (x_2 == NULL || y_2 == NULL || z_2 == NULL) {
+
+			goto end;
+		}
+		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
+		if (point_3 == NULL || point_3->type != cJSON_Object) {
+
+			goto end;
+		}
+		x_3 = cJSON_GetObjectItem(point_3, "x");
+		y_3 = cJSON_GetObjectItem(point_3, "y");
+		z_3 = cJSON_GetObjectItem(point_3, "z");
+		if (x_3 == NULL || y_3 == NULL || z_3 == NULL) {
+
+			goto end;
+		}
+		sprintf(content, "%sMultilayerOffsetTrsfToBase(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, x->valuestring, y->valuestring, z->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], end_ptr);
 		strcat(file_content, content);
 	/* other code send without processing */
 	} else {

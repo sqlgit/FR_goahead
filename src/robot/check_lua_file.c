@@ -798,6 +798,16 @@ static int FT_Control(lua_State* L)
 	return 1;
 }
 
+static int MultilayerOffsetTrsfToBase(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 12) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1123,6 +1133,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ActGripper", ActGripper);
 	lua_register(luaEnv, "FT_Guard", FT_Guard);
 	lua_register(luaEnv, "FT_Control", FT_Control);
+	lua_register(luaEnv, "MultilayerOffsetTrsfToBase", MultilayerOffsetTrsfToBase);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);
