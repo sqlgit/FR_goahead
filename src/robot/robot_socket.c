@@ -483,9 +483,17 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		//printf("array[4] = %s\n", array[4]);
 		if (atoi(array[2]) == 229 || atoi(array[2]) == 527) {//反馈夹爪配置信息, 获取力/扭矩传感器配置信息
 			bzero(&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
+			//printf("array[4] = %s\n", array[4]);
 			StringToBytes(array[4], (BYTE *)&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
 			root_json = cJSON_CreateArray();
 			for(i = 0; i < MAXGRIPPER; i++) {
+				/*
+				printf("id = %d\n", (i+1));
+				printf("name = %d\n", grippers_config_info.id_company[i]);
+				printf("type = %d\n", grippers_config_info.id_device[i]);
+				printf("version = %d\n", grippers_config_info.id_softversion[i]);
+				printf("position = %d\n", grippers_config_info.id_bus[i]);
+				*/
 				newitem = cJSON_CreateObject();
 				cJSON_AddNumberToObject(newitem, "id", (i+1));
 				cJSON_AddNumberToObject(newitem, "name", grippers_config_info.id_company[i]);
@@ -958,6 +966,64 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 530) {//获取重量辨识数据
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 1) {
+				perror("string to string list");
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+
+				continue;
+			}
+			cJSON_AddStringToObject(root_json, "weight", msg_array[0]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
+		} else if (atoi(array[2]) == 532) {//获取质心辨识数据
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
+				perror("string to string list");
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+
+				continue;
+			}
+			cJSON_AddStringToObject(root_json, "x", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "y", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "z", msg_array[2]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(msg_array, size_content);
+				string_list_free(array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(array, size_package);
@@ -1333,6 +1399,9 @@ void *socket_status_thread(void *arg)
 					//}
 					//for (i = 16; i <= 18; i++) {
 					//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
+					//}
+					//for (i = 0; i <= 5; i++) {
+					//	printf("state->FT_data[%d] = %lf\n", i, state->FT_data[i]);
 					//}
 					/* 系统变量发生改变时 */
 					if (jiabao_torque_pd_data.left_product_count != (int)state->sys_var[11] || jiabao_torque_pd_data.left_NG_count != (int)state->sys_var[12] || jiabao_torque_pd_data.left_work_time != (int)state->sys_var[13] || jiabao_torque_pd_data.right_product_count != (int)state->sys_var[16] || jiabao_torque_pd_data.right_NG_count != (int)state->sys_var[17] || jiabao_torque_pd_data.right_work_time != (int)state->sys_var[18]) {

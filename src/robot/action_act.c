@@ -333,7 +333,7 @@ static int modify_exaxis_cdsystem(const cJSON *data_json)
 	sprintf(sql, "update exaxis_coordinate_system set name='%s', exaxisid='%s', id='%s', x='%s', y='%s', z='%s', rx='%s', ry='%s', rz='%s', flag='%s' where id='%s';", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring, id->valuestring);
 	//sprintf(sql, "insert into exaxis_coordinate_system(name,exaxisid,id,x,y,z,rx,ry,rz,flag) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", name->valuestring, exaxisid->valuestring, id->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, flag->valuestring);
 
-	if (change_info_sqlite3( DB_EXAXIS_CDSYSTEM, sql) == -1) {
+	if (change_info_sqlite3(DB_EXAXIS_CDSYSTEM, sql) == -1) {
 		perror("database");
 
 		return FAIL;
@@ -591,7 +591,7 @@ static int remove_points(const cJSON *data_json)
 			continue;
 		}
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "delete from points where name = \'%s\'", name_index->valuestring);
+		sprintf(sql, "delete from points where name = \'%s\';", name_index->valuestring);
 		if (change_info_sqlite3(DB_POINTS, sql) == -1) {
 			perror("database");
 
@@ -1180,8 +1180,8 @@ static int torque_save_cfg(const cJSON *data_json)
 	cJSON *slip_time = NULL;
 	cJSON *dispensing_time = NULL;
 
-	old_workpiece_name = cJSON_GetObjectItem(data_json, "old_workpiece_name");
-	new_workpiece_name = cJSON_GetObjectItem(data_json, "new_workpiece_name");
+	old_workpiece_name = cJSON_GetObjectItem(data_json, "old_workpiece_id");
+	new_workpiece_name = cJSON_GetObjectItem(data_json, "new_workpiece_id");
 	screw_num = cJSON_GetObjectItem(data_json, "screw_num");
 	screw_time = cJSON_GetObjectItem(data_json, "screw_time");
 	screw_period = cJSON_GetObjectItem(data_json, "screw_period");
@@ -1194,7 +1194,11 @@ static int torque_save_cfg(const cJSON *data_json)
 		return FAIL;
 	}
 
-	sprintf(sql, "update torquesys_cfg set workpiece_name='%s', screw_num=%d, screw_time=%d, screw_period=%d, float_time=%d, slip_time=%d, dispensing_time=%d where workpiece_name='%s';", new_workpiece_name->valuestring, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, dispensing_time->valueint, old_workpiece_name->valuestring);
+	if (strcmp(old_workpiece_name->valuestring, "new") == 0) {
+		sprintf(sql, "insert into torquesys_cfg values ('%s', %d, %d, %d, %d, %d, %d);", new_workpiece_name->valuestring, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, dispensing_time->valueint);
+	} else {
+		sprintf(sql, "update torquesys_cfg set workpiece_id='%s', screw_num=%d, screw_time=%d, screw_period=%d, float_time=%d, slip_time=%d, dispensing_time=%d where workpiece_id='%s';", new_workpiece_name->valuestring, screw_num->valueint, screw_time->valueint, screw_period->valueint, float_time->valueint, slip_time->valueint, dispensing_time->valueint, old_workpiece_name->valuestring);
+	}
 
 	if (change_info_sqlite3(DB_TORQUE_CFG, sql) == -1) {
 		perror("database");
@@ -1235,7 +1239,7 @@ static int generate_luafile(const cJSON *data_json)
 
 		return FAIL;
 	}
-	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_id");
 	ptemp = cJSON_GetObjectItem(data_json, "ptemp");
 	perscrew_pnum = cJSON_GetObjectItem(data_json, "perscrew_pnum");
 	left_workstation = cJSON_GetObjectItem(data_json, "left_workstation");
@@ -1415,7 +1419,7 @@ static int torque_ensure_points(const cJSON *data_json)
 	int nrow = 0;
 	int ncloumn = 0;
 
-	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_name");
+	workpiece_name = cJSON_GetObjectItem(data_json, "workpiece_id");
 	ptemp = cJSON_GetObjectItem(data_json, "ptemp");
 	perscrew_pnum = cJSON_GetObjectItem(data_json, "perscrew_pnum");
 	left_workstation = cJSON_GetObjectItem(data_json, "left_workstation");
@@ -1436,7 +1440,7 @@ static int torque_ensure_points(const cJSON *data_json)
 	select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn);
 	for (i = 0; i < nrow; i++) {
 		memset(sql, 0, sizeof(sql));
-		sprintf(sql, "drop table '%s';", resultp[(i + 1) * ncloumn]);
+		sprintf(sql, "drop table [%s];", resultp[(i + 1) * ncloumn]);
 		if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
 			perror("database");
 
@@ -1447,21 +1451,21 @@ static int torque_ensure_points(const cJSON *data_json)
 
 	/** 创建 table */
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "create table %s (name TEXT, id INTEGER primary key);", wk_left);
+	sprintf(sql, "create table [%s] (name TEXT, id INTEGER primary key);", wk_left);
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
 		perror("database");
 
 		return FAIL;
 	}
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "create table %s (name TEXT, id INTEGER primary key);", wk_right);
+	sprintf(sql, "create table [%s] (name TEXT, id INTEGER primary key);", wk_right);
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
 		perror("database");
 
 		return FAIL;
 	}
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "create table %s (ptemp TEXT, perscrew_pnum INTEGER);", wk_cfg);
+	sprintf(sql, "create table [%s] (ptemp TEXT, perscrew_pnum INTEGER);", wk_cfg);
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
 		perror("database");
 
@@ -1475,7 +1479,7 @@ static int torque_ensure_points(const cJSON *data_json)
 		name = cJSON_GetObjectItem(item, "name");
 		id = cJSON_GetObjectItem(item, "id");
 		memset(temp, 0, sizeof(temp));
-		sprintf(temp, "insert into %s values ('%s', %d);", wk_left, name->valuestring, id->valueint);
+		sprintf(temp, "insert into [%s] values ('%s', %d);", wk_left, name->valuestring, id->valueint);
 		strcat(sql, temp);
 	}
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
@@ -1491,7 +1495,7 @@ static int torque_ensure_points(const cJSON *data_json)
 		name = cJSON_GetObjectItem(item, "name");
 		id = cJSON_GetObjectItem(item, "id");
 		memset(temp, 0, sizeof(temp));
-		sprintf(temp, "insert into %s values ('%s', %d); ", wk_right, name->valuestring, id->valueint);
+		sprintf(temp, "insert into [%s] values ('%s', %d); ", wk_right, name->valuestring, id->valueint);
 		strcat(sql, temp);
 	}
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
@@ -1501,7 +1505,7 @@ static int torque_ensure_points(const cJSON *data_json)
 	}
 
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "insert into %s values ('%s', %d);", wk_cfg, ptemp->valuestring, perscrew_pnum->valueint);
+	sprintf(sql, "insert into [%s] values ('%s', %d);", wk_cfg, ptemp->valuestring, perscrew_pnum->valueint);
 	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
 		perror("insert");
 
@@ -1706,7 +1710,7 @@ static int move_to_home_point(const cJSON *data_json)
 	}
 	point_home_info.error_flag = 0;
 
-	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)\n", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, ovl->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring);
+	sprintf(content, "MoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0,0)\n", j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, ovl->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring);
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_cmd = &socket_cmd;
 	} else { // "0" 代表虚拟机器人
@@ -1768,7 +1772,7 @@ static int torque_generate_program(const cJSON *data_json)
 
 	/* 获取左工位上工件信息 */
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "select * from torquesys_cfg where workpiece_name = '%s'", left_wp->valuestring);
+	sprintf(sql, "select * from torquesys_cfg where workpiece_id = '%s'", left_wp->valuestring);
 	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 		return FAIL;
@@ -1789,7 +1793,7 @@ static int torque_generate_program(const cJSON *data_json)
 
 	/* 获取右工位上工件信息 */
 	memset(sql, 0, sizeof(sql));
-	sprintf(sql, "select * from torquesys_cfg where workpiece_name = '%s'", right_wp->valuestring);
+	sprintf(sql, "select * from torquesys_cfg where workpiece_id = '%s'", right_wp->valuestring);
 	if (select_info_sqlite3(DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 		return FAIL;
@@ -1971,6 +1975,12 @@ static int modify_ip(const cJSON *data_json)
 	user_ip = cJSON_GetObjectItem(data_json, "user_ip");
 	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || user_ip == NULL || user_ip->valuestring == NULL) {
 		perror("json");
+
+		return FAIL;
+	}
+
+	if (strstr(ctrl_ip->valuestring, "192.168.57")) {
+		perror("ip set fail: same 192.168.58.XXX");
 
 		return FAIL;
 	}
@@ -2201,6 +2211,16 @@ void act(Webs *wp)
 		strcpy(log_content, "保存机器人型号");
 		strcpy(en_log_content, "Save the robot type");
 		strcpy(jap_log_content, "ロボット型保存");
+	} else if (!strcmp(cmd, "rename_var")) {
+		ret = rename_var(data_json);
+		strcpy(log_content, "变量重命名");
+		strcpy(en_log_content, "variable renaming");
+		strcpy(jap_log_content, "変数の名前変更");
+	} else if (!strcmp(cmd, "move_to_home_point")) {
+		ret = move_to_home_point(data_json);
+		strcpy(log_content, "移至原点");
+		strcpy(en_log_content, "Move to the origin point");
+		strcpy(jap_log_content, "原点に移す");
 	} else if (!strcmp(cmd, "torque_save_cfg")) {
 		ret = torque_save_cfg(data_json);
 		strcpy(log_content, "设置扭矩参数");
@@ -2211,6 +2231,11 @@ void act(Webs *wp)
 		strcpy(log_content, "确认扭矩示教点");
 		strcpy(en_log_content, "Ensure torque teaching points");
 		strcpy(jap_log_content, "トルク表示点を確認する");
+	} else if (!strcmp(cmd, "torque_generate_program")) {
+		ret = torque_generate_program(data_json);
+		strcpy(log_content, "扭矩: 生成示教程序");
+		strcpy(en_log_content, "torque: Generate the instruction program");
+		strcpy(jap_log_content, "トルク: 表示手順を生成する");
 	} else if (!strcmp(cmd, "set_DIO_cfg")) {
 		ret = set_DIO_cfg(data_json);
 		strcpy(log_content, "设置 DIO 配置");
@@ -2221,26 +2246,11 @@ void act(Webs *wp)
 		strcpy(log_content, "设置扭矩页面显示标志位");
 		strcpy(en_log_content, "Set the display flag bit on the torque page");
 		strcpy(jap_log_content, "トルク表示表示ビットを設定します");
-	} else if (!strcmp(cmd, "rename_var")) {
-		ret = rename_var(data_json);
-		strcpy(log_content, "变量重命名");
-		strcpy(en_log_content, "variable renaming");
-		strcpy(jap_log_content, "変数の名前変更");
 	} else if (!strcmp(cmd, "clear_product_info")) {
 		ret = clear_product_info(data_json);
 		strcpy(log_content, "生产数据清除");
 		strcpy(en_log_content, "Production data cleanup");
 		strcpy(jap_log_content, "生産データ消去");
-	} else if (!strcmp(cmd, "move_to_home_point")) {
-		ret = move_to_home_point(data_json);
-		strcpy(log_content, "移至原点");
-		strcpy(en_log_content, "Move to the origin point");
-		strcpy(jap_log_content, "原点に移す");
-	} else if (!strcmp(cmd, "torque_generate_program")) {
-		ret = torque_generate_program(data_json);
-		strcpy(log_content, "扭矩: 生成示教程序");
-		strcpy(en_log_content, "torque: Generate the instruction program");
-		strcpy(jap_log_content, "トルク: 表示手順を生成する");
 	} else if (!strcmp(cmd, "torque_save_custom_pause")) {
 		ret = torque_save_custom_pause(data_json);
 		strcpy(log_content, "扭矩: 保存自定义提示内容");

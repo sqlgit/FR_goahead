@@ -9,12 +9,17 @@ extern ACCOUNT_INFO cur_account;
 //extern SOCKET_INFO socket_cmd;
 //extern SOCKET_INFO socket_vir_cmd;
 //extern int robot_type;
-static void fileWriteEvent(Webs *wp);
-static int avolfileHandler(Webs *wp);
+
 static int compute_file_md5(const char *file_path, char *md5_str);
 static int check_upfile(const char *upgrade_path, const char *readme_now_path, const char *readme_up_path);
 static int check_version(const char *readme_now_path, const char *readme_up_path);
+static int check_robot_type();
 static int update_config(char *filename);
+static int import_torquesys(char *pathfilename);
+
+static void fileWriteEvent(Webs *wp);
+static int export_torquesys(char *pathfilename);
+static int avolfileHandler(Webs *wp);
 
 /**
 	计算 MD5 值：
@@ -482,6 +487,51 @@ int update_file_dir()
 	return SUCCESS;
 }
 
+/* 嘉宝扭矩系统：导入机种工艺包 */
+static int import_torquesys(char *pathfilename)
+{
+	char cmd[100] = {0};
+	char wk_id[100] = "";
+	char sql[SQL_LEN] = {0};
+	char** resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	int i = 0;
+
+	strncpy(wk_id, (pathfilename + strlen("/tmp/torquesys_")), (strlen(pathfilename) - strlen("/tmp/torquesys_") - strlen(".tar.gz")));
+	//printf("wk_id = %s\n", wk_id);
+
+	sprintf(sql, "select * from torquesys_cfg;");
+	if (select_info_sqlite3(UPLOAD_DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	sprintf(sql, "insert into torquesys_cfg values ('%s', %d, %d, %d, %d, %d, %d);", resultp[ncloumn], atoi(resultp[ncloumn + 1]), atoi(resultp[ncloumn + 2]),atoi(resultp[ncloumn + 3]),atoi(resultp[ncloumn + 4]),atoi(resultp[ncloumn + 5]),atoi(resultp[ncloumn + 6]));
+	if (change_info_sqlite3(DB_TORQUE_CFG, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	sqlite3_free_table(resultp);
+
+	sprintf(sql, "select * from points;");
+	if (select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	for (i = 0; i < nrow; i++) {
+		sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", resultp[(i+1)*ncloumn], resultp[(i+1)*ncloumn+1], resultp[(i+1)*ncloumn+2], resultp[(i+1)*ncloumn+3], resultp[(i+1)*ncloumn+4], resultp[(i+1)*ncloumn+5], resultp[(i+1)*ncloumn+6], resultp[(i+1)*ncloumn+7], resultp[(i+1)*ncloumn+8], resultp[(i+1)*ncloumn+9], resultp[(i+1)*ncloumn+10], resultp[(i+1)*ncloumn+11], resultp[(i+1)*ncloumn+12], resultp[(i+1)*ncloumn+13], resultp[(i+1)*ncloumn+14], resultp[(i+1)*ncloumn+15], resultp[(i+1)*ncloumn+16], resultp[(i+1)*ncloumn+17], resultp[(i+1)*ncloumn+18], resultp[(i+1)*ncloumn+19], resultp[(i+1)*ncloumn+20], resultp[(i+1)*ncloumn+21], resultp[(i+1)*ncloumn+22]); 
+	}
+	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	sqlite3_free_table(resultp);
+
+	return SUCCESS;
+}
+
 void upload(Webs *wp)
 {
 	//printf("__FUNC__ = %s, __LINE__ = %d\n", __FUNCTION__, __LINE__);
@@ -604,6 +654,13 @@ void upload(Webs *wp)
 				my_syslog("普通操作", "导入 ODM 文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import ODM file successfully", cur_account.username);
 				my_jap_syslog("普通の操作", "odmファイルのインポートに成功", cur_account.username);
+				strcpy(filename, upfile);
+			/* torquesys pkg file */
+			} else if (is_in(up->clientFilename, "torquesys") == 1 && is_in(up->clientFilename, ".tar.gz") == 1) {
+				upfile = sfmt("/tmp/%s", up->clientFilename);
+				my_syslog("普通操作", "导入嘉宝工件配方文件成功", cur_account.username);
+				my_en_syslog("normal operation", "The garbo artifact recipe file was imported successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "ガルボワークのレシピファイルの導入に成功", cur_account.username);
 				strcpy(filename, upfile);
 			} else {
 				my_syslog("普通操作", "导入文件未匹配", cur_account.username);
@@ -875,6 +932,8 @@ void upload(Webs *wp)
 			system(delete_cmd);
 			goto end;
 		}
+	} else if (is_in(filename, "torquesys") == 1 && is_in(filename, ".tar.gz") == 1) {
+		import_torquesys(filename);
 	} else if (strcmp(filename, UPLOAD_WEB_ODM) == 0) {
 		system("rm -rf /root/web/frontend/file/odm");
 		system("cd /root/web/frontend/file/ && tar -zxvf odm.tar.gz");
@@ -933,6 +992,71 @@ static void fileWriteEvent(Webs *wp)
 	}
 }
 
+/* 嘉宝扭矩系统：导出机种工艺包 */
+static int export_torquesys(char *pathfilename)
+{
+	char cmd[100] = {0};
+	char wk_id[100] = "";
+	char sql[SQL_LEN] = {0};
+	char** resultp = NULL;
+	int nrow = 0;
+	int ncloumn = 0;
+	int i = 0;
+
+	strncpy(wk_id, (pathfilename + strlen("/tmp/torquesys_")), (strlen(pathfilename) - strlen("/tmp/torquesys_") - strlen(".tar.gz")));
+	//printf("wk_id = %s\n", wk_id);
+
+	memset(cmd, 0, 100);
+	sprintf(cmd, "rm -f %s %s %s", UPLOAD_DB_TORQUE_CFG, UPLOAD_DB_TORQUE_POINTS_CFG, UPLOAD_DB_TORQUE_POINTS);
+	system(cmd);
+	memset(cmd, 0, 100);
+	sprintf(cmd, "cp %s %s", DB_TORQUE_CFG, UPLOAD_DB_TORQUE_CFG);
+	system(cmd);
+	memset(cmd, 0, 100);
+	sprintf(cmd, "cp %s %s", DB_TORQUE_POINTS, UPLOAD_DB_TORQUE_POINTS_CFG);
+	system(cmd);
+	memset(cmd, 0, 100);
+	sprintf(cmd, "cp %s %s", DB_POINTS, UPLOAD_DB_TORQUE_POINTS);
+	system(cmd);
+
+	/* 只保留当前工件生产参数配置信息 */
+	memset(sql, SQL_LEN, 0);
+	sprintf(sql, "delete from torquesys_cfg where workpiece_id != '%s';", wk_id);
+	if (change_info_sqlite3(UPLOAD_DB_TORQUE_CFG, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+	/* 只保留当前工件示教点配置信息 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select name from sqlite_master where type = 'table' and name not like '%s%';", wk_id);
+	select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS_CFG, sql, &resultp, &nrow, &ncloumn);
+	for (i = 0; i < nrow; i++) {
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "drop table [%s];", resultp[(i + 1) * ncloumn]);
+		if (change_info_sqlite3(UPLOAD_DB_TORQUE_POINTS_CFG, sql) == -1) {
+			perror("database");
+
+			return FAIL;
+		}
+	}
+	sqlite3_free_table(resultp);
+	/* 只保留当前工件示教点信息 */
+	memset(sql, SQL_LEN, 0);
+	sprintf(sql, "delete from points where name not like '%s%';", wk_id);
+	if (change_info_sqlite3(UPLOAD_DB_TORQUE_POINTS, sql) == -1) {
+		perror("database");
+
+		return FAIL;
+	}
+
+	memset(cmd, 0, 100);
+	sprintf(cmd, "cd /tmp/ && tar -zcvf torquesys_%s.tar.gz ./torquesys_cfg.db ./torquesys_points_cfg.db ./torquesys_points.db", wk_id);
+	system(cmd);
+
+	return SUCCESS;
+}
+
 static int avolfileHandler(Webs *wp)
 {
 	WebsFileInfo    info;
@@ -970,6 +1094,11 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of user data file successful", cur_account.username);
 		my_jap_syslog("普通の操作", "ユーザーデータファイルのエクスポートに成功", cur_account.username);
+	} else if (strstr(pathfilename, "torquesys")) {
+		export_torquesys(pathfilename);
+		my_syslog("普通操作", "导出工件配方成功", cur_account.username);
+		my_en_syslog("normal operation", "Export of workpiece package successful", cur_account.username);
+		my_jap_syslog("普通の操作", "ワークレシピを導き出すことに成功", cur_account.username);
 	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
 		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of points file successful", cur_account.username);

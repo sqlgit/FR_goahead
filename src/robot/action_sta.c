@@ -121,6 +121,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	basic_index++;
 	cJSON_AddStringToObject(root_json, "time_now", time_now);
 
+	//printf("torquesys.enable = %d\n", torquesys.enable);
 	/** 扭矩管理系统状态反馈 */
 	if (torquesys.enable == 1) {
 		cJSON_AddNumberToObject(torquesys_json, "motion_state", torque_sys_state.motion_state);
@@ -143,6 +144,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		cJSON_AddNumberToObject(torquesys_json, "current_unit", torque_sys_state.current_unit);
 	}
 
+	//printf("jiabao_torque_pd_data.left_wk_id = %s\n", jiabao_torque_pd_data.left_wk_id);
 	/** 嘉宝扭矩系统状态反馈 */
 	//if () {
 	leftstation_json = cJSON_CreateObject();
@@ -2214,7 +2216,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->paraError = 0;
 			break;
 	}
-//printf("state->exaxis_out_slimit_error = %d\n", state->exaxis_out_slimit_error);
+	//printf("state->exaxis_out_slimit_error = %d\n", state->exaxis_out_slimit_error);
 	switch(state->exaxis_out_slimit_error)
 	{
 		case 1:
@@ -2926,10 +2928,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pre_state->interfereAlarm = 0;
 	}
 
+	//printf("state->FT_data[0] = %lf\n", state->FT_data[0]);
+	//printf("state->FT_data[5] = %lf\n", state->FT_data[5]);
 	FT_data_json = cJSON_CreateArray();
 	cJSON_AddItemToObject(root_json, "FT_data", FT_data_json);
 	for (i = 0; i < 6; i++) {
-		cJSON_AddNumberToObject(FT_data_json, "key", double_round(state->FT_data[i], 3));
+		cJSON_AddNumberToObject(FT_data_json, "key", state->FT_data[i]);
 	}
 
 	buf = cJSON_Print(root_json);

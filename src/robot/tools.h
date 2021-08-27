@@ -51,6 +51,7 @@
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
+#define FILE_TORQUE_PKG "/root/web/file/torquesys/torquesys.tar.gz"
 #define FILENAME_UP_SUC "upgrade_success.txt"
 
 #define DIR_SHELL "/root/web/webserver/shell/"
@@ -86,6 +87,9 @@
 #define DB_TORQUE_CUSTOM "/root/web/file/torquesys/torquesys_custom.db"
 #define DB_TORQUE_PDDATA "/root/web/file/torquesys/torquesys_pd_data.db"
 
+#define UPLOAD_DB_TORQUE_CFG "/tmp/torquesys_cfg.db"
+#define UPLOAD_DB_TORQUE_POINTS_CFG "/tmp/torquesys_points_cfg.db"
+#define UPLOAD_DB_TORQUE_POINTS "/tmp/torquesys_points.db"
 #define UPLOAD_TOOL_MODEL "/root/web/frontend/data/toolmodel/"
 #define UPLOAD_WEB_PLUGINS "/root/web/frontend/plugins/web-plugins/"
 #define UPLOAD_WEB_ODM "/root/web/frontend/file/odm.tar.gz"

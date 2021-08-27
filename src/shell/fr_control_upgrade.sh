@@ -11,6 +11,12 @@ cp /tmp/software/README_CTL.txt /root/README/
 #	cp  /tmp/fr_control/frsys*.ifs  /.boot/
 #fi
 
+# update web_recover
+if [ -d /tmp/web_recover ]; then
+	rm -rf /root/web_recover
+	mv /tmp/web_recover /root/
+fi
+
 # update frapploader.sh
 if test -x /tmp/fr_control/frapploader.sh; then
 	rm  /etc/rc.d/frapploader.sh
