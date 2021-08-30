@@ -51,7 +51,6 @@
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
-#define FILE_TORQUE_PKG "/root/web/file/torquesys/torquesys.tar.gz"
 #define FILENAME_UP_SUC "upgrade_success.txt"
 
 #define DIR_SHELL "/root/web/webserver/shell/"

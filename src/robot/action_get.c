@@ -1578,10 +1578,7 @@ static int torque_get_points(char **ret_f_content, const cJSON *data_json)
 		/** 获取工件在左工位上的示教点 */
 		memset(sql, 0, 1024);
 		sprintf(sql, "select * from [%s_left];", name->valuestring);
-		if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
-
-			return FAIL;
-		}
+		select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn);
 		left_workstation_json = cJSON_CreateArray();
 		for (i = 0; i < nrow; i++) {
 			if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {
@@ -1597,10 +1594,7 @@ static int torque_get_points(char **ret_f_content, const cJSON *data_json)
 		/** 获取工件在右工位上的示教点 */
 		memset(sql, 0, 1024);
 		sprintf(sql, "select * from [%s_right];", name->valuestring);
-		if (select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
-
-			return FAIL;
-		}
+		select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn);
 		right_workstation_json = cJSON_CreateArray();
 		for (i = 0; i < nrow; i++) {
 			if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {

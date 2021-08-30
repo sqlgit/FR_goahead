@@ -3,6 +3,7 @@
 #include    "md5.h"
 #include 	"tools.h"
 #include 	"robot_socket.h"
+#include 	"sqlite3.h"
 #include	"filehandler.h"
 
 extern ACCOUNT_INFO cur_account;
@@ -493,41 +494,219 @@ static int import_torquesys(char *pathfilename)
 	char cmd[100] = {0};
 	char wk_id[100] = "";
 	char sql[SQL_LEN] = {0};
+	char sql_exec[SQL_LEN] = {0};
 	char** resultp = NULL;
 	int nrow = 0;
 	int ncloumn = 0;
 	int i = 0;
+	char *errmsg = NULL;
+	sqlite3 *db = NULL;
 
 	strncpy(wk_id, (pathfilename + strlen("/tmp/torquesys_")), (strlen(pathfilename) - strlen("/tmp/torquesys_") - strlen(".tar.gz")));
 	//printf("wk_id = %s\n", wk_id);
 
+	memset(cmd, 0, 100);
+	sprintf(cmd, "cd /tmp/ && tar -zxvf torquesys_%s.tar.gz", wk_id);
+	system(cmd);
+
+	/* 更新 torquesys_cfg.db 工件生产参数配置信息 */
+	memset(sql, 0, sizeof(sql));
 	sprintf(sql, "select * from torquesys_cfg;");
 	if (select_info_sqlite3(UPLOAD_DB_TORQUE_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 		return FAIL;
 	}
-	sprintf(sql, "insert into torquesys_cfg values ('%s', %d, %d, %d, %d, %d, %d);", resultp[ncloumn], atoi(resultp[ncloumn + 1]), atoi(resultp[ncloumn + 2]),atoi(resultp[ncloumn + 3]),atoi(resultp[ncloumn + 4]),atoi(resultp[ncloumn + 5]),atoi(resultp[ncloumn + 6]));
-	if (change_info_sqlite3(DB_TORQUE_CFG, sql) == -1) {
+	memset(sql_exec, 0, sizeof(sql_exec));
+	sprintf(sql_exec, "insert into torquesys_cfg values ('%s', %d, %d, %d, %d, %d, %d);", resultp[ncloumn], atoi(resultp[ncloumn + 1]), atoi(resultp[ncloumn + 2]),atoi(resultp[ncloumn + 3]),atoi(resultp[ncloumn + 4]),atoi(resultp[ncloumn + 5]),atoi(resultp[ncloumn + 6]));
+	if (change_info_sqlite3(DB_TORQUE_CFG, sql_exec) == -1) {
 		perror("database");
 
 		return FAIL;
 	}
 	sqlite3_free_table(resultp);
 
+	/* 更新 torquesys_points.db	工件示教点信息 */
+	/* 创建/打开 box 数据库 */
+	if (sqlite3_open(DB_POINTS, &db) != SQLITE_OK) {
+		fprintf(stderr, "Cannot create database:%s\n", sqlite3_errmsg(db));
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	//printf("%s database open success!\n", DB_POINTS);
+	memset(sql, 0, sizeof(sql));
 	sprintf(sql, "select * from points;");
 	if (select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn) == -1) {
 
 		return FAIL;
 	}
+	/* 在插入数据前显式开启事务 */
+	sqlite3_exec(db, "begin;", 0, 0, 0);
 	for (i = 0; i < nrow; i++) {
-		sprintf(sql, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", resultp[(i+1)*ncloumn], resultp[(i+1)*ncloumn+1], resultp[(i+1)*ncloumn+2], resultp[(i+1)*ncloumn+3], resultp[(i+1)*ncloumn+4], resultp[(i+1)*ncloumn+5], resultp[(i+1)*ncloumn+6], resultp[(i+1)*ncloumn+7], resultp[(i+1)*ncloumn+8], resultp[(i+1)*ncloumn+9], resultp[(i+1)*ncloumn+10], resultp[(i+1)*ncloumn+11], resultp[(i+1)*ncloumn+12], resultp[(i+1)*ncloumn+13], resultp[(i+1)*ncloumn+14], resultp[(i+1)*ncloumn+15], resultp[(i+1)*ncloumn+16], resultp[(i+1)*ncloumn+17], resultp[(i+1)*ncloumn+18], resultp[(i+1)*ncloumn+19], resultp[(i+1)*ncloumn+20], resultp[(i+1)*ncloumn+21], resultp[(i+1)*ncloumn+22]); 
+		memset(sql_exec, 0, sizeof(sql_exec));
+		sprintf(sql_exec, "insert into points(name,speed,elbow_speed,acc,elbow_acc,toolnum,workpiecenum,j1,j2,j3,j4,j5,j6,E1,E2,E3,E4,x,y,z,rx,ry,rz) values ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s');", resultp[(i+1)*ncloumn], resultp[(i+1)*ncloumn+1], resultp[(i+1)*ncloumn+2], resultp[(i+1)*ncloumn+3], resultp[(i+1)*ncloumn+4], resultp[(i+1)*ncloumn+5], resultp[(i+1)*ncloumn+6], resultp[(i+1)*ncloumn+7], resultp[(i+1)*ncloumn+8], resultp[(i+1)*ncloumn+9], resultp[(i+1)*ncloumn+10], resultp[(i+1)*ncloumn+11], resultp[(i+1)*ncloumn+12], resultp[(i+1)*ncloumn+13], resultp[(i+1)*ncloumn+14], resultp[(i+1)*ncloumn+15], resultp[(i+1)*ncloumn+16], resultp[(i+1)*ncloumn+17], resultp[(i+1)*ncloumn+18], resultp[(i+1)*ncloumn+19], resultp[(i+1)*ncloumn+20], resultp[(i+1)*ncloumn+21], resultp[(i+1)*ncloumn+22]); 
+		if (sqlite3_exec(db, sql_exec, NULL, NULL, &errmsg) != SQLITE_OK) {
+			fprintf(stderr, "SQL error: %s\n", errmsg);
+			sqlite3_free(errmsg);
+			sqlite3_close(db);
+			sqlite3_free_table(resultp);
+
+			return FAIL;
+		}
 	}
-	if (change_info_sqlite3(DB_POINTS, sql) == -1) {
-		perror("database");
+	sqlite3_free_table(resultp);
+	/* 插入后再一起提交 */
+	sqlite3_exec(db, "commit;", 0, 0, 0);
+	sqlite3_close(db);
+
+	/* 更新 torquesys_points_cfg.db 工件示教点配置信息 */
+	/** 删除已有的工件数据表 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "select name from sqlite_master where type = 'table' and name like '%s%';", wk_id);
+	select_info_sqlite3(DB_TORQUE_POINTS, sql, &resultp, &nrow, &ncloumn);
+	for (i = 0; i < nrow; i++) {
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "drop table [%s];", resultp[(i + 1) * ncloumn]);
+		if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+			perror("database");
+
+			return FAIL;
+		}
+	}
+	sqlite3_free_table(resultp);
+	/** 创建新的 table, 插入示教点信息 */
+	/* 创建/打开 box 数据库 */
+	if (sqlite3_open(DB_TORQUE_POINTS, &db) != SQLITE_OK) {
+		fprintf(stderr, "Cannot create database:%s\n", sqlite3_errmsg(db));
+		sqlite3_close(db);
 
 		return FAIL;
 	}
+	//printf("%s database open success!\n", DB_TORQUE_POINTS);
+	/* 在插入数据前显式开启事务 */
+	sqlite3_exec(db, "begin;", 0, 0, 0);
+	/* 创建 left 数据表 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table [%s_left] (name TEXT, id INTEGER primary key);", wk_id);
+	if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+		fprintf(stderr, "SQL error: %s\n", errmsg);
+		sqlite3_free(errmsg);
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	memset(sql, 0, 1024);
+	sprintf(sql, "select * from [%s_left];", wk_id);
+	if (select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	for (i = 0; i < nrow; i++) {
+		if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {
+			memset(sql, 0, sizeof(sql));
+			sprintf(sql, "insert into [%s_left] values ('%s', %d);", wk_id, resultp[(i + 1) * ncloumn], atoi(resultp[(i + 1) * ncloumn + 1]));
+			if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+				fprintf(stderr, "SQL error: %s\n", errmsg);
+				sqlite3_free(errmsg);
+				sqlite3_close(db);
+				sqlite3_free_table(resultp);
+
+				return FAIL;
+			}
+		}
+	}
 	sqlite3_free_table(resultp);
+	/* 插入后再一起提交 */
+	sqlite3_exec(db, "commit;", 0, 0, 0);
+	sqlite3_close(db);
+
+	/* 创建/打开 box 数据库 */
+	if (sqlite3_open(DB_TORQUE_POINTS, &db) != SQLITE_OK) {
+		fprintf(stderr, "Cannot create database:%s\n", sqlite3_errmsg(db));
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	//printf("%s database open success!\n", DB_TORQUE_POINTS);
+	/* 在插入数据前显式开启事务 */
+	sqlite3_exec(db, "begin;", 0, 0, 0);
+	/* 创建 right 数据表 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table [%s_right] (name TEXT, id INTEGER primary key);", wk_id);
+	if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+		fprintf(stderr, "SQL error: %s\n", errmsg);
+		sqlite3_free(errmsg);
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	memset(sql, 0, 1024);
+	sprintf(sql, "select * from [%s_right];", wk_id);
+	if (select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	for (i = 0; i < nrow; i++) {
+		if (resultp[(i + 1) * ncloumn] != NULL && resultp[(i + 1) * ncloumn + 1] != NULL) {
+			memset(sql, 0, sizeof(sql));
+			sprintf(sql, "insert into [%s_right] values ('%s', %d);", wk_id, resultp[(i + 1) * ncloumn], atoi(resultp[(i + 1) * ncloumn + 1]));
+			if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+				fprintf(stderr, "SQL error: %s\n", errmsg);
+				sqlite3_free(errmsg);
+				sqlite3_close(db);
+				sqlite3_free_table(resultp);
+
+				return FAIL;
+			}
+		}
+	}
+	sqlite3_free_table(resultp);
+	/* 插入后再一起提交 */
+	sqlite3_exec(db, "commit;", 0, 0, 0);
+	sqlite3_close(db);
+
+	/* 创建/打开 box 数据库 */
+	if (sqlite3_open(DB_TORQUE_POINTS, &db) != SQLITE_OK) {
+		fprintf(stderr, "Cannot create database:%s\n", sqlite3_errmsg(db));
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	//printf("%s database open success!\n", DB_TORQUE_POINTS);
+	/* 在插入数据前显式开启事务 */
+	sqlite3_exec(db, "begin;", 0, 0, 0);
+	/* 创建 right 数据表 */
+	memset(sql, 0, sizeof(sql));
+	sprintf(sql, "create table [%s_cfg] (ptemp TEXT, perscrew_pnum INTEGER);", wk_id);
+	if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+		fprintf(stderr, "SQL error: %s\n", errmsg);
+		sqlite3_free(errmsg);
+		sqlite3_close(db);
+
+		return FAIL;
+	}
+	memset(sql, 0, 1024);
+	sprintf(sql, "select * from [%s_cfg];", wk_id);
+	if (select_info_sqlite3(UPLOAD_DB_TORQUE_POINTS_CFG, sql, &resultp, &nrow, &ncloumn) == -1) {
+
+		return FAIL;
+	}
+	if (resultp[ncloumn] != NULL && resultp[ncloumn + 1] != NULL) {
+		memset(sql, 0, sizeof(sql));
+		sprintf(sql, "insert into [%s_cfg] values ('%s', %d);", wk_id, resultp[ncloumn], atoi(resultp[ncloumn + 1]));
+		if (sqlite3_exec(db, sql, NULL, NULL, &errmsg) != SQLITE_OK) {
+			fprintf(stderr, "SQL error: %s\n", errmsg);
+			sqlite3_free(errmsg);
+			sqlite3_close(db);
+			sqlite3_free_table(resultp);
+
+			return FAIL;
+		}
+	}
+	sqlite3_free_table(resultp);
+	/* 插入后再一起提交 */
+	sqlite3_exec(db, "commit;", 0, 0, 0);
+	sqlite3_close(db);
 
 	return SUCCESS;
 }
@@ -947,6 +1126,15 @@ void upload(Webs *wp)
 	//websRedirect(wp,"/index.html#/programteach");
 	if (is_in(up->clientFilename, ".dae") == 1 || is_in(up->clientFilename, ".stl") == 1) {
 		websWrite(wp, filename);
+	/**
+	  HTTP 状态码为 200 OK 时， jquery ajax报错
+	  原因:
+	  1. 后端返回的json数据格式不规范
+	  2. HTTP状态码为200，但是返回空的响应
+	  解决方案：如果后端接口想返回200，那么请返回一个null或者{}去代替空响应
+	*/
+	} else if (is_in(filename, "torquesys") == 1 && is_in(filename, ".tar.gz") == 1) {
+		websWrite(wp, "{}");
 	} else {
 		websWrite(wp, "success");
 	}
@@ -1006,6 +1194,9 @@ static int export_torquesys(char *pathfilename)
 	strncpy(wk_id, (pathfilename + strlen("/tmp/torquesys_")), (strlen(pathfilename) - strlen("/tmp/torquesys_") - strlen(".tar.gz")));
 	//printf("wk_id = %s\n", wk_id);
 
+	memset(cmd, 0, 100);
+	sprintf(cmd, "rm -f %s", pathfilename);
+	system(cmd);
 	memset(cmd, 0, 100);
 	sprintf(cmd, "rm -f %s %s %s", UPLOAD_DB_TORQUE_CFG, UPLOAD_DB_TORQUE_POINTS_CFG, UPLOAD_DB_TORQUE_POINTS);
 	system(cmd);
