@@ -818,6 +818,16 @@ static int GetSystemClock(lua_State* L)
 	return 1;
 }
 
+static int ConveyorCatchPointComp(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 3) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1068,6 +1078,16 @@ static int CalPoseTrans(lua_State* L)
 	return 1;
 }
 
+static int str_split(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int pcall_lua(void *arg)
 {
 	int error;
@@ -1145,6 +1165,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "FT_Control", FT_Control);
 	lua_register(luaEnv, "MultilayerOffsetTrsfToBase", MultilayerOffsetTrsfToBase);
 	lua_register(luaEnv, "GetSystemClock", GetSystemClock);
+	lua_register(luaEnv, "ConveyorCatchPointComp", ConveyorCatchPointComp);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);
@@ -1186,6 +1207,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "CalPoseInv", CalPoseInv);
 	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
 	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
+	lua_register(luaEnv, "str_split", str_split);
 
 
 	//printf("lua_filename = %s\n", lua_filename);
