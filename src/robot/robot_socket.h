@@ -5,8 +5,8 @@
 #include    "statefb_quene.h"
 /********************************* Defines ************************************/
 
-//#define SERVER_PI_IP "192.168.58.77"
-#define SERVER_PI_IP "192.168.58.88"
+#define SERVER_PI_IP "192.168.58.77"
+//#define SERVER_PI_IP "192.168.58.88"
 #define CMD_PORT 8060
 #define STATUS_PORT 8061
 #define FILE_PORT 8062
@@ -37,6 +37,7 @@
 #define MAXGRIPPER 8
 #define MAXSLAVES 8
 #define TM_SYS_VAR_NUM 20
+#define SOCKET_CONNECT_CLIENT_NUM_MAX 8
 
 #pragma pack(push, 1)
 /** 外部轴状态结构体 */
@@ -276,22 +277,21 @@ typedef struct _SOCKET_PI_INFO
 	uint8_t connect_status; 		/** socket 连接状态 */
 } SOCKET_PI_INFO;
 
+/* socket connect client info */
+typedef	struct _SOCKET_CONNECT_CLIENT_INFO
+{
+	int clnt_fd;					// client fd
+	int connect_status; 			// server 与 client socket 连接状态
+	int msghead; 					// 记录消息头, 依此增加
+} SOCKET_CONNECT_CLIENT_INFO;
+
 /* socket server 相关信息结构体 */
 typedef struct _SOCKET_SERVER_INFO
 {
-	int serv_fd;
-	int clnt_fd;
+	int serv_fd;					// server fd
 	char server_ip[20];
 	int server_port;
-	uint8_t connect_status; // socket 连接状态
-	int msghead; // 当前有记录的消息头
-	LinkQuene quene; //指令队列
-	LinkQuene ret_quene; //指令执行结果反馈队列
-	pthread_t t_socket_send;
-	pthread_t t_socket_recv;
-	pthread_mutex_t mut; // socket 锁
-	pthread_mutex_t mute;//指令队列锁
-	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
+	SOCKET_CONNECT_CLIENT_INFO socket_connect_client_info[SOCKET_CONNECT_CLIENT_NUM_MAX];
 } SOCKET_SERVER_INFO;
 
 /* point home 相关信息 */

@@ -22,6 +22,7 @@ SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
 SOCKET_INFO socket_state;
 SOCKET_SERVER_INFO socket_upper_computer;
+int socket_connect_client_num; // server 已连接 client 个数;
 SOCKET_INFO socket_torquesys;
 SOCKET_PI_INFO socket_pi_status;
 SOCKET_INFO socket_vir_cmd;
@@ -68,8 +69,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory);
 static void *socket_send_thread(void *arg);
 static void *socket_recv_thread(void *arg);
 static int socket_bind_listen(SOCKET_SERVER_INFO *sock);
-static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
-static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock);
+static int socket_upper_computer_send(SOCKET_CONNECT_CLIENT_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
+static void *socket_upper_computer_recv_send(void *arg);
 static int socket_pi_pkg_handle(char* buf_memory, uint8* frame, char** change_memory);
 static void init_torquesys();
 static int init_torque_production_data();
@@ -124,14 +125,18 @@ static void socket_pi_init(SOCKET_INFO *sock, const int port)
 /* socket server init */
 static void socket_server_init(SOCKET_SERVER_INFO *sock, const int port)
 {
+	int i = 0;
 	bzero(sock, sizeof(SOCKET_SERVER_INFO));
 
 	sock->serv_fd = 0;
-	sock->clnt_fd = 0;
 	strcpy(sock->server_ip, SERVER_IP);
 	sock->server_port = port;
-	sock->connect_status = 0;
-	sock->msghead = 0;
+	socket_connect_client_num = 0;
+	for (i = 0; i < SOCKET_CONNECT_CLIENT_NUM_MAX; i++) {
+		sock->socket_connect_client_info[i].clnt_fd = 0;
+		sock->socket_connect_client_info[i].connect_status = 0;
+		sock->socket_connect_client_info[i].msghead = 0;
+	}
 }
 
 /* socket create */
@@ -2011,6 +2016,13 @@ static int socket_bind_listen(SOCKET_SERVER_INFO *sock)
 		return FAIL;
 	}
 
+	/*
+	   每当有一个客户端 connect 了，
+	   listen 的队列中就加入一个连接，
+	   每当服务器端 accept 了，
+	   就从listen的队列中取出一个连接，
+	   转成一个专门用来传输数据的socket（accept函数的返回值）
+	*/
 	if (listen(sock->serv_fd, 10) == -1) {
 		printf("listen socket error: %s(errno: %d)\n", strerror(errno), errno);
 
@@ -2021,7 +2033,7 @@ static int socket_bind_listen(SOCKET_SERVER_INFO *sock)
 }
 
 /* socket_upper_computer_send */
-static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content)
+static int socket_upper_computer_send(SOCKET_CONNECT_CLIENT_INFO *sock, const int cmd_id, const int data_len, const char *data_content)
 {
 	char *sendbuf = NULL;
 	int send_len = 0;
@@ -2060,8 +2072,9 @@ static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id
 	return SUCCESS;
 }
 
-static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
+static void *socket_upper_computer_recv_send(void *arg)
 {
+	SOCKET_CONNECT_CLIENT_INFO *sock = (SOCKET_CONNECT_CLIENT_INFO *)arg;
 	char buf_memory[BUFFSIZE] = {0};
 	char sec_buf_memory[BUFFSIZE] = {0};
 	char recvbuf[MAX_BUF] = {0};
@@ -2073,6 +2086,8 @@ static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
 	int check_result = 0;
 	char data_content[1024] = "";
 
+	/* set socket status: connected */
+	sock->connect_status = 1;
 	while (1) {
 		//printf("buf_memory content = %s\n", buf_memory);
 		/* socket 连接已经断开 */
@@ -2084,11 +2099,11 @@ static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
 		//printf("recv_len = %d\n", recv_len);
 		if (recv_len <= 0) {
 			printf("sock->clnt_fd = %d\n", sock->clnt_fd);
-			printf("sock cmd/file recv_len : %d\n", recv_len);
+			printf("sock do client connent, recv_len : %d\n", recv_len);
 			/* 认为连接已经断开 */
-			printf("sock cmd/file errno : %d\n", errno);
-			printf("sock cmd/file strerror : %s\n", strerror(errno));
-			perror("sock cmd/file perror recv :");
+			printf("sock do client connent errno : %d\n", errno);
+			printf("sock do client connent strerror : %s\n", strerror(errno));
+			perror("sock do client connent perror recv :");
 			/* set socket status: disconnected */
 			sock->connect_status = 0;
 
@@ -2161,12 +2176,26 @@ static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock)
 			string_list_free(array, size_package);
 		}
 	}
+	/* close clnt socket fd */
+	printf("close clnt fd\n");
+	close(sock->clnt_fd);
+	/* clear client info */
+	sock->clnt_fd = 0;
+	sock->connect_status = 0;
+	sock->msghead = 0;
+	socket_connect_client_num--;
 }
 
 void *socket_upper_computer_thread(void* arg)
 {
+	pthread_t t_socket_client;
 	SOCKET_SERVER_INFO* sock = NULL;
+	struct sockaddr_in clnt_socket;
+	socklen_t clnt_socket_len = sizeof(clnt_socket);
+	char buf_ip[20] = { 0 };
 	int port = (int)arg;
+	int i = 0;
+	int client_socket_fd = 0;
 	printf("port = %d\n", port);
 
 	sock = &socket_upper_computer;
@@ -2191,26 +2220,39 @@ void *socket_upper_computer_thread(void* arg)
 		}
 		printf("====== waiting for client's request ======\n");
 		while (1) {
-			//接收客户端请求
-			struct sockaddr_in clnt_addr;
-			socklen_t clnt_addr_size = sizeof(clnt_addr);
 			/* socket accepted */
-			//if ((sock->clnt_fd = accept(sock->serv_fd, (struct sockaddr*)NULL, NULL)) == -1) {
-			if ((sock->clnt_fd = accept(sock->serv_fd, (struct sockaddr*)&clnt_addr, &clnt_addr_size)) == -1) {
-				printf("accept socket error: %s(errno: %d)", strerror(errno), errno);
+			if ((client_socket_fd = accept(sock->serv_fd, (struct sockaddr *)(&clnt_socket), &clnt_socket_len)) == -1) {
+				printf("accept socket error: %s(errno: %d)\n", strerror(errno), errno);
 
 				continue;
 			}
-			/* set socket status: connected */
-			sock->connect_status = 1;
-			printf("Client online\n");
+			// 如果已经达到最大 client 连接数
+			if (socket_connect_client_num == SOCKET_CONNECT_CLIENT_NUM_MAX) {
+				printf("connect client num is MAX : %d\n", SOCKET_CONNECT_CLIENT_NUM_MAX);
+				printf("close fd: %d\n", client_socket_fd);
+				close(client_socket_fd);
 
-			socket_upper_computer_recv_send(sock);
+				continue;
+			}
 
-			/* close clnt socket fd */
-			close(sock->clnt_fd);
-			/* set socket status: disconnected */
-			sock->connect_status = 0;
+			// 没有超过最大 client 连接数，允许连接，查询哪个 SOCKET_CONNECT_CLIENT_INFO 结构体可用
+			for (i = 0; i < SOCKET_CONNECT_CLIENT_NUM_MAX; i++) {
+				if (sock->socket_connect_client_info[i].clnt_fd == 0)  {
+					sock->socket_connect_client_info[i].clnt_fd = client_socket_fd;
+
+					break;
+				}
+			}
+			memset(buf_ip, 0,sizeof(buf_ip));
+			inet_ntop(AF_INET, &clnt_socket.sin_addr, buf_ip, sizeof(buf_ip));
+			//printf("Client online, ip is %s, port is %d\n", buf_ip, ntohs(clnt_socket.sin_port));
+			//printf("clnt_fd = %d\n", sock->socket_connect_client_info[i].clnt_fd);
+			// client 连接数加 1
+			socket_connect_client_num++;
+			//printf("connect_client_num = %d\n", socket_connect_client_num);
+
+			pthread_create(&t_socket_client, NULL, (void *)socket_upper_computer_recv_send, (void *)(&sock->socket_connect_client_info[i]));
+			pthread_detach(t_socket_client);
 		}
 		/* close serv socket fd */
 		close(sock->serv_fd);
