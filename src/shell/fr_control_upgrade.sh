@@ -50,7 +50,7 @@ if test -x /tmp/fr_control/zbt.config; then
 	cp  /tmp/fr_control/zbt.config  /root/robot/
 fi
 
-if [ ! -f /tmp/fr_control/robot.config ]; then
+if [ ! -f /root/robot/robot.config ]; then
 	cp  /tmp/fr_control/robot.config  /root/robot/
 fi
 

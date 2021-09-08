@@ -1292,3 +1292,44 @@ int update_torquesys_pd_data()
 	return SUCCESS;
 }
 
+/**
+  发送方：
+  参数，buf为发送数组，len为数组长度
+  返回值，校验值
+*/
+uint16_t TX_CheckSum(uint8_t *buf, uint8_t len)
+{
+	uint8_t i = 0;
+	uint16_t ret = 0;
+
+	for (i = 0; i < len; i++)
+	{
+		ret += buf[i];
+	}
+	ret = ~ret;
+
+	return ret;
+}
+
+/**
+	接收方：
+	参数，buf为接收数组，len为数组长度（已包含发送的校验值）
+	返回值, 如果是 0，说明数据正确
+*/
+uint16_t RX_CheckSum(uint8_t *buf, uint8_t len)
+{
+	uint8_t i = 0;
+	uint16_t ret = 0;
+
+	for (i = 0; i < len; i++)
+	{
+		// 校验和的高位需要左移 8 位
+		if (i == (len - 4)) {
+			ret += buf[i] << 8;
+		} else {
+			ret += buf[i];
+		}
+	}
+
+	return ret+1;
+}

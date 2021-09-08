@@ -6,6 +6,7 @@
 #define local 0
 #define virtual_robot 0
 #define recover_mode 1 // 0 为进入 recover mode, 1 为 normal mode
+#define print_mode 0 // 1 为进入 print mode
 #define test_package 0
 #define SUCCESS 1
 #define FAIL 0
@@ -150,5 +151,7 @@ char *my_strlwr(char * str);
 int local_now_time(char *time_now);
 int update_userconfig_robottype();
 int update_torquesys_pd_data();
+uint16_t TX_CheckSum(uint8_t *buf, uint8_t len);
+uint16_t RX_CheckSum(uint8_t *buf, uint8_t len);
 
 #endif

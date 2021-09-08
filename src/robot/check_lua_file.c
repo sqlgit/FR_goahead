@@ -56,6 +56,16 @@ static int MoveC(lua_State* L)
 	return 1;
 }
 
+static int Circle(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 41) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SplineCIRC(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -562,7 +572,7 @@ static int ConveyorGetTrackData(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 0) {
+	if (argc != 1) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1088,6 +1098,36 @@ static int str_split(lua_State* L)
 	return 1;
 }
 
+static int ComputePrePick(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 8) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ComputePostPick(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 8) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetUpdateTCPPose(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int pcall_lua(void *arg)
 {
 	int error;
@@ -1100,6 +1140,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "SplinePTP", SplinePTP);
 	lua_register(luaEnv, "ExtAxisMoveJ", ExtAxisMoveJ);
 	lua_register(luaEnv, "MoveC", MoveC);
+	lua_register(luaEnv, "Circle", Circle);
 	lua_register(luaEnv, "SplineCIRC", SplineCIRC);
 	lua_register(luaEnv, "MoveL", MoveL);
 	lua_register(luaEnv, "SplineLINE", SplineLINE);
@@ -1208,6 +1249,9 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
 	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
 	lua_register(luaEnv, "str_split", str_split);
+	lua_register(luaEnv, "ComputePrePick", ComputePrePick);
+	lua_register(luaEnv, "ComputePostPick", ComputePostPick);
+	lua_register(luaEnv, "GetUpdateTCPPose", GetUpdateTCPPose);
 
 
 	//printf("lua_filename = %s\n", lua_filename);

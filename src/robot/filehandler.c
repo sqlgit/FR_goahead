@@ -220,7 +220,6 @@ static int check_robot_type()
 	char strline_now[LINE_LEN] = {0};
 	char **array_now = NULL;
 	int size_now = 0;
-	char cmd[128] = {0};
 	char robot_type_now[100] = "";
 	char robot_type_up[100] = "";
 
@@ -314,9 +313,13 @@ static int update_config(char *filename)
 	printf("now_filename = %s\n", now_filename);
 
 	if ((fp_up = fopen(upgrade_filename, "r")) == NULL) {
-		perror("config : open file");
+		perror("upgrade config : open file");
+		//printf("rm now config\n");
+		//memset(cmd, 0, 128);
+		//sprintf(cmd, "rm %s", now_filename);
+		//system(cmd);
 
-		return FAIL;
+		return SUCCESS;
 	}
 	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
 		line_index++;
@@ -337,6 +340,8 @@ static int update_config(char *filename)
 					fclose(fp_up);
 					string_list_free(array_up, size_up);
 
+					printf("cp upgrade config file to now config\n");
+					memset(cmd, 0, 128);
 					sprintf(cmd, "cp %s %s", upgrade_filename, now_filename);
 					system(cmd);
 
@@ -1273,12 +1278,6 @@ static int avolfileHandler(Webs *wp)
 	if (strcmp(pathfilename, FILE_USERDATA) == 0) {
 		char cmd[128] = {0};
 		sprintf(cmd, "cp %s %s", USER_CFG, WEB_USER_CFG);
-		system(cmd);
-		memset(cmd, 0, 128);
-		sprintf(cmd, "cp %s %s", EX_DEVICE_CFG, WEB_EX_DEVICE_CFG);
-		system(cmd);
-		memset(cmd, 0, 128);
-		sprintf(cmd, "cp %s %s", EXAXIS_CFG, WEB_EXAXIS_CFG);
 		system(cmd);
 		system("rm -f /root/fr_user_data.tar.gz");
 		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config ./robot/ex_device.config");

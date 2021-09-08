@@ -33,6 +33,7 @@ extern TORQUE_SYS_STATE torque_sys_state;
 extern TORQUE_SYS torquesys;
 extern POINT_HOME_INFO point_home_info;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
+extern PI_STATUS pi_status;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -74,6 +75,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *FT_data_json = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
+	cJSON *PI_IO_json = NULL;
+	cJSON *electric_quantity = NULL;
+	cJSON *switch_json = NULL;
+	cJSON *axis_plus = NULL;
+	cJSON *axis_minus = NULL;
+	cJSON *custom = NULL;
 	int array[16] = {0};
 	int ret_connect_status = 0;
 	Qnode *p = NULL;
@@ -94,8 +101,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	error_json = cJSON_CreateArray();
 	torquesys_json = cJSON_CreateObject();
 	jiabao_torquesys_json = cJSON_CreateObject();
+	PI_IO_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
+	cJSON_AddItemToObject(root_json, "PI_IO", PI_IO_json);
 	cJSON_AddItemToObject(root_json, "torque_sys_state", torquesys_json);
 	cJSON_AddItemToObject(root_json, "jiabao_torque_sys_state", jiabao_torquesys_json);
 	cJSON_AddItemToObject(root_json, "joints", joints_json);
@@ -160,6 +169,36 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(rightstation_json, "NG_count", jiabao_torque_pd_data.right_NG_count);
 	cJSON_AddNumberToObject(rightstation_json, "work_time", jiabao_torque_pd_data.right_work_time);
 	//}
+
+	/** PI IO 状态反馈 */
+	cJSON_AddNumberToObject(PI_IO_json, "power_supply_mode", pi_status.power_supply_mode);
+	electric_quantity = cJSON_CreateArray();
+	cJSON_AddItemToObject(PI_IO_json, "electric_quantity", electric_quantity);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(electric_quantity, "key", pi_status.electric_quantity[i]);
+	}
+	switch_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(PI_IO_json, "switch", switch_json);
+	for (i = 0; i < 2; i++) {
+		cJSON_AddNumberToObject(switch_json, "key", pi_status.key[i]);
+	}
+	cJSON_AddNumberToObject(PI_IO_json, "start", pi_status.start);
+	cJSON_AddNumberToObject(PI_IO_json, "stop", pi_status.stop);
+	axis_plus = cJSON_CreateArray();
+	cJSON_AddItemToObject(PI_IO_json, "axis_plus", axis_plus);
+	for (i = 0; i < 6; i++) {
+		cJSON_AddNumberToObject(axis_plus, "key", pi_status.axis_plus[i]);
+	}
+	axis_minus = cJSON_CreateArray();
+	cJSON_AddItemToObject(PI_IO_json, "axis_minus", axis_minus);
+	for (i = 0; i < 6; i++) {
+		cJSON_AddNumberToObject(axis_minus, "key", pi_status.axis_minus[i]);
+	}
+	custom = cJSON_CreateArray();
+	cJSON_AddItemToObject(PI_IO_json, "custom", custom);
+	for (i = 0; i < 4; i++) {
+		cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
+	}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
 	memset(array, 0, sizeof(array));

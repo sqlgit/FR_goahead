@@ -11,8 +11,8 @@
 
 #if local
 //	char SERVER_IP[20] = "127.0.0.1";
-//	char SERVER_IP[20] = "192.168.152.129"; //sql
-	char SERVER_IP[20] = "192.168.172.128";	//zjq,gjc
+	char SERVER_IP[20] = "192.168.152.129"; //sql
+//	char SERVER_IP[20] = "192.168.172.128";	//zjq,gjc
 //	char SERVER_IP[20] = "192.168.121.129";	//wsk
 #else
 	char SERVER_IP[20] = "192.168.58.2";
@@ -23,14 +23,18 @@ SOCKET_INFO socket_status;
 SOCKET_INFO socket_state;
 SOCKET_SERVER_INFO socket_upper_computer;
 SOCKET_INFO socket_torquesys;
+SOCKET_PI_INFO socket_pi_status;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
+
 STATE_FEEDBACK state_fb;
 CTRL_STATE ctrl_state;
+PI_STATUS pi_status;
 CTRL_STATE vir_ctrl_state;
 CTRL_STATE pre_ctrl_state;
 CTRL_STATE pre_vir_ctrl_state;
+
 FB_LinkQuene fb_quene;
 extern int robot_type;
 extern char error_info[ERROR_SIZE];
@@ -51,6 +55,7 @@ POINT_HOME_INFO point_home_info = {
 
 static void state_feedback_init(STATE_FEEDBACK *fb);
 static void socket_init(SOCKET_INFO *sock, const int port);
+static void socket_pi_init(SOCKET_INFO *sock, const int port);
 static void socket_server_init(SOCKET_SERVER_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
 static int socket_server_create(SOCKET_SERVER_INFO *sock);
@@ -65,6 +70,7 @@ static void *socket_recv_thread(void *arg);
 static int socket_bind_listen(SOCKET_SERVER_INFO *sock);
 static int socket_upper_computer_send(SOCKET_SERVER_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
 static void *socket_upper_computer_recv_send(SOCKET_SERVER_INFO *sock);
+static int socket_pi_pkg_handle(char* buf_memory, uint8* frame, char** change_memory);
 static void init_torquesys();
 static int init_torque_production_data();
 /*
@@ -101,6 +107,18 @@ static void socket_init(SOCKET_INFO *sock, const int port)
 	sock->select_timeout = SOCK_SELECT_TIMEOUT;
 	sock->connect_status = 0;
 	sock->msghead = 0;
+}
+
+/* socket pi init */
+static void socket_pi_init(SOCKET_INFO *sock, const int port)
+{
+	bzero(sock, sizeof(SOCKET_PI_INFO));
+
+	sock->fd = 0;
+	strcpy(sock->server_ip, SERVER_PI_IP);
+	sock->server_port = port;
+	sock->select_timeout = SOCK_SELECT_TIMEOUT;
+	sock->connect_status = 0;
 }
 
 /* socket server init */
@@ -163,17 +181,23 @@ static int socket_connect(SOCKET_INFO *sock)
 
 	//unblock mode --> local connect, connect return immediately
 	if (ret == 0) {
+#if print_mode
 		printf("connect with server immediately\n");
+#endif
 		fcntl(sock->fd, F_SETFL, fdopt);
 
 		return SUCCESS;
 	} else if (errno != EINPROGRESS) {
+#if print_mode
 		printf("unblock connect failed!\n");
+#endif
 		fcntl(sock->fd, F_SETFL, fdopt);
 
 		return FAIL;
 	} else if (errno == EINPROGRESS) {
+#if print_mode
 		printf("unblock mode socket is connecting...\n");
+#endif
 	}
 
 	// set socket connect timeout 
@@ -211,24 +235,32 @@ static int socket_timeout(SOCKET_INFO *sock)
 
 	ret = select((sock->fd+1), NULL, &writefd, NULL, &timeout);
 	if(ret <= 0) {
+#if print_mode
 		printf("connection timeout or fail!\n");
+#endif
 
 		return -1;
 	}
 	if(!FD_ISSET(sock->fd, &writefd)) {
+#if print_mode
 		printf("no events on sock fd found\n");
+#endif
 
 		return -1;
 	}
 
 	//get socket status
 	if(getsockopt(sock->fd, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+#if print_mode
 		printf("get socket option failed\n");
+#endif
 
 		return -1;
 	}
 	if(error != 0) {
+#if print_mode
 		printf("connection failed after select with the error: %d \n", error);
+#endif
 
 		return -1;
 	}
@@ -702,6 +734,11 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			}
 			string_list_free(msg_array, size_content);
 		} else if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
+			/*
+			   1. 用户恢复出厂值成功
+			   2. 导入控制器端用户配置文件成功
+			   3. 导入用户数据文件成功
+			*/
 			//printf("robot cfg : array[4] = %s\n", array[4]);
 			if (strcmp(array[4], "0") == 0) {
 				//printf("fail！\n");
@@ -2177,6 +2214,199 @@ void *socket_upper_computer_thread(void* arg)
 		}
 		/* close serv socket fd */
 		close(sock->serv_fd);
+	}
+}
+
+/**
+	function : 数据包收包后对于“粘包”，“断包”，“残包”，“错包”的处理
+
+	buf_memory[IN] : 待处理数据缓冲区
+
+	frame[out]：获取到的完整一帧数据包
+
+	change_memory：记录每次接收完数据后的位置
+
+	return: 如果有完整一帧数据包，返回其数据长度，否则返回 0 for error
+*/
+static int socket_pi_pkg_handle(char* buf_memory, uint8* frame, char** change_memory)
+{
+	assert(buf_memory != NULL);
+
+	int i;
+	uint8 head = 0;
+	uint8 tail = 0;
+	uint8 frame_len = 0;
+	uint8 memory_len = 0;
+	int data_len = PI_STATUS_SIZE;
+	char buf[PI_STATUS_BUFFSIZE] = { 0 }; //内圈循环 buf
+	char *temp = NULL;
+
+	//如果缓冲区中为空，则可以直接进行下一轮tcp请求
+	while (((*change_memory) - buf_memory) != 0) {
+		temp = buf_memory;
+		memory_len = (*change_memory) - buf_memory;
+		//printf("memory_len = %d\n", memory_len);
+		//循环找包头
+		for (i = 1; i < memory_len; i++) {
+			if(*(temp+i-1) == 0x5a && *(temp+i) == 0x5a) {
+				head = i;
+				//printf("this is head\n");
+				break;
+			}
+		}
+		//循环找包尾
+		for (i = 1; i < memory_len; i++) {
+			if (*(temp+i-1) == 0x5b && *(temp+i) == 0x5b) {
+				tail = i;
+				//printf("this is tail\n");
+				break;
+			}
+		}
+		// 断包(有头无尾), 即接收到的包不完整，则跳出内圈循环，进入外圈循环，从输入流中继续读取数据
+		if (head != 0 && tail == 0) {
+
+			break;
+		}
+		// 找到了包头包尾，则提取出完整一帧
+		if (head != 0 && tail != 0 && head < tail) {
+			//判断整包长度是否为 data_len
+			if ((tail - head + 2) == data_len) {
+				frame_len = data_len;
+				memset(frame, 0, data_len);
+				memcpy(frame, temp + (head - 1), frame_len);
+			}
+
+			//若包的长度不为 32 或者 整包的数据被提出，将包尾后的内容推入最前方
+			temp = temp + tail + 1;
+			memset(buf, 0, PI_STATUS_BUFFSIZE);
+			memcpy(buf, temp, (*change_memory) - temp); //保存末尾数据, (*change_memory) - temp 是包尾后的数据长度
+			memset(buf_memory, 0, PI_STATUS_BUFFSIZE); //清空缓冲区, 并把包尾后的内容推入缓冲区
+			memcpy(buf_memory, buf, (*change_memory) - temp); //将保存的数据重新复制给buf_memory
+			*change_memory = buf_memory + ((*change_memory) - temp);
+
+			break;
+		}
+
+		// 残包(只找到包尾,没头)或者错包(没头没尾)的，清空缓冲区，进入外圈循环，从输入流中重新读取数据
+		if ((head == 0 && tail != 0) || (head == 0 && tail == 0)) {
+			perror("Incomplete package!");
+			// 清空缓冲区, 直接跳出内圈循环，到外圈循环里
+			memset(buf_memory, 0, PI_STATUS_BUFFSIZE);
+			*change_memory = buf_memory;
+
+			break;
+		}
+
+		//包头在包尾后面，则扔掉缓冲区中包头之前的多余字节, 继续内圈循环
+		if (head != 0 && tail != 0 && head > tail) {
+			perror("Error package");
+			printf("tail ... head ...\n");
+			temp = temp + head - 1;
+			memset(buf, 0, PI_STATUS_BUFFSIZE);
+			memcpy(buf, temp, (*change_memory) - temp);
+			memset(buf_memory, 0, PI_STATUS_BUFFSIZE); //清空缓冲区, 并把包头后的内容推入缓冲区
+			memcpy(buf_memory, buf, (*change_memory) - temp);
+			*change_memory = buf_memory + ((*change_memory) - temp);
+		}
+	}
+
+	return frame_len;
+}
+
+void *socket_pi_status_thread(void *arg)
+{
+	SOCKET_PI_INFO *sock = NULL;
+	PI_STATUS *status = NULL;
+	int port = (int)arg;
+	int recv_len = 0;
+	char buf_memory[PI_STATUS_BUFFSIZE] = { 0 }; 	//保存所有的已接收的数据
+	char *change_memory = NULL; 					//记录每次拷贝后的位置
+	char recvbuf[PI_STATUS_SIZE + 1] = { 0 };
+	uint8 frame[PI_STATUS_SIZE] = { 0 };
+	int i = 0;
+
+	change_memory = buf_memory;
+	printf("port = %d\n", port);
+	sock = &socket_pi_status;
+	status = &pi_status;
+
+	socket_pi_init(sock, port);
+
+	while(1) {
+		bzero(status, sizeof(PI_STATUS));
+		/* do socket connect */
+		/* create socket */
+		if (socket_create(sock) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(sock) == FAIL) {
+			/* connect fail */
+#if print_mode
+			perror("socket connect fail");
+#endif
+			close(sock->fd);
+			//delay(1000);
+			sleep(1);
+
+			continue;
+		}
+		/* socket connected */
+		/* set socket status: connected */
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_PI_IP, port);
+
+		/* recv PI status */
+		while (1) {
+			//bzero(recvbuf, (PI_STATUS_SIZE + 1));
+			memset(recvbuf, 0, (PI_STATUS_SIZE + 1));
+			recv_len = recv(sock->fd, recvbuf, PI_STATUS_SIZE, 0);
+			//printf("sock status recv_len = %d\n", recv_len);
+			/* recv timeout or error */
+			if (recv_len <= 0) {
+				printf("sock status recv_len : %d\n", recv_len);
+				printf("sock status errno : %d\n", errno);
+				printf("sock status strerror : %s\n", strerror(errno));
+				perror("sock status recv perror :");
+				/* 认为连接已经断开 */
+
+				break;
+			}
+			//printf("recvbuf = ");
+			//for (i = 0; i < recv_len; i++) {
+			//	printf("%x ", recvbuf[i]);
+			//}
+			//printf("\n");
+#if print_mode
+			printf("recv len = %d\n", recv_len);
+#endif
+			memcpy(change_memory, recvbuf, recv_len);
+			change_memory = change_memory + recv_len;  //每次接收完消息后，将指针的位置指向消息最后
+
+			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
+			while (socket_pi_pkg_handle(buf_memory, frame, &change_memory) == PI_STATUS_SIZE) {
+#if print_mode
+				printf("frame = ");
+				for (i = 0; i < PI_STATUS_SIZE; i++) {
+					printf("%x ", frame[i]);
+				}
+				printf("\n");
+#endif
+				if (RX_CheckSum(frame, PI_STATUS_SIZE) == 0) {
+					//printf("update PI_STATUS\n");
+					memset(status, 0, sizeof(PI_STATUS));
+					memcpy(status, (frame + 3), (recv_len - 7));
+				}
+			}
+		}
+		/* socket disconnected */
+		/* close socket */
+		close(sock->fd);
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
 	}
 }
 

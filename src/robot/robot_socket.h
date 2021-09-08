@@ -5,12 +5,15 @@
 #include    "statefb_quene.h"
 /********************************* Defines ************************************/
 
+//#define SERVER_PI_IP "192.168.58.77"
+#define SERVER_PI_IP "192.168.58.88"
 #define CMD_PORT 8060
 #define STATUS_PORT 8061
 #define FILE_PORT 8062
 #define STATE_FEEDBACK_PORT 8063
 #define TORQUE_PORT 8064
 #define UPPER_COMPUTER_PORT 2000
+#define PI_STATUS_PORT 8899
 #define VIR_CMD_PORT 8070
 #define VIR_STATUS_PORT 8071
 #define VIR_FILE_PORT 8072
@@ -21,6 +24,8 @@
 #define BUFFSIZE 8192
 #define STATE_BUFFSIZE 16384
 #define STATE_SIZE 8192
+#define PI_STATUS_BUFFSIZE 1024
+#define PI_STATUS_SIZE 32
 #define STATEFB_SIZE 25000 /** 4(sizeof(float))*100(row)*20(column)*3 + 1000(包头包尾分隔符等) */
 #define STATEFB_BUFSIZE 2400000 /** 4(sizeof(float))*100(row)*20(column)*3*100(num) */
 //#define STATEFB_WRITESIZE 10*8000*2 /** 10(num)*4(sizeof(float))*100(row)*20(column)*2 */
@@ -165,6 +170,21 @@ typedef struct _CTRL_STATE
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+/** PI_STATUS 结构体 */
+typedef struct _PI_STATUS
+{
+	uint8_t power_supply_mode;			/** 供电方式检测，H：外部供电，L：电池 */
+	uint8_t electric_quantity[4];		/** 电池电量，3%~25%:LHHH，25%~50%:LLHH, 50%~75%:LLLH, >75%:LLLL */
+	uint8_t key[2];						/** 钥匙，自动模式：钥匙1H+钥匙2H，手动模式：钥匙1H+钥匙2L */
+	uint8_t start;						/** 开始按钮，H:按下 */
+	uint8_t stop;						/** 停止按钮，L:按下 */
+	uint8_t axis_plus[6];				/** 轴增，L:按下 */
+	uint8_t axis_minus[6];				/** 轴减，L:按下 */
+	uint8_t custom[4];					/** 自定义，L:按下 */
+} PI_STATUS;
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 /** GRIPPERS_CONFIG_INFO 结构体 */
 typedef struct _GRIPPERS_CONFIG_INFO
 {
@@ -246,6 +266,16 @@ typedef struct _SOCKET_INFO
 	pthread_mutex_t ret_mute;//指令执行结果反馈队列锁
 } SOCKET_INFO;
 
+/* PI status socket 相关信息结构体 */
+typedef struct _SOCKET_PI_INFO
+{
+	int fd;							/** socket fd */
+	char server_ip[20];				/** server ip */
+	int server_port;				/** server port */
+	int select_timeout; 			/** socket select timeout */
+	uint8_t connect_status; 		/** socket 连接状态 */
+} SOCKET_PI_INFO;
+
 /* socket server 相关信息结构体 */
 typedef struct _SOCKET_SERVER_INFO
 {
@@ -278,6 +308,7 @@ void *socket_status_thread(void *arg);
 void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
 void *socket_upper_computer_thread(void* arg);
+void *socket_pi_status_thread(void *arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 int check_pointhome_data(char *arr[]);
 int update_server_ip();
