@@ -247,6 +247,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		joint_value_ptr[i] = NULL;
 	}
 	cJSON *id = NULL;
+
 	cJSON *j1 = NULL;
 	cJSON *j2 = NULL;
 	cJSON *j3 = NULL;
@@ -300,6 +301,28 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	cJSON *E2_2 = NULL;
 	cJSON *E3_2 = NULL;
 	cJSON *E4_2 = NULL;
+
+	cJSON *j1_3 = NULL;
+	cJSON *j2_3 = NULL;
+	cJSON *j3_3 = NULL;
+	cJSON *j4_3 = NULL;
+	cJSON *j5_3 = NULL;
+	cJSON *j6_3 = NULL;
+	cJSON *x_3 = NULL;
+	cJSON *y_3 = NULL;
+	cJSON *z_3 = NULL;
+	cJSON *rx_3 = NULL;
+	cJSON *ry_3 = NULL;
+	cJSON *rz_3 = NULL;
+	cJSON *speed_3 = NULL;
+	cJSON *acc_3 = NULL;
+	cJSON *toolnum_3 = NULL;
+	cJSON *workpiecenum_3 = NULL;
+	cJSON *E1_3 = NULL;
+	cJSON *E2_3 = NULL;
+	cJSON *E3_3 = NULL;
+	cJSON *E4_3 = NULL;
+
 	cJSON *cd = NULL;
 	cJSON *et_cd = NULL;
 	cJSON *ptp = NULL;
@@ -307,12 +330,6 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	cJSON *point_1 = NULL;
 	cJSON *point_2 = NULL;
 	cJSON *point_3 = NULL;
-	cJSON *x_3 = NULL;
-	cJSON *y_3 = NULL;
-	cJSON *z_3 = NULL;
-	cJSON *rx_3 = NULL;
-	cJSON *ry_3 = NULL;
-	cJSON *rz_3 = NULL;
 	cJSON *ext_axis_ptp = NULL;
 	cJSON *var = NULL;
 	cJSON *installation_site = NULL;
@@ -711,8 +728,12 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 4) {
 			perror("string to string list");
+
+			goto end;
+		}
+		if (cmd_array[0] == NULL) {
 
 			goto end;
 		}
@@ -737,7 +758,11 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		workpiecenum = cJSON_GetObjectItem(point_1, "workpiecenum");
 		speed = cJSON_GetObjectItem(point_1, "speed");
 		acc = cJSON_GetObjectItem(point_1, "acc");
-		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+		E1 = cJSON_GetObjectItem(point_1, "E1");
+		E2 = cJSON_GetObjectItem(point_1, "E2");
+		E3 = cJSON_GetObjectItem(point_1, "E3");
+		E4 = cJSON_GetObjectItem(point_1, "E4");
+		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || E1->valuestring == NULL || E2->valuestring == NULL || E3->valuestring == NULL || E4->valuestring == NULL) {
 
 			goto end;
 		}
@@ -759,6 +784,10 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 				goto end;
 			}
 			point_home_info.error_flag = 0;
+		}
+		if (cmd_array[1] == NULL) {
+
+			goto end;
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
@@ -785,7 +814,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		E2_2 = cJSON_GetObjectItem(point_2, "E2");
 		E3_2 = cJSON_GetObjectItem(point_2, "E3");
 		E4_2 = cJSON_GetObjectItem(point_2, "E4");
-		if (j1_2 == NULL || j2_2 == NULL || j3_2 == NULL || j4_2 == NULL || j5_2 == NULL || j6_2 == NULL || x_2 == NULL || y_2 == NULL || z_2 == NULL || rx_2 == NULL || ry_2 == NULL || rz_2 == NULL || toolnum_2 == NULL || workpiecenum_2 == NULL || speed_2 == NULL || acc_2 == NULL || E1_2 == NULL || E2_2 == NULL || E3_2 == NULL || E4_2 == NULL || j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || workpiecenum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || E1_2->valuestring == NULL || E2_2->valuestring == NULL || E3_2->valuestring == NULL || E4_2->valuestring == NULL || cmd_array[2] == NULL) {
+		if (j1_2 == NULL || j2_2 == NULL || j3_2 == NULL || j4_2 == NULL || j5_2 == NULL || j6_2 == NULL || x_2 == NULL || y_2 == NULL || z_2 == NULL || rx_2 == NULL || ry_2 == NULL || rz_2 == NULL || toolnum_2 == NULL || workpiecenum_2 == NULL || speed_2 == NULL || acc_2 == NULL || E1_2 == NULL || E2_2 == NULL || E3_2 == NULL || E4_2 == NULL || j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || workpiecenum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || E1_2->valuestring == NULL || E2_2->valuestring == NULL || E3_2->valuestring == NULL || E4_2->valuestring == NULL) {
 
 			goto end;
 		}
@@ -811,14 +840,18 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			point_home_info.error_flag = 0;
 		}
-		sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, cmd_array[2], E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, end_ptr);
+		if (cmd_array[2] == NULL || cmd_array[3] == NULL) {
+
+			goto end;
+		}
+		sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], cmd_array[3], end_ptr);
 		strcat(file_content, content);
 	/* Circle */
 	} else if ((ptr = strstr(lua_cmd, "Circle(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 4) {
 			perror("string to string list");
 
 			goto end;
@@ -934,7 +967,62 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 
 			goto end;
 		}
-		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], end_ptr);
+		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
+		if (point_3 == NULL || point_3->type != cJSON_Object) {
+
+			goto end;
+		}
+		j1_3 = cJSON_GetObjectItem(point_3, "j1");
+		j2_3 = cJSON_GetObjectItem(point_3, "j2");
+		j3_3 = cJSON_GetObjectItem(point_3, "j3");
+		j4_3 = cJSON_GetObjectItem(point_3, "j4");
+		j5_3 = cJSON_GetObjectItem(point_3, "j5");
+		j6_3 = cJSON_GetObjectItem(point_3, "j6");
+		x_3 = cJSON_GetObjectItem(point_3, "x");
+		y_3 = cJSON_GetObjectItem(point_3, "y");
+		z_3 = cJSON_GetObjectItem(point_3, "z");
+		rx_3 = cJSON_GetObjectItem(point_3, "rx");
+		ry_3 = cJSON_GetObjectItem(point_3, "ry");
+		rz_3 = cJSON_GetObjectItem(point_3, "rz");
+		toolnum_3 = cJSON_GetObjectItem(point_3, "toolnum");
+		workpiecenum_3 = cJSON_GetObjectItem(point_3, "workpiecenum");
+		speed_3 = cJSON_GetObjectItem(point_3, "speed");
+		acc_3 = cJSON_GetObjectItem(point_3, "acc");
+		E1_3 = cJSON_GetObjectItem(point_3, "E1");
+		E2_3 = cJSON_GetObjectItem(point_3, "E2");
+		E3_3 = cJSON_GetObjectItem(point_3, "E3");
+		E4_3 = cJSON_GetObjectItem(point_3, "E4");
+		if (j1_3 == NULL || j2_3 == NULL || j3_3 == NULL || j4_3 == NULL || j5_3 == NULL || j6_3 == NULL || x_3 == NULL || y_3 == NULL || z_3 == NULL || rx_3 == NULL || ry_3 == NULL || rz_3 == NULL || toolnum_3 == NULL || workpiecenum_3 == NULL || speed_3 == NULL || acc_3 == NULL || E1_3 == NULL || E2_3 == NULL || E3_3 == NULL || E4_3 == NULL || j1_3->valuestring == NULL || j2_3->valuestring == NULL || j3_3->valuestring == NULL || j4_3->valuestring == NULL || j5_3->valuestring == NULL || j6_3->valuestring == NULL || x_3->valuestring == NULL || y_3->valuestring == NULL || z_3->valuestring == NULL || rx_3->valuestring == NULL || ry_3->valuestring == NULL || rz_3->valuestring == NULL || toolnum_3->valuestring == NULL || workpiecenum_3->valuestring == NULL || speed_3->valuestring == NULL || acc_3->valuestring == NULL || E1_3->valuestring == NULL || E2_3->valuestring == NULL || E3_3->valuestring == NULL || E4_3->valuestring == NULL) {
+
+			goto end;
+		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[2], POINT_HOME) == 0) {
+			for (i = 0; i < 6; i++) {
+				memset(joint_value[i], 0, 10);
+			}
+			sprintf(joint_value[0], "%.1lf", atof(j1_3->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2_3->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3_3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4_3->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5_3->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6_3->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+		if (cmd_array[3] == NULL) {
+
+			goto end;
+		}
+		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, j1_3->valuestring, j2_3->valuestring, j3_3->valuestring, j4_3->valuestring, j5_3->valuestring, j6_3->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, toolnum_3->valuestring, workpiecenum_3->valuestring, speed_3->valuestring, acc_3->valuestring, E1_3->valuestring, E2_3->valuestring, E3_3->valuestring, E4_3->valuestring, cmd_array[3], end_ptr);
 		strcat(file_content, content);
 	/* SCIRC */
 	} else if ((ptr = strstr(lua_cmd, "SCIRC(")) && strrchr(lua_cmd, ')')) {
