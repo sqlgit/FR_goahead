@@ -2317,23 +2317,24 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "0"
-	if (cmd == 302 || cmd == 308 || cmd == 309 || cmd == 312 || cmd == 425) {
+	if (cmd == 302 || cmd == 305 || cmd == 308 || cmd == 309 || cmd == 312 || cmd == 332 || cmd == 337 || cmd == 343 || cmd == 391 || cmd == 425 || cmd == 541 || cmd == 542 || cmd == 543 || cmd == 544) {
 		if (!authority_management("0")) {
 			perror("authority_management");
+
 			goto auth_end;
 		}
-	}
 	// cmd_auth "1"
-	if (cmd == 313 || cmd == 314 || cmd == 230 || cmd == 231 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 280 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 332) {
+	} else if (cmd == 201 || cmd == 203 || cmd == 204 || cmd == 208 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 216 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 226 || cmd == 230 || cmd == 231 || cmd == 232 || cmd == 233 || cmd == 234 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 278 || cmd == 279 || cmd == 280 || cmd == 283 || cmd == 287 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 306 || cmd == 307 || cmd == 313 || cmd == 314 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 320 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356 || cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 393 || cmd == 403 || cmd == 404 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 415 || cmd == 422 || cmd == 426 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 524 || cmd == 525 || cmd == 526 || cmd == 528 || cmd == 529 || cmd == 530 || cmd == 531 || cmd == 532) {
 		if (!authority_management("1")) {
 			perror("authority_management");
+
 			goto auth_end;
 		}
 	// cmd_auth "2"
-	}
-	if (cmd == 320 || cmd == 201 || cmd == 303 || cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 107 || cmd == 1001 || cmd == 232 || cmd == 233 || cmd == 208 || cmd == 216 || cmd == 203 || cmd == 204 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 234 || cmd == 316 || cmd == 306 || cmd == 307 || cmd == 206 || cmd == 305 || cmd == 321 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 105 || cmd == 106 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 226 || cmd == 229 || cmd == 227 || cmd == 330 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 278 || cmd == 279 || cmd == 283 || cmd == 287 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 333 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 337 || cmd == 338 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 343 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356|| cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 375 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 391 || cmd == 393 || cmd == 401 || cmd == 402 || cmd == 403 || cmd == 404 || cmd == 405 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 415 || cmd == 422 || cmd == 423 || cmd == 424 || cmd == 426 || cmd == 427 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 524 || cmd == 525 || cmd == 526 || cmd == 527 || cmd == 528 || cmd == 529 || cmd == 530 || cmd == 531 || cmd == 532 || cmd == 541 || cmd == 542 || cmd == 543) {
+	} else if (cmd == 101 || cmd == 102 || cmd == 103 || cmd == 104 || cmd == 105 || cmd == 106 || cmd == 107 || cmd == 206 || cmd == 227 || cmd == 229 || cmd == 303 || cmd == 316 || cmd == 321 || cmd == 330 || cmd == 333 || cmd == 338 || cmd == 345 || cmd == 375 || cmd == 400 || cmd == 401 || cmd == 402 || cmd == 405 || cmd == 412 || cmd == 413 || cmd == 414 || cmd == 423 || cmd == 424 || cmd == 429 || cmd == 527 || cmd == 1001) {
 		if (!authority_management("2")) {
 			perror("authority_management");
+
 			goto auth_end;
 		}
 	}
@@ -2732,7 +2733,7 @@ void set(Webs *wp)
 		break;
 	case 263:
 		port = cmdport;
-		strcpy(log_content, "配置机器人IP");
+		strcpy(log_content, "配置机器人IP (192.168.57.2 网口)");
 		strcpy(en_log_content, "Configure Robot IP");
 		strcpy(jap_log_content, "ロボットipを構成する");
 		ret = copy_content(data_json, content);
@@ -3419,15 +3420,15 @@ void set(Webs *wp)
 		break;
 	case 403:
 		port = cmdport;
-		strcpy(log_content, "程序编辑确认修改");
-		strcpy(en_log_content, "Program editors confirm the changes");
+		strcpy(log_content, "扭矩程序编辑确认修改");
+		strcpy(en_log_content, "Torque: Program editors confirm the changes");
 		strcpy(jap_log_content, "プログラム編集者が修正を確認する");
 		ret = save_program(data_json, content);
 		break;
 	case 404:
 		port = cmdport;
-		strcpy(log_content, "程序下发");
-		strcpy(en_log_content, "Upload program");
+		strcpy(log_content, "扭矩程序下发");
+		strcpy(en_log_content, "Torque: upload program");
 		strcpy(jap_log_content, "プログラム交付");
 		ret = upload_program(data_json, content);
 		break;
@@ -3608,23 +3609,23 @@ void set(Webs *wp)
 		break;
 	case 523:
 		port = cmdport;
-		strcpy(log_content, "牵引示教");
-		strcpy(en_log_content, "Traction teaching");
-		strcpy(jap_log_content, "けん引示教");
+		strcpy(log_content, "力/扭矩传感器：牵引示教");
+		strcpy(en_log_content, "The force/torque sensor: traction teaching");
+		strcpy(jap_log_content, "力/トルクセンサー:けん引示教");
 		ret = copy_content(data_json, content);
 		break;
 	case 524:
 		port = cmdport;
-		strcpy(log_content, "复位激活");
-		strcpy(en_log_content, "Reset the activation");
-		strcpy(jap_log_content, "リセット起動");
+		strcpy(log_content, "力/扭矩传感器：复位激活");
+		strcpy(en_log_content, "The force/torque sensor: reset the activation");
+		strcpy(jap_log_content, "力/トルクセンサー:リセット起動");
 		ret = copy_content(data_json, content);
 		break;
 	case 525:
 		port = cmdport;
-		strcpy(log_content, "设置参考坐标系");
-		strcpy(en_log_content, "Set the reference frame");
-		strcpy(jap_log_content, "参照座標系を設定する");
+		strcpy(log_content, "设置力/扭矩传感器参考坐标系");
+		strcpy(en_log_content, "Set the force/torque sensor the reference frame");
+		strcpy(jap_log_content, "設置力/トルクセンサーは座標系を参照");
 		ret = copy_content(data_json, content);
 		break;
 	case 526:
@@ -3643,9 +3644,9 @@ void set(Webs *wp)
 		break;
 	case 528:
 		port = cmdport;
-		strcpy(log_content, "设置零点");
-		strcpy(en_log_content, "Set the zero point");
-		strcpy(jap_log_content, "0点を設ける");
+		strcpy(log_content, "设置力/扭矩传感器零点");
+		strcpy(en_log_content, "Set the force/torque sensor the zero point");
+		strcpy(jap_log_content, "力/トルクセンサーを0点設置");
 		ret = copy_content(data_json, content);
 		break;
 	case 529:
@@ -3695,6 +3696,13 @@ void set(Webs *wp)
 		strcpy(log_content, "设置摩擦力补偿系数-挂装");
 		strcpy(en_log_content, "Set friction compensation coefficient - upside down mounting");
 		strcpy(jap_log_content, "摩擦力補償係数をセットする-マウント");
+		ret = copy_content(data_json, content);
+		break;
+	case 544:
+		port = cmdport;
+		strcpy(log_content, "设置末端灯色对应机器人模式");
+		strcpy(en_log_content, "Set the end light color corresponding to the robot mode");
+		strcpy(jap_log_content, "エンドライト対応ロボットモードを設定");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */

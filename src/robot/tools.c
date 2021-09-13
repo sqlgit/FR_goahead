@@ -1044,11 +1044,8 @@ void *create_dir(const char *dir_path)
 int authority_management(const char *cmd_type)
 {
 	if (!strcmp(cur_account.auth, "0")) { //管理员
-		if (!strcmp(cmd_type, "0")) {
-			return 1;
-		} else {
-			return 0;
-		}
+
+		return 1;
 	} else if (!strcmp(cur_account.auth, "1")) { //程序员
 		if (!strcmp(cmd_type, "1") || !strcmp(cmd_type, "2")) {
 			return 1;

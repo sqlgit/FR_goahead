@@ -2245,11 +2245,11 @@ void *socket_upper_computer_thread(void* arg)
 			}
 			memset(buf_ip, 0,sizeof(buf_ip));
 			inet_ntop(AF_INET, &clnt_socket.sin_addr, buf_ip, sizeof(buf_ip));
-			//printf("Client online, ip is %s, port is %d\n", buf_ip, ntohs(clnt_socket.sin_port));
-			//printf("clnt_fd = %d\n", sock->socket_connect_client_info[i].clnt_fd);
+			printf("Client online, ip is %s, port is %d\n", buf_ip, ntohs(clnt_socket.sin_port));
+			printf("clnt_fd = %d\n", sock->socket_connect_client_info[i].clnt_fd);
 			// client 连接数加 1
 			socket_connect_client_num++;
-			//printf("connect_client_num = %d\n", socket_connect_client_num);
+			printf("connect_client_num = %d\n", socket_connect_client_num);
 
 			pthread_create(&t_socket_client, NULL, (void *)socket_upper_computer_recv_send, (void *)(&sock->socket_connect_client_info[i]));
 			pthread_detach(t_socket_client);

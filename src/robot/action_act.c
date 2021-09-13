@@ -2057,25 +2057,33 @@ void act(Webs *wp)
 	}
 	cmd = command->valuestring;
 	//printf("cmd = %s\n", cmd);
-	// cmd_auth "1"
-	if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "odm_password")) {
-		if (!authority_management("1")) {
-			perror("authority_management");
-			goto auth_end;
-		}
-	// cmd_auth "2"
-	} else if (!strcmp(cmd, "change_type") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "torque_save_custom_pause")) {
-		if (!authority_management("2")) {
-			perror("authority_management");
-			goto auth_end;
-		}
+
 	// cmd_auth "0"
-	} else if (!strcmp(cmd, "save_accounts") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip")) {
+	if (!strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
+
+			goto auth_end;
+		}
+	// cmd_auth "1"
+	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause")) {
+		if (!authority_management("1")) {
+			perror("authority_management");
+
 			goto auth_end;
 		}
 	}
+	/*
+	// cmd_auth "2"
+	} else if () {
+		if (!authority_management("2")) {
+			perror("authority_management");
+
+			goto auth_end;
+		}
+	}
+	*/
+
 	if (!strcmp(cmd, "save_lua_file")) {
 		ret = save_lua_file(data_json);
 		strcpy(log_content, "保存当前程序示教文件");
@@ -2238,9 +2246,9 @@ void act(Webs *wp)
 		strcpy(jap_log_content, "トルク: 表示手順を生成する");
 	} else if (!strcmp(cmd, "set_DIO_cfg")) {
 		ret = set_DIO_cfg(data_json);
-		strcpy(log_content, "设置 DIO 配置");
-		strcpy(en_log_content, "Setting the DIO configuration");
-		strcpy(jap_log_content, "dio構成の設定");
+		strcpy(log_content, "设置扭矩 DIO 配置");
+		strcpy(en_log_content, "torque: setting the DIO configuration");
+		strcpy(jap_log_content, "トルク: dio構成の設定");
 	} else if (!strcmp(cmd, "set_TSP_flg")) {
 		ret = set_TSP_flg(data_json);
 		strcpy(log_content, "设置扭矩页面显示标志位");
@@ -2248,9 +2256,9 @@ void act(Webs *wp)
 		strcpy(jap_log_content, "トルク表示表示ビットを設定します");
 	} else if (!strcmp(cmd, "clear_product_info")) {
 		ret = clear_product_info(data_json);
-		strcpy(log_content, "生产数据清除");
-		strcpy(en_log_content, "Production data cleanup");
-		strcpy(jap_log_content, "生産データ消去");
+		strcpy(log_content, "扭矩: 生产数据清除");
+		strcpy(en_log_content, "torque: Production data cleanup");
+		strcpy(jap_log_content, "トルク: 生産データ消去");
 	} else if (!strcmp(cmd, "torque_save_custom_pause")) {
 		ret = torque_save_custom_pause(data_json);
 		strcpy(log_content, "扭矩: 保存自定义提示内容");

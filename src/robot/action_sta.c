@@ -34,6 +34,7 @@ extern TORQUE_SYS torquesys;
 extern POINT_HOME_INFO point_home_info;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 extern PI_STATUS pi_status;
+extern SOCKET_PI_INFO socket_pi_status;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -171,33 +172,35 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	//}
 
 	/** PI IO 状态反馈 */
-	cJSON_AddNumberToObject(PI_IO_json, "power_supply_mode", pi_status.power_supply_mode);
-	electric_quantity = cJSON_CreateArray();
-	cJSON_AddItemToObject(PI_IO_json, "electric_quantity", electric_quantity);
-	for (i = 0; i < 4; i++) {
-		cJSON_AddNumberToObject(electric_quantity, "key", pi_status.electric_quantity[i]);
-	}
-	switch_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(PI_IO_json, "switch", switch_json);
-	for (i = 0; i < 2; i++) {
-		cJSON_AddNumberToObject(switch_json, "key", pi_status.key[i]);
-	}
-	cJSON_AddNumberToObject(PI_IO_json, "start", pi_status.start);
-	cJSON_AddNumberToObject(PI_IO_json, "stop", pi_status.stop);
-	axis_plus = cJSON_CreateArray();
-	cJSON_AddItemToObject(PI_IO_json, "axis_plus", axis_plus);
-	for (i = 0; i < 6; i++) {
-		cJSON_AddNumberToObject(axis_plus, "key", pi_status.axis_plus[i]);
-	}
-	axis_minus = cJSON_CreateArray();
-	cJSON_AddItemToObject(PI_IO_json, "axis_minus", axis_minus);
-	for (i = 0; i < 6; i++) {
-		cJSON_AddNumberToObject(axis_minus, "key", pi_status.axis_minus[i]);
-	}
-	custom = cJSON_CreateArray();
-	cJSON_AddItemToObject(PI_IO_json, "custom", custom);
-	for (i = 0; i < 4; i++) {
-		cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
+	if (socket_pi_status.connect_status == 1) {
+		cJSON_AddNumberToObject(PI_IO_json, "power_supply_mode", pi_status.power_supply_mode);
+		electric_quantity = cJSON_CreateArray();
+		cJSON_AddItemToObject(PI_IO_json, "electric_quantity", electric_quantity);
+		for (i = 0; i < 4; i++) {
+			cJSON_AddNumberToObject(electric_quantity, "key", pi_status.electric_quantity[i]);
+		}
+		switch_json = cJSON_CreateArray();
+		cJSON_AddItemToObject(PI_IO_json, "switch", switch_json);
+		for (i = 0; i < 2; i++) {
+			cJSON_AddNumberToObject(switch_json, "key", pi_status.key[i]);
+		}
+		cJSON_AddNumberToObject(PI_IO_json, "start", pi_status.start);
+		cJSON_AddNumberToObject(PI_IO_json, "stop", pi_status.stop);
+		axis_plus = cJSON_CreateArray();
+		cJSON_AddItemToObject(PI_IO_json, "axis_plus", axis_plus);
+		for (i = 0; i < 6; i++) {
+			cJSON_AddNumberToObject(axis_plus, "key", pi_status.axis_plus[i]);
+		}
+		axis_minus = cJSON_CreateArray();
+		cJSON_AddItemToObject(PI_IO_json, "axis_minus", axis_minus);
+		for (i = 0; i < 6; i++) {
+			cJSON_AddNumberToObject(axis_minus, "key", pi_status.axis_minus[i]);
+		}
+		custom = cJSON_CreateArray();
+		cJSON_AddItemToObject(PI_IO_json, "custom", custom);
+		for (i = 0; i < 4; i++) {
+			cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
+		}
 	}
 
 	//printf("state->gripperActStatus = %d\n", state->gripperActStatus);
@@ -269,7 +272,11 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		cJSON_AddNumberToObject(array_ao, "key", double_round(1.0*state->analog_output[i]/40.95, 3));
 	}
 
+#if local
+	cJSON_AddNumberToObject(root_json, "mode", 1);
+#else
 	cJSON_AddNumberToObject(root_json, "mode", state->robot_mode);
+#endif
 	cJSON_AddNumberToObject(root_json, "toolnum", state->toolNum);
 	cJSON_AddNumberToObject(root_json, "workpiecenum", state->workPieceNum);
 	cJSON_AddNumberToObject(root_json, "exaxisnum", state->exAxisNum);
@@ -1619,6 +1626,74 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				my_en_syslog("error", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
 				my_jap_syslog("さくご", "定力制御-RZ方向最大調整角度を超えてリセット可能", cur_account.username);
 				pre_state->cmdPointError = 36;
+			}
+			break;
+		case 37:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "整圆中间点1错误（包括工具不符），可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 1 error (including tool mismatch), resettable");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "全円中間点1エラー(工具が合わないことを含む),リセット可能");
+			}
+			if (pre_state->cmdPointError != 37) {
+				my_syslog("错误", "整圆中间点1错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle midpoint 1 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円中間点1エラー(工具が合わないことを含む),リセット可能", cur_account.username);
+				pre_state->cmdPointError = 37;
+			}
+			break;
+		case 38:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "整圆中间点2错误（包括工具不符），可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 2 error (including tool mismatch), resettable");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能");
+			}
+			if (pre_state->cmdPointError != 38) {
+				my_syslog("错误", "整圆中间点2错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle midpoint 2 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 38;
+			}
+			break;
+		case 39:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "整圆中间点3错误（包括工具不符），可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 3 error (including tool mismatch), resettable");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能");
+			}
+			if (pre_state->cmdPointError != 39) {
+				my_syslog("错误", "整圆中间点3错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle midpoint 3 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 39;
+			}
+			break;
+		case 40:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "整圆指令点间距过小，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The command point spacing of the whole circle is too small, which can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "全円コマンドピッチが小さすぎるのでリセット可能");
+			}
+			if (pre_state->cmdPointError != 40) {
+				my_syslog("错误", "整圆指令点间距过小，可复位", cur_account.username);
+				my_en_syslog("error", "The command point spacing of the whole circle is too small, which can be reset", cur_account.username);
+				my_jap_syslog("さくご", "全円コマンドピッチが小さすぎるのでリセット可能", cur_account.username);
+				pre_state->cmdPointError = 40;
 			}
 			break;
 		default:
