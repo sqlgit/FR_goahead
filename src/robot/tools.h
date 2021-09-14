@@ -118,7 +118,7 @@ typedef struct _ACCOUNT_INFO
 /********************************* Function declaration ***********************/
 
 int string_to_string_list(char *src_str, char *delimiter, int *delimiter_count, char ***str_list);
-void string_list_free(char **str_list, int list_size);
+void string_list_free(char ***str_list, int list_size);
 //int separate_string_to_array(char *pData, char *pDelimiter , unsigned int Ary_num, unsigned int Ary_size, char ***pAry_out);
 int get_n_len(const int n);
 int write_file(const char *file_name, const char *file_content);

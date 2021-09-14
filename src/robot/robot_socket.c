@@ -509,7 +509,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		/* 把接收到的包按照分割符"III"进行分割 */
 		if (string_to_string_list(frame, "III", &size_package, &array) == 0 || size_package != 6) {
 			perror("string to string list");
-			string_list_free(array, size_package);
+			string_list_free(&array, size_package);
 
 			continue;
 		}
@@ -543,7 +543,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(array, size_package);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -561,8 +561,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -578,8 +578,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			root_json = NULL;
 			//printf("msg_content = %s\n", msg_content);
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -591,13 +591,13 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 278) {//反馈激光传感器记录点内
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 16) {
 				perror("string to string list");
 				printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -623,8 +623,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -636,13 +636,13 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 325) {//计算 TCF to Joint
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
 				printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -658,8 +658,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -671,14 +671,14 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 283) {//获取激光跟踪传感器配置信息
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 4) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -691,8 +691,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -704,14 +704,14 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 358) {//获取负载信息
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 4) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -724,8 +724,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -737,7 +737,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
 			/*
 			   1. 用户恢复出厂值成功
@@ -755,7 +755,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				system(cmd);
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
-				string_list_free(array, size_package);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -764,8 +764,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -780,8 +780,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -793,14 +793,14 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 386) {
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -812,8 +812,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -825,14 +825,14 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 393) {//获取外部轴驱动器配置信息
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -844,8 +844,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -857,7 +857,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 412) {
 			root_json = cJSON_CreateObject();
 			cJSON_AddNumberToObject(root_json, "enable", (atoi(array[4])-10));
@@ -865,7 +865,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(array, size_package);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -886,7 +886,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				/* create socket PCI thread */
 				if (pthread_create(&torquesys.t_socket_TORQUE_SYS, NULL, (void*)&socket_TORQUE_SYS_thread, (void *)TORQUE_PORT)) {
 					perror("pthread_create");
-					string_list_free(array, size_package);
+					string_list_free(&array, size_package);
 
 					continue;
 				}
@@ -902,7 +902,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
 				if (pthread_join(torquesys.t_socket_TORQUE_SYS, NULL)) {
 					perror("pthread_join");
-					string_list_free(array, size_package);
+					string_list_free(&array, size_package);
 
 					continue;
 				}
@@ -912,8 +912,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 8) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -924,8 +924,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -937,13 +937,13 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 424) {//获取从站固件版本
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 8) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -954,8 +954,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -967,14 +967,14 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 429) {//获取机器人作业原点
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 7) {
 				perror("string to string list");
 				//printf("size_content = %d\n", size_content);
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -994,8 +994,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			root_json = NULL;
 			//printf("msg_content = %s\n", msg_content);
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -1007,13 +1007,13 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 530) {//获取重量辨识数据
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 1) {
 				perror("string to string list");
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -1022,8 +1022,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -1035,13 +1035,13 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else if (atoi(array[2]) == 532) {//获取质心辨识数据
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 3) {
 				perror("string to string list");
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -1052,8 +1052,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			cJSON_Delete(root_json);
 			root_json = NULL;
 			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
-				string_list_free(msg_array, size_content);
-				string_list_free(array, size_package);
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
 				if (msg_content != NULL) {
 					free(msg_content);
 					msg_content = NULL;
@@ -1065,10 +1065,10 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				free(msg_content);
 				msg_content = NULL;
 			}
-			string_list_free(msg_array, size_content);
+			string_list_free(&msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
-				string_list_free(array, size_package);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -1097,7 +1097,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			//p->data.state = 2;
 		//}
 		//	p = p->next;
-		string_list_free(array, size_package);
+		string_list_free(&array, size_package);
 	}
 
 	return SUCCESS;
@@ -1812,7 +1812,7 @@ void *socket_state_feedback_thread(void *arg)
 			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, 2*STATEFB_SIZE, STATEFB_SIZE) == (7+varnum_len+3+5+3+sizeof(STATE_FB)*3+7)) {
 				/*if (string_to_string_list(frame, "III", &size, &array) == 0 || size != 5) {
 					perror("string to string list");
-					string_list_free(array, size);
+					string_list_free(&array, size);
 
 					continue;
 				}*/
@@ -1973,7 +1973,7 @@ void *socket_state_feedback_thread(void *arg)
 						state_fb.index++;*/
 					}
 				}
-				//string_list_free(array, size);
+				//string_list_free(&array, size);
 				//printf("after StringToBytes\n");
 			}
 		}
@@ -2123,7 +2123,7 @@ static void *socket_upper_computer_recv_send(void *arg)
 			/* 把接收到的包按照分割符"III"进行分割 */
 			if (string_to_string_list(frame, "III", &size_package, &array) == 0 || size_package != 6) {
 				perror("string to string list");
-				string_list_free(array, size_package);
+				string_list_free(&array, size_package);
 
 				continue;
 			}
@@ -2173,7 +2173,7 @@ static void *socket_upper_computer_recv_send(void *arg)
 			}
 			/* send recv info to upper computer */
 			socket_upper_computer_send(sock, atoi(array[2]), strlen(data_content), data_content);
-			string_list_free(array, size_package);
+			string_list_free(&array, size_package);
 		}
 	}
 	/* close clnt socket fd */

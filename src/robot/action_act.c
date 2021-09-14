@@ -1014,7 +1014,7 @@ static int save_DH_point(const cJSON *data_json)
 			if (string_to_string_list(strline, " ", &size, &array) == 0 || size != 7) {
 				perror("string to string list");
 				fclose(fp);
-				string_list_free(array, size);
+				string_list_free(&array, size);
 
 				return FAIL;
 			}
@@ -1027,7 +1027,7 @@ static int save_DH_point(const cJSON *data_json)
 				sprintf(tmp_content, "%s%s", write_content, strline);
 			}
 			strcpy(write_content, tmp_content);
-			string_list_free(array, size);
+			string_list_free(&array, size);
 			bzero(strline, LINE_LEN);
 		}
 		fclose(fp);

@@ -475,7 +475,7 @@ static int get_robot_cfg(char **ret_f_content)
 		if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
 			perror("string to string list");
 			fclose(fp);
-			string_list_free(array, size);
+			string_list_free(&array, size);
 			cJSON_Delete(root_json);
 			root_json = NULL;
 
@@ -484,7 +484,7 @@ static int get_robot_cfg(char **ret_f_content)
 		if (array[0] != NULL) {
 			cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
 		}
-		string_list_free(array, size);
+		string_list_free(&array, size);
 		bzero(strline, sizeof(char)*LINE_LEN);
 		line_num++;
 	}
@@ -530,7 +530,7 @@ static int get_ex_device_cfg(char **ret_f_content)
 		if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
 			perror("string to string list");
 			fclose(fp);
-			string_list_free(array, size);
+			string_list_free(&array, size);
 			cJSON_Delete(root_json);
 			root_json = NULL;
 
@@ -539,7 +539,7 @@ static int get_ex_device_cfg(char **ret_f_content)
 		if (array[0] != NULL) {
 			cJSON_AddStringToObject(root_json, my_strlwr(array[0]), array[1]);
 		}
-		string_list_free(array, size);
+		string_list_free(&array, size);
 		bzero(strline, sizeof(char)*LINE_LEN);
 		line_num++;
 	}
@@ -1346,7 +1346,7 @@ static int get_DH_file(char **ret_f_content)
 			if (string_to_string_list(strline, " ", &size, &array) == 0 || size != 7) {
 				perror("string to string list");
 				fclose(fp);
-				string_list_free(array, size);
+				string_list_free(&array, size);
 				cJSON_Delete(root_json);
 				root_json = NULL;
 
@@ -1355,7 +1355,7 @@ static int get_DH_file(char **ret_f_content)
 			if (array[0] != NULL) {
 				cJSON_AddItemToArray(root_json, cJSON_CreateNumber(atoi(array[0])));
 			}
-			string_list_free(array, size);
+			string_list_free(&array, size);
 			bzero(strline, LINE_LEN);
 		}
 		fclose(fp);

@@ -117,23 +117,23 @@ int string_to_string_list(char *src_str, char *delimiter, int *delimiter_count, 
 	return ret;
 }
 
-void string_list_free(char **str_list, int list_size)
+void string_list_free(char ***str_list, int list_size)
 {
 	int index = 0;
 
-	if ((str_list != NULL) && (list_size > 0)) {
+	if ((*str_list != NULL) && (list_size > 0)) {
 		while (index < list_size) {
-			if (str_list[index] != NULL) {
-				free(str_list[index]);
-				str_list[index] = NULL;
+			if ((*str_list)[index] != NULL) {
+				free((*str_list)[index]);
+				(*str_list)[index] = NULL;
 			}
 			index++;
 		}
 	}
 
-	if (str_list != NULL) {
-		free(str_list);
-		str_list = NULL;
+	if (*str_list != NULL) {
+		free(*str_list);
+		*str_list = NULL;
 	}
 }
 
@@ -1221,7 +1221,7 @@ int update_userconfig_robottype()
 			if (string_to_string_list(strline, " = ", &size, &array) == 0 || size != 2) {
 				perror("string to string list");
 				fclose(fp);
-				string_list_free(array, size);
+				string_list_free(&array, size);
 
 				return FAIL;
 			}
@@ -1253,7 +1253,7 @@ int update_userconfig_robottype()
 			cJSON_Delete(content_json);
 			content_json = NULL;
 
-			string_list_free(array, size);
+			string_list_free(&array, size);
 		}
 		bzero(strline, sizeof(char)*LEN_100);
 		strcat(write_content, write_line);

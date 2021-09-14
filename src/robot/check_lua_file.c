@@ -50,7 +50,7 @@ static int MoveC(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 37) {
+	if (argc != 42) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -60,7 +60,7 @@ static int Circle(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 41) {
+	if (argc != 61) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1130,8 +1130,8 @@ static int GetUpdateTCPPose(lua_State* L)
 
 static int pcall_lua(void *arg)
 {
-	int error;
-	int result;
+	int lua_pcall_result = 0;
+	int luaL_loadfile_result = 0;
 
 	luaEnv = luaL_newstate();; /* opens Lua */
 	luaL_openlibs(luaEnv);
@@ -1253,37 +1253,49 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ComputePostPick", ComputePostPick);
 	lua_register(luaEnv, "GetUpdateTCPPose", GetUpdateTCPPose);
 
-
 	//printf("lua_filename = %s\n", lua_filename);
 
-	result = luaL_loadfile(luaEnv, lua_filename);
-
-	printf("result = %d\n", result);
-
-	if (result != LUA_OK) {
-		//printf("lua file is not exist or illegal character exists in file\n");
-		strcpy(error_info, "lua file is not exist or illegal character exists in file");
-
+	/**
+	  通过 luaL_loadfile 加载文件，编译代码成中间码并且返回编译后的 chunk 作为一个函数，而不执行代码
+	  可以检测一些 lua 自身的语法格式是否正确
+	  返回值：检查正确返回 0，检查发现错误返回非 0
+	*/
+	luaL_loadfile_result = luaL_loadfile(luaEnv, lua_filename);
+	//printf("luaL_loadfile result is: %d\n", luaL_loadfile_result);
+	if (luaL_loadfile_result != LUA_OK) {
+		strcpy(error_info, lua_tostring(luaEnv, -1));
+		//printf("load file fail ret error: %s\n", error_info);
+		lua_pop(luaEnv, 1); //pop error message from the stack
 		lua_close(luaEnv);
+
 		return FAIL;
 	}
 
-	error = lua_pcall(luaEnv, 0, 0, 0);
-	//error = lua_pcall (luaEnv, 0, LUA_MULTRET, 0);
+	printf("lua load file success\n");
+	/**
+		通过 lua_pcall 执行 loadfile 编译产生的中间码,
+		可以检测我们自己注册的 lua c API名称，参数个数等等是否正确
+		返回值：检查正确返回 0，检查错误返回非 0
 
-	printf("error = %d\n", error);
-
-	if (error != LUA_OK) {
-		strcpy(error_info, lua_tostring(luaEnv, -1));
-
+		Tips:
+			当 lua 中存在 while 等循环时，会一直执行不退出
+			所以需要外部线程中断本线程，停止检查
+			返回 timeout， 此时也认为 lua 代码检查正确
+	*/
+	//lua_pcall_result = lua_pcall (luaEnv, 0, LUA_MULTRET, 0);
+	lua_pcall_result = lua_pcall(luaEnv, 0, 0, 0);
+	//printf("lua_pcall_result = %d\n", lua_pcall_result);
+	if (lua_pcall_result != LUA_OK) {
 		//fprintf(stderr, "%s", error_info);
+		strcpy(error_info, lua_tostring(luaEnv, -1));
 		//printf("error_info = %s\n", error_info);
 		lua_pop(luaEnv, 1); //pop error message from the stack
-
 		lua_close(luaEnv);
+
 		return FAIL;
 	}
 
+	//printf("lua pcall success\n");
 	strcpy(error_info, "success");
 	lua_close(luaEnv);
 
@@ -1315,7 +1327,7 @@ int check_lua_file()
 		perror("pthread_create");
 	}
 
-	/* 检测最多 50 ms, 使用 pcall 运行 lua，检测是否有语法错误 */
+	/* 检测最多 50 ms, 使用 luaL_loadfile 加载编译文件， pcall 运行 lua，检测是否有语法错误 */
 	for (i = 0; i < 5; i++) {
 		if (strcmp(error_info, "") != 0) {
 			//printf("before join pcall 1 \n");
@@ -1324,20 +1336,20 @@ int check_lua_file()
 				perror("pthread_join");
 			}
 			printf("error_info = %s\n", error_info);
-			//printf("error_info 1 = %s\n", error_info);
 
 			if (strcmp(error_info, "success") == 0) {
 
 				return SUCCESS;
 			} else {
 
-				return FAIL ;
+				return FAIL;
 			}
 		}
 		//printf("i = %d\n", i);
 
 		//delay(100);
 		usleep(10000);
+		//sleep(1);
 
 		//time_now = clock();
 		//printf("time_now = %d\n", time_now);
@@ -1354,5 +1366,8 @@ int check_lua_file()
 	}
 	//printf("error_info 2 = %s\n", error_info);
 
+	/**
+		此时 error_info 为 timeout， 也认为 lua 代码检查正确
+	*/
 	return SUCCESS;
 }

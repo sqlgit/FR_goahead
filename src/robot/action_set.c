@@ -40,7 +40,8 @@ typedef struct _DB_JSON
 } DB_JSON;
 
 /********************************* Function declaration ***********************/
-
+static void argc_error_info(int lua_argc, char *func_name);
+static void database_error_info();
 static int copy_content(const cJSON *data_json, char *content);
 static int program_start(const cJSON *data_json, char *content);
 static int program_stop(const cJSON *data_json, char *content);
@@ -78,6 +79,17 @@ static int get_lua_content_size(const cJSON *data_json);
 static int wait_cmd_feedback();
 
 /*********************************** Code *************************************/
+/* argc error info */
+static void argc_error_info(int lua_argc, char *func_name)
+{
+	sprintf(error_info, "bad argument #%d to '%s' (Error number of parameters)", lua_argc, func_name);
+}
+
+/* database error info */
+static void database_error_info()
+{
+	sprintf(error_info, "failed to query the database (the data does not exist)");
+}
 
 /* copy json data to content */
 static int copy_content(const cJSON *data_json, char *content)
@@ -145,7 +157,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 	if (strstr(lua_filename, "main")) {
 		if (string_to_string_list(lua_filename, "_", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
-			string_list_free(cmd_array, size);
+			string_list_free(&cmd_array, size);
 
 			return FAIL;
 		}
@@ -155,7 +167,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 		strncpy(jiabao_torque_pd_data.right_wk_id, cmd_array[2], (strlen(cmd_array[2]) - 4));
 		/* 保存最新数据到生产数据数据库 */
 		update_torquesys_pd_data();
-		string_list_free(cmd_array, size);
+		string_list_free(&cmd_array, size);
 	}
 	//printf("content = %s\n", content);
 
@@ -355,7 +367,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		lua_cmd = new_lua_cmd;
 		//printf("lua_cmd = %s\n", lua_cmd);
 	/* PTP 添加了平滑过度半径参数 */
-	} else if (strstr(lua_cmd, "PTP") && (strstr(lua_cmd, "EXT_AXIS_PTP") == NULL) && (strstr(lua_cmd, "laserPTP") == NULL)) {
+	} else if (strstr(lua_cmd, "PTP") && (strstr(lua_cmd, "EXT_AXIS_PTP") == NULL) && (strstr(lua_cmd, "laserPTP") == NULL) && (strstr(lua_cmd, "SPTP") == NULL)) {
 		if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
 			perror("string to string list");
 
@@ -369,8 +381,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(new_lua_cmd, "%s,%s,0,%s,%s,%s,%s,%s,%s,%s", cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8]);
 			lua_cmd = new_lua_cmd;
 		}
-		string_list_free(cmd_array, size);
-		//printf("lua_cmd = %s\n", lua_cmd);
+		string_list_free(&cmd_array, size);
 	}
 
 	if ((old_ptr = strstr(lua_cmd, ":")) && (strstr(lua_cmd, "::") == NULL)) {
@@ -400,6 +411,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 9), (end_ptr - ptr - 10));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "laserPTP");
 
 			goto end;
 		}
@@ -412,6 +424,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 13), (end_ptr - ptr - 14));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
+			argc_error_info(3, "EXT_AXIS_PTP");
 
 			goto end;
 		}
@@ -420,6 +433,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		} else {
 			ext_axis_ptp = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 			if (ext_axis_ptp == NULL || ext_axis_ptp->type != cJSON_Object) {
+				database_error_info();
 
 				goto end;
 			}
@@ -434,6 +448,64 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(content,"%sExtAxisMoveJ(%s,%s,%s,%s,%s,%s)%s\n", head, cmd_array[0], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], end_ptr);
 		}
 		strcat(file_content, content);
+	/* SPTP */
+	} else if ((ptr = strstr(lua_cmd, "SPTP(")) && strrchr(lua_cmd, ')')) {
+		end_ptr = strrchr(lua_cmd, ')') + 1;
+		strncpy(head, lua_cmd, (ptr - lua_cmd));
+		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
+			perror("string to string list");
+			argc_error_info(2, "SPTP");
+
+			goto end;
+		}
+		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
+		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
+
+			goto end;
+		}
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		workpiecenum = cJSON_GetObjectItem(point_1, "workpiecenum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
+
+			goto end;
+		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[0], POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+		sprintf(content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], end_ptr);
+		strcat(file_content, content);
 	/* PTP */
 	} else if ((ptr = strstr(lua_cmd, "PTP(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
@@ -441,11 +513,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 10 && size != 4)) {
 			perror("string to string list");
+			sprintf(error_info, "bad argument #%d #%d to '%s' (Error number of parameters)", 4, 10, "PTP");
 
 			goto end;
 		}
 		ptp = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (ptp == NULL || ptp->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -499,62 +573,6 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(content,"%sMoveJ(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[2], cmd_array[3], end_ptr);
 		}
 		strcat(file_content, content);
-	/* SPTP */
-	} else if ((ptr = strstr(lua_cmd, "SPTP(")) && strrchr(lua_cmd, ')')) {
-		end_ptr = strrchr(lua_cmd, ')') + 1;
-		strncpy(head, lua_cmd, (ptr - lua_cmd));
-		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
-			perror("string to string list");
-
-			goto end;
-		}
-		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
-		if (point_1 == NULL || point_1->type != cJSON_Object) {
-
-			goto end;
-		}
-		j1 = cJSON_GetObjectItem(point_1, "j1");
-		j2 = cJSON_GetObjectItem(point_1, "j2");
-		j3 = cJSON_GetObjectItem(point_1, "j3");
-		j4 = cJSON_GetObjectItem(point_1, "j4");
-		j5 = cJSON_GetObjectItem(point_1, "j5");
-		j6 = cJSON_GetObjectItem(point_1, "j6");
-		x = cJSON_GetObjectItem(point_1, "x");
-		y = cJSON_GetObjectItem(point_1, "y");
-		z = cJSON_GetObjectItem(point_1, "z");
-		rx = cJSON_GetObjectItem(point_1, "rx");
-		ry = cJSON_GetObjectItem(point_1, "ry");
-		rz = cJSON_GetObjectItem(point_1, "rz");
-		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
-		workpiecenum = cJSON_GetObjectItem(point_1, "workpiecenum");
-		speed = cJSON_GetObjectItem(point_1, "speed");
-		acc = cJSON_GetObjectItem(point_1, "acc");
-		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || cmd_array[1] == NULL) {
-
-			goto end;
-		}
-		/* 当点为 pHOME 原点时，进行检查 */
-		if (strcmp(cmd_array[0], POINT_HOME) == 0) {
-			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
-			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
-			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
-			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
-			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
-			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
-			for (i = 0; i < 6; i++) {
-				joint_value_ptr[i] = joint_value[i];
-			}
-			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
-			if (check_pointhome_data(joint_value_ptr) == FAIL) {
-				point_home_info.error_flag = 1;
-
-				goto end;
-			}
-			point_home_info.error_flag = 0;
-		}
-		sprintf(content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], end_ptr);
-		strcat(file_content, content);
 	/* laserLin */
 	} else if ((ptr = strstr(lua_cmd, "laserLin(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
@@ -562,6 +580,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 9), (end_ptr - ptr - 10));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "laserLin");
 
 			goto end;
 		}
@@ -574,11 +593,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 5), (end_ptr - ptr - 6));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SLIN");
 
 			goto end;
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -638,13 +659,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		printf("ptr + 4 = %s\n", (ptr + 4));
 		*/
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 6 && size != 4 && size != 10)) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 4 && size != 6 && size != 10)) {
 			perror("string to string list");
+			sprintf(error_info, "bad argument #%d #%d #%d to '%s' (Error number of parameters)", 4, 6, 10, "Lin");
 
 			goto end;
 		}
 		lin = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (lin == NULL || lin->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -730,6 +753,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 4) {
 			perror("string to string list");
+			argc_error_info(4, "ARC");
 
 			goto end;
 		}
@@ -739,6 +763,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -791,6 +816,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -853,6 +879,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 4) {
 			perror("string to string list");
+			argc_error_info(4, "Circle");
 
 			goto end;
 		}
@@ -862,6 +889,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -914,6 +942,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -969,6 +998,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
 		if (point_3 == NULL || point_3->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1031,11 +1061,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 6), (end_ptr - ptr - 7));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
+			argc_error_info(3, "SCIRC");
 
 			goto end;
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1080,6 +1112,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1134,6 +1167,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 6), (end_ptr - ptr - 7));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SetAO");
 
 			goto end;
 		}
@@ -1146,6 +1180,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 10), (end_ptr - ptr - 11));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SetToolAO");
 
 			goto end;
 		}
@@ -1158,6 +1193,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 10), (end_ptr - ptr - 11));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SPLCSetAO");
 
 			goto end;
 		}
@@ -1170,6 +1206,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 14), (end_ptr - ptr - 15));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SPLCSetToolAO");
 
 			goto end;
 		}
@@ -1180,13 +1217,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 1) {
 			perror("string to string list");
+			argc_error_info(1, "SetToolList");
 
 			goto end;
 		}
 		cd = cJSON_GetObjectItemCaseSensitive(p_db_json->cdsystem, cmd_array[0]);
 		if (cd == NULL || cd->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1210,13 +1249,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 1) {
 			perror("string to string list");
+			argc_error_info(1, "SetWobjList");
 
 			goto end;
 		}
 		cd = cJSON_GetObjectItemCaseSensitive(p_db_json->wobj_cdsystem, cmd_array[0]);
 		if (cd == NULL || cd->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1238,13 +1279,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 14), (end_ptr - ptr - 15));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 1) {
 			perror("string to string list");
+			argc_error_info(1, "SetExToolList");
 
 			goto end;
 		}
 		et_cd = cJSON_GetObjectItemCaseSensitive(p_db_json->et_cdsystem, cmd_array[0]);
 		if (et_cd == NULL || et_cd->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1274,11 +1317,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 16), (end_ptr - ptr - 17));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 11) {
 			perror("string to string list");
+			argc_error_info(11, "PostureAdjustOn");
 
 			goto end;
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1291,6 +1336,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1303,6 +1349,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[3]);
 		if (point_3 == NULL || point_3->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1322,6 +1369,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size < 1 || size > 6)) {
 			perror("string to string list");
+			sprintf(error_info, "bad argument over than #%d and less than #%d to '%s' (Error number of parameters)", 0, 7, "RegisterVar");
 
 			goto end;
 		}
@@ -1349,11 +1397,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 15), (end_ptr - ptr - 16));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
+			argc_error_info(2, "SetSysVarValue");
 
 			goto end;
 		}
 		var = cJSON_GetObjectItemCaseSensitive(p_db_json->sysvar, cmd_array[0]);
 		if (var == NULL || var->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1369,13 +1419,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 15), (end_ptr - ptr - 16));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 1) {
 			perror("string to string list");
+			argc_error_info(1, "GetSysVarValue");
 
 			goto end;
 		}
 		var = cJSON_GetObjectItemCaseSensitive(p_db_json->sysvar, cmd_array[0]);
 		if (var == NULL || var->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1393,11 +1445,13 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 27), (end_ptr - ptr - 28));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 6) {
 			perror("string to string list");
+			argc_error_info(6, "MultilayerOffsetTrsfToBase");
 
 			goto end;
 		}
 		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
 		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1410,6 +1464,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1422,6 +1477,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
 		if (point_3 == NULL || point_3->type != cJSON_Object) {
+			database_error_info();
 
 			goto end;
 		}
@@ -1440,12 +1496,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strcat(file_content, "\n");
 	}
 	//printf("file_content = %s\n", file_content);
-	string_list_free(cmd_array, size);
+	string_list_free(&cmd_array, size);
 
 	return SUCCESS;
 
 end:
-	string_list_free(cmd_array, size);
+	if (strlen(error_info) == 0) {
+		sprintf(error_info, "parse lua fail");
+	}
+	string_list_free(&cmd_array, size);
 	return FAIL;
 }
 
@@ -1461,7 +1520,8 @@ static int sendfile(const cJSON *data_json, char *content)
 		.et_cdsystem = NULL,
 		.sysvar = NULL,
 	};
-	//int i = 0;
+	int line = 0;
+	char tmp_error_info[ERROR_SIZE] = { 0 };
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -1490,11 +1550,15 @@ static int sendfile(const cJSON *data_json, char *content)
 
 			//time_1 = clock();
 			//printf("time_1, %d\n", time_1);
-			//printf("i = %d\n", i);
-			//i++;
+			//printf("token = %s\n", token);
+			//printf("line = %d\n", line);
+			line++;
 			//printf("token = %s\n", token);
 			if (parse_lua_cmd(token, content, &db_json) == FAIL) {
-				perror("parse lua cmd");
+				perror("parse lua");
+				sprintf(tmp_error_info,"%s:%d: %s", lua_filename, line, error_info);
+				memset(error_info, 0, ERROR_SIZE);
+				strcpy(error_info, tmp_error_info);
 				db_json_delete(&db_json);
 
 				return FAIL;
@@ -1545,118 +1609,118 @@ static int step_over(const cJSON *data_json, char *content)
 	}
 	//printf("upload lua cmd:%s\n", pgvalue->valuestring);
 	/* PTP */
-	if (strstr(pgvalue->valuestring, "PTP")) {
+	if (strstr(pgvalue->valuestring, "PTP(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 201;
 	/* ARC */
-	} else if (strstr(pgvalue->valuestring, "ARC")) {
+	} else if (strstr(pgvalue->valuestring, "ARC(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 202;
 	/* Lin */
-	} else if (strstr(pgvalue->valuestring, "Lin")) {
+	} else if (strstr(pgvalue->valuestring, "Lin(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 203;
 	/* set DO */
-	} else if (strstr(pgvalue->valuestring, "SetDO")) {
+	} else if (strstr(pgvalue->valuestring, "SetDO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 204;
 	/* wait ms */
-	} else if (strstr(pgvalue->valuestring, "WaitMs")) {
+	} else if (strstr(pgvalue->valuestring, "WaitMs(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 207;
 	/* set AO */
-	} else if (strstr(pgvalue->valuestring, "SetAO")) {
+	} else if (strstr(pgvalue->valuestring, "SetAO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 209;
 	/* set ToolDO */
-	} else if (strstr(pgvalue->valuestring, "SetToolDO")) {
+	} else if (strstr(pgvalue->valuestring, "SetToolDO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 210;
 	/* set ToolAO */
-	} else if (strstr(pgvalue->valuestring, "SetToolAO")) {
+	} else if (strstr(pgvalue->valuestring, "SetToolAO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 211;
 	/* waitDI */
-	} else if (strstr(pgvalue->valuestring, "WaitDI")) {
+	} else if (strstr(pgvalue->valuestring, "WaitDI(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 218;
 	/* waitToolDI */
-	} else if (strstr(pgvalue->valuestring, "WaitToolDI")) {
+	} else if (strstr(pgvalue->valuestring, "WaitToolDI(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 219;
 	/* waitAI */
-	} else if (strstr(pgvalue->valuestring, "WaitAI")) {
+	} else if (strstr(pgvalue->valuestring, "WaitAI(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 220;
 	/* waitToolAI */
-	} else if (strstr(pgvalue->valuestring, "WaitToolAI")) {
+	} else if (strstr(pgvalue->valuestring, "WaitToolAI(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 221;
 	/* ActGripper */
-	} else if (strstr(pgvalue->valuestring, "ActGripper")) {
+	} else if (strstr(pgvalue->valuestring, "ActGripper(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 227;
 	/* MoveGripper */
-	} else if (strstr(pgvalue->valuestring, "MoveGripper")) {
+	} else if (strstr(pgvalue->valuestring, "MoveGripper(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 228;
 	/* SprayStart */
-	} else if (strstr(pgvalue->valuestring, "SprayStart")) {
+	} else if (strstr(pgvalue->valuestring, "SprayStart(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 236;
 	/* SprayStop */
-	} else if (strstr(pgvalue->valuestring, "SprayStop")) {
+	} else if (strstr(pgvalue->valuestring, "SprayStop(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 237;
 	/* PowerCleanStart */
-	} else if (strstr(pgvalue->valuestring, "PowerCleanStart")) {
+	} else if (strstr(pgvalue->valuestring, "PowerCleanStart(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 238;
 	/* PowerCleanStop */
-	} else if (strstr(pgvalue->valuestring, "PowerCleanStop")) {
+	} else if (strstr(pgvalue->valuestring, "PowerCleanStop(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 239;
 	/* ARCStart */
-	} else if (strstr(pgvalue->valuestring, "ARCStart")) {
+	} else if (strstr(pgvalue->valuestring, "ARCStart(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 247;
 	/* ARCEnd */
-	} else if (strstr(pgvalue->valuestring, "ARCEnd")) {
+	} else if (strstr(pgvalue->valuestring, "ARCEnd(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 248;
 	/* LTLaserOn */
-	} else if (strstr(pgvalue->valuestring, "LTLaserOn")) {
+	} else if (strstr(pgvalue->valuestring, "LTLaserOn(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 255;
 	/* LTLaserOff */
-	} else if (strstr(pgvalue->valuestring, "LTLaserOff")) {
+	} else if (strstr(pgvalue->valuestring, "LTLaserOff(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 256;
 	/* LoadPosSensorDriver */
-	} else if (strstr(pgvalue->valuestring, "LoadPosSensorDriver")) {
+	} else if (strstr(pgvalue->valuestring, "LoadPosSensorDriver(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 265;
 	/* UnloadPosSensorDriver */
-	} else if (strstr(pgvalue->valuestring, "UnloadPosSensorDriver")) {
+	} else if (strstr(pgvalue->valuestring, "UnloadPosSensorDriver(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 266;
 	/* ExtAxisSetHoming */
-	} else if (strstr(pgvalue->valuestring, "ExtAxisSetHoming")) {
+	} else if (strstr(pgvalue->valuestring, "ExtAxisSetHoming(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 290;
 	/* ExtAxisServoOn */
-	} else if (strstr(pgvalue->valuestring, "ExtAxisServoOn")) {
+	} else if (strstr(pgvalue->valuestring, "ExtAxisServoOn(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 296;
 	/* EXT_AXIS_PTP */
-	} else if (strstr(pgvalue->valuestring, "EXT_AXIS_PTP")) {
+	} else if (strstr(pgvalue->valuestring, "EXT_AXIS_PTP(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 297;
 	/* Mode */
-	} else if (strstr(pgvalue->valuestring, "Mode")) {
+	} else if (strstr(pgvalue->valuestring, "Mode(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 303;
 	/* SetToolList */
-	} else if (strstr(pgvalue->valuestring, "SetToolList")) {
+	} else if (strstr(pgvalue->valuestring, "SetToolList(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 319;
 	/* SetWobjList */
-	} else if (strstr(pgvalue->valuestring, "SetWobjList")) {
+	} else if (strstr(pgvalue->valuestring, "SetWobjList(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 383 ;
 	/* SetExToolCoord */
-	} else if (strstr(pgvalue->valuestring, "SetExToolList")) {
+	} else if (strstr(pgvalue->valuestring, "SetExToolList(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 331;
 	/* soft-PLC setDO */
-	} else if (strstr(pgvalue->valuestring, "SPLCSetDO")) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetDO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 394;
 	/* soft-PLC setToolDO */
-	} else if (strstr(pgvalue->valuestring, "SPLCSetToolDO")) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetToolDO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 395;
 	/* soft-PLC setAO */
-	} else if (strstr(pgvalue->valuestring, "SPLCSetAO")) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetAO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 396;
 	/* soft-PLC setToolAO */
-	} else if (strstr(pgvalue->valuestring, "SPLCSetToolAO")) {
+	} else if (strstr(pgvalue->valuestring, "SPLCSetToolAO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 397;
 	/* SetSysVarValue */
-	} else if (strstr(pgvalue->valuestring, "SetSysVarValue")) {
+	} else if (strstr(pgvalue->valuestring, "SetSysVarValue(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 511;
 	/* GetSysVarValue */
-	} else if (strstr(pgvalue->valuestring, "GetSysVarValue")) {
+	} else if (strstr(pgvalue->valuestring, "GetSysVarValue(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 512;
 	/* Circle */
-	} else if (strstr(pgvalue->valuestring, "Circle")) {
+	} else if (strstr(pgvalue->valuestring, "Circle(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 540;
 	/* error */
 	} else {
@@ -1670,7 +1734,7 @@ static int step_over(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 	if (parse_lua_cmd(pgvalue->valuestring, content, &db_json) == FAIL) {
-		perror("parse lua cmd");
+		perror("parse lua");
 		db_json_delete(&db_json);
 
 		return FAIL;
@@ -3799,10 +3863,9 @@ void set(Webs *wp)
 		strcpy(en_log_content, "Step the instruction");
 		strcpy(jap_log_content, "1ステップでコマンドを実行する");
 		ret = step_over(data_json, content);
-		if (ret == FAIL) {
+		if (ret == FAIL && strlen(error_info) != 0) {
 			perror("step over");
-
-			goto end;
+			goto end_error_info;
 		}
 		cmd = ret;
 		//printf("cmd = %d\n", cmd);

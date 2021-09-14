@@ -233,12 +233,12 @@ static int check_robot_type()
 			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
 				perror("string to string list");
 				fclose(fp_up);
-				string_list_free(array_up, size_up);
+				string_list_free(&array_up, size_up);
 
 				return FAIL;
 			}
 			strcpy(robot_type_up, array_up[1]);
-			string_list_free(array_up, size_up);
+			string_list_free(&array_up, size_up);
 
 			break;
 		}
@@ -256,12 +256,12 @@ static int check_robot_type()
 			if (string_to_string_list(strline_now, " = ", &size_now, &array_now) == 0 || size_now != 2) {
 				perror("string to string list");
 				fclose(fp_now);
-				string_list_free(array_now, size_now);
+				string_list_free(&array_now, size_now);
 
 				return FAIL;
 			}
 			strcpy(robot_type_now, array_now[1]);
-			string_list_free(array_now, size_now);
+			string_list_free(&array_now, size_now);
 
 			break;
 		}
@@ -329,7 +329,7 @@ static int update_config(char *filename)
 			if (string_to_string_list(strline_up, " = ", &size_up, &array_up) == 0 || size_up != 2) {
 				perror("string to string list");
 				fclose(fp_up);
-				string_list_free(array_up, size_up);
+				string_list_free(&array_up, size_up);
 
 				return FAIL;
 			}
@@ -338,7 +338,7 @@ static int update_config(char *filename)
 				if ((fp_now = fopen(now_filename, "r")) == NULL) {
 					perror("now config : open file");
 					fclose(fp_up);
-					string_list_free(array_up, size_up);
+					string_list_free(&array_up, size_up);
 
 					printf("cp upgrade config file to now config\n");
 					memset(cmd, 0, 128);
@@ -356,8 +356,8 @@ static int update_config(char *filename)
 						perror("string to string list");
 						fclose(fp_up);
 						fclose(fp_now);
-						string_list_free(array_up, size_up);
-						string_list_free(array_now, size_now);
+						string_list_free(&array_up, size_up);
+						string_list_free(&array_now, size_now);
 
 						return FAIL;
 					}
@@ -369,17 +369,17 @@ static int update_config(char *filename)
 							//printf("array_now[1] = %s\n", array_now[1]);
 							bzero(write_line, sizeof(char)*LINE_LEN);
 							sprintf(write_line, "%s = %s", array_up[0], array_now[1]);
-							string_list_free(array_now, size_now);
+							string_list_free(&array_now, size_now);
 							bzero(strline_now, sizeof(char)*LINE_LEN);
 							break;
 						}
 					}
-					string_list_free(array_now, size_now);
+					string_list_free(&array_now, size_now);
 					bzero(strline_now, sizeof(char)*LINE_LEN);
 				}
 				fclose(fp_now);
 			}
-			string_list_free(array_up, size_up);
+			string_list_free(&array_up, size_up);
 		}
 		bzero(strline_up, sizeof(char)*LINE_LEN);
 		//printf("write_line = %s\n", write_line);
