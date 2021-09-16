@@ -158,7 +158,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   encoder_type_flag;		/** 编码器类型切换完成标志,0:未完成,1:完成,2:超时 */
 	uint8_t	   curEncoderType[6]; 		/** 当前各轴编码器类型,0:光编,1:磁编 */
 	uint8_t    alarm_check_emerg_stop_btn; /** 1-通信异常,检查急停按钮是否松开 */
-	uint8_t    alarm_reboot_rebot; 		/** 1-断电重启机器人 */
+	uint8_t    alarm_reboot_robot; 		/** 1-断电重启机器人 */
 	uint8_t    ts_web_state_com_error; 	/** 扭矩：WEB-TM 状态反馈，通信失败 */
 	uint8_t    ts_tm_cmd_com_error; 	/** 扭矩：TM-扭矩 指令下发，通信失败 */
 	uint8_t    ts_tm_state_com_error; 	/** 扭矩：TM-扭矩 状态反馈，通信失败 */
@@ -219,8 +219,8 @@ typedef struct _TORQUE_SYS_STATE
 /** 状态查询结构体 */
 typedef struct _STATE_FEEDBACK
 {
-	int id[STATEFB_ID_MAXNUM];			// state feedback id
-	int icount;							// state feedback icount
+	int id[STATEFB_ID_MAXNUM];			// state feedback id    查询变量数组
+	int icount;							// state feedback icount  查询变量数组中，查询变量的个数
 	int type;							// state feedback type, "0": 图表查询，"1": 轨迹数据查询, "2": 查询 10 秒内固定机器人数据，"3":查询 10 秒内部分选择的机器人数据
 	int overflow;						// state feedback overflow
 	int index;						    // state feedback index "最大为 100"

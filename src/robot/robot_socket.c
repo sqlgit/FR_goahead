@@ -87,8 +87,8 @@ static void *socket_file_recv_thread(void *arg);
 static void state_feedback_init(STATE_FEEDBACK *fb)
 {
 	bzero(fb, sizeof(STATE_FEEDBACK));
-
 	int i = 0;
+
 	for (i = 0; i < STATEFB_ID_MAXNUM; i++) {
 		fb->id[i] = 0;
 	}
@@ -1841,6 +1841,7 @@ void *socket_state_feedback_thread(void *arg)
 					//printf("time_4, %d\n", time_4);
 					//printf("enter/if\n");
 					if (state_fb.type == 0) { //"0":图表查询
+						/** 查询队列中存储 node 超过最大数量，清空队列 */
 						if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
 							state_fb.overflow = 1;
 							/** clear state quene */

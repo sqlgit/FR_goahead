@@ -8,6 +8,7 @@
 #define recover_mode 1 // 0 为进入 recover mode, 1 为 normal mode
 #define print_mode 0 // 1 为进入 print mode
 #define test_package 0
+
 #define SUCCESS 1
 #define FAIL 0
 #define PWD_FAIL -1

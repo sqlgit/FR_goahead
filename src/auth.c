@@ -44,6 +44,9 @@ static int autoLogin = ME_GOAHEAD_AUTO_LOGIN;
 static WebsVerify verifyPassword = websVerifyPasswordFromFile;
 extern ACCOUNT_INFO cur_account;
 extern FB_LinkQuene fb_quene;
+extern int robot_type;
+extern CTRL_STATE ctrl_state;
+extern CTRL_STATE vir_ctrl_state;
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_state;
 #if ME_COMPILER_HAS_PAM
@@ -600,14 +603,25 @@ PUBLIC bool websLogoutUser(Webs *wp)
         return 0;
     }
     websRedirectByStatus(wp, HTTP_CODE_OK);
-	printf("Will clear state quene!\n");
-	/** clear state quene */
-	pthread_mutex_lock(&socket_state.mute);
-	fb_clearquene(&fb_quene);
-	pthread_mutex_unlock(&socket_state.mute);
-	/** send stop vardata_feedback to TaskManagement */
-	socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
-	//delete_timer();
+
+	CTRL_STATE *state = NULL;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
+	if (state->ctrl_query_state == 1) {
+		printf("Will clear state quene!\n");
+		/** clear state quene */
+		pthread_mutex_lock(&socket_state.mute);
+		fb_clearquene(&fb_quene);
+		pthread_mutex_unlock(&socket_state.mute);
+		/** send stop vardata_feedback to TaskManagement */
+		socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
+		//delete_timer();
+	}
+
 	my_syslog("普通操作", "用户登出成功", cur_account.username);
 	my_en_syslog("normal operation", "User logged out successfully", cur_account.username);
 	my_jap_syslog("普通の操作", "ユーザーがログアウトに成功", cur_account.username);

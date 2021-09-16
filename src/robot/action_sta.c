@@ -61,6 +61,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *curencodertype_json = NULL;
 	cJSON *tcp_json = NULL;
 	cJSON *error_json = NULL;
+	cJSON *alarm_json = NULL;
 	cJSON *feedback_json = NULL;
 	cJSON *torquesys_json = NULL;
 	cJSON *jiabao_torquesys_json = NULL;
@@ -100,10 +101,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	tcp_json = cJSON_CreateObject();
 	feedback_json = cJSON_CreateObject();
 	error_json = cJSON_CreateArray();
+	alarm_json = cJSON_CreateArray();
 	torquesys_json = cJSON_CreateObject();
 	jiabao_torquesys_json = cJSON_CreateObject();
 	PI_IO_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
+	cJSON_AddItemToObject(root_json, "alarm_info", alarm_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "PI_IO", PI_IO_json);
 	cJSON_AddItemToObject(root_json, "torque_sys_state", torquesys_json);
@@ -321,7 +324,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	cJSON_AddNumberToObject(root_json, "cons", ret_connect_status);
 
-
 	p = sock_cmd->ret_quene.front->next;
 	while (p != NULL) {
 		memset(content, 0, sizeof(content));
@@ -376,18 +378,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->btn_box_stop_signal == 1) {
 		if (language == 0) {
-			cJSON_AddStringToObject(error_json, "key", "按钮盒急停已按下");
+			cJSON_AddStringToObject(alarm_json, "key", "按钮盒急停已按下");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "The button box emergency stop has been pressed");
+			cJSON_AddStringToObject(alarm_json, "key", "The button box emergency stop has been pressed");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "ボタンボックスが押されました");
+			cJSON_AddStringToObject(alarm_json, "key", "ボタンボックスが押されました");
 		}
 		if (pre_state->btn_box_stop_signal != 1) {
-			my_syslog("错误", "按钮盒急停已按下", cur_account.username);
-			my_en_syslog("error", "The button box emergency stop has been pressed", cur_account.username);
-			my_jap_syslog("さくご", "ボタンボックスが押されました", cur_account.username);
+			my_syslog("警告", "按钮盒急停已按下", cur_account.username);
+			my_en_syslog("alarm", "The button box emergency stop has been pressed", cur_account.username);
+			my_jap_syslog("戒告する", "ボタンボックスが押されました", cur_account.username);
 			pre_state->btn_box_stop_signal = 1;
 		}
 	} else {
@@ -396,18 +398,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->strangePosFlag == 1) {
 		if (language == 0) {
-			cJSON_AddStringToObject(error_json, "key", "当前处于奇异位姿");
+			cJSON_AddStringToObject(alarm_json, "key", "当前处于奇异位姿");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "It is currently in a singular position");
+			cJSON_AddStringToObject(alarm_json, "key", "It is currently in a singular position");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "今は不思議な姿をしている");
+			cJSON_AddStringToObject(alarm_json, "key", "今は不思議な姿をしている");
 		}
 		if (pre_state->strangePosFlag != 1) {
-			my_syslog("错误", "当前处于奇异位姿", cur_account.username);
-			my_en_syslog("error", "It is currently in a singular position", cur_account.username);
-			my_jap_syslog("さくご", "今は不思議な姿をしている", cur_account.username);
+			my_syslog("警告", "当前处于奇异位姿", cur_account.username);
+			my_en_syslog("alarm", "It is currently in a singular position", cur_account.username);
+			my_jap_syslog("戒告する", "今は不思議な姿をしている", cur_account.username);
 			pre_state->strangePosFlag = 1;
 		}
 	} else {
@@ -416,18 +418,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->drag_alarm == 1) {
 		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "拖动警告, 当前处于自动模式");
+			cJSON_AddStringToObject(alarm_json, "key", "拖动警告, 当前处于自动模式");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "Drag warning, currently in automatic mode");
+			cJSON_AddStringToObject(alarm_json, "key", "Drag warning, currently in automatic mode");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "警告をドラッグすると、自動モードになります");
+			cJSON_AddStringToObject(alarm_json, "key", "警告をドラッグすると、自動モードになります");
 		}
 		if (pre_state->drag_alarm != 1) {
-			my_syslog("错误", "拖动警告, 当前处于自动模式", cur_account.username);
-			my_en_syslog("error", "Drag warning, currently in automatic mode", cur_account.username);
-			my_jap_syslog("さくご", "警告をドラッグすると、自動モードになります", cur_account.username);
+			my_syslog("警告", "拖动警告, 当前处于自动模式", cur_account.username);
+			my_en_syslog("alarm", "Drag warning, currently in automatic mode", cur_account.username);
+			my_jap_syslog("戒告する", "警告をドラッグすると、自動モードになります", cur_account.username);
 			pre_state->drag_alarm = 1;
 		}
 	} else {
@@ -653,18 +655,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	if (state->robot_mode == 0 && state->program_state == 4) {
 		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "切换拖动状态失败");
+			cJSON_AddStringToObject(alarm_json, "key", "切换拖动状态失败");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "Failed to toggle drag state");
+			cJSON_AddStringToObject(alarm_json, "key", "Failed to toggle drag state");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "ドラッグ状態の切り替えに失敗しました");
+			cJSON_AddStringToObject(alarm_json, "key", "ドラッグ状態の切り替えに失敗しました");
 		}
 		if (pre_state->robot_mode != 1) {
-			my_syslog("错误", "切换拖动状态失败", cur_account.username);
-			my_en_syslog("error", "Failed to toggle drag state", cur_account.username);
-			my_jap_syslog("さくご", "ドラッグ状態の切り替えに失敗しました", cur_account.username);
+			my_syslog("警告", "切换拖动状态失败", cur_account.username);
+			my_en_syslog("alarm", "Failed to toggle drag state", cur_account.username);
+			my_jap_syslog("戒告する", "ドラッグ状態の切り替えに失敗しました", cur_account.username);
 			pre_state->robot_mode = 1;
 		}
 	} else {
@@ -2408,154 +2410,154 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	switch(state->alarm) {
 		case 1:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "肩关节配置变化");
+				cJSON_AddStringToObject(alarm_json, "key", "肩关节配置变化");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Shoulder joint configuration changes");
+				cJSON_AddStringToObject(alarm_json, "key", "Shoulder joint configuration changes");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "肩関節の配置変化");
+				cJSON_AddStringToObject(alarm_json, "key", "肩関節の配置変化");
 			}
 			if (pre_state->alarm != 1) {
-				my_syslog("错误", "肩关节配置变化", cur_account.username);
-				my_en_syslog("error", "Shoulder joint configuration changes", cur_account.username);
-				my_jap_syslog("さくご", "肩関節の配置変化", cur_account.username);
+				my_syslog("警告", "肩关节配置变化", cur_account.username);
+				my_en_syslog("alarm", "Shoulder joint configuration changes", cur_account.username);
+				my_jap_syslog("戒告する", "肩関節の配置変化", cur_account.username);
 				pre_state->alarm = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "肘关节配置变化");
+				cJSON_AddStringToObject(alarm_json, "key", "肘关节配置变化");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Elbow  joint configuration changes");
+				cJSON_AddStringToObject(alarm_json, "key", "Elbow  joint configuration changes");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "肘関節の配置変化");
+				cJSON_AddStringToObject(alarm_json, "key", "肘関節の配置変化");
 			}
 			if (pre_state->alarm != 2) {
-				my_syslog("错误", "肘关节配置变化", cur_account.username);
-				my_en_syslog("error", "Elbow  joint configuration changes", cur_account.username);
-				my_jap_syslog("さくご", "肘関節の配置変化", cur_account.username);
+				my_syslog("警告", "肘关节配置变化", cur_account.username);
+				my_en_syslog("alarm", "Elbow  joint configuration changes", cur_account.username);
+				my_jap_syslog("戒告する", "肘関節の配置変化", cur_account.username);
 				pre_state->alarm = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "腕关节配置变化");
+				cJSON_AddStringToObject(alarm_json, "key", "腕关节配置变化");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Wrist  joint configuration changes");
+				cJSON_AddStringToObject(alarm_json, "key", "Wrist  joint configuration changes");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "腕関節の配置変化");
+				cJSON_AddStringToObject(alarm_json, "key", "腕関節の配置変化");
 			}
 			if (pre_state->alarm != 3) {
-				my_syslog("错误", "腕关节配置变化", cur_account.username);
-				my_en_syslog("error", "Wrist  joint configuration changes", cur_account.username);
-				my_jap_syslog("さくご", "腕関節の配置変化", cur_account.username);
+				my_syslog("警告", "腕关节配置变化", cur_account.username);
+				my_en_syslog("alarm", "Wrist  joint configuration changes", cur_account.username);
+				my_jap_syslog("戒告する", "腕関節の配置変化", cur_account.username);
 				pre_state->alarm = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "RPY初始化失败");
+				cJSON_AddStringToObject(alarm_json, "key", "RPY初始化失败");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "RPY initialization failure");
+				cJSON_AddStringToObject(alarm_json, "key", "RPY initialization failure");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "rpyの初期化に失敗する");
+				cJSON_AddStringToObject(alarm_json, "key", "rpyの初期化に失敗する");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "RPY初始化失败", cur_account.username);
-				my_en_syslog("error", "RPY initialization failure", cur_account.username);
-				my_jap_syslog("さくご", "rpyの初期化に失敗する", cur_account.username);
+				my_syslog("警告", "RPY初始化失败", cur_account.username);
+				my_en_syslog("alarm", "RPY initialization failure", cur_account.username);
+				my_jap_syslog("戒告する", "rpyの初期化に失敗する", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "警告: WaitDI 等待超时");
+				cJSON_AddStringToObject(alarm_json, "key", "警告: WaitDI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Warning: WaitDI wait for a timeout");
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: WaitDI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "戒告する: waitdiタイムアウトを待つ");
+					cJSON_AddStringToObject(alarm_json, "key", "戒告する: waitdiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "警告: WaitDI 等待超时", cur_account.username);
-				my_en_syslog("error", "Warning: WaitDI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "戒告する: waitdiタイムアウトを待つ", cur_account.username);
+				my_syslog("警告", "警告: WaitDI 等待超时", cur_account.username);
+				my_en_syslog("alarm", "Warning: WaitDI wait for a timeout", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: waitdiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 6:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "警告: WaitAI 等待超时");
+				cJSON_AddStringToObject(alarm_json, "key", "警告: WaitAI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Warning: WaitAI wait for a timeout");
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: WaitAI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "戒告する: waitaiタイムアウト待ち");
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: waitaiタイムアウト待ち");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "警告: WaitAI 等待超时", cur_account.username);
-				my_en_syslog("error", "Warning: WaitAI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "戒告する: waitaiタイムアウト待ち", cur_account.username);
+				my_syslog("警告", "警告: WaitAI 等待超时", cur_account.username);
+				my_en_syslog("alarm", "Warning: WaitAI wait for a timeout", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: waitaiタイムアウト待ち", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 7:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "警告: WaitToolDI 等待超时");
+				cJSON_AddStringToObject(alarm_json, "key", "警告: WaitToolDI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Warning: WaitToolDI wait for a timeout");
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: WaitToolDI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "戒告する: waittooldiタイムアウトを待つ");
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: waittooldiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "警告: WaitToolDI 等待超时", cur_account.username);
-				my_en_syslog("error", "Warning: WaitToolDI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "戒告する: waittooldiタイムアウトを待つ", cur_account.username);
+				my_syslog("警告", "警告: WaitToolDI 等待超时", cur_account.username);
+				my_en_syslog("alarm", "Warning: WaitToolDI wait for a timeout", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: waittooldiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 8:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "警告: WaitToolAI 等待超时");
+				cJSON_AddStringToObject(alarm_json, "key", "警告: WaitToolAI 等待超时");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Warning: WaitToolAI wait for a timeout");
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: WaitToolAI wait for a timeout");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "戒告する: waittoolaiタイムアウトを待つ");
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: waittoolaiタイムアウトを待つ");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "警告: WaitToolAI 等待超时", cur_account.username);
-				my_en_syslog("error", "Warning: WaitToolAI wait for a timeout", cur_account.username);
-				my_jap_syslog("さくご", "戒告する: waittoolaiタイムアウトを待つ", cur_account.username);
+				my_syslog("警告", "警告: WaitToolAI 等待超时", cur_account.username);
+				my_en_syslog("alarm", "Warning: WaitToolAI wait for a timeout", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: waittoolaiタイムアウトを待つ", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
 		case 9:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "警告: 起弧成功 DI 未配置");
+				cJSON_AddStringToObject(alarm_json, "key", "警告: 起弧成功 DI 未配置");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Warning: Arcing success DI is not configured");
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: Arcing success DI is not configured");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "戒告する: 起弧成功di未配置");
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: 起弧成功di未配置");
 			}
 			if (pre_state->alarm != 4) {
-				my_syslog("错误", "警告: 起弧成功 DI 未配置", cur_account.username);
-				my_en_syslog("error", "Warning: Arcing success DI is not configured", cur_account.username);
-				my_jap_syslog("さくご", "戒告する: 起弧成功di未配置", cur_account.username);
+				my_syslog("警告", "警告: 起弧成功 DI 未配置", cur_account.username);
+				my_en_syslog("alarm", "Warning: Arcing success DI is not configured", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: 起弧成功di未配置", cur_account.username);
 				pre_state->alarm = 4;
 			}
 			break;
@@ -2667,18 +2669,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}
 	if (state->safetydoor_alarm == 1) {
 		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "安全门触发");
+			cJSON_AddStringToObject(alarm_json, "key", "安全门触发");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "Safety door trigger");
+			cJSON_AddStringToObject(alarm_json, "key", "Safety door trigger");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "安全扉トリガ");
+			cJSON_AddStringToObject(alarm_json, "key", "安全扉トリガ");
 		}
 		if (pre_state->safetydoor_alarm != 1) {
-			my_syslog("错误", "安全门触发", cur_account.username);
-			my_en_syslog("error", "Safety door trigger", cur_account.username);
-			my_jap_syslog("さくご", "安全扉トリガ", cur_account.username);
+			my_syslog("警告", "安全门触发", cur_account.username);
+			my_en_syslog("alarm", "Safety door trigger", cur_account.username);
+			my_jap_syslog("戒告する", "安全扉トリガ", cur_account.username);
 			pre_state->safetydoor_alarm = 1;
 		}
 	} else {
@@ -2897,18 +2899,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->motionAlarm == 1) {
 		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "警告： LIN 指令姿态变化过大");
+			cJSON_AddStringToObject(alarm_json, "key", "警告： LIN 指令姿态变化过大");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "Warning: The LIN command posture has changed too much");
+			cJSON_AddStringToObject(alarm_json, "key", "Warning: The LIN command posture has changed too much");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "戒告する: linコマンドの姿勢変化が大きすぎる");
+			cJSON_AddStringToObject(alarm_json, "key", "戒告する: linコマンドの姿勢変化が大きすぎる");
 		}
 		if (pre_state->motionAlarm != 1) {
-			my_syslog("错误", "警告： LIN指令姿态变化过大", cur_account.username);
-			my_en_syslog("error", "Warning: The LIN command posture has changed too much", cur_account.username);
-			my_jap_syslog("さくご", "戒告する: linコマンドの姿勢変化が大きすぎる", cur_account.username);
+			my_syslog("警告", "警告： LIN指令姿态变化过大", cur_account.username);
+			my_en_syslog("alarm", "Warning: The LIN command posture has changed too much", cur_account.username);
+			my_jap_syslog("戒告する", "戒告する: linコマンドの姿勢変化が大きすぎる", cur_account.username);
 			pre_state->motionAlarm = 1;
 		}
 	} else {
@@ -2942,7 +2944,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		pre_state->alarm_check_emerg_stop_btn = 0;
 	}
 
-	if (state->alarm_reboot_rebot == 1) {
+	if (state->alarm_reboot_robot == 1) {
 		if (language == 0) { 
 			cJSON_AddStringToObject(error_json, "key", "断电重启机器人");
 		}
@@ -2952,14 +2954,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		if (language == 2) {
 			cJSON_AddStringToObject(error_json, "key", "電源を切ってロボットを再起動する");
 		}
-		if (pre_state->alarm_reboot_rebot != 1) {
+		if (pre_state->alarm_reboot_robot != 1) {
 			my_syslog("错误", "断电重启机器人", cur_account.username);
 			my_en_syslog("error", "Power off and restart the robot", cur_account.username);
 			my_jap_syslog("さくご", "電源を切ってロボットを再起動す", cur_account.username);
-			pre_state->alarm_reboot_rebot = 1;
+			pre_state->alarm_reboot_robot = 1;
 		}
 	} else {
-		pre_state->alarm_reboot_rebot = 0;
+		pre_state->alarm_reboot_robot = 0;
 	}
 
 	if (state->ts_web_state_com_error == 1) {
@@ -3024,18 +3026,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 
 	if (state->interfereAlarm == 1) {
 		if (language == 0) {
-			cJSON_AddStringToObject(error_json, "key", "警告：进入干涉区");
+			cJSON_AddStringToObject(alarm_json, "key", "警告：进入干涉区");
 		}
 		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "Warning: Entering interference zone");
+			cJSON_AddStringToObject(alarm_json, "key", "Warning: Entering interference zone");
 		}
 		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "警告:干渉領域に入る");
+			cJSON_AddStringToObject(alarm_json, "key", "警告:干渉領域に入る");
 		}
 		if (pre_state->interfereAlarm != 1) {
-			my_syslog("错误", "警告：进入干涉区", cur_account.username);
-			my_en_syslog("error", "Warning: Entering interference zone", cur_account.username);
-			my_jap_syslog("さくご", "警告:干渉領域に入る", cur_account.username);
+			my_syslog("警告", "警告：进入干涉区", cur_account.username);
+			my_en_syslog("alarm", "Warning: Entering interference zone", cur_account.username);
+			my_jap_syslog("戒告する", "警告:干渉領域に入る", cur_account.username);
 			pre_state->interfereAlarm = 1;
 		}
 	} else {
@@ -3168,18 +3170,27 @@ static int vardata_feedback(char *ret_status)
 
 void sig_handler(int signo)
 {
+	CTRL_STATE *state = NULL;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
 	//printf("enter timer_signal function! %d\n", signo);
 	printf("Will free Sessions!\n");
 	//清空 session
 	myfreeSessions();
 
-	printf("Will clear state quene!\n");
-	/** clear state quene */
-	pthread_mutex_lock(&socket_state.mute);
-	fb_clearquene(&fb_quene);
-	pthread_mutex_unlock(&socket_state.mute);
-	/** send stop vardata_feedback to TaskManagement */
-	socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
+	if (state->ctrl_query_state == 1) {
+		printf("Will clear state quene!\n");
+		/** clear state quene */
+		pthread_mutex_lock(&socket_state.mute);
+		fb_clearquene(&fb_quene);
+		pthread_mutex_unlock(&socket_state.mute);
+		/** send stop vardata_feedback to TaskManagement */
+		socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
+	}
 }
 
 /* set timer */
@@ -3280,16 +3291,19 @@ void sta(Webs *wp)
 			goto end;
 		}
 		printf("refresh !\n");
-		printf("Will clear state quene!\n");
-		/** clear state quene */
-		pthread_mutex_lock(&socket_state.mute);
-		fb_clearquene(&fb_quene);
-		pthread_mutex_unlock(&socket_state.mute);
-		/** send stop vardata_feedback to TaskManagement */
-		ret = socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
-		//print_num++;
-		//delete_timer();
 		strcpy(ret_status, "refresh!");
+
+		if (state->ctrl_query_state == 1) {
+			printf("Will clear state quene!\n");
+			/** clear state quene */
+			pthread_mutex_lock(&socket_state.mute);
+			fb_clearquene(&fb_quene);
+			pthread_mutex_unlock(&socket_state.mute);
+			/** send stop vardata_feedback to TaskManagement */
+			ret = socket_enquene(&socket_cmd, 231, "SetCTLStateQuery(0)", 1);
+			//print_num++;
+			//delete_timer();
+		}
 	} else {
 		perror("cmd not found");
 		goto end;

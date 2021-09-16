@@ -1854,7 +1854,7 @@ static int set_state(const cJSON *data_json, char *content)
 	char *src_buf = NULL;
 	int ret = 0;
 
-	if(flag == NULL || flag->valuestring == NULL) {
+	if (flag == NULL || flag->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
