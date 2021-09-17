@@ -1188,16 +1188,6 @@ static int GetVisionObjPos(lua_State* L)
 	return 1;
 }
 
-static int GetActualTCPSpeed(lua_State* L)
-{
-	int argc = lua_gettop(L);
-
-	if (argc != 0) {
-		luaL_argerror(L, argc, "Error number of parameters");
-	}
-	return 1;
-}
-
 static int GetActualWObjNum(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1368,7 +1358,6 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ComputePostPick", ComputePostPick);
 	lua_register(luaEnv, "GetUpdateTCPPose", GetUpdateTCPPose);
 	lua_register(luaEnv, "GetVisionObjPos", GetVisionObjPos);
-	lua_register(luaEnv, "GetActualTCPSpeed", GetActualTCPSpeed);
 	lua_register(luaEnv, "GetActualWObjNum", GetActualWObjNum);
 	lua_register(luaEnv, "GetWObjOffset", GetWObjOffset);
 	lua_register(luaEnv, "PointsOffsetEnable", PointsOffsetEnable);

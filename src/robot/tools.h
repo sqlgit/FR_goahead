@@ -61,6 +61,7 @@
 #define DIR_LOG_EN "/root/web/log_en/"
 #define DIR_LOG_JAP "/root/web/log_jap/"
 #define DIR_FILE "/root/web/file/"
+#define DIR_BLOCK "/root/web/file/block/"
 #define DIR_USER "/root/web/file/user/"
 #define DIR_TEMPLATE "/root/web/file/template/"
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"
@@ -124,6 +125,7 @@ void string_list_free(char ***str_list, int list_size);
 int get_n_len(const int n);
 int write_file(const char *file_name, const char *file_content);
 int write_file_append(const char *file_name, const char *file_content);
+char *format_str(const char *source_str);
 char *get_file_content(const char *file_path);
 char *get_complete_file_content(const char *file_path);
 char *get_dir_content(const char *dir_path);

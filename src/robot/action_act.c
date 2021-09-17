@@ -61,6 +61,7 @@ static int move_to_home_point(const cJSON *data_json);
 static int torque_generate_program(const cJSON *data_json);
 static int torque_save_custom_pause(const cJSON *data_json);
 static int modify_ip(const cJSON *data_json);
+static int save_blockly_workspace(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -2021,6 +2022,23 @@ static int modify_ip(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/* save blockly workspace */
+static int save_blockly_workspace(const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+
+	cJSON *ws_name = cJSON_GetObjectItem(data_json, "ws_name");
+	cJSON *ws_content = cJSON_GetObjectItem(data_json, "ws_content");
+	if (ws_name == NULL || ws_content == NULL || ws_name->valuestring == NULL || ws_content->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s%s", DIR_BLOCK, ws_name->valuestring);
+
+	return write_file(dir_filename, ws_content->valuestring);
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -2066,7 +2084,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "1"
-	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause")) {
+	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause") || !strcmp(cmd, "save_blockly_workspace")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 
@@ -2269,6 +2287,11 @@ void act(Webs *wp)
 		strcpy(log_content, "修改控制器 IP 地址");
 		strcpy(en_log_content, "Change the CONTROLLER IP address");
 		strcpy(jap_log_content, "コントローラのIPアドレスを変更");
+	} else if (!strcmp(cmd, "save_blockly_workspace")) {
+		ret = save_blockly_workspace(data_json);
+		strcpy(log_content, "保存工作区内容");
+		strcpy(en_log_content, "Save workspace contents");
+		strcpy(jap_log_content, "作業スペースを保存する");
 	} else {
 		perror("cmd not found");
 		goto end;

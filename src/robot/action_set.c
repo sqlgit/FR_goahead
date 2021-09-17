@@ -354,7 +354,15 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 	char *old_comment = NULL; // 指向 lua_cmd 中 "--" 之后的字符串指针
 	char new_lua_cmd[MAX_BUF] = { 0 }; // 存储转换后的 new_lua_cmd 字符串内容
 	char new_lua_cmd_2[MAX_BUF] = { 0 }; // 存储转换后的 new_lua_cmd 字符串内容
+	char new_lua_cmd_3[MAX_BUF] = { 0 }; // 存储转换后的 new_lua_cmd 字符串内容
 
+	/** 删除 -- 之后的内容 */
+	if (old_ptr = strstr(lua_cmd, "--")) {
+		strncpy(new_lua_cmd_3, lua_cmd, (old_ptr - lua_cmd));
+		lua_cmd = new_lua_cmd_3;
+	}
+
+//兼容 V3.2.0 之前的旧版本，兼容性代码,未来可删除
 	//printf("lua_cmd = %s\n", lua_cmd);
 	if (old_ptr = strstr(lua_cmd, "WaitTime")) {
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
@@ -389,20 +397,22 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
 		//printf("old_head = %s\n", old_head);
 		//strcpy(old_end, (old_ptr + 1));
+		/*
 		if (old_comment = strstr(old_ptr, "--")) {
 			//printf("old_comment = %s\n", old_comment);
 			strncpy(old_ptr_comment, (old_ptr + 1), (old_comment - old_ptr - 1));
 			//printf("old_ptr_comment = %s\n", old_ptr_comment);
-			/* 去掉字符串结尾多余空格 */
+			// 去掉字符串结尾多余空格
 			//old_ptr_comment[strlen(old_ptr_comment)] = '\0';
 			//printf("old_ptr_comment = %s\n", old_ptr_comment);
 			sprintf(new_lua_cmd_2, "%s(%s)%s", old_head, old_ptr_comment, old_comment);
-		} else {
+		} else {*/
 			sprintf(new_lua_cmd_2, "%s(%s)", old_head, (old_ptr + 1));
-		}
+		//}
 		lua_cmd = new_lua_cmd_2;
 		//printf("lua_cmd = %s\n", lua_cmd);
 	}
+
 
 	/* laserPTP */
 	if ((ptr = strstr(lua_cmd, "laserPTP(")) && strrchr(lua_cmd, ')')) {
@@ -1551,8 +1561,8 @@ static int sendfile(const cJSON *data_json, char *content)
 			//time_1 = clock();
 			//printf("time_1, %d\n", time_1);
 			//printf("token = %s\n", token);
-			//printf("line = %d\n", line);
 			line++;
+			//printf("line = %d\n", line);
 			//printf("token = %s\n", token);
 			if (parse_lua_cmd(token, content, &db_json) == FAIL) {
 				perror("parse lua");

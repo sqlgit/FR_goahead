@@ -250,9 +250,51 @@ int write_file_append(const char *file_name, const char *file_content)
 }
 
 /**
-  open file and return file content without '\n' '\r' '\t'
+  该函数会顺序读取输入字符串中所有字符，当匹配到 '%' 时，在前面添加一个 '%'
+  主要防止 cJSON_Print 时会对其进行格式化匹配
+
   函数执行效率较高.
   参考：函数在操作 520000 字节数的文件时，耗时大约 10ms 左右
+
+  RETURN:
+	fail: NULL
+	Normal : 转换好后的字符串
+*/
+char *format_str(const char *source_str)
+{
+	int str_size = 0;
+	int i = 0;
+	int j = 0;
+	char *dest_str = NULL;
+
+	str_size = strlen(source_str);
+	dest_str = (char *)calloc(1, str_size*sizeof(char)+1024);
+	if (dest_str == NULL) {
+		perror("calloc");
+
+		return NULL;
+	}
+
+	while (source_str[i] != '\0') {
+		if (source_str[i] == '%') {
+			dest_str[j++] = '%';
+		}
+		dest_str[j++] = source_str[i];
+		i++;
+	}
+	dest_str[j] = '\0';
+	//printf("dest_str = %s\n", dest_str);
+
+	return dest_str;
+}
+
+/**
+  该函数一般用于获取 json 格式的文件内容
+  open file and return file content without '\n' '\r' '\t'
+
+  函数执行效率较高.
+  参考：函数在操作 520000 字节数的文件时，耗时大约 10ms 左右
+
   RETURN:
 	malloc fail: NULL
 	no file: NO_FILE
@@ -353,6 +395,7 @@ char *get_dir_content(const char *dir_path)
 	char *content = NULL;
 	char *buf = NULL;
 	char *f_content = NULL;
+	char *dest_str = NULL;
 	char dir_filename[100] = {0};
 	cJSON *root_json = NULL;
 	cJSON *file_cont = NULL;
@@ -376,13 +419,17 @@ char *get_dir_content(const char *dir_path)
 			perror("Open file error");
 			continue;
 		}
-		//printf("f_content = %s\n", f_content);
 		file_cont = cJSON_CreateObject();
 		cJSON_AddStringToObject(file_cont, "name", ptr->d_name);
-		cJSON_AddStringToObject(file_cont, "pgvalue", f_content);
-		cJSON_AddItemToObject(root_json, ptr->d_name, file_cont);
+		//printf("f_content = %s\n", f_content);
+		dest_str = format_str(f_content);
+		//printf("dest_str = %s\n", dest_str);
 		free(f_content);
 		f_content = NULL;
+		cJSON_AddStringToObject(file_cont, "pgvalue", dest_str);
+		cJSON_AddItemToObject(root_json, ptr->d_name, file_cont);
+		free(dest_str);
+		dest_str = NULL;
 	}
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
@@ -536,7 +583,7 @@ int check_dir_filename(const char *dir_path, const char *filename)
 }
 
 /* open dir and return dir's file name only .txt file without name suffix*/
-// Ext:["test.txt","test2.txt"]
+// Ext:["test","test2"]
 char *get_dir_filename_txt(const char *dir_path)
 {
 	DIR *dir = NULL;

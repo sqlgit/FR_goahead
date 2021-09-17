@@ -53,6 +53,8 @@ static int torque_get_main_list(char **ret_f_content);
 static int torque_get_custom_pause(char **ret_f_content, const cJSON *data_json);
 static int torque_get_all_custom_pause(char **ret_f_content);
 static int get_ip(char **ret_f_content);
+static int get_blockly_workspace(char **ret_f_content, const cJSON *data_json);
+static int get_blockly_workspace_names(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1927,6 +1929,47 @@ static int get_ip(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get blockly workspace */
+static int get_blockly_workspace(char **ret_f_content, const cJSON *data_json)
+{
+	char dir_filename[100] = {0};
+
+	cJSON *file_name = cJSON_GetObjectItem(data_json, "ws_name");
+	if (file_name == NULL || file_name->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(dir_filename, "%s%s", DIR_BLOCK, file_name->valuestring);
+
+	*ret_f_content = get_file_content(dir_filename);
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get blockly workspace names */
+static int get_blockly_workspace_names(char **ret_f_content)
+{
+	*ret_f_content = get_dir_filename(DIR_BLOCK);
+
+	/* file is NULL */
+	if (*ret_f_content == NULL) {
+		perror("get dir content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+
 /* get web data and return to page */
 void get(Webs *wp)
 {
@@ -2092,6 +2135,15 @@ void get(Webs *wp)
 		ret = torque_get_all_custom_pause(&ret_f_content);
 	} else if(!strcmp(cmd, "get_ip")) {
 		ret = get_ip(&ret_f_content);
+	} else if(!strcmp(cmd, "get_blockly_workspace")) {
+		data_json = cJSON_GetObjectItem(data, "data");
+		if (data_json == NULL || data_json->type != cJSON_Object) {
+			perror("json");
+			goto end;
+		}
+		ret = get_blockly_workspace(&ret_f_content, data_json);
+	} else if(!strcmp(cmd, "get_blockly_workspace_names")) {
+		ret = get_blockly_workspace_names(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
