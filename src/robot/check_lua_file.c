@@ -598,6 +598,16 @@ static int ConveyorTrackEnd(lua_State* L)
 	return 1;
 }
 
+static int ConveyorSetParam(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 5) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int GetSysVarValue(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -803,6 +813,46 @@ static int FT_Control(lua_State* L)
 	int argc = lua_gettop(L);
 
 	if (argc != 22) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_Activate(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_SetRCS(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_GetForceTorqueRCS(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int FT_GetForceTorqueOrigin(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1128,6 +1178,66 @@ static int GetUpdateTCPPose(lua_State* L)
 	return 1;
 }
 
+static int GetVisionObjPos(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 7) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetActualTCPSpeed(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetActualWObjNum(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetWObjOffset(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int PointsOffsetEnable(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int PointsOffsetDisable(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int pcall_lua(void *arg)
 {
 	int lua_pcall_result = 0;
@@ -1194,6 +1304,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ConveyorGetTrackData", ConveyorGetTrackData);
 	lua_register(luaEnv, "ConveyorTrackStart", ConveyorTrackStart);
 	lua_register(luaEnv, "ConveyorTrackEnd", ConveyorTrackEnd);
+	lua_register(luaEnv, "ConveyorSetParam", ConveyorSetParam);
 	lua_register(luaEnv, "GetSysVarValue", GetSysVarValue);
 	lua_register(luaEnv, "SetSysVarValue", SetSysVarValue);
 	lua_register(luaEnv, "ServoJ", ServoJ);
@@ -1204,6 +1315,10 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ActGripper", ActGripper);
 	lua_register(luaEnv, "FT_Guard", FT_Guard);
 	lua_register(luaEnv, "FT_Control", FT_Control);
+	lua_register(luaEnv, "FT_Activate", FT_Activate);
+	lua_register(luaEnv, "FT_SetRCS", FT_SetRCS);
+	lua_register(luaEnv, "FT_GetForceTorqueRCS", FT_GetForceTorqueRCS);
+	lua_register(luaEnv, "FT_GetForceTorqueOrigin", FT_GetForceTorqueOrigin);
 	lua_register(luaEnv, "MultilayerOffsetTrsfToBase", MultilayerOffsetTrsfToBase);
 	lua_register(luaEnv, "GetSystemClock", GetSystemClock);
 	lua_register(luaEnv, "ConveyorCatchPointComp", ConveyorCatchPointComp);
@@ -1248,10 +1363,16 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "CalPoseInv", CalPoseInv);
 	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
 	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
-	lua_register(luaEnv, "str_split", str_split);
+	lua_register(luaEnv, "string.split", str_split);
 	lua_register(luaEnv, "ComputePrePick", ComputePrePick);
 	lua_register(luaEnv, "ComputePostPick", ComputePostPick);
 	lua_register(luaEnv, "GetUpdateTCPPose", GetUpdateTCPPose);
+	lua_register(luaEnv, "GetVisionObjPos", GetVisionObjPos);
+	lua_register(luaEnv, "GetActualTCPSpeed", GetActualTCPSpeed);
+	lua_register(luaEnv, "GetActualWObjNum", GetActualWObjNum);
+	lua_register(luaEnv, "GetWObjOffset", GetWObjOffset);
+	lua_register(luaEnv, "PointsOffsetEnable", PointsOffsetEnable);
+	lua_register(luaEnv, "PointsOffsetDisable", PointsOffsetDisable);
 
 	//printf("lua_filename = %s\n", lua_filename);
 

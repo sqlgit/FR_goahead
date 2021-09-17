@@ -1695,12 +1695,15 @@ static int step_over(const cJSON *data_json, char *content)
 	/* SetToolList */
 	} else if (strstr(pgvalue->valuestring, "SetToolList(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 319;
-	/* SetWobjList */
-	} else if (strstr(pgvalue->valuestring, "SetWobjList(") && strrchr(pgvalue->valuestring, ')')) {
-		cmd = 383 ;
-	/* SetExToolCoord */
+	/* SetExToolList */
 	} else if (strstr(pgvalue->valuestring, "SetExToolList(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 331;
+	/* SetWobjList */
+	} else if (strstr(pgvalue->valuestring, "SetWobjList(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 383;
+	/* ConveyorSetParam */
+	} else if (strstr(pgvalue->valuestring, "ConveyorSetParam(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 367;
 	/* soft-PLC setDO */
 	} else if (strstr(pgvalue->valuestring, "SPLCSetDO(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 394;
@@ -1719,6 +1722,12 @@ static int step_over(const cJSON *data_json, char *content)
 	/* GetSysVarValue */
 	} else if (strstr(pgvalue->valuestring, "GetSysVarValue(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 512;
+	/* FT_Activate */
+	} else if (strstr(pgvalue->valuestring, "FT_Activate(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 524;
+	/* FT_SetRCS */
+	} else if (strstr(pgvalue->valuestring, "FT_SetRCS(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 525;
 	/* Circle */
 	} else if (strstr(pgvalue->valuestring, "Circle(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 540;
