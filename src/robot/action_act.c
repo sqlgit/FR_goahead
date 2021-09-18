@@ -1139,14 +1139,13 @@ static int save_robot_type(const cJSON *data_json)
 	write_ret = write_file(FILE_ODM_CFG, buf);//write file
 	free(buf);
 	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
 	if (write_ret == FAIL) {
 		perror("write file");
 
 		return FAIL;
 	}
-	cJSON_Delete(root_json);
-	root_json = NULL;
-
 	/** 写入RobotType.txt 文件 */
 	buf = cJSON_Print(data_json);
 	write_ret = write_file(FILE_ROBOT_TYPE, buf);//write file
@@ -2026,17 +2025,35 @@ static int modify_ip(const cJSON *data_json)
 static int save_blockly_workspace(const cJSON *data_json)
 {
 	char dir_filename[100] = {0};
+	cJSON *ws_name = NULL;
+	cJSON *ws_xml_text = NULL;
+	cJSON *ws_code = NULL;
+	cJSON *root_json = NULL;
+	char *buf = NULL;
+	int ret = FAIL;
 
-	cJSON *ws_name = cJSON_GetObjectItem(data_json, "ws_name");
-	cJSON *ws_content = cJSON_GetObjectItem(data_json, "ws_content");
-	if (ws_name == NULL || ws_content == NULL || ws_name->valuestring == NULL || ws_content->valuestring == NULL) {
+	ws_name = cJSON_GetObjectItem(data_json, "ws_name");
+	ws_xml_text = cJSON_GetObjectItem(data_json, "ws_xml_text");
+	ws_code = cJSON_GetObjectItem(data_json, "ws_code");
+	if (ws_name == NULL || ws_xml_text == NULL || ws_code == NULL || ws_name->valuestring == NULL || ws_xml_text->valuestring == NULL || ws_code->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s%s", DIR_BLOCK, ws_name->valuestring);
 
-	return write_file(dir_filename, ws_content->valuestring);
+	root_json = cJSON_CreateObject();
+	cJSON_AddStringToObject(root_json, "ws_xml_text", ws_xml_text->valuestring);
+	cJSON_AddStringToObject(root_json, "ws_code", ws_code->valuestring);
+	buf = cJSON_Print(root_json);
+
+	sprintf(dir_filename, "%s%s", DIR_BLOCK, ws_name->valuestring);
+	ret = write_file(dir_filename, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(root_json);
+	root_json = NULL;
+
+	return ret;
 }
 
 /* do some user actions basic on web */
