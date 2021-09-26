@@ -33,8 +33,11 @@ extern TORQUE_SYS_STATE torque_sys_state;
 extern TORQUE_SYS torquesys;
 extern POINT_HOME_INFO point_home_info;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
+
 extern PI_STATUS pi_status;
+extern PI_PTHREAD pi_pt_status;   /** PI 状态反馈线程结构体 */
 extern SOCKET_PI_INFO socket_pi_status;
+extern SOCKET_PI_INFO socket_pi_cmd;
 //int print_num = 0;
 
 /********************************* Function declaration ***********************/
@@ -174,35 +177,60 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(rightstation_json, "work_time", jiabao_torque_pd_data.right_work_time);
 	//}
 
-	/** PI IO 状态反馈 */
-	if (socket_pi_status.connect_status == 1) {
-		cJSON_AddNumberToObject(PI_IO_json, "power_supply_mode", pi_status.power_supply_mode);
-		electric_quantity = cJSON_CreateArray();
-		cJSON_AddItemToObject(PI_IO_json, "electric_quantity", electric_quantity);
-		for (i = 0; i < 4; i++) {
-			cJSON_AddNumberToObject(electric_quantity, "key", pi_status.electric_quantity[i]);
+	/* pi function enable */
+	if (pi_pt_status.enable == 1) {
+		/** PI IO 状态反馈 */
+		if (socket_pi_status.connect_status == 1) {
+			cJSON_AddNumberToObject(PI_IO_json, "power_supply_mode", pi_status.power_supply_mode);
+			electric_quantity = cJSON_CreateArray();
+			cJSON_AddItemToObject(PI_IO_json, "electric_quantity", electric_quantity);
+			for (i = 0; i < 4; i++) {
+				cJSON_AddNumberToObject(electric_quantity, "key", pi_status.electric_quantity[i]);
+			}
+			switch_json = cJSON_CreateArray();
+			cJSON_AddItemToObject(PI_IO_json, "switch", switch_json);
+			for (i = 0; i < 2; i++) {
+				cJSON_AddNumberToObject(switch_json, "key", pi_status.key[i]);
+			}
+			cJSON_AddNumberToObject(PI_IO_json, "start", pi_status.start);
+			cJSON_AddNumberToObject(PI_IO_json, "stop", pi_status.stop);
+			axis_plus = cJSON_CreateArray();
+			cJSON_AddItemToObject(PI_IO_json, "axis_plus", axis_plus);
+			for (i = 0; i < 6; i++) {
+				cJSON_AddNumberToObject(axis_plus, "key", pi_status.axis_plus[i]);
+			}
+			axis_minus = cJSON_CreateArray();
+			cJSON_AddItemToObject(PI_IO_json, "axis_minus", axis_minus);
+			for (i = 0; i < 6; i++) {
+				cJSON_AddNumberToObject(axis_minus, "key", pi_status.axis_minus[i]);
+			}
+			custom = cJSON_CreateArray();
+			cJSON_AddItemToObject(PI_IO_json, "custom", custom);
+			for (i = 0; i < 4; i++) {
+				cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
+			}
 		}
-		switch_json = cJSON_CreateArray();
-		cJSON_AddItemToObject(PI_IO_json, "switch", switch_json);
-		for (i = 0; i < 2; i++) {
-			cJSON_AddNumberToObject(switch_json, "key", pi_status.key[i]);
-		}
-		cJSON_AddNumberToObject(PI_IO_json, "start", pi_status.start);
-		cJSON_AddNumberToObject(PI_IO_json, "stop", pi_status.stop);
-		axis_plus = cJSON_CreateArray();
-		cJSON_AddItemToObject(PI_IO_json, "axis_plus", axis_plus);
-		for (i = 0; i < 6; i++) {
-			cJSON_AddNumberToObject(axis_plus, "key", pi_status.axis_plus[i]);
-		}
-		axis_minus = cJSON_CreateArray();
-		cJSON_AddItemToObject(PI_IO_json, "axis_minus", axis_minus);
-		for (i = 0; i < 6; i++) {
-			cJSON_AddNumberToObject(axis_minus, "key", pi_status.axis_minus[i]);
-		}
-		custom = cJSON_CreateArray();
-		cJSON_AddItemToObject(PI_IO_json, "custom", custom);
-		for (i = 0; i < 4; i++) {
-			cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
+		/* PI socket connect error */
+		if (socket_pi_status.connect_status == 0 || socket_pi_cmd.connect_status == 0) {
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "WebAPP 与示教器（树莓派）通信失败");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "WebAPP failed to communicate with the teaching device (Raspberry PI)");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "WebAPPがシエナ(ラズベリーパイ)と通信に失敗");
+			}
+			if (socket_pi_status.pre_connect_status != 0 || socket_pi_cmd.pre_connect_status != 0) {
+				my_syslog("错误", "WebAPP 与示教器（树莓派）通信失败", cur_account.username);
+				my_en_syslog("error", "WebAPP failed to communicate with the teaching device (Raspberry PI)", cur_account.username);
+				my_jap_syslog("さくご", "WebAPPがシエナ(ラズベリーパイ)と通信に失敗", cur_account.username);
+				socket_pi_status.pre_connect_status = 0;
+				socket_pi_cmd.pre_connect_status = 0;
+			}
+		} else {
+			socket_pi_status.pre_connect_status = 1;
+			socket_pi_cmd.pre_connect_status = 1;
 		}
 	}
 

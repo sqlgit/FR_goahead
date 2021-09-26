@@ -43,6 +43,7 @@
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_STATEFB10 "/root/web/file/statefb/statefb10.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"
+#define FILE_PI_CFG "/root/web/file/cfg/PI.txt"
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
@@ -76,6 +77,7 @@
 #define DIR_FACTORY_RESET_TORQUESYS "/root/web/webserver/file_factory/torquesys/"
 #define DIR_SYSVAR "/root/web/file/sysvar/"
 #define DIR_FACTORY_RESET_SYSVAR "/root/web/webserver/file_factory/sysvar/"
+#define DIR_FACTORY_RESET "/root/web/webserver/file_factory/"
 
 #define DB_POINTS "/root/web/file/points/web_point.db"
 #define DB_CDSYSTEM "/root/web/file/cdsystem/coordinate_system.db"

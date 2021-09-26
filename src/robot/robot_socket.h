@@ -5,8 +5,6 @@
 #include    "statefb_quene.h"
 /********************************* Defines ************************************/
 
-#define SERVER_PI_IP "192.168.58.77"
-//#define SERVER_PI_IP "192.168.58.88"
 #define CMD_PORT 8060
 #define STATUS_PORT 8061
 #define FILE_PORT 8062
@@ -14,6 +12,7 @@
 #define TORQUE_PORT 8064
 #define UPPER_COMPUTER_PORT 2000
 #define PI_STATUS_PORT 8899
+#define PI_CMD_PORT 8898
 #define VIR_CMD_PORT 8070
 #define VIR_STATUS_PORT 8071
 #define VIR_FILE_PORT 8072
@@ -274,8 +273,17 @@ typedef struct _SOCKET_PI_INFO
 	char server_ip[20];				/** server ip */
 	int server_port;				/** server port */
 	int select_timeout; 			/** socket select timeout */
-	uint8_t connect_status; 		/** socket 连接状态 */
+	int pre_connect_status; 		/** pre socket 连接状态 0:未连接 1:连接 */
+	int connect_status; 			/** socket 连接状态 0:未连接 1:连接 */
+	int send_flag; 					/** send data 标志位，1:代表需要发送数据，0:代表没有数据需要发送 */
 } SOCKET_PI_INFO;
+
+/* PI pthread 相关信息结构体 */
+typedef struct _PI_PTHREAD
+{
+	int enable;
+	pthread_t t_pi;
+} PI_PTHREAD;
 
 /* socket connect client info */
 typedef	struct _SOCKET_CONNECT_CLIENT_INFO
@@ -309,6 +317,7 @@ void *socket_TORQUE_SYS_thread(void *arg);
 void *socket_state_feedback_thread(void *arg);
 void *socket_upper_computer_thread(void* arg);
 void *socket_pi_status_thread(void *arg);
+void *socket_pi_cmd_thread(void *arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 int check_pointhome_data(char *arr[]);
 int update_server_ip();

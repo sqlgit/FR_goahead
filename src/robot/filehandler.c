@@ -490,6 +490,16 @@ int update_file_dir()
 		system(cmd);
 	}
 
+	/**
+	    V3.3.1 版本 cfg 文件夹下，增加了 pi.txt 文件
+		如果该文件不存在， 拷贝恢复出厂值文件夹下的 pi.txt 到 cfg 文件夹下
+	*/
+	if (check_dir_filename(DIR_CFG, "PI.txt") == 0) {
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cp -r %scfg/PI.txt %s", DIR_FACTORY_RESET, DIR_CFG);
+		system(cmd);
+	}
+
 	return SUCCESS;
 }
 

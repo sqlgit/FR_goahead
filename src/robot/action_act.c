@@ -10,6 +10,13 @@
 
 /********************************* Defines ************************************/
 
+extern pthread_t t_socket_pi_status;   /** PI 状态反馈线程*/
+extern pthread_t t_socket_pi_cmd;		/** PI 指令下发线程*/
+extern PI_PTHREAD pi_pt_status;   /** PI 状态反馈线程结构体 */
+extern PI_PTHREAD pi_pt_cmd;		/** PI 指令下发线程结构体 */
+
+extern SOCKET_PI_INFO socket_pi_status;
+extern SOCKET_PI_INFO socket_pi_cmd;
 extern CTRL_STATE ctrl_state;
 extern CTRL_STATE vir_ctrl_state;
 extern int robot_type;
@@ -20,6 +27,8 @@ extern SOCKET_INFO socket_vir_cmd;
 extern int robot_type;
 extern POINT_HOME_INFO point_home_info;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
+extern SERVER_IP[20];
+extern SERVER_PI_IP[20];
 
 /********************************* Function declaration ***********************/
 
@@ -62,6 +71,7 @@ static int torque_generate_program(const cJSON *data_json);
 static int torque_save_custom_pause(const cJSON *data_json);
 static int modify_ip(const cJSON *data_json);
 static int save_blockly_workspace(const cJSON *data_json);
+static int modify_PI_cfg(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -1546,7 +1556,6 @@ static int set_TSP_flg(const cJSON *data_json)
 {
 	char *buf = NULL;
 	int write_ret = FAIL;
-	cJSON *content = NULL;
 
 	buf = cJSON_Print(data_json);
 	write_ret = write_file(FILE_TORQUE_PAGEFLAG, buf);
@@ -1970,10 +1979,12 @@ static int modify_ip(const cJSON *data_json)
 	char write_content[LEN_100*100] = {0};
 	cJSON *ctrl_ip = NULL;
 	cJSON *user_ip = NULL;
+	cJSON *PI_ip = NULL;
 
 	ctrl_ip = cJSON_GetObjectItem(data_json, "ctrl_ip");
 	user_ip = cJSON_GetObjectItem(data_json, "user_ip");
-	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || user_ip == NULL || user_ip->valuestring == NULL) {
+	PI_ip = cJSON_GetObjectItem(data_json, "PI_ip");
+	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || user_ip == NULL || user_ip->valuestring == NULL || PI_ip == NULL || PI_ip->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -1992,11 +2003,12 @@ static int modify_ip(const cJSON *data_json)
 	}
 	while (fgets(strline, LEN_100, fp) != NULL) {
 		bzero(write_line, sizeof(char)*LEN_100);
-		strcpy(write_line, strline);
-
 		if (strstr(strline, "CTRL_IP = ")) {
-			bzero(write_line, sizeof(char)*LEN_100);
 			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
+		} else if (strstr(strline, "PI_IP = ")) {
+			sprintf(write_line, "PI_IP = %s\n", PI_ip->valuestring);
+		} else {
+			strcpy(write_line, strline);
 		}
 
 		strcat(write_content, write_line);
@@ -2009,6 +2021,13 @@ static int modify_ip(const cJSON *data_json)
 
 		return FAIL;
 	}
+
+	/** 发送控制器和树莓派 IP 到树莓派 */
+	memset(SERVER_IP, 0, 20);
+	strcpy(SERVER_IP, ctrl_ip->valuestring);
+	memset(SERVER_PI_IP, 0, 20);
+	strcpy(SERVER_PI_IP, PI_ip->valuestring);
+	socket_pi_cmd.send_flag = 1;
 
 	/**
 		代码中调用 write/read 等文件系统函数时,
@@ -2056,6 +2075,102 @@ static int save_blockly_workspace(const cJSON *data_json)
 	return ret;
 }
 
+/** modify PI cfg */
+static int modify_PI_cfg(const cJSON *data_json)
+{
+	char *buf = NULL;
+	int write_ret = FAIL;
+	cJSON *enable = NULL;
+	cJSON *mode = NULL;
+
+	enable = cJSON_GetObjectItem(data_json, "enable");
+	if (enable == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	printf("pthread_kill(pi_pt_status.t_pi, 0) = %d\n", pthread_kill(pi_pt_status.t_pi, 0));
+	printf("pthread_kill(pi_pt_cmd.t_pi, 0) = %d\n", pthread_kill(pi_pt_cmd.t_pi, 0));
+	printf("ESRCH = %d\n", ESRCH);
+
+	/** 关闭使用示教器树莓派 */
+	if (enable->valueint == 0) {
+		/** pi status 线程存在 */
+		if (pthread_kill(pi_pt_status.t_pi, 0) == 0) {
+			pi_pt_status.enable = enable->valueint;
+			printf("before pthread_cancel pi status\n");
+			if (pthread_cancel(pi_pt_status.t_pi) != 0) {
+				perror("pthread_cancel");
+
+				return FAIL;
+			}
+			printf("before pthread_join pi status\n");
+			/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+			if (pthread_join(pi_pt_status.t_pi, NULL)) {
+				perror("pthread_join");
+
+				return FAIL;
+			}
+			printf("before pthread_join pi status\n");
+			/* set socket status: disconnected */
+			socket_pi_status.connect_status = 0;
+			/* close socket fd */
+			close(socket_pi_status.fd);
+		}
+		/** pi cmd 线程存在 */
+		if (pthread_kill(pi_pt_cmd.t_pi, 0) == 0) {
+			pi_pt_cmd.enable = enable->valueint;
+			printf("before pthread_join pi cmd\n");
+			/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+			if (pthread_join(pi_pt_cmd.t_pi, NULL)) {
+				perror("pthread_join");
+
+				return FAIL;
+			}
+			printf("pthread_join pi cmd\n");
+		}
+	/** 开启使用示教器树莓派 */
+	} else {
+		/** 线程不存在 */
+		if (pthread_kill(pi_pt_status.t_pi, 0) == ESRCH) {
+			pi_pt_status.enable = enable->valueint;
+			/* create socket_pi_status thread */
+			if (pthread_create(&pi_pt_status.t_pi, NULL, (void *)&socket_pi_status_thread, (void *)PI_STATUS_PORT)) {
+				perror("pthread_create");
+
+				return FAIL;
+			}
+		}
+		/** 线程不存在 */
+		if (pthread_kill(pi_pt_cmd.t_pi, 0) == ESRCH) {
+			pi_pt_cmd.enable = enable->valueint;
+			/* create socket_pi_cmd thread */
+			if (pthread_create(&pi_pt_cmd.t_pi, NULL, (void *)&socket_pi_cmd_thread, (void *)PI_CMD_PORT)) {
+				perror("pthread_create");
+
+				return FAIL;
+			}
+		}
+	}
+	/* update pi pthread enable */
+	pi_pt_status.enable = enable->valueint;
+	pi_pt_cmd.enable = enable->valueint;
+
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_PI_CFG, buf);
+	free(buf);
+	buf = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -2094,7 +2209,7 @@ void act(Webs *wp)
 	//printf("cmd = %s\n", cmd);
 
 	// cmd_auth "0"
-	if (!strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip")) {
+	if (!strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_PI_cfg")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 
@@ -2309,6 +2424,11 @@ void act(Webs *wp)
 		strcpy(log_content, "保存工作区内容");
 		strcpy(en_log_content, "Save workspace contents");
 		strcpy(jap_log_content, "作業スペースを保存する");
+	} else if (!strcmp(cmd, "modify_PI_cfg")) {
+		ret = modify_PI_cfg(data_json);
+		strcpy(log_content, "修改示教器（树莓派）配置");
+		strcpy(en_log_content, "Modify the display (Raspberry PI) configuration");
+		strcpy(jap_log_content, "ラズベリーパイの構成を修正する");
 	} else {
 		perror("cmd not found");
 		goto end;

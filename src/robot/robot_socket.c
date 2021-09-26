@@ -17,6 +17,12 @@
 #else
 	char SERVER_IP[20] = "192.168.58.2";
 #endif
+char SERVER_PI_IP[20] = "192.168.58.77";
+//#define SERVER_PI_IP "192.168.58.88"
+
+PI_PTHREAD pi_pt_status;   /** PI 状态反馈线程结构体 */
+PI_PTHREAD pi_pt_cmd;	/** PI 指令下发线程结构体 */
+
 SOCKET_INFO socket_cmd;
 SOCKET_INFO socket_file;
 SOCKET_INFO socket_status;
@@ -25,6 +31,7 @@ SOCKET_SERVER_INFO socket_upper_computer;
 int socket_connect_client_num; // server 已连接 client 个数;
 SOCKET_INFO socket_torquesys;
 SOCKET_PI_INFO socket_pi_status;
+SOCKET_PI_INFO socket_pi_cmd;
 SOCKET_INFO socket_vir_cmd;
 SOCKET_INFO socket_vir_file;
 SOCKET_INFO socket_vir_status;
@@ -56,7 +63,7 @@ POINT_HOME_INFO point_home_info = {
 
 static void state_feedback_init(STATE_FEEDBACK *fb);
 static void socket_init(SOCKET_INFO *sock, const int port);
-static void socket_pi_init(SOCKET_INFO *sock, const int port);
+static void socket_pi_init(SOCKET_PI_INFO *sock, const int port);
 static void socket_server_init(SOCKET_SERVER_INFO *sock, const int port);
 static int socket_create(SOCKET_INFO *sock);
 static int socket_server_create(SOCKET_SERVER_INFO *sock);
@@ -111,7 +118,7 @@ static void socket_init(SOCKET_INFO *sock, const int port)
 }
 
 /* socket pi init */
-static void socket_pi_init(SOCKET_INFO *sock, const int port)
+static void socket_pi_init(SOCKET_PI_INFO *sock, const int port)
 {
 	bzero(sock, sizeof(SOCKET_PI_INFO));
 
@@ -119,7 +126,9 @@ static void socket_pi_init(SOCKET_INFO *sock, const int port)
 	strcpy(sock->server_ip, SERVER_PI_IP);
 	sock->server_port = port;
 	sock->select_timeout = SOCK_SELECT_TIMEOUT;
+	sock->pre_connect_status = 0;
 	sock->connect_status = 0;
+	sock->send_flag = 0;
 }
 
 /* socket server init */
@@ -1160,7 +1169,9 @@ static void *socket_send_thread(void *arg)
 
 		//delay(1);
 		// 延迟 20 ms
-		usleep(20000);
+		//usleep(20000);
+		// 延迟 1 ms
+		usleep(1000);
 	}
 }
 
@@ -1708,6 +1719,7 @@ void *socket_state_feedback_thread(void *arg)
 	//char **array = NULL;
 	int varnum = 0;
 	int varnum_len = 0;
+	int flag_print = 0;
 	printf("port = %d\n", port);
 
 /*	file_content = (char *)calloc(1, sizeof(char)*(STATEFB_FILESIZE+100));
@@ -1781,6 +1793,8 @@ void *socket_state_feedback_thread(void *arg)
 
 				break;
 			}
+			//printf("recv len = %d\n", recv_len);
+			//printf("recv buf = %s\n", recv_buf);
 
 			//clock_t time_1, time_2, time_3, time_4, time_5;
 
@@ -1793,8 +1807,6 @@ void *socket_state_feedback_thread(void *arg)
 			}
 			memcpy((buf_memory+strlen(buf_memory)), recv_buf, recv_len);
 
-			//printf("recv len = %d\n", recv_len);
-			//printf("recv buf = %s\n", recv_buf);
 			/**
 				获取到的一帧长度等于期望长度（/f/bIII变量个数III数据长度III数据区III/b/f）
 				变量个数长度：varnum_len
@@ -1837,12 +1849,27 @@ void *socket_state_feedback_thread(void *arg)
 					//bzero(state, sizeof(STATE_FB));
 					//StringToBytes(array[3], (BYTE *)&sta_fb, sizeof(STATE_FB));
 					StringToBytes(state_buf, (BYTE *)&sta_fb, sizeof(STATE_FB));
+					/*
+					int i = 0;
+					int j = 0;
+					if (flag_print == 0) {
+						for (i = 0; i < STATEFB_PERPKG_NUM; i++) {
+							printf("fb_quene.front fb[%d] = ", i);
+							for (j = 0; j < state_fb.icount; j++) {
+								printf("%f ", sta_fb.fb[i][j]);
+							}
+							printf("\n");
+						}
+						flag_print = 1; //只打印一次
+					}
+					*/
 					//time_4 = clock();
 					//printf("time_4, %d\n", time_4);
 					//printf("enter/if\n");
 					if (state_fb.type == 0) { //"0":图表查询
 						/** 查询队列中存储 node 超过最大数量，清空队列 */
 						if (fb_get_node_num(fb_quene) >= STATEFB_MAX) {
+							printf("state_fb overflow\n");
 							state_fb.overflow = 1;
 							/** clear state quene */
 							pthread_mutex_lock(&sock->mute);
@@ -2356,6 +2383,7 @@ static int socket_pi_pkg_handle(char* buf_memory, uint8* frame, char** change_me
 	return frame_len;
 }
 
+/* socket_pi_status thread */
 void *socket_pi_status_thread(void *arg)
 {
 	SOCKET_PI_INFO *sock = NULL;
@@ -2375,7 +2403,7 @@ void *socket_pi_status_thread(void *arg)
 
 	socket_pi_init(sock, port);
 
-	while(1) {
+	while (pi_pt_status.enable == 1) {
 		bzero(status, sizeof(PI_STATUS));
 		/* do socket connect */
 		/* create socket */
@@ -2403,7 +2431,7 @@ void *socket_pi_status_thread(void *arg)
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_PI_IP, port);
 
 		/* recv PI status */
-		while (1) {
+		while (pi_pt_status.enable == 1) {
 			//bzero(recvbuf, (PI_STATUS_SIZE + 1));
 			memset(recvbuf, 0, (PI_STATUS_SIZE + 1));
 			recv_len = recv(sock->fd, recvbuf, PI_STATUS_SIZE, 0);
@@ -2444,6 +2472,115 @@ void *socket_pi_status_thread(void *arg)
 					memcpy(status, (frame + 3), (recv_len - 7));
 				}
 			}
+		}
+		/* socket disconnected */
+		/* close socket */
+		close(sock->fd);
+		/* set socket status: disconnected */
+		sock->connect_status = 0;
+	}
+}
+
+/* socket_pi_cmd thread */
+void *socket_pi_cmd_thread(void *arg)
+{
+	SOCKET_PI_INFO *sock = NULL;
+	int port = (int)arg;
+	int recv_len = 0;
+	char recvbuf[MAX_BUF] = { 0 };
+	char sendbuf[MAX_BUF] = { 0 };
+	int msghead = 0;//帧计数
+
+	//pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);   //设置立即取消
+
+	printf("port = %d\n", port);
+	sock = &socket_pi_cmd;
+	socket_pi_init(sock, port);
+	while (pi_pt_cmd.enable == 1) {
+		/* do socket connect */
+		/* create socket */
+		if (socket_create(sock) == FAIL) {
+			/* create fail */
+			perror("socket create fail");
+
+			continue;
+		}
+		/* connect socket */
+		if (socket_connect(sock) == FAIL) {
+			/* connect fail */
+#if print_mode
+			perror("socket connect fail");
+#endif
+			close(sock->fd);
+			//delay(1000);
+			sleep(1);
+
+			continue;
+		}
+		/* socket connected */
+		/* set socket status: connected */
+		sock->connect_status = 1;
+		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_PI_IP, port);
+
+		/* send/recv PI cmd */
+		while (pi_pt_cmd.enable == 1) {
+			if (sock->send_flag == 1) {
+				msghead++;
+				/* send 树莓派 ip */
+				memset(sendbuf, 0, MAX_BUF);
+				sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", msghead, 100, strlen(SERVER_PI_IP), SERVER_PI_IP);
+				if (send(sock->fd, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
+					perror("send");
+
+					break;
+				}
+				//bzero(recvbuf, (PI_STATUS_SIZE + 1));
+				memset(recvbuf, 0, MAX_BUF);
+				recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
+				//printf("sock status recv_len = %d\n", recv_len);
+				/* recv timeout or error */
+				if (recv_len <= 0) {
+					printf("sock status recv_len : %d\n", recv_len);
+					printf("sock status errno : %d\n", errno);
+					printf("sock status strerror : %s\n", strerror(errno));
+					perror("sock status recv perror :");
+					/* 认为连接已经断开 */
+
+					break;
+				}
+				printf("recv len = %d\n", recv_len);
+				printf("recvbuf = %s\n", recvbuf);
+
+				msghead++;
+				/* send 控制器 ip */
+				memset(sendbuf, 0, MAX_BUF);
+				sprintf(sendbuf, "/f/bIII%dIII%dIII%dIII%sIII/b/f", msghead, 101, strlen(SERVER_IP), SERVER_IP);
+				if (send(sock->fd, sendbuf, strlen(sendbuf), 0) != strlen(sendbuf)) {
+					perror("send");
+
+					break;
+				}
+				//bzero(recvbuf, (PI_STATUS_SIZE + 1));
+				memset(recvbuf, 0, MAX_BUF);
+				recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
+				//printf("sock status recv_len = %d\n", recv_len);
+				/* recv timeout or error */
+				if (recv_len <= 0) {
+					printf("sock status recv_len : %d\n", recv_len);
+					printf("sock status errno : %d\n", errno);
+					printf("sock status strerror : %s\n", strerror(errno));
+					perror("sock status recv perror :");
+					/* 认为连接已经断开 */
+
+					break;
+				}
+				printf("recv len = %d\n", recv_len);
+				printf("recvbuf = %s\n", recvbuf);
+
+				sock->send_flag = 0;
+			}
+			// 延迟 1 ms
+			usleep(1000);
 		}
 		/* socket disconnected */
 		/* close socket */
@@ -2584,7 +2721,7 @@ int check_pointhome_data(char *arr[])
 }
 
 /**
-  update SERVER_IP
+  update SERVER_IP、SERVER_PI_IP
 */
 int update_server_ip()
 {
@@ -2616,14 +2753,61 @@ int update_server_ip()
 		if (ptr = strstr(strline, "CTRL_IP = ")) {
 			memset(SERVER_IP, 0, 20);
 			strcpy(SERVER_IP, (ptr + 10));
-
-			break;
+		} else if (ptr = strstr(strline, "PI_IP = ")) {
+			memset(SERVER_PI_IP, 0, 20);
+			strcpy(SERVER_PI_IP, (ptr + 8));
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
 	fclose(fp);
 
 	//printf("after SERVER_IP = %s\n", SERVER_IP);
+	return SUCCESS;
+}
+
+int init_PI_cfg()
+{
+	char *config_content = NULL;
+	cJSON *config_json = NULL;
+	cJSON *enable = NULL;
+
+	config_content = get_file_content(FILE_PI_CFG);
+	if (config_content == NULL || strcmp(config_content, "NO_FILE") == 0 || strcmp(config_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	printf("config_content = %s\n", config_content);
+	config_json = cJSON_Parse(config_content);
+	free(config_content);
+	config_content = NULL;
+	if (config_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	enable = cJSON_GetObjectItem(config_json, "enable");
+	if (enable == NULL) {
+		perror("JSON");
+
+		return FAIL;
+	}
+
+	pi_pt_status.enable = enable->valueint;
+	pi_pt_cmd.enable = enable->valueint;
+
+	/* 开启 PI socket thread */
+	if (enable->valueint == 1) {
+		/* create socket_pi_status thread */
+		if (pthread_create(&pi_pt_status.t_pi, NULL, (void *)&socket_pi_status_thread, (void *)PI_STATUS_PORT)) {
+			perror("pthread_create");
+		}
+		/* create socket_pi_cmd thread */
+		if (pthread_create(&pi_pt_cmd.t_pi, NULL, (void *)&socket_pi_cmd_thread, (void *)PI_CMD_PORT)) {
+			perror("pthread_create");
+		}
+	}
+
 	return SUCCESS;
 }
 

@@ -55,6 +55,7 @@ static int torque_get_all_custom_pause(char **ret_f_content);
 static int get_ip(char **ret_f_content);
 static int get_blockly_workspace(char **ret_f_content, const cJSON *data_json);
 static int get_blockly_workspace_names(char **ret_f_content);
+static int get_PI_cfg(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1908,9 +1909,10 @@ static int get_ip(char **ret_f_content)
 
 		if (ptr = strstr(strline, "CTRL_IP = ")) {
 			cJSON_AddStringToObject(root_json, "ctrl_ip", (ptr + 10));
-		}
-		if (ptr = strstr(strline, "USER_IP = ")) {
+		} else if (ptr = strstr(strline, "USER_IP = ")) {
 			cJSON_AddStringToObject(root_json, "user_ip", (ptr + 10));
+		} else if (ptr = strstr(strline, "PI_IP = ")) {
+			cJSON_AddStringToObject(root_json, "PI_ip", (ptr + 8));
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
@@ -1962,6 +1964,21 @@ static int get_blockly_workspace_names(char **ret_f_content)
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get dir content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
+
+/* get PI cfg and return to page */
+static int get_PI_cfg(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(FILE_PI_CFG);
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
+		perror("get file content");
 
 		return FAIL;
 	}
@@ -2144,6 +2161,8 @@ void get(Webs *wp)
 		ret = get_blockly_workspace(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "get_blockly_workspace_names")) {
 		ret = get_blockly_workspace_names(&ret_f_content);
+	} else if (!strcmp(cmd, "get_PI_cfg")) {
+		ret = get_PI_cfg(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
