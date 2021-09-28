@@ -2798,6 +2798,7 @@ int init_PI_cfg()
 
 	/* 开启 PI socket thread */
 	if (enable->valueint == 1) {
+		printf("create PI socket thread\n");
 		/* create socket_pi_status thread */
 		if (pthread_create(&pi_pt_status.t_pi, NULL, (void *)&socket_pi_status_thread, (void *)PI_STATUS_PORT)) {
 			perror("pthread_create");
@@ -2807,6 +2808,9 @@ int init_PI_cfg()
 			perror("pthread_create");
 		}
 	}
+	/* cjson delete */
+	cJSON_Delete(config_json);
+	config_json = NULL;
 
 	return SUCCESS;
 }

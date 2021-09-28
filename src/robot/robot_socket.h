@@ -166,6 +166,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   tpd_record_state;		/** TPD记录状态， 1-记录中， 0-不记录 */
 	uint8_t	   tpd_record_scale;		/** TPD记录进度百分比，0-100 */
 	double	   FT_data[6];				/** 力/扭矩传感器数据，Fx,Fy,Fz,Tx,Ty,Tz */
+	uint8_t	   FT_ActStatus;			/** 力/扭矩传感器激活状态， 0-复位，1-激活 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -281,8 +282,8 @@ typedef struct _SOCKET_PI_INFO
 /* PI pthread 相关信息结构体 */
 typedef struct _PI_PTHREAD
 {
-	int enable;
-	pthread_t t_pi;
+	int enable;						/** 启用线程 1:启用，0:未启用 */
+	pthread_t t_pi;					/** 线程 ID */
 } PI_PTHREAD;
 
 /* socket connect client info */

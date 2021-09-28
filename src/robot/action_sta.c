@@ -130,6 +130,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "pause_parameter", state->pause_parameter);
 	cJSON_AddNumberToObject(root_json, "tpd_record_state", state->tpd_record_state);
 	cJSON_AddNumberToObject(root_json, "tpd_record_scale", state->tpd_record_scale);
+	cJSON_AddNumberToObject(root_json, "FT_ActStatus", state->FT_ActStatus);
 	if (basic_index%10 == 0) {
 		local_now_time(time_now);
 	}
@@ -1252,35 +1253,35 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			break;
 		case 13:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化");
+				cJSON_AddStringToObject(error_json, "key", "下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点，可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "The next command changes the joint configuration");
+				cJSON_AddStringToObject(error_json, "key", "Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point, which can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "次は関節配置の変化を指示します");
+				cJSON_AddStringToObject(error_json, "key", "次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して、リセットすることができます");
 			}
 			if (pre_state->cmdPointError != 13) {
-				my_syslog("错误", "下一指令关节配置发生变化", cur_account.username);
-				my_en_syslog("error", "The next command changes the joint configuration", cur_account.username);
-				my_jap_syslog("さくご", "次は関節配置の変化を指示します", cur_account.username);
+				my_syslog("错误", "下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点，可复位", cur_account.username);
+				my_en_syslog("error", "Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point, which can be reset", cur_account.username);
+				my_jap_syslog("さくご", "次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して、リセットすることができます", cur_account.username);
 				pre_state->cmdPointError = 13;
 			}
 			break;
 		case 14:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "当前指令关节配置发生变化");
+				cJSON_AddStringToObject(error_json, "key", "当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点，可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "The current instruction joint configuration has changed");
+				cJSON_AddStringToObject(error_json, "key", "Singular pose exists in the current command, please use PTP command or change the current command point, which can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "カレントコマンド関節配置が変化します");
+					cJSON_AddStringToObject(error_json, "key", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。");
 			}
 			if (pre_state->cmdPointError != 14) {
-				my_syslog("错误", "当前指令关节配置发生变化", cur_account.username);
-				my_en_syslog("error", "The current instruction joint configuration has changed", cur_account.username);
-				my_jap_syslog("さくご", "カレントコマンド関節配置が変化します", cur_account.username);
+				my_syslog("错误", "当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点，可复位", cur_account.username);
+				my_en_syslog("error", "Singular pose exists in the current command, please use PTP command or change the current command point, which can be reset", cur_account.username);
+				my_jap_syslog("さくご", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。", cur_account.username);
 				pre_state->cmdPointError = 14;
 			}
 			break;

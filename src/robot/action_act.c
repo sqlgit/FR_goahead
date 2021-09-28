@@ -2080,8 +2080,31 @@ static int modify_PI_cfg(const cJSON *data_json)
 {
 	char *buf = NULL;
 	int write_ret = FAIL;
+	char *config_content = NULL;
+	cJSON *config_json = NULL;
+	cJSON *old_enable = NULL;
 	cJSON *enable = NULL;
-	cJSON *mode = NULL;
+
+	config_content = get_file_content(FILE_PI_CFG);
+	if (config_content == NULL || strcmp(config_content, "NO_FILE") == 0 || strcmp(config_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	config_json = cJSON_Parse(config_content);
+	free(config_content);
+	config_content = NULL;
+	if (config_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	old_enable = cJSON_GetObjectItem(config_json, "enable");
+	if (old_enable == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
 
 	enable = cJSON_GetObjectItem(data_json, "enable");
 	if (enable == NULL) {
@@ -2089,62 +2112,58 @@ static int modify_PI_cfg(const cJSON *data_json)
 
 		return FAIL;
 	}
+	/* update pi pthread enable */
+	pi_pt_status.enable = enable->valueint;
+	pi_pt_cmd.enable = enable->valueint;
 
 	printf("pthread_kill(pi_pt_status.t_pi, 0) = %d\n", pthread_kill(pi_pt_status.t_pi, 0));
 	printf("pthread_kill(pi_pt_cmd.t_pi, 0) = %d\n", pthread_kill(pi_pt_cmd.t_pi, 0));
 	printf("ESRCH = %d\n", ESRCH);
-
 	/** 关闭使用示教器树莓派 */
 	if (enable->valueint == 0) {
-		/** pi status 线程存在 */
-		if (pthread_kill(pi_pt_status.t_pi, 0) == 0) {
-			pi_pt_status.enable = enable->valueint;
-			printf("before pthread_cancel pi status\n");
-			if (pthread_cancel(pi_pt_status.t_pi) != 0) {
-				perror("pthread_cancel");
+		if (old_enable->valueint == 1) {
+			/** pi status 线程存在 */
+			//if (pthread_kill(pi_pt_status.t_pi, 0) == 0) {
+				printf("before pthread_cancel pi status\n");
+				if (pthread_cancel(pi_pt_status.t_pi) != 0) {
+					perror("pthread_cancel");
 
-				return FAIL;
-			}
-			printf("before pthread_join pi status\n");
-			/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
-			if (pthread_join(pi_pt_status.t_pi, NULL)) {
-				perror("pthread_join");
+					return FAIL;
+				}
+				printf("before pthread_join pi status\n");
+				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+				if (pthread_join(pi_pt_status.t_pi, NULL)) {
+					perror("pthread_join");
 
-				return FAIL;
-			}
-			printf("before pthread_join pi status\n");
-			/* set socket status: disconnected */
-			socket_pi_status.connect_status = 0;
-			/* close socket fd */
-			close(socket_pi_status.fd);
-		}
-		/** pi cmd 线程存在 */
-		if (pthread_kill(pi_pt_cmd.t_pi, 0) == 0) {
-			pi_pt_cmd.enable = enable->valueint;
-			printf("before pthread_join pi cmd\n");
-			/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
-			if (pthread_join(pi_pt_cmd.t_pi, NULL)) {
-				perror("pthread_join");
+					return FAIL;
+				}
+				printf("after pthread_join pi status\n");
+				/* set socket status: disconnected */
+				socket_pi_status.connect_status = 0;
+				/* close socket fd */
+				close(socket_pi_status.fd);
+			//}
+			/** pi cmd 线程存在 */
+			//if (pthread_kill(pi_pt_cmd.t_pi, 0) == 0) {
+				printf("before pthread_join pi cmd\n");
+				/* 当前线程挂起, 等待创建线程返回，获取该线程的返回值后，当前线程退出 */
+				if (pthread_join(pi_pt_cmd.t_pi, NULL)) {
+					perror("pthread_join");
 
-				return FAIL;
-			}
-			printf("pthread_join pi cmd\n");
+					return FAIL;
+				}
+				printf("after pthread_join pi cmd\n");
+			//}
 		}
 	/** 开启使用示教器树莓派 */
 	} else {
-		/** 线程不存在 */
-		if (pthread_kill(pi_pt_status.t_pi, 0) == ESRCH) {
-			pi_pt_status.enable = enable->valueint;
+		if (old_enable->valueint == 0) {
 			/* create socket_pi_status thread */
 			if (pthread_create(&pi_pt_status.t_pi, NULL, (void *)&socket_pi_status_thread, (void *)PI_STATUS_PORT)) {
 				perror("pthread_create");
 
 				return FAIL;
 			}
-		}
-		/** 线程不存在 */
-		if (pthread_kill(pi_pt_cmd.t_pi, 0) == ESRCH) {
-			pi_pt_cmd.enable = enable->valueint;
 			/* create socket_pi_cmd thread */
 			if (pthread_create(&pi_pt_cmd.t_pi, NULL, (void *)&socket_pi_cmd_thread, (void *)PI_CMD_PORT)) {
 				perror("pthread_create");
@@ -2153,9 +2172,9 @@ static int modify_PI_cfg(const cJSON *data_json)
 			}
 		}
 	}
-	/* update pi pthread enable */
-	pi_pt_status.enable = enable->valueint;
-	pi_pt_cmd.enable = enable->valueint;
+	/* cjson delete */
+	cJSON_Delete(config_json);
+	config_json = NULL;
 
 	buf = cJSON_Print(data_json);
 	write_ret = write_file(FILE_PI_CFG, buf);

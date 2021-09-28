@@ -246,6 +246,16 @@ static int SetToolList(lua_State* L)
 	return 1;
 }
 
+static int SetToolCoord(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 9) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SetWobjList(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1259,6 +1269,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "MoveTPD", MoveTPD);
 	lua_register(luaEnv, "MoveGripper", MoveGripper);
 	lua_register(luaEnv, "SetToolList", SetToolList);
+	lua_register(luaEnv, "SetToolCoord", SetToolCoord);
 	lua_register(luaEnv, "SetWobjList", SetWobjList);
 	lua_register(luaEnv, "SetExToolList", SetExToolList);
 	lua_register(luaEnv, "WeaveStart", WeaveStart);
@@ -1353,7 +1364,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "CalPoseInv", CalPoseInv);
 	lua_register(luaEnv, "CalPoseSub", CalPoseSub);
 	lua_register(luaEnv, "CalPoseTrans", CalPoseTrans);
-	lua_register(luaEnv, "string.split", str_split);
+	lua_register(luaEnv, "str_split", str_split);
 	lua_register(luaEnv, "ComputePrePick", ComputePrePick);
 	lua_register(luaEnv, "ComputePostPick", ComputePostPick);
 	lua_register(luaEnv, "GetUpdateTCPPose", GetUpdateTCPPose);
