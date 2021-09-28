@@ -1050,9 +1050,9 @@ int delete_log_file(int flag)
 			if (count != NULL) {
 				//printf("count = %d\n", count->valuestring);
 				if (flag) {//此时马上需要新增一个 log文件，所以需要多删除一个最旧的 log 文件
-					log_count = atoi(count->valuestring) - 1;
+					log_count = count->valueint - 1;
 				} else {
-					log_count = atoi(count->valuestring);
+					log_count = count->valueint;
 				}
 				sprintf(cmd, "sh %s %d", SHELL_DELETELOG, log_count);
 				system(cmd);
@@ -1060,7 +1060,7 @@ int delete_log_file(int flag)
 			/* 更新系统语言 */
 			sys_language = cJSON_GetObjectItem(root_json, "language");
 			if (sys_language != NULL) {
-				language = atoi(sys_language->valuestring);
+				language = sys_language->valueint;
 			}
 		}
 	}

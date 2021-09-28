@@ -43,6 +43,7 @@
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_STATEFB10 "/root/web/file/statefb/statefb10.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"
+#define FILE_POINTS_CFG "/root/web/file/points/point_cfg.txt"
 #define FILE_PI_CFG "/root/web/file/cfg/PI.txt"
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"

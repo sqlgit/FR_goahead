@@ -46,10 +46,11 @@ static int save_laser_point(const cJSON *data_json);
 static int modify_point(const cJSON *data_json);
 static int remove_points(const cJSON *data_json);
 static int change_type(const cJSON *data_json);
-static int set_syscfg(const cJSON *data_json);
-static int set_language(const cJSON *data_json);
+static int set_sys_logcount(const cJSON *data_json);
+static int set_sys_lifespan(const cJSON *data_json);
+static int set_sys_language(const cJSON *data_json);
 static int set_ODM_cfg(const cJSON *data_json);
-static int ptnbox(const cJSON *data_json);
+static int set_ptn_cfg(const cJSON *data_json);
 static int save_accounts(const cJSON *data_json);
 static int shutdown_system(const cJSON *data_json);
 static int plugin_enable(const cJSON *data_json);
@@ -72,6 +73,7 @@ static int torque_save_custom_pause(const cJSON *data_json);
 static int modify_ip(const cJSON *data_json);
 static int save_blockly_workspace(const cJSON *data_json);
 static int modify_PI_cfg(const cJSON *data_json);
+static int robottype_password(const cJSON *data_json);
 
 /*********************************** Code *************************************/
 
@@ -628,8 +630,8 @@ static int change_type(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* set_syscfg */
-static int set_syscfg(const cJSON *data_json)
+/* set_sys_logcount */
+static int set_sys_logcount(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
@@ -638,7 +640,7 @@ static int set_syscfg(const cJSON *data_json)
 	cJSON *count = NULL;
 
 	count = cJSON_GetObjectItem(data_json, "log_count");
-	if (count == NULL || count->valuestring == NULL) {
+	if (count == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -651,15 +653,15 @@ static int set_syscfg(const cJSON *data_json)
 		return FAIL;
 	}
 	cfg_json = cJSON_Parse(cfg_content);
+	free(cfg_content);
+	cfg_content = NULL;
 	if (cfg_json == NULL) {
 		perror("cJSON_Parse");
 
 		return FAIL;
 	}
-	free(cfg_content);
-	cfg_content = NULL;
 
-	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateString(count->valuestring));
+	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateNumber(count->valueint));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
@@ -672,17 +674,17 @@ static int set_syscfg(const cJSON *data_json)
 	return ret;
 }
 
-/* set_language */
-static int set_language(const cJSON *data_json)
+/* set_sys_lifespan */
+static int set_sys_lifespan(const cJSON *data_json)
 {
 	int ret = FAIL;
 	char *buf = NULL;
 	char *cfg_content = NULL;
 	cJSON *cfg_json = NULL;
-	cJSON *language_json = NULL;
+	cJSON *lifespan = NULL;
 
-	language_json = cJSON_GetObjectItem(data_json, "language");
-	if (language_json == NULL || language_json->valuestring == NULL) {
+	lifespan = cJSON_GetObjectItem(data_json, "lifespan");
+	if (lifespan == NULL) {
 		perror("json");
 
 		return FAIL;
@@ -695,19 +697,15 @@ static int set_language(const cJSON *data_json)
 		return FAIL;
 	}
 	cfg_json = cJSON_Parse(cfg_content);
+	free(cfg_content);
+	cfg_content = NULL;
 	if (cfg_json == NULL) {
 		perror("cJSON_Parse");
 
 		return FAIL;
 	}
-	free(cfg_content);
-	cfg_content = NULL;
 
-	if (cJSON_GetObjectItem(cfg_json, "language") == NULL) {
-		cJSON_AddStringToObject(cfg_json, "language", language_json->valuestring);
-	} else {
-		cJSON_ReplaceItemInObject(cfg_json, "language", cJSON_CreateString(language_json->valuestring));
-	}
+	cJSON_ReplaceItemInObject(cfg_json, "lifespan", cJSON_CreateNumber(lifespan->valueint));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
@@ -715,7 +713,51 @@ static int set_language(const cJSON *data_json)
 	cJSON_Delete(cfg_json);
 	cfg_json = NULL;
 
-	language = atoi(language_json->valuestring);
+	delete_log_file(0);
+
+	return ret;
+}
+
+/* set_sys_language */
+static int set_sys_language(const cJSON *data_json)
+{
+	int ret = FAIL;
+	char *buf = NULL;
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *language_json = NULL;
+
+	language_json = cJSON_GetObjectItem(data_json, "language");
+	if (language_json == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	cfg_content = get_file_content(FILE_CFG);
+	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	cfg_json = cJSON_Parse(cfg_content);
+	free(cfg_content);
+	cfg_content = NULL;
+	if (cfg_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+
+	cJSON_ReplaceItemInObject(cfg_json, "language", cJSON_CreateNumber(language_json->valueint));
+	buf = cJSON_Print(cfg_json);
+	ret = write_file(FILE_CFG, buf);
+	free(buf);
+	buf = NULL;
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
+
+	language = language_json->valueint;
 
 	return ret;
 }
@@ -747,73 +789,23 @@ static int set_ODM_cfg(const cJSON *data_json)
 	return ret;
 }
 
-/* ptnbox */
-static int ptnbox(const cJSON *data_json)
+/* set_ptn_cfg */
+static int set_ptn_cfg(const cJSON *data_json)
 {
-	int ret = FAIL;
 	char *buf = NULL;
-	char *cfg_content = NULL;
-	cJSON *cfg_json = NULL;
-	cJSON *name = NULL;
-	cJSON *number = NULL;
-	cJSON *laser = NULL;
+	int write_ret = FAIL;
 
-	name = cJSON_GetObjectItem(data_json, "name");
-	if (name == NULL || name->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	number = cJSON_GetObjectItem(data_json, "number");
-	if (number == NULL || number->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-	laser = cJSON_GetObjectItem(data_json, "laser");
-	if (laser == NULL || laser->valuestring == NULL) {
-		perror("json");
-
-		return FAIL;
-	}
-
-	cfg_content = get_file_content(FILE_CFG);
-	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
-		perror("get file content");
-
-		return FAIL;
-	}
-	cfg_json = cJSON_Parse(cfg_content);
-	if (cfg_json == NULL) {
-		perror("cJSON_Parse");
-
-		return FAIL;
-	}
-	free(cfg_content);
-	cfg_content = NULL;
-	if (cJSON_GetObjectItem(cfg_json, "name") == NULL) {
-		cJSON_AddStringToObject(cfg_json, "name", name->valuestring);
-	} else {
-		cJSON_ReplaceItemInObject(cfg_json, "name", cJSON_CreateString(name->valuestring));
-	}
-	if (cJSON_GetObjectItem(cfg_json, "number") == NULL) {
-		cJSON_AddStringToObject(cfg_json, "number", number->valuestring);
-	} else {
-		cJSON_ReplaceItemInObject(cfg_json, "number", cJSON_CreateString(number->valuestring));
-	}
-	if (cJSON_GetObjectItem(cfg_json, "laser") == NULL) {
-		cJSON_AddStringToObject(cfg_json, "laser", laser->valuestring);
-	} else {
-		cJSON_ReplaceItemInObject(cfg_json, "laser", cJSON_CreateString(laser->valuestring));
-	}
-	buf = cJSON_Print(cfg_json);
-	ret = write_file(FILE_CFG, buf);
+	buf = cJSON_Print(data_json);
+	write_ret = write_file(FILE_POINTS_CFG, buf);
 	free(buf);
 	buf = NULL;
-	cJSON_Delete(cfg_json);
-	cfg_json = NULL;
+	if (write_ret == FAIL) {
+		perror("write file");
 
-	return ret;
+		return FAIL;
+	}
+
+	return SUCCESS;
 }
 
 /* save accounts */
@@ -2189,6 +2181,26 @@ static int modify_PI_cfg(const cJSON *data_json)
 	return SUCCESS;
 }
 
+/** robottype_password */
+static int robottype_password(const cJSON *data_json)
+{
+	cJSON *password = NULL;
+
+	password = cJSON_GetObjectItem(data_json, "password");
+	if (password == NULL || password->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	if (strcmp(password->valuestring, RTS_PASSWORD) == 0) {
+
+		return SUCCESS;
+	} else {
+
+		return FAIL;
+	}
+}
 
 /* do some user actions basic on web */
 void act(Webs *wp)
@@ -2228,14 +2240,14 @@ void act(Webs *wp)
 	//printf("cmd = %s\n", cmd);
 
 	// cmd_auth "0"
-	if (!strcmp(cmd, "set_syscfg") || !strcmp(cmd, "set_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_PI_cfg")) {
+	if (!strcmp(cmd, "set_sys_logcount") || !strcmp(cmd, "set_sys_lifespan") || !strcmp(cmd, "set_sys_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_PI_cfg") || !strcmp(cmd, "robottype_password")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 
 			goto auth_end;
 		}
 	// cmd_auth "1"
-	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "ptnbox") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause") || !strcmp(cmd, "save_blockly_workspace")) {
+	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_ptn_cfg") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause") || !strcmp(cmd, "save_blockly_workspace")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 
@@ -2323,13 +2335,18 @@ void act(Webs *wp)
 		strcpy(log_content, "切换实体和虚拟机器人");
 		strcpy(en_log_content, "Switch between physical and virtual robots");
 		strcpy(jap_log_content, "実物と仮想ロボットを切り替えます");
-	} else if (!strcmp(cmd, "set_syscfg")) {
-		ret = set_syscfg(data_json);
-		strcpy(log_content, "设置系统配置");
-		strcpy(en_log_content, "Set up system configuration");
-		strcpy(jap_log_content, "システム構成を設定する");
-	} else if (!strcmp(cmd, "set_language")) {
-		ret = set_language(data_json);
+	} else if (!strcmp(cmd, "set_sys_logcount")) {
+		ret = set_sys_logcount(data_json);
+		strcpy(log_content, "设置系统日志");
+		strcpy(en_log_content, "Setting system Logs");
+		strcpy(jap_log_content, "システムログを設定する");
+	} else if (!strcmp(cmd, "set_sys_lifespan")) {
+		ret = set_sys_lifespan(data_json);
+		strcpy(log_content, "设置系统超时时间");
+		strcpy(en_log_content, "Example Set the system timeout period");
+		strcpy(jap_log_content, "システムタイムアウト時間を設定する");
+	} else if (!strcmp(cmd, "set_sys_language")) {
+		ret = set_sys_language(data_json);
 		strcpy(log_content, "设置系统语言");
 		strcpy(en_log_content, "Set up system language");
 		strcpy(jap_log_content, "システム言語を設定する");
@@ -2338,11 +2355,11 @@ void act(Webs *wp)
 		strcpy(log_content, "设置 ODM 配置");
 		strcpy(en_log_content, "Set up the ODM configuration");
 		strcpy(jap_log_content, "odm構成を設定します");
-	} else if (!strcmp(cmd, "ptnbox")) {
-		ret = ptnbox(data_json);
-		strcpy(log_content, "按钮盒记录点个数限制");
-		strcpy(en_log_content, "Limit the number of record points in the button box");
-		strcpy(jap_log_content, "ボタンボックス記録ポイント数制限");
+	} else if (!strcmp(cmd, "set_ptn_cfg")) {
+		ret = set_ptn_cfg(data_json);
+		strcpy(log_content, "设置示教点配置");
+		strcpy(en_log_content, "Set the teaching point configuration");
+		strcpy(jap_log_content, "示教点配置を設ける");
 	} else if (!strcmp(cmd, "save_accounts")) {
 		ret = save_accounts(data_json);
 		strcpy(log_content, "保存账户信息");
@@ -2448,6 +2465,11 @@ void act(Webs *wp)
 		strcpy(log_content, "修改示教器（树莓派）配置");
 		strcpy(en_log_content, "Modify the display (Raspberry PI) configuration");
 		strcpy(jap_log_content, "ラズベリーパイの構成を修正する");
+	} else if (!strcmp(cmd, "robottype_password")) {
+		ret = robottype_password(data_json);
+		strcpy(log_content, "认证机器人型号配置密码");
+		strcpy(en_log_content, "Authentication robot model configures a password");
+		strcpy(jap_log_content, "認証ロボットモデル設定パスワード");
 	} else {
 		perror("cmd not found");
 		goto end;

@@ -56,6 +56,7 @@ static int get_ip(char **ret_f_content);
 static int get_blockly_workspace(char **ret_f_content, const cJSON *data_json);
 static int get_blockly_workspace_names(char **ret_f_content);
 static int get_PI_cfg(char **ret_f_content);
+static int get_ptn_cfg(char **ret_f_content);
 //static int index_get_config = 0;
 
 /*********************************** Code *************************************/
@@ -1986,6 +1987,20 @@ static int get_PI_cfg(char **ret_f_content)
 	return SUCCESS;
 }
 
+/* get ptn cfg and return to page */
+static int get_ptn_cfg(char **ret_f_content)
+{
+	*ret_f_content = get_file_content(FILE_POINTS_CFG);
+	/* ret_f_content is NULL or no such file or empty */
+	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
+		*ret_f_content = NULL;
+		perror("get file content");
+
+		return FAIL;
+	}
+
+	return SUCCESS;
+}
 
 /* get web data and return to page */
 void get(Webs *wp)
@@ -2163,6 +2178,8 @@ void get(Webs *wp)
 		ret = get_blockly_workspace_names(&ret_f_content);
 	} else if (!strcmp(cmd, "get_PI_cfg")) {
 		ret = get_PI_cfg(&ret_f_content);
+	} else if (!strcmp(cmd, "get_ptn_cfg")) {
+		ret = get_ptn_cfg(&ret_f_content);
 	} else {
 		perror("cmd not found");
 		goto end;
