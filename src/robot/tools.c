@@ -8,6 +8,7 @@
 
 /********************************* Defines ************************************/
 
+WEBAPP_SYSCFG web_cfg;
 extern ACCOUNT_INFO cur_account;
 extern timer_t timerid;
 extern int robot_type;
@@ -1376,4 +1377,39 @@ uint16_t RX_CheckSum(uint8_t *buf, uint8_t len)
 	}
 
 	return ret+1;
+}
+
+/** 初始化，WebAPP 系统无操作时的超时时间 */
+int init_sys_lifespan()
+{
+	char *cfg_content = NULL;
+	cJSON *cfg_json = NULL;
+	cJSON *lifespan_json = NULL;
+
+	cfg_content = get_file_content(FILE_CFG);
+	if (cfg_content == NULL || strcmp(cfg_content, "NO_FILE") == 0 || strcmp(cfg_content, "Empty") == 0) {
+		perror("get file content");
+
+		return FAIL;
+	}
+	cfg_json = cJSON_Parse(cfg_content);
+	free(cfg_content);
+	cfg_content = NULL;
+	if (cfg_json == NULL) {
+		perror("cJSON_Parse");
+
+		return FAIL;
+	}
+	lifespan_json = cJSON_GetObjectItem(cfg_json, "lifespan");
+	if (lifespan_json == NULL) {
+
+		return FAIL;
+	}
+	web_cfg.lifespan = lifespan_json->valueint;
+	//printf("web_cfg.lifespan = %d\n", web_cfg.lifespan);
+
+	cJSON_Delete(cfg_json);
+	cfg_json = NULL;
+
+	return SUCCESS;
 }

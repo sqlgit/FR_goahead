@@ -67,6 +67,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
     char    *argp, *home, *documents, *endpoints, *endpoint, *route, *auth, *tok, *lspec;
     int     argind;
 
+	init_sys_lifespan();
 #if WINDOWS
     if (windowsInit() < 0) {
         return 0;

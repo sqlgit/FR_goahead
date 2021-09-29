@@ -10,6 +10,7 @@
 /********************************* Includes ***********************************/
 
 #include    "goahead.h"
+#include	"tools.h"
 
 /********************************* Defines ************************************/
 
@@ -39,6 +40,7 @@ static char         websHost[ME_MAX_IP];        /* Host name for the server */
 static char         websIpAddr[ME_MAX_IP];      /* IP address for the server */
 static char         *websHostUrl = NULL;        /* URL to access server */
 static char         *websIpAddrUrl = NULL;      /* URL to access server */
+extern 				WEBAPP_SYSCFG web_cfg;
 
 #define WEBS_ENCODE_HTML    0x1                 /* Bit setting in charMatch[] */
 
@@ -3189,7 +3191,8 @@ WebsSession *websGetSession(Webs *wp, int create)
             }
             sessionCount++;
             //printf("sessionCount = %d\n", sessionCount);
-            if ((wp->session = websAllocSession(wp, id, ME_GOAHEAD_LIMIT_SESSION_LIFE)) == 0) {
+            //if ((wp->session = websAllocSession(wp, id, ME_GOAHEAD_LIMIT_SESSION_LIFE)) == 0) {
+            if ((wp->session = websAllocSession(wp, id, web_cfg.lifespan)) == 0) {
                 wfree(id);
                 return 0;
             }

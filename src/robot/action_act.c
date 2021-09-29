@@ -29,6 +29,7 @@ extern POINT_HOME_INFO point_home_info;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;
 extern SERVER_IP[20];
 extern SERVER_PI_IP[20];
+extern WEBAPP_SYSCFG web_cfg;
 
 /********************************* Function declaration ***********************/
 
@@ -706,6 +707,10 @@ static int set_sys_lifespan(const cJSON *data_json)
 	}
 
 	cJSON_ReplaceItemInObject(cfg_json, "lifespan", cJSON_CreateNumber(lifespan->valueint));
+
+	web_cfg.lifespan = lifespan->valueint;
+	//printf("web_cfg.lifespan = %d\n", web_cfg.lifespan);
+
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
@@ -713,7 +718,6 @@ static int set_sys_lifespan(const cJSON *data_json)
 	cJSON_Delete(cfg_json);
 	cfg_json = NULL;
 
-	delete_log_file(0);
 
 	return ret;
 }

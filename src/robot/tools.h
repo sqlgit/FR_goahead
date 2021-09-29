@@ -120,6 +120,13 @@ typedef struct _ACCOUNT_INFO
 	char auth[10];
 	char username[100];
 } ACCOUNT_INFO;
+
+/* WebAPP 系统配置结构体 */
+typedef struct _WEBAPP_SYSCFG
+{
+	int lifespan;				/** Webapp 无操作时的登出时间，可配置 5min ~ 24H */
+} WEBAPP_SYSCFG;
+
 /********************************* Function declaration ***********************/
 
 int string_to_string_list(char *src_str, char *delimiter, int *delimiter_count, char ***str_list);
@@ -159,5 +166,6 @@ int update_userconfig_robottype();
 int update_torquesys_pd_data();
 uint16_t TX_CheckSum(uint8_t *buf, uint8_t len);
 uint16_t RX_CheckSum(uint8_t *buf, uint8_t len);
+int init_sys_lifespan();
 
 #endif
