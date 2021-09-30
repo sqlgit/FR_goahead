@@ -527,7 +527,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		QElemType node;
 		//printf("array[2] = %s\n", array[2]);
 		//printf("array[4] = %s\n", array[4]);
-		if (atoi(array[2]) == 229 || atoi(array[2]) == 527) {//反馈夹爪配置信息, 获取力/扭矩传感器配置信息
+		if (atoi(array[2]) == 229 || atoi(array[2]) == 527 || atoi(array[2]) == 546) {//反馈夹爪配置信息, 获取力/扭矩传感器配置信息,获取传感器配置
 			bzero(&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
 			//printf("array[4] = %s\n", array[4]);
 			StringToBytes(array[4], (BYTE *)&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));

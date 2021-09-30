@@ -898,6 +898,16 @@ static int ConveyorCatchPointComp(lua_State* L)
 	return 1;
 }
 
+static int AxleSensorRegWrite(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1323,6 +1333,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "MultilayerOffsetTrsfToBase", MultilayerOffsetTrsfToBase);
 	lua_register(luaEnv, "GetSystemClock", GetSystemClock);
 	lua_register(luaEnv, "ConveyorCatchPointComp", ConveyorCatchPointComp);
+	lua_register(luaEnv, "AxleSensorRegWrite", AxleSensorRegWrite);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);
