@@ -72,6 +72,7 @@ static int move_to_home_point(const cJSON *data_json);
 static int torque_generate_program(const cJSON *data_json);
 static int torque_save_custom_pause(const cJSON *data_json);
 static int modify_ip(const cJSON *data_json);
+static int modify_customcfg(const cJSON *data_json);
 static int save_blockly_workspace(const cJSON *data_json);
 static int modify_PI_cfg(const cJSON *data_json);
 static int robottype_password(const cJSON *data_json);
@@ -1987,7 +1988,7 @@ static int modify_ip(const cJSON *data_json)
 	}
 
 	if (strstr(ctrl_ip->valuestring, "192.168.57")) {
-		perror("ip set fail: same 192.168.58.XXX");
+		perror("ip set fail: same 192.168.57.XXX");
 
 		return FAIL;
 	}
@@ -2003,6 +2004,82 @@ static int modify_ip(const cJSON *data_json)
 			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
 		} else if (strstr(strline, "PI_IP = ")) {
 			sprintf(write_line, "PI_IP = %s\n", PI_ip->valuestring);
+		} else {
+			strcpy(write_line, strline);
+		}
+
+		strcat(write_content, write_line);
+		bzero(strline, sizeof(char)*LEN_100);
+	}
+	fclose(fp);
+
+	if (write_file(ROBOT_CFG, write_content) == FAIL) {
+		perror("write file");
+
+		return FAIL;
+	}
+
+	/** 发送控制器和树莓派 IP 到树莓派 */
+	memset(SERVER_IP, 0, 20);
+	strcpy(SERVER_IP, ctrl_ip->valuestring);
+	memset(SERVER_PI_IP, 0, 20);
+	strcpy(SERVER_PI_IP, PI_ip->valuestring);
+	socket_pi_cmd.send_flag = 1;
+
+	/**
+		代码中调用 write/read 等文件系统函数时,
+	    看似程序已经返回文件写入或读取成功，
+		实际硬盘上的文件尚未更改，
+		需要一定的等待时间
+	*/
+	sleep(10);
+
+	return SUCCESS;
+}
+
+/* modify customcfg */
+static int modify_customcfg(const cJSON *data_json)
+{
+	FILE *fp = NULL;
+	char strline[LEN_100] = {0};
+	char write_line[LEN_100] = {0};
+	char write_content[LEN_100*100] = {0};
+	cJSON *port = NULL;
+	cJSON *type = NULL;
+	cJSON *ctrl_ip = NULL;
+	cJSON *PI_ip = NULL;
+
+	ctrl_ip = cJSON_GetObjectItem(data_json, "ctrl_ip");
+	PI_ip = cJSON_GetObjectItem(data_json, "PI_ip");
+	port = cJSON_GetObjectItem(data_json, "port");
+	type = cJSON_GetObjectItem(data_json, "type");
+	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || PI_ip == NULL || PI_ip->valuestring == NULL || port == NULL  || port->valuestring == NULL|| type == NULL || type->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+
+	if (strstr(ctrl_ip->valuestring, "192.168.57")) {
+		perror("ip set fail: same 192.168.57.XXX");
+
+		return FAIL;
+	}
+
+	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
+		perror("open file");
+
+		return FAIL;
+	}
+	while (fgets(strline, LEN_100, fp) != NULL) {
+		bzero(write_line, sizeof(char)*LEN_100);
+		if (strstr(strline, "CTRL_IP = ")) {
+			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
+		} else if (strstr(strline, "PI_IP = ")) {
+			sprintf(write_line, "PI_IP = %s\n", PI_ip->valuestring);
+		} else if (strstr(strline, "Custom_Port = ")) {
+			sprintf(write_line, "Custom_Port = %s\n", port->valuestring);
+		} else if (strstr(strline, "Protocol_Type = ")) {
+			sprintf(write_line, "Protocol_Type = %s\n", type->valuestring);
 		} else {
 			strcpy(write_line, strline);
 		}
@@ -2244,7 +2321,7 @@ void act(Webs *wp)
 	//printf("cmd = %s\n", cmd);
 
 	// cmd_auth "0"
-	if (!strcmp(cmd, "set_sys_logcount") || !strcmp(cmd, "set_sys_lifespan") || !strcmp(cmd, "set_sys_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_PI_cfg") || !strcmp(cmd, "robottype_password")) {
+	if (!strcmp(cmd, "set_sys_logcount") || !strcmp(cmd, "set_sys_lifespan") || !strcmp(cmd, "set_sys_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_customcfg") || !strcmp(cmd, "modify_PI_cfg") || !strcmp(cmd, "robottype_password")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 
@@ -2459,6 +2536,11 @@ void act(Webs *wp)
 		strcpy(log_content, "修改控制器 IP 地址");
 		strcpy(en_log_content, "Change the CONTROLLER IP address");
 		strcpy(jap_log_content, "コントローラのIPアドレスを変更");
+	} else if (!strcmp(cmd, "modify_customcfg")) {
+		ret = modify_customcfg(data_json);
+		strcpy(log_content, "修改客户配置");
+		strcpy(en_log_content, "Modifying Customer Configurations");
+		strcpy(jap_log_content, "顧客プロファイルの変更");
 	} else if (!strcmp(cmd, "save_blockly_workspace")) {
 		ret = save_blockly_workspace(data_json);
 		strcpy(log_content, "保存工作区内容");
