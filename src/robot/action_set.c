@@ -887,7 +887,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 4) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
 			argc_error_info(4, "Circle");
 
@@ -1006,6 +1006,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 
 			goto end;
 		}
+		/*
 		point_3 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[2]);
 		if (point_3 == NULL || point_3->type != cJSON_Object) {
 			database_error_info();
@@ -1036,7 +1037,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 
 			goto end;
 		}
-		/* 当点为 pHOME 原点时，进行检查 */
+		// 当点为 pHOME 原点时，进行检查
 		if (strcmp(cmd_array[2], POINT_HOME) == 0) {
 			for (i = 0; i < 6; i++) {
 				memset(joint_value[i], 0, 10);
@@ -1050,7 +1051,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			for (i = 0; i < 6; i++) {
 				joint_value_ptr[i] = joint_value[i];
 			}
-			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			// 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中
 			if (check_pointhome_data(joint_value_ptr) == FAIL) {
 				point_home_info.error_flag = 1;
 
@@ -1063,6 +1064,8 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			goto end;
 		}
 		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, j1_3->valuestring, j2_3->valuestring, j3_3->valuestring, j4_3->valuestring, j5_3->valuestring, j6_3->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, toolnum_3->valuestring, workpiecenum_3->valuestring, speed_3->valuestring, acc_3->valuestring, E1_3->valuestring, E2_3->valuestring, E3_3->valuestring, E4_3->valuestring, cmd_array[3], end_ptr);
+		*/
+		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], end_ptr);
 		strcat(file_content, content);
 	/* SCIRC */
 	} else if ((ptr = strstr(lua_cmd, "SCIRC(")) && strrchr(lua_cmd, ')')) {

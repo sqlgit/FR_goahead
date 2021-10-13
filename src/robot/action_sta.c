@@ -1049,617 +1049,90 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	switch(state->cmdPointError) {
 		case 1:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "关节指令点错误");
+				cJSON_AddStringToObject(error_json, "key", "关节指令点错误, 可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Joint command point error");
+				cJSON_AddStringToObject(error_json, "key", "Joint command point error, can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "関節の指令点が間違っている");
+				cJSON_AddStringToObject(error_json, "key", "関節の指令点が間違っている, リセット可能");
 			}
 			if (pre_state->cmdPointError != 1) {
-				my_syslog("错误", "关节指令点错误", cur_account.username);
-				my_en_syslog("error", "Joint command point error", cur_account.username);
-				my_jap_syslog("さくご", "関節の指令点が間違っている", cur_account.username);
+				my_syslog("错误", "关节指令点错误, 可复位", cur_account.username);
+				my_en_syslog("error", "Joint command point error, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "関節の指令点が間違っている, リセット可能", cur_account.username);
 				pre_state->cmdPointError = 1;
 			}
 			break;
 		case 2:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "直线目标点错误（包括工具不符）");
+				cJSON_AddStringToObject(error_json, "key", "直线目标点错误（包括工具不符）, 可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Straight line target point error(including tool discrepancy)");
+				cJSON_AddStringToObject(error_json, "key", "Straight line target point error(including tool discrepancy), can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "直線の目標点が間違っている(道具が違っていることも含む)");
+				cJSON_AddStringToObject(error_json, "key", "直線の目標点が間違っている(道具が違っていることも含む), リセット可能");
 			}
 			if (pre_state->cmdPointError != 2) {
-				my_syslog("错误", "直线目标点错误（包括工具不符）", cur_account.username);
-				my_en_syslog("error", "Straight line target point error(including tool discrepancy)", cur_account.username);
-				my_jap_syslog("さくご", "直線の目標点が間違っている(道具が違っていることも含む)", cur_account.username);
+				my_syslog("错误", "直线目标点错误（包括工具不符）, 可复位", cur_account.username);
+				my_en_syslog("error", "Straight line target point error(including tool discrepancy), can be reset", cur_account.username);
+				my_jap_syslog("さくご", "直線の目標点が間違っている(道具が違っていることも含む), リセット可能", cur_account.username);
 				pre_state->cmdPointError = 2;
 			}
 			break;
 		case 3:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "圆弧中间点错误（包括工具不符）");
+				cJSON_AddStringToObject(error_json, "key", "圆弧中间点错误（包括工具不符）, 可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Midpoint of arc error (including tool discrepancy)");
+				cJSON_AddStringToObject(error_json, "key", "Midpoint of arc error (including tool discrepancy), can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "円弧の中間点のエラー(ツールの不一致を含む)");
+					cJSON_AddStringToObject(error_json, "key", "円弧の中間点のエラー(ツールの不一致を含む), リセット可能");
 			}
 			if (pre_state->cmdPointError != 3) {
-				my_syslog("错误", "圆弧中间点错误（包括工具不符）", cur_account.username);
-				my_en_syslog("error", "Midpoint of arc error (including tool discrepancy)", cur_account.username);
-				my_jap_syslog("さくご", "円弧の中間点のエラー(ツールの不一致を含む)", cur_account.username);
+				my_syslog("错误", "圆弧中间点错误（包括工具不符）, 可复位", cur_account.username);
+				my_en_syslog("error", "Midpoint of arc error (including tool discrepancy), can be reset", cur_account.username);
+				my_jap_syslog("さくご", "円弧の中間点のエラー(ツールの不一致を含む), リセット可能", cur_account.username);
 				pre_state->cmdPointError = 3;
 			}
 			break;
 		case 4:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "圆弧目标点错误（包括工具不符）");
+				cJSON_AddStringToObject(error_json, "key", "圆弧目标点错误（包括工具不符）, 可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Arc target point error (including tool discrepancy)");
+				cJSON_AddStringToObject(error_json, "key", "Arc target point error (including tool discrepancy), can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "円弧の目標点エラー(ツールが一致しないことを含む)");
+					cJSON_AddStringToObject(error_json, "key", "円弧の目標点エラー(ツールが一致しないことを含む), リセット可能");
 			}
 			if (pre_state->cmdPointError != 4) {
-				my_syslog("错误", "圆弧目标点错误（包括工具不符）", cur_account.username);
-				my_en_syslog("error", "Arc target point error (including tool discrepancy)", cur_account.username);
-				my_jap_syslog("さくご", "円弧の目標点エラー(ツールが一致しないことを含む)", cur_account.username);
+				my_syslog("错误", "圆弧目标点错误（包括工具不符）, 可复位", cur_account.username);
+				my_en_syslog("error", "Arc target point error (including tool discrepancy), can be reset", cur_account.username);
+				my_jap_syslog("さくご", "円弧の目標点エラー(ツールが一致しないことを含む), リセット可能", cur_account.username);
 				pre_state->cmdPointError = 4;
 			}
 			break;
 		case 5:
 			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "TPD指令点错误");
+				cJSON_AddStringToObject(error_json, "key", "圆弧指令点间距过小, 可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "TPD point error");
+				cJSON_AddStringToObject(error_json, "key", "The distance between arc instruction points is too small, can be reset");
 			}
 			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "TPD指令点エラー");
+				cJSON_AddStringToObject(error_json, "key", "円弧コマンド点の間隔が小さすぎる, リセット可能");
 			}
 			if (pre_state->cmdPointError != 5) {
-				my_syslog("错误", "TPD指令点错误", cur_account.username);
-				my_en_syslog("error", "TPD point error", cur_account.username);
-				my_jap_syslog("さくご", "TPD指令点エラー", cur_account.username);
+				my_syslog("错误", "圆弧指令点间距过小, 可复位", cur_account.username);
+				my_en_syslog("error", "The distance between arc instruction points is too small, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "円弧コマンド点の間隔が小さすぎる, リセット可能", cur_account.username);
 				pre_state->cmdPointError = 5;
 			}
 			break;
 		case 6:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "TPD指令工具与当前工具不符");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "TPD instruction tool does not match the current tool");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "TPDコマンドツールは、現在のツールと一致しません");
-			}
-			if (pre_state->cmdPointError != 6) {
-				my_syslog("错误", "TPD指令工具与当前工具不符", cur_account.username);
-				my_en_syslog("error", "TPD instruction tool does not match the current tool", cur_account.username);
-				my_jap_syslog("さくご", "TPDコマンドツールは、現在のツールと一致しません", cur_account.username);
-				pre_state->cmdPointError = 6;
-			}
-			break;
-		case 7:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "TPD当前指令与下一指令起始点偏差过大");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "TPD the current instruction deviates too much from the starting point of the next instruction");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "TPD現在の命令は、次の命令の開始点から過大にずれている");
-			}
-			if (pre_state->cmdPointError != 7) {
-				my_syslog("错误", "TPD当前指令与下一指令起始点偏差过大", cur_account.username);
-				my_en_syslog("error", "TPD the current instruction deviates too much from the starting point of the next instruction", cur_account.username);
-				my_jap_syslog("さくご", "TPD現在の命令は、次の命令の開始点から過大にずれている", cur_account.username);
-				pre_state->cmdPointError = 7;
-			}
-			break;
-		case 8:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "PTP关节指令超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "PTP joint instruction out of limit");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "ptp関節コマンドオーバー");
-			}
-			if (pre_state->cmdPointError != 8) {
-				my_syslog("错误", "PTP关节指令超限", cur_account.username);
-				my_en_syslog("error", "PTP joint instruction out of limit", cur_account.username);
-				my_jap_syslog("さくご", "ptp関節コマンドオーバー", cur_account.username);
-				pre_state->cmdPointError = 8;
-			}
-			break;
-		case 9:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "TPD关节指令超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "TPD joint instruction out of limit");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "tpd関節コマンドオーバー");
-			}
-			if (pre_state->cmdPointError != 9) {
-				my_syslog("错误", "TPD关节指令超限", cur_account.username);
-				my_en_syslog("error", "TPD joint instruction out of limit", cur_account.username);
-				my_jap_syslog("さくご", "tpd関節コマンドオーバー", cur_account.username);
-				pre_state->cmdPointError = 9;
-			}
-			break;
-		case 10:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "LIN/ARC offering joint command out of limit");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "LIN/ARC関節指令を出してオーバーランさせる");
-			}
-			if (pre_state->cmdPointError != 10) {
-				my_syslog("错误", "LIN/ARC下发关节指令超限", cur_account.username);
-				my_en_syslog("error", "LIN/ARC offering joint command out of limit", cur_account.username);
-				my_jap_syslog("さくご", "LIN/ARC関節指令を出してオーバーランさせる", cur_account.username);
-				pre_state->cmdPointError = 10;
-			}
-			break;
-		case 11:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Overspeed command in Cartesian space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "デカルト空間内ではスピードの出しすぎを指示する");
-			}
-			if (pre_state->cmdPointError != 11) {
-				my_syslog("错误", "笛卡尔空间内指令超速", cur_account.username);
-				my_en_syslog("error", "Overspeed command in Cartesian space", cur_account.username);
-				my_jap_syslog("さくご", "デカルト空間内ではスピードの出しすぎを指示する", cur_account.username);
-				pre_state->cmdPointError = 11;
-			}
-			break;
-		case 12:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Excessive torque command in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "関節空間内トルク指令オーバー");
-			}
-			if (pre_state->cmdPointError != 12) {
-				my_syslog("错误", "关节空间内扭矩指令超限", cur_account.username);
-				my_en_syslog("error", "Excessive torque command in joint space", cur_account.username);
-				my_jap_syslog("さくご", "関節空間内トルク指令オーバー", cur_account.username);
-				pre_state->cmdPointError = 12;
-			}
-			break;
-		case 13:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point, which can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して、リセットすることができます");
-			}
-			if (pre_state->cmdPointError != 13) {
-				my_syslog("错误", "下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点，可复位", cur_account.username);
-				my_en_syslog("error", "Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point, which can be reset", cur_account.username);
-				my_jap_syslog("さくご", "次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して、リセットすることができます", cur_account.username);
-				pre_state->cmdPointError = 13;
-			}
-			break;
-		case 14:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Singular pose exists in the current command, please use PTP command or change the current command point, which can be reset");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。");
-			}
-			if (pre_state->cmdPointError != 14) {
-				my_syslog("错误", "当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点，可复位", cur_account.username);
-				my_en_syslog("error", "Singular pose exists in the current command, please use PTP command or change the current command point, which can be reset", cur_account.username);
-				my_jap_syslog("さくご", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。", cur_account.username);
-				pre_state->cmdPointError = 14;
-			}
-			break;
-		case 15:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "JOG joint instruction out of limit");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "JOG関節コマンドオーバー");
-			}
-			if (pre_state->cmdPointError != 15) {
-				my_syslog("错误", "JOG关节指令超限", cur_account.username);
-				my_en_syslog("error", "JOG joint instruction out of limit", cur_account.username);
-				my_jap_syslog("さくご", "JOG関節コマンドオーバー", cur_account.username);
-				pre_state->cmdPointError = 15;
-			}
-			break;
-		case 16:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴1关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 1 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸1関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 16) {
-				my_syslog("错误", "轴1关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 1 joint overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸1関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 16;
-			}
-			break;
-		case 17:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴2关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 2 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸2関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 17) {
-				my_syslog("错误", "轴2关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 2 overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸2関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 17;
-			}
-			break;
-		case 18:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴3关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 3 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸3関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 18) {
-				my_syslog("错误", "轴3关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 3 overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸3関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 18;
-			}
-			break;
-		case 19:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴4关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 4 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸4関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 19) {
-				my_syslog("错误", "轴4关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 4 overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸4関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 19;
-			}
-			break;
-		case 20:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴5关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 5 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸5関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 20) {
-				my_syslog("错误", "轴5关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 5 overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸5関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 20;
-			}
-			break;
-		case 21:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Axis 6 overrun command velocity in joint space");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "軸6関節空間内指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 21) {
-				my_syslog("错误", "轴6关节空间内指令速度超限", cur_account.username);
-				my_en_syslog("error", "Axis 6 overrun command velocity in joint space", cur_account.username);
-				my_jap_syslog("さくご", "軸6関節空間内指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 21;
-			}
-			break;
-		case 22:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "内外部工具切换错误");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Error switching internal and external tools");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "内部ツールと外部ツールの切り替えエラー");
-			}
-			if (pre_state->cmdPointError != 22) {
-				my_syslog("错误", "内外部工具切换错误", cur_account.username);
-				my_en_syslog("error", "Error switching internal and external tools", cur_account.username);
-				my_jap_syslog("さくご", "内部ツールと外部ツールの切り替えエラー", cur_account.username);
-				pre_state->cmdPointError = 22;
-			}
-			break;
-		case 23:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "焊接指令错误，起收弧间只允许LIN和ARC指令");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between starting and closing arcs");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "はんだ付けコマンドが間違っていて、linとarcコマンドだけがアーク間で許可されています");
-			}
-			if (pre_state->cmdPointError != 23) {
-				my_syslog("错误", "焊接指令错误，起收弧间只允许LIN和ARC指令", cur_account.username);
-				my_en_syslog("error", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between starting and closing arcs", cur_account.username);
-				my_jap_syslog("さくご", "はんだ付けコマンドが間違っていて、linとarcコマンドだけがアーク間で許可されています", cur_account.username);
-				pre_state->cmdPointError = 23;
-			}
-			break;
-		case 24:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "摆焊参数错误");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Swing welding parameter error");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "振り子溶接パラメータが間違っている");
-			}
-			if (pre_state->cmdPointError != 24) {
-				my_syslog("错误", "摆焊参数错误", cur_account.username);
-				my_en_syslog("error", "Swing welding parameter error", cur_account.username);
-				my_jap_syslog("さくご", "振り子溶接パラメータが間違っている", cur_account.username);
-				pre_state->cmdPointError = 24;
-			}
-			break;
-		case 25:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "圆弧指令点间距过小");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "The distance between arc instruction points is too small");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "円弧コマンド点の間隔が小さすぎる");
-			}
-			if (pre_state->cmdPointError != 25) {
-				my_syslog("错误", "圆弧指令点间距过小", cur_account.username);
-				my_en_syslog("error", "The distance between arc instruction points is too small", cur_account.username);
-				my_jap_syslog("さくご", "円弧コマンド点の間隔が小さすぎる", cur_account.username);
-				pre_state->cmdPointError = 25;
-			}
-			break;
-		case 26:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "激光传感器指令偏差过大");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction deviation is too large");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "レーザーセンサーの指令偏差が大きすぎる");
-			}
-			if (pre_state->cmdPointError != 26) {
-				my_syslog("错误", "激光传感器指令偏差过大", cur_account.username);
-				my_en_syslog("error", "Laser sensor instruction deviation is too large", cur_account.username);
-				my_jap_syslog("さくご", "レーザーセンサーの指令偏差が大きすぎる", cur_account.username);
-				pre_state->cmdPointError = 26;
-			}
-			break;
-		case 27:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "激光传感器指令中断, 焊缝跟踪提前结束");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction is interrupted, weld tracking ends prematurely");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "レーザーセンサは中断され、溶接部の追跡は早期に終了します");
-			}
-			if (pre_state->cmdPointError != 27) {
-				my_syslog("错误", "激光传感器指令中断, 焊缝跟踪提前结束", cur_account.username);
-				my_en_syslog("error", "Laser sensor instruction is interrupted, weld tracking ends prematurely", cur_account.username);
-				my_jap_syslog("さくご", "レーザーセンサは中断され、溶接部の追跡は早期に終了します", cur_account.username);
-				pre_state->cmdPointError = 27;
-			}
-			break;
-		case 28:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "外部轴指令速度超限");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "External shaft instruction speed over limit");
-			}
-			if (language == 2) {
-					cJSON_AddStringToObject(error_json, "key", "外部軸指令速度オーバー");
-			}
-			if (pre_state->cmdPointError != 28) {
-				my_syslog("错误", "外部轴指令速度超限", cur_account.username);
-				my_en_syslog("error", "External shaft instruction speed over limit", cur_account.username);
-				my_jap_syslog("さくご", "外部軸指令速度オーバー", cur_account.username);
-				pre_state->cmdPointError = 28;
-			}
-			break;
-		case 29:
-			if (language == 0) { 
-				cJSON_AddStringToObject(error_json, "key", "传送带跟踪-起始点与参考点姿态变化过大");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Belt tracking - starting point and reference point attitude change too much");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている");
-			}
-			if (pre_state->cmdPointError != 29) {
-				my_syslog("错误", "传送带跟踪-起始点与参考点姿态变化过大", cur_account.username);
-				my_en_syslog("error", "Belt tracking - starting point and reference point attitude change too much", cur_account.username);
-				my_jap_syslog("さくご", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている", cur_account.username);
-				pre_state->cmdPointError = 29;
-			}
-			break;
-		case 30:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります");
-			}
-			if (pre_state->cmdPointError != 30) {
-				my_syslog("错误", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启", cur_account.username);
-				my_en_syslog("error", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart", cur_account.username);
-				my_jap_syslog("さくご", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります", cur_account.username);
-				pre_state->cmdPointError = 30;
-			}
-			break;
-		case 31:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-X方向超过最大调整距离，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "定力制御-X方向に最大調整距離を超え、リセット可能");
-			}
-			if (pre_state->cmdPointError != 31) {
-				my_syslog("错误", "恒力控制-X方向超过最大调整距离，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "定力制御-X方向に最大調整距離を超え、リセット可能", cur_account.username);
-				pre_state->cmdPointError = 31;
-			}
-			break;
-		case 32:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-Y方向超过最大调整距离，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "定力制御-Y方向が最大調整距離を超えてリセット可能");
-			}
-			if (pre_state->cmdPointError != 32) {
-				my_syslog("错误", "恒力控制-Y方向超过最大调整距离，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "定力制御-Y方向が最大調整距離を超えてリセット可能", cur_account.username);
-				pre_state->cmdPointError = 32;
-			}
-			break;
-		case 33:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-Z方向超过最大调整距离，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "定力制御-Z方向最大調整距離を超えてリセット可能");
-			}
-			if (pre_state->cmdPointError != 33) {
-				my_syslog("错误", "恒力控制-Z方向超过最大调整距离，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "定力制御-Z方向最大調整距離を超えてリセット可能", cur_account.username);
-				pre_state->cmdPointError = 33;
-			}
-			break;
-		case 34:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-RX方向超过最大调整角度，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "定力制御-RX方向を最大調整角度以上、リセット可能");
-			}
-			if (pre_state->cmdPointError != 34) {
-				my_syslog("错误", "恒力控制-RX方向超过最大调整角度，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "定力制御-RX方向を最大調整角度以上、リセット可能", cur_account.username);
-				pre_state->cmdPointError = 34;
-			}
-			break;
-		case 35:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-RY方向超过最大调整角度，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "力制御-RY方向が最大調整角度を超えてリセット可能");
-			}
-			if (pre_state->cmdPointError != 35) {
-				my_syslog("错误", "恒力控制-RY方向超过最大调整角度，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "力制御-RY方向が最大調整角度を超えてリセット可能", cur_account.username);
-				pre_state->cmdPointError = 35;
-			}
-			break;
-		case 36:
-			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "恒力控制-RZ方向超过最大调整角度，可复位");
-			}
-			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset");
-			}
-			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "定力制御-RZ方向最大調整角度を超えてリセット可能");
-			}
-			if (pre_state->cmdPointError != 36) {
-				my_syslog("错误", "恒力控制-RZ方向超过最大调整角度，可复位", cur_account.username);
-				my_en_syslog("error", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
-				my_jap_syslog("さくご", "定力制御-RZ方向最大調整角度を超えてリセット可能", cur_account.username);
-				pre_state->cmdPointError = 36;
-			}
-			break;
-		case 37:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "整圆中间点1错误（包括工具不符），可复位");
 			}
@@ -1669,14 +1142,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 				cJSON_AddStringToObject(error_json, "key", "全円中間点1エラー(工具が合わないことを含む),リセット可能");
 			}
-			if (pre_state->cmdPointError != 37) {
+			if (pre_state->cmdPointError != 6) {
 				my_syslog("错误", "整圆中间点1错误（包括工具不符），可复位", cur_account.username);
 				my_en_syslog("error", "Full circle midpoint 1 error (including tool mismatch), resettable", cur_account.username);
 				my_jap_syslog("さくご", "全円中間点1エラー(工具が合わないことを含む),リセット可能", cur_account.username);
-				pre_state->cmdPointError = 37;
+				pre_state->cmdPointError = 6;
 			}
 			break;
-		case 38:
+		case 7:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "整圆中间点2错误（包括工具不符），可复位");
 			}
@@ -1686,14 +1159,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 				cJSON_AddStringToObject(error_json, "key", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能");
 			}
-			if (pre_state->cmdPointError != 38) {
+			if (pre_state->cmdPointError != 7) {
 				my_syslog("错误", "整圆中间点2错误（包括工具不符），可复位", cur_account.username);
 				my_en_syslog("error", "Full circle midpoint 2 error (including tool mismatch), resettable", cur_account.username);
 				my_jap_syslog("さくご", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
-				pre_state->cmdPointError = 38;
+				pre_state->cmdPointError = 7;
 			}
 			break;
-		case 39:
+		case 8:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "整圆中间点3错误（包括工具不符），可复位");
 			}
@@ -1703,14 +1176,14 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 				cJSON_AddStringToObject(error_json, "key", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能");
 			}
-			if (pre_state->cmdPointError != 39) {
+			if (pre_state->cmdPointError != 8) {
 				my_syslog("错误", "整圆中间点3错误（包括工具不符），可复位", cur_account.username);
 				my_en_syslog("error", "Full circle midpoint 3 error (including tool mismatch), resettable", cur_account.username);
 				my_jap_syslog("さくご", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
-				pre_state->cmdPointError = 39;
+				pre_state->cmdPointError = 8;
 			}
 			break;
-		case 40:
+		case 9:
 			if (language == 0) {
 				cJSON_AddStringToObject(error_json, "key", "整圆指令点间距过小，可复位");
 			}
@@ -1720,11 +1193,555 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			if (language == 2) {
 				cJSON_AddStringToObject(error_json, "key", "全円コマンドピッチが小さすぎるのでリセット可能");
 			}
-			if (pre_state->cmdPointError != 40) {
+			if (pre_state->cmdPointError != 9) {
 				my_syslog("错误", "整圆指令点间距过小，可复位", cur_account.username);
 				my_en_syslog("error", "The command point spacing of the whole circle is too small, which can be reset", cur_account.username);
 				my_jap_syslog("さくご", "全円コマンドピッチが小さすぎるのでリセット可能", cur_account.username);
-				pre_state->cmdPointError = 40;
+				pre_state->cmdPointError = 9;
+			}
+			break;
+		case 10:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "TPD指令点错误，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "TPD point error, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "TPD指令点エラー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 10) {
+				my_syslog("错误", "TPD指令点错误，可复位", cur_account.username);
+				my_en_syslog("error", "TPD point error, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "TPD指令点エラー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 10;
+			}
+			break;
+		case 11:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "TPD指令工具与当前工具不符, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "TPD instruction tool does not match the current tool, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "TPDコマンドツールは、現在のツールと一致しません, リセット可能");
+			}
+			if (pre_state->cmdPointError != 11) {
+				my_syslog("错误", "TPD指令工具与当前工具不符, 可复位", cur_account.username);
+				my_en_syslog("error", "TPD instruction tool does not match the current tool, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "TPDコマンドツールは、現在のツールと一致しません, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 11;
+			}
+			break;
+		case 12:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "TPD当前指令与下一指令起始点偏差过大, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "TPD the current instruction deviates too much from the starting point of the next instruction, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "TPD現在の命令は、次の命令の開始点から過大にずれている, リセット可能");
+			}
+			if (pre_state->cmdPointError != 12) {
+				my_syslog("错误", "TPD当前指令与下一指令起始点偏差过大, 可复位", cur_account.username);
+				my_en_syslog("error", "TPD the current instruction deviates too much from the starting point of the next instruction, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "TPD現在の命令は、次の命令の開始点から過大にずれている, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 12;
+			}
+			break;
+		case 13:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "内外部工具切换错误, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Error switching internal and external tools, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "内部ツールと外部ツールの切り替えエラー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 13) {
+				my_syslog("错误", "内外部工具切换错误, 可复位", cur_account.username);
+				my_en_syslog("error", "Error switching internal and external tools, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "内部ツールと外部ツールの切り替えエラー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 13;
+			}
+			break;
+		case 17:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "PTP关节指令超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "PTP joint instruction out of limit, can be reset");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "ptp関節コマンドオーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 17) {
+				my_syslog("错误", "PTP关节指令超限, 可复位", cur_account.username);
+				my_en_syslog("error", "PTP joint instruction out of limit, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "ptp関節コマンドオーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 17;
+			}
+			break;
+		case 18:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "TPD关节指令超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "TPD joint instruction out of limit, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "tpd関節コマンドオーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 18) {
+				my_syslog("错误", "TPD关节指令超限, 可复位", cur_account.username);
+				my_en_syslog("error", "TPD joint instruction out of limit, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "tpd関節コマンドオーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 18;
+			}
+			break;
+		case 19:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "LIN/ARC下发关节指令超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "LIN/ARC offering joint command out of limit, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "LIN/ARC関節指令を出してオーバーランさせる, リセット可能");
+			}
+			if (pre_state->cmdPointError != 19) {
+				my_syslog("错误", "LIN/ARC下发关节指令超限, 可复位", cur_account.username);
+				my_en_syslog("error", "LIN/ARC offering joint command out of limit, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "LIN/ARC関節指令を出してオーバーランさせる, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 19;
+			}
+			break;
+		case 20:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "笛卡尔空间内指令超速, 不可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Overspeed command in Cartesian space, do not reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "デカルト空間内ではスピードの出しすぎを指示する, リセット不可");
+			}
+			if (pre_state->cmdPointError != 20) {
+				my_syslog("错误", "笛卡尔空间内指令超速, 不可复位", cur_account.username);
+				my_en_syslog("error", "Overspeed command in Cartesian space, do not reset", cur_account.username);
+				my_jap_syslog("さくご", "デカルト空間内ではスピードの出しすぎを指示する, リセット不可", cur_account.username);
+				pre_state->cmdPointError = 20;
+			}
+			break;
+		case 21:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "关节空间内扭矩指令超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Excessive torque command in joint space, can be reset");
+			}
+			if (language == 2) {
+					cJSON_AddStringToObject(error_json, "key", "関節空間内トルク指令オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 21) {
+				my_syslog("错误", "关节空间内扭矩指令超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Excessive torque command in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "関節空間内トルク指令オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 21;
+			}
+			break;
+		case 22:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "JOG关节指令超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "JOG joint instruction out of limit, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "JOG関節コマンドオーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 22) {
+				my_syslog("错误", "JOG关节指令超限, 可复位", cur_account.username);
+				my_en_syslog("error", "JOG joint instruction out of limit, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "JOG関節コマンドオーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 22;
+			}
+			break;
+		case 23:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴1关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 1 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸1関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 23) {
+				my_syslog("错误", "轴1关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 1 joint overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸1関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 23;
+			}
+			break;
+		case 24:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴2关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 2 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸2関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 24) {
+				my_syslog("错误", "轴2关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 2 overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸2関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 24;
+			}
+			break;
+		case 25:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴3关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 3 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸3関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 25) {
+				my_syslog("错误", "轴3关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 3 overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸3関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 25;
+			}
+			break;
+		case 26:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴4关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 4 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸4関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 26) {
+				my_syslog("错误", "轴4关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 4 overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸4関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 26;
+			}
+			break;
+		case 27:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴5关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 5 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸5関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 27) {
+				my_syslog("错误", "轴5关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 5 overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸5関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 27;
+			}
+			break;
+		case 28:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "轴6关节空间内指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Axis 6 overrun command velocity in joint space, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "軸6関節空間内指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 28) {
+				my_syslog("错误", "轴6关节空间内指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "Axis 6 overrun command velocity in joint space, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "軸6関節空間内指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 28;
+			}
+			break;
+		case 33:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "下一指令关节配置发生变化 (下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点)，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The next instruction changes the joint configuration (Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point), which can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "次の指令関節の配置が変わる (次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して)、リセットすることができます");
+			}
+			if (pre_state->cmdPointError != 33) {
+				my_syslog("错误", "下一指令关节配置发生变化 (下一指令中存在奇异位姿，请使用 PTP 指令或更改下一指令点)，可复位", cur_account.username);
+				my_en_syslog("error", "The next instruction changes the joint configuration (Singularity pose exists in the next instruction, please use PTP instruction or change the next instruction point), which can be reset", cur_account.username);
+				my_jap_syslog("さくご", "次の指令関節の配置が変わる (次のコマンドの中で奇妙な姿勢が存在して、PTPコマンドを使用してくださいまたは次のコマンドポイントを変更して)、リセットすることができます", cur_account.username);
+				pre_state->cmdPointError = 33;
+			}
+			break;
+		case 34:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "当前指令关节配置发生变化 （当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点），可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The current command joint configuration has changed (singular pose exists in the current command, please use PTP command or change the current command point), which can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。");
+			}
+			if (pre_state->cmdPointError != 34) {
+				my_syslog("错误", "当前指令关节配置发生变化 （当前指令中存在奇异位姿，请使用 PTP 指令或更改当前指令点），可复位", cur_account.username);
+				my_en_syslog("error", "The current command joint configuration has changed (singular pose exists in the current command, please use PTP command or change the current command point), which can be reset", cur_account.username);
+				my_jap_syslog("さくご", "現在のコマンドに特異な姿勢が存在する場合は、PTPコマンドを使用するか、現在のコマンドポイントを変更してリセット可能にしてください。", cur_account.username);
+				pre_state->cmdPointError = 34;
+			}
+			break;
+		case 49:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "焊接指令错误，ARCSTART 和 ARCEND 之间只允许 LIN 和 ARC 指令, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between ARCSTART and ARCEND, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ハンダ付け命令が間違っていて、ARCSTARTとARCENDの間でLINとARC命令しか許されない, リセット可能");
+			}
+			if (pre_state->cmdPointError != 49) {
+				my_syslog("错误", "焊接指令错误，ARCSTART 和 ARCEND 之间只允许 LIN 和 ARC 指令, 可复位", cur_account.username);
+				my_en_syslog("error", "Incorrect welding instruction. Only LIN and ARC instructions are allowed between ARCSTART and ARCEND, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "ハンダ付け命令が間違っていて、ARCSTARTとARCENDの間でLINとARC命令しか許されない, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 49;
+			}
+			break;
+		case 50:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "焊接指令错误， WEAVESTART 和 WEAVEEND 之间只允许 LIN 指令, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Incorrect welding instruction. Only LIN instructions are allowed between WEAVESTART and WEAVEEND, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ハンダ付け命令が間違っていて、WEAVESTARTとWEAVEENDの間でLIN命令しか許されない, リセット可能");
+			}
+			if (pre_state->cmdPointError != 50) {
+				my_syslog("错误", "焊接指令错误，WEAVESTART 和 WEAVEEND 之间只允许 LIN 指令, 可复位", cur_account.username);
+				my_en_syslog("error", "Incorrect welding instruction. Only LIN instructions are allowed between WEAVESTART and WEAVEEND, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "ハンダ付け命令が間違っていて、WEAVESTARTとWEAVEENDの間でLIN命令しか許されない, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 50;
+			}
+			break;
+		case 51:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "摆焊参数错误, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Swing welding parameter error, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "振り子溶接パラメータが間違っている, リセット可能");
+			}
+			if (pre_state->cmdPointError != 51) {
+				my_syslog("错误", "摆焊参数错误, 可复位", cur_account.username);
+				my_en_syslog("error", "Swing welding parameter error, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "振り子溶接パラメータが間違っている, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 51;
+			}
+			break;
+		case 65:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "激光传感器指令偏差过大, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction deviation is too large, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "レーザーセンサーの指令偏差が大きすぎる, リセット可能");
+			}
+			if (pre_state->cmdPointError != 65) {
+				my_syslog("错误", "激光传感器指令偏差过大, 可复位", cur_account.username);
+				my_en_syslog("error", "Laser sensor instruction deviation is too large, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "レーザーセンサーの指令偏差が大きすぎる, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 65;
+			}
+			break;
+		case 66:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "激光传感器指令中断, 焊缝跟踪提前结束, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Laser sensor instruction is interrupted, weld tracking ends prematurely, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "レーザーセンサは中断され、溶接部の追跡は早期に終了します, リセット可能");
+			}
+			if (pre_state->cmdPointError != 66) {
+				my_syslog("错误", "激光传感器指令中断, 焊缝跟踪提前结束, 可复位", cur_account.username);
+				my_en_syslog("error", "Laser sensor instruction is interrupted, weld tracking ends prematurely, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "レーザーセンサは中断され、溶接部の追跡は早期に終了します, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 66;
+			}
+			break;
+		case 81:
+			if (language == 0) { 
+				cJSON_AddStringToObject(error_json, "key", "外部轴指令速度超限, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "External shaft instruction speed over limit, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "外部軸指令速度オーバー, リセット可能");
+			}
+			if (pre_state->cmdPointError != 81) {
+				my_syslog("错误", "外部轴指令速度超限, 可复位", cur_account.username);
+				my_en_syslog("error", "External shaft instruction speed over limit, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "外部軸指令速度オーバー, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 81;
+			}
+			break;
+		case 82:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります");
+			}
+			if (pre_state->cmdPointError != 82) {
+				my_syslog("错误", "外部轴指令与反馈偏差过大，不可复位，需要回零或重启", cur_account.username);
+				my_en_syslog("error", "The deviation between the external axis instruction and the feedback is too large, which cannot be reset. It needs to be reset to zero or restart", cur_account.username);
+				my_jap_syslog("さくご", "外部軸指令とフィードバックのずれが大きすぎてリセットできないので、ゼロに戻すかリセットする必要があります", cur_account.username);
+				pre_state->cmdPointError = 82;
+			}
+			break;
+		case 97:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "传送带跟踪-起始点与参考点姿态变化过大, 可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Belt tracking - starting point and reference point attitude change too much, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている, リセット可能");
+			}
+			if (pre_state->cmdPointError != 97) {
+				my_syslog("错误", "传送带跟踪-起始点与参考点姿态变化过大, 可复位", cur_account.username);
+				my_en_syslog("error", "Belt tracking - starting point and reference point attitude change too much, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "ベルトコンベヤー追跡-開始点と基準点の姿勢が変化しすぎている, リセット可能", cur_account.username);
+				pre_state->cmdPointError = 97;
+			}
+			break;
+		case 113:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-X方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-X方向に最大調整距離を超え、リセット可能");
+			}
+			if (pre_state->cmdPointError != 113) {
+				my_syslog("错误", "恒力控制-X方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -X direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-X方向に最大調整距離を超え、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 113;
+			}
+			break;
+		case 114:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-Y方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-Y方向が最大調整距離を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 114) {
+				my_syslog("错误", "恒力控制-Y方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -Y direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-Y方向が最大調整距離を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 114;
+			}
+			break;
+		case 115:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-Z方向超过最大调整距离，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-Z方向最大調整距離を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 115) {
+				my_syslog("错误", "恒力控制-Z方向超过最大调整距离，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -Z direction exceeds the maximum adjustment distance, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-Z方向最大調整距離を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 115;
+			}
+			break;
+		case 116:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RX方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-RX方向を最大調整角度以上、リセット可能");
+			}
+			if (pre_state->cmdPointError != 116) {
+				my_syslog("错误", "恒力控制-RX方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RX direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-RX方向を最大調整角度以上、リセット可能", cur_account.username);
+				pre_state->cmdPointError = 116;
+			}
+			break;
+		case 117:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RY方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "力制御-RY方向が最大調整角度を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 117) {
+				my_syslog("错误", "恒力控制-RY方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RY direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "力制御-RY方向が最大調整角度を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 117;
+			}
+			break;
+		case 118:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "恒力控制-RZ方向超过最大调整角度，可复位");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "定力制御-RZ方向最大調整角度を超えてリセット可能");
+			}
+			if (pre_state->cmdPointError != 118) {
+				my_syslog("错误", "恒力控制-RZ方向超过最大调整角度，可复位", cur_account.username);
+				my_en_syslog("error", "Constant force control -RZ direction exceeds the maximum adjustment Angle, can be reset", cur_account.username);
+				my_jap_syslog("さくご", "定力制御-RZ方向最大調整角度を超えてリセット可能", cur_account.username);
+				pre_state->cmdPointError = 118;
 			}
 			break;
 		default:

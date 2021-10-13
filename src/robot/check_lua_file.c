@@ -60,7 +60,7 @@ static int Circle(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 61) {
+	if (argc != 41) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;

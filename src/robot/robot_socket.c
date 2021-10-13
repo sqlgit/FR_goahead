@@ -522,6 +522,18 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 			continue;
 		}
+		// 没有账户登录时或者示教器（浏览器） 不存在时, 丢弃接收到的任务管理器指令反馈数据
+		printf("websGetSessionCount() = %d\n", websGetSessionCount());
+		if (websGetSessionCount() <= 0) {
+			if (atoi(array[2]) == 502) {//获取按钮盒 IO 状态
+				if (atoi(array[4]) == 3) {
+					socket_enquene(&socket_cmd, 101, "START", 0);
+				}
+			}
+			string_list_free(&array, size_package);
+
+			continue;
+		}
 		/* 遍历整个队列, 更改相关结点信息 */
 		/* 创建结点 */
 		QElemType node;
