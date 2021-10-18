@@ -71,7 +71,7 @@ static int clear_product_info(const cJSON *data_json);
 static int move_to_home_point(const cJSON *data_json);
 static int torque_generate_program(const cJSON *data_json);
 static int torque_save_custom_pause(const cJSON *data_json);
-static int modify_ip(const cJSON *data_json);
+static int modify_network(const cJSON *data_json);
 static int modify_customcfg(const cJSON *data_json);
 static int save_blockly_workspace(const cJSON *data_json);
 static int modify_PI_cfg(const cJSON *data_json);
@@ -1656,6 +1656,9 @@ static int move_to_home_point(const cJSON *data_json)
 	char *joint_value_ptr[6];
 	int i = 0;
 
+	for (i = 0; i < 6; i++) {
+		joint_value_ptr[i] = NULL;
+	}
 	ovl = cJSON_GetObjectItem(data_json, "ovl");
 	if (ovl == NULL) {
 		perror("json");
@@ -1663,7 +1666,7 @@ static int move_to_home_point(const cJSON *data_json)
 		return FAIL;
 	}
 	sprintf(sql, "select * from points;");
-	if(select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
+	if (select_info_json_sqlite3(DB_POINTS, sql, &f_json) == -1) {
 		perror("select ptp points");
 
 		return FAIL;
@@ -1967,28 +1970,49 @@ static int torque_save_custom_pause(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/* modify ip */
-static int modify_ip(const cJSON *data_json)
+/* modify network */
+static int modify_network(const cJSON *data_json)
 {
 	FILE *fp = NULL;
 	char strline[LEN_100] = {0};
 	char write_line[LEN_100] = {0};
 	char write_content[LEN_100*100] = {0};
+	cJSON *ip_json = NULL;
 	cJSON *ctrl_ip = NULL;
 	cJSON *user_ip = NULL;
 	cJSON *PI_ip = NULL;
+	cJSON *port_json = NULL;
+	cJSON *webapp_port = NULL;
 
-	ctrl_ip = cJSON_GetObjectItem(data_json, "ctrl_ip");
-	user_ip = cJSON_GetObjectItem(data_json, "user_ip");
-	PI_ip = cJSON_GetObjectItem(data_json, "PI_ip");
+	ip_json = cJSON_GetObjectItem(data_json, "ip");
+	if (ip_json == NULL || ip_json->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	ctrl_ip = cJSON_GetObjectItem(ip_json, "ctrl_ip");
+	user_ip = cJSON_GetObjectItem(ip_json, "user_ip");
+	PI_ip = cJSON_GetObjectItem(ip_json, "PI_ip");
 	if (ctrl_ip == NULL || ctrl_ip->valuestring == NULL || user_ip == NULL || user_ip->valuestring == NULL || PI_ip == NULL || PI_ip->valuestring == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-
 	if (strstr(ctrl_ip->valuestring, "192.168.57")) {
 		perror("ip set fail: same 192.168.57.XXX");
+
+		return FAIL;
+	}
+
+	port_json = cJSON_GetObjectItem(data_json, "port");
+	if (port_json == NULL || port_json->type != cJSON_Object) {
+		perror("json");
+
+		return FAIL;
+	}
+	webapp_port = cJSON_GetObjectItem(port_json, "webapp_port");
+	if (webapp_port == NULL || webapp_port->valuestring == NULL) {
+		perror("json");
 
 		return FAIL;
 	}
@@ -2004,6 +2028,8 @@ static int modify_ip(const cJSON *data_json)
 			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
 		} else if (strstr(strline, "PI_IP = ")) {
 			sprintf(write_line, "PI_IP = %s\n", PI_ip->valuestring);
+		} else if (strstr(strline, "WebAPP_Port = ")) {
+			sprintf(write_line, "WebAPP_Port = %s\n", webapp_port->valuestring);
 		} else {
 			strcpy(write_line, strline);
 		}
@@ -2076,8 +2102,8 @@ static int modify_customcfg(const cJSON *data_json)
 			sprintf(write_line, "CTRL_IP = %s\n", ctrl_ip->valuestring);
 		} else if (strstr(strline, "PI_IP = ")) {
 			sprintf(write_line, "PI_IP = %s\n", PI_ip->valuestring);
-		} else if (strstr(strline, "Custom_Port = ")) {
-			sprintf(write_line, "Custom_Port = %s\n", port->valuestring);
+		} else if (strstr(strline, "CTRL_Port = ")) {
+			sprintf(write_line, "CTRL_Port = %s\n", port->valuestring);
 		} else if (strstr(strline, "Protocol_Type = ")) {
 			sprintf(write_line, "Protocol_Type = %s\n", type->valuestring);
 		} else {
@@ -2321,7 +2347,7 @@ void act(Webs *wp)
 	//printf("cmd = %s\n", cmd);
 
 	// cmd_auth "0"
-	if (!strcmp(cmd, "set_sys_logcount") || !strcmp(cmd, "set_sys_lifespan") || !strcmp(cmd, "set_sys_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_ip") || !strcmp(cmd, "modify_customcfg") || !strcmp(cmd, "modify_PI_cfg") || !strcmp(cmd, "robottype_password")) {
+	if (!strcmp(cmd, "set_sys_logcount") || !strcmp(cmd, "set_sys_lifespan") || !strcmp(cmd, "set_sys_language") || !strcmp(cmd, "set_ODM_cfg") || !strcmp(cmd, "save_accounts") || !strcmp(cmd, "shutdown") || !strcmp(cmd, "factory_reset") || !strcmp(cmd, "odm_password") || !strcmp(cmd, "save_robot_type") || !strcmp(cmd, "modify_network") || !strcmp(cmd, "modify_customcfg") || !strcmp(cmd, "modify_PI_cfg") || !strcmp(cmd, "robottype_password")) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 
@@ -2531,11 +2557,11 @@ void act(Webs *wp)
 		strcpy(log_content, "扭矩: 保存自定义提示内容");
 		strcpy(en_log_content, "torque: Save the custom prompt content");
 		strcpy(jap_log_content, "トルク: カスタマイズのヒントを保存する");
-	} else if (!strcmp(cmd, "modify_ip")) {
-		ret = modify_ip(data_json);
-		strcpy(log_content, "修改控制器 IP 地址");
-		strcpy(en_log_content, "Change the CONTROLLER IP address");
-		strcpy(jap_log_content, "コントローラのIPアドレスを変更");
+	} else if (!strcmp(cmd, "modify_network")) {
+		ret = modify_network(data_json);
+		strcpy(log_content, "修改网络配置");
+		strcpy(en_log_content, "Modifying Network Configurations");
+		strcpy(jap_log_content, "ネットワーク構成を変更する");
 	} else if (!strcmp(cmd, "modify_customcfg")) {
 		ret = modify_customcfg(data_json);
 		strcpy(log_content, "修改客户配置");

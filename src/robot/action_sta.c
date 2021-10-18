@@ -1134,69 +1134,69 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			break;
 		case 6:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "整圆中间点1错误（包括工具不符），可复位");
+				cJSON_AddStringToObject(error_json, "key", "整圆/螺旋线指令中间点1错误（包括工具不符），可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 1 error (including tool mismatch), resettable");
+				cJSON_AddStringToObject(error_json, "key", "Full circle/helix instruction midpoint 1 error (including tool mismatch), resettable");
 			}
 			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "全円中間点1エラー(工具が合わないことを含む),リセット可能");
+				cJSON_AddStringToObject(error_json, "key", "全円/螺旋線指令中間点1エラー(工具が合わないことを含む),リセット可能");
 			}
 			if (pre_state->cmdPointError != 6) {
-				my_syslog("错误", "整圆中间点1错误（包括工具不符），可复位", cur_account.username);
-				my_en_syslog("error", "Full circle midpoint 1 error (including tool mismatch), resettable", cur_account.username);
-				my_jap_syslog("さくご", "全円中間点1エラー(工具が合わないことを含む),リセット可能", cur_account.username);
+				my_syslog("错误", "整圆/螺旋线指令中间点1错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle/helix instruction midpoint 1 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円/螺旋線指令中間点1エラー(工具が合わないことを含む),リセット可能", cur_account.username);
 				pre_state->cmdPointError = 6;
 			}
 			break;
 		case 7:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "整圆中间点2错误（包括工具不符），可复位");
+				cJSON_AddStringToObject(error_json, "key", "整圆/螺旋线指令中间点2错误（包括工具不符），可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 2 error (including tool mismatch), resettable");
+				cJSON_AddStringToObject(error_json, "key", "Full circle/helix instruction midpoint 2 error (including tool mismatch), resettable");
 			}
 			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能");
+				cJSON_AddStringToObject(error_json, "key", "全円/螺旋線指令中間点2エラー(工具が合わないことを含む),リセット可能");
 			}
 			if (pre_state->cmdPointError != 7) {
-				my_syslog("错误", "整圆中间点2错误（包括工具不符），可复位", cur_account.username);
-				my_en_syslog("error", "Full circle midpoint 2 error (including tool mismatch), resettable", cur_account.username);
-				my_jap_syslog("さくご", "全円の中間点2エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
+				my_syslog("错误", "整圆/螺旋线指令中间点2错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle/helix instruction midpoint 2 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円/螺旋線指令中間点2エラー(工具が合わないことを含む),リセット可能", cur_account.username);
 				pre_state->cmdPointError = 7;
 			}
 			break;
 		case 8:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "整圆中间点3错误（包括工具不符），可复位");
+				cJSON_AddStringToObject(error_json, "key", "整圆/螺旋线指令中间点3错误（包括工具不符），可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "Full circle midpoint 3 error (including tool mismatch), resettable");
+				cJSON_AddStringToObject(error_json, "key", "Full circle/helix instruction midpoint 3 error (including tool mismatch), resettable");
 			}
 			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能");
+				cJSON_AddStringToObject(error_json, "key", "全円/螺旋線指令中間点3エラー(工具が合わないことを含む),リセット可能");
 			}
 			if (pre_state->cmdPointError != 8) {
-				my_syslog("错误", "整圆中间点3错误（包括工具不符），可复位", cur_account.username);
-				my_en_syslog("error", "Full circle midpoint 3 error (including tool mismatch), resettable", cur_account.username);
-				my_jap_syslog("さくご", "全円の中間点3エラー(工具が合わないことを含む)、リセット可能", cur_account.username);
+				my_syslog("错误", "整圆/螺旋线指令中间点3错误（包括工具不符），可复位", cur_account.username);
+				my_en_syslog("error", "Full circle/helix instruction midpoint 3 error (including tool mismatch), resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円/螺旋線指令中間点3エラー(工具が合わないことを含む),リセット可能", cur_account.username);
 				pre_state->cmdPointError = 8;
 			}
 			break;
 		case 9:
 			if (language == 0) {
-				cJSON_AddStringToObject(error_json, "key", "整圆指令点间距过小，可复位");
+				cJSON_AddStringToObject(error_json, "key", "整圆/螺旋线指令点间距过小，可复位");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(error_json, "key", "The command point spacing of the whole circle is too small, which can be reset");
+				cJSON_AddStringToObject(error_json, "key", "Full circle/helix command point spacing is too small, resettable");
 			}
 			if (language == 2) {
-				cJSON_AddStringToObject(error_json, "key", "全円コマンドピッチが小さすぎるのでリセット可能");
+				cJSON_AddStringToObject(error_json, "key", "全円/螺旋線コマンドピッチが小さすぎて、リセット可能");
 			}
 			if (pre_state->cmdPointError != 9) {
-				my_syslog("错误", "整圆指令点间距过小，可复位", cur_account.username);
-				my_en_syslog("error", "The command point spacing of the whole circle is too small, which can be reset", cur_account.username);
-				my_jap_syslog("さくご", "全円コマンドピッチが小さすぎるのでリセット可能", cur_account.username);
+				my_syslog("错误", "整圆/螺旋线指令点间距过小，可复位", cur_account.username);
+				my_en_syslog("error", "Full circle/helix command point spacing is too small, resettable", cur_account.username);
+				my_jap_syslog("さくご", "全円/螺旋線コマンドピッチが小さすぎて、リセット可能", cur_account.username);
 				pre_state->cmdPointError = 9;
 			}
 			break;

@@ -50,6 +50,7 @@
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
 #define FILE_SN "/root/web/file/SN/SN.txt"
 #define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
+#define FILE_GENGKU_POINT "/root/web/file/points/gengku_point.txt"
 #define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
 #define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"

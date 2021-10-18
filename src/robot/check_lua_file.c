@@ -66,6 +66,16 @@ static int Circle(lua_State* L)
 	return 1;
 }
 
+static int Spiral(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 44) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SplineCIRC(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1248,6 +1258,26 @@ static int PointsOffsetDisable(lua_State* L)
 	return 1;
 }
 
+static int GetPLCCustVar(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetPLCCustVar(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 3) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int pcall_lua(void *arg)
 {
 	int lua_pcall_result = 0;
@@ -1261,6 +1291,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "ExtAxisMoveJ", ExtAxisMoveJ);
 	lua_register(luaEnv, "MoveC", MoveC);
 	lua_register(luaEnv, "Circle", Circle);
+	lua_register(luaEnv, "Spiral", Spiral);
 	lua_register(luaEnv, "SplineCIRC", SplineCIRC);
 	lua_register(luaEnv, "MoveL", MoveL);
 	lua_register(luaEnv, "SplineLINE", SplineLINE);
@@ -1384,6 +1415,8 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetWObjOffset", GetWObjOffset);
 	lua_register(luaEnv, "PointsOffsetEnable", PointsOffsetEnable);
 	lua_register(luaEnv, "PointsOffsetDisable", PointsOffsetDisable);
+	lua_register(luaEnv, "GetPLCCustVar", GetPLCCustVar);
+	lua_register(luaEnv, "SetPLCCustVar", SetPLCCustVar);
 
 	//printf("lua_filename = %s\n", lua_filename);
 

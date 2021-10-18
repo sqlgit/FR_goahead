@@ -10,7 +10,6 @@
 #define FILE_PORT 8062
 #define STATE_FEEDBACK_PORT 8063
 #define TORQUE_PORT 8064
-#define UPPER_COMPUTER_PORT 2000
 #define PI_STATUS_PORT 8899
 #define PI_CMD_PORT 8898
 #define VIR_CMD_PORT 8070
@@ -167,6 +166,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   tpd_record_scale;		/** TPD记录进度百分比，0-100 */
 	double	   FT_data[6];				/** 力/扭矩传感器数据，Fx,Fy,Fz,Tx,Ty,Tz */
 	uint8_t	   FT_ActStatus;			/** 力/扭矩传感器激活状态， 0-复位，1-激活 */
+	int	   	   motion_done;				/** 运动完成信号， 0-未完成，1-完成 */
 } CTRL_STATE;
 #pragma pack(pop)
 
@@ -321,7 +321,7 @@ void *socket_pi_status_thread(void *arg);
 void *socket_pi_cmd_thread(void *arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 int check_pointhome_data(char *arr[]);
-int update_server_ip();
+int init_network();
 //int send_cmd_set_robot_type();
 
 #endif

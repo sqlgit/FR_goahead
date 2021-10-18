@@ -889,7 +889,7 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
 		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
-			argc_error_info(4, "Circle");
+			argc_error_info(3, "Circle");
 
 			goto end;
 		}
@@ -1066,6 +1066,132 @@ static int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, j1_3->valuestring, j2_3->valuestring, j3_3->valuestring, j4_3->valuestring, j5_3->valuestring, j6_3->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, toolnum_3->valuestring, workpiecenum_3->valuestring, speed_3->valuestring, acc_3->valuestring, E1_3->valuestring, E2_3->valuestring, E3_3->valuestring, E4_3->valuestring, cmd_array[3], end_ptr);
 		*/
 		sprintf(content, "%sCircle(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], end_ptr);
+		strcat(file_content, content);
+	/* Spiral */
+	} else if ((ptr = strstr(lua_cmd, "Spiral(")) && strrchr(lua_cmd, ')')) {
+		end_ptr = strrchr(lua_cmd, ')') + 1;
+		strncpy(head, lua_cmd, (ptr - lua_cmd));
+		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 6) {
+			perror("string to string list");
+			argc_error_info(6, "Spiral");
+
+			goto end;
+		}
+		if (cmd_array[0] == NULL) {
+
+			goto end;
+		}
+		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
+		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
+
+			goto end;
+		}
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		workpiecenum = cJSON_GetObjectItem(point_1, "workpiecenum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+		E1 = cJSON_GetObjectItem(point_1, "E1");
+		E2 = cJSON_GetObjectItem(point_1, "E2");
+		E3 = cJSON_GetObjectItem(point_1, "E3");
+		E4 = cJSON_GetObjectItem(point_1, "E4");
+		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL || E1->valuestring == NULL || E2->valuestring == NULL || E3->valuestring == NULL || E4->valuestring == NULL) {
+
+			goto end;
+		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[0], POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位，添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+		if (cmd_array[1] == NULL) {
+
+			goto end;
+		}
+		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
+		if (point_2 == NULL || point_2->type != cJSON_Object) {
+			database_error_info();
+
+			goto end;
+		}
+		j1_2 = cJSON_GetObjectItem(point_2, "j1");
+		j2_2 = cJSON_GetObjectItem(point_2, "j2");
+		j3_2 = cJSON_GetObjectItem(point_2, "j3");
+		j4_2 = cJSON_GetObjectItem(point_2, "j4");
+		j5_2 = cJSON_GetObjectItem(point_2, "j5");
+		j6_2 = cJSON_GetObjectItem(point_2, "j6");
+		x_2 = cJSON_GetObjectItem(point_2, "x");
+		y_2 = cJSON_GetObjectItem(point_2, "y");
+		z_2 = cJSON_GetObjectItem(point_2, "z");
+		rx_2 = cJSON_GetObjectItem(point_2, "rx");
+		ry_2 = cJSON_GetObjectItem(point_2, "ry");
+		rz_2 = cJSON_GetObjectItem(point_2, "rz");
+		toolnum_2 = cJSON_GetObjectItem(point_2, "toolnum");
+		workpiecenum_2 = cJSON_GetObjectItem(point_2, "workpiecenum");
+		speed_2 = cJSON_GetObjectItem(point_2, "speed");
+		acc_2 = cJSON_GetObjectItem(point_2, "acc");
+		E1_2 = cJSON_GetObjectItem(point_2, "E1");
+		E2_2 = cJSON_GetObjectItem(point_2, "E2");
+		E3_2 = cJSON_GetObjectItem(point_2, "E3");
+		E4_2 = cJSON_GetObjectItem(point_2, "E4");
+		if (j1_2 == NULL || j2_2 == NULL || j3_2 == NULL || j4_2 == NULL || j5_2 == NULL || j6_2 == NULL || x_2 == NULL || y_2 == NULL || z_2 == NULL || rx_2 == NULL || ry_2 == NULL || rz_2 == NULL || toolnum_2 == NULL || workpiecenum_2 == NULL || speed_2 == NULL || acc_2 == NULL || E1_2 == NULL || E2_2 == NULL || E3_2 == NULL || E4_2 == NULL || j1_2->valuestring == NULL || j2_2->valuestring == NULL || j3_2->valuestring == NULL || j4_2->valuestring == NULL || j5_2->valuestring == NULL || j6_2->valuestring == NULL || x_2->valuestring == NULL || y_2->valuestring == NULL || z_2->valuestring == NULL || rx_2->valuestring == NULL || ry_2->valuestring == NULL || rz_2->valuestring == NULL || toolnum_2->valuestring == NULL || workpiecenum_2->valuestring == NULL || speed_2->valuestring == NULL || acc_2->valuestring == NULL || E1_2->valuestring == NULL || E2_2->valuestring == NULL || E3_2->valuestring == NULL || E4_2->valuestring == NULL) {
+
+			goto end;
+		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[1], POINT_HOME) == 0) {
+			for (i = 0; i < 6; i++) {
+				memset(joint_value[i], 0, 10);
+			}
+			sprintf(joint_value[0], "%.1lf", atof(j1_2->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2_2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3_2->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4_2->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5_2->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6_2->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+		if (cmd_array[2] == NULL || cmd_array[3] == NULL || cmd_array[4] == NULL || cmd_array[5] == NULL) {
+
+			goto end;
+		}
+		sprintf(content, "%sSpiral(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], end_ptr);
 		strcat(file_content, content);
 	/* SCIRC */
 	} else if ((ptr = strstr(lua_cmd, "SCIRC(")) && strrchr(lua_cmd, ')')) {
@@ -1744,6 +1870,9 @@ static int step_over(const cJSON *data_json, char *content)
 	/* Circle */
 	} else if (strstr(pgvalue->valuestring, "Circle(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 540;
+	/* Spiral */
+	} else if (strstr(pgvalue->valuestring, "Spiral(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 552;
 	/* AxleSensorRegWrite */
 	} else if (strstr(pgvalue->valuestring, "AxleSensorRegWrite(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 548;

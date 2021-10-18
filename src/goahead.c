@@ -32,6 +32,7 @@
 static int finished = 0;
 int robot_type = 1;// 默认实体机器人
 int language = 0;// 默认中文
+extern int WEBAPP_PORT;
 ACCOUNT_INFO cur_account;
 /********************************* Function declaration ***********************/
 
@@ -250,9 +251,12 @@ MAIN(goahead, int argc, char **argv, char **envp)
 		}
 	}
 
-	/* 更新控制器、树莓派 IP */
-	update_server_ip();
-	/* 生效示教器树莓派配置*/
+	/* 初始化 network 配置
+	   控制器、树莓派 IP
+	   webapp Port
+	*/
+	init_network();
+	/* 初始化示教器树莓派配置*/
 	init_PI_cfg();
 
 #endif
@@ -284,7 +288,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 		perror("pthread_create");
 	}
 	/* create socket_upper_computer thread */
-	if (pthread_create(&t_socket_upper_computer, NULL, (void *)&socket_upper_computer_thread, (void *)UPPER_COMPUTER_PORT)) {
+	if (pthread_create(&t_socket_upper_computer, NULL, (void *)&socket_upper_computer_thread, (void *)WEBAPP_PORT)) {
 		perror("pthread_create");
 	}
 #endif

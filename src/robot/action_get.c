@@ -52,7 +52,7 @@ static int torque_get_ptemp_list(char **ret_f_content);
 static int torque_get_main_list(char **ret_f_content);
 static int torque_get_custom_pause(char **ret_f_content, const cJSON *data_json);
 static int torque_get_all_custom_pause(char **ret_f_content);
-static int get_ip(char **ret_f_content);
+static int get_network(char **ret_f_content);
 static int get_customcfg(char **ret_f_content);
 static int get_blockly_workspace(char **ret_f_content, const cJSON *data_json);
 static int get_blockly_workspace_names(char **ret_f_content);
@@ -1881,10 +1881,12 @@ static int torque_get_all_custom_pause(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get ip */
-static int get_ip(char **ret_f_content)
+/* get network */
+static int get_network(char **ret_f_content)
 {
 	cJSON *root_json = NULL;
+	cJSON *ip_json = NULL;
+	cJSON *port_json = NULL;
 	char strline[LINE_LEN] = { 0 };
 	FILE *fp;
 	char *ptr = NULL;
@@ -1892,6 +1894,10 @@ static int get_ip(char **ret_f_content)
 	int j = 0;
 
 	root_json = cJSON_CreateObject();
+	ip_json = cJSON_CreateObject();
+	cJSON_AddItemToObject(root_json, "ip", ip_json);
+	port_json = cJSON_CreateObject();
+	cJSON_AddItemToObject(root_json, "port", port_json);
 	if ((fp = fopen(ROBOT_CFG, "r")) == NULL) {
 		perror("open file");
 
@@ -1910,11 +1916,13 @@ static int get_ip(char **ret_f_content)
 		strline[j] = '\0';
 
 		if (ptr = strstr(strline, "CTRL_IP = ")) {
-			cJSON_AddStringToObject(root_json, "ctrl_ip", (ptr + 10));
+			cJSON_AddStringToObject(ip_json, "ctrl_ip", (ptr + 10));
 		} else if (ptr = strstr(strline, "USER_IP = ")) {
-			cJSON_AddStringToObject(root_json, "user_ip", (ptr + 10));
+			cJSON_AddStringToObject(ip_json, "user_ip", (ptr + 10));
 		} else if (ptr = strstr(strline, "PI_IP = ")) {
-			cJSON_AddStringToObject(root_json, "PI_ip", (ptr + 8));
+			cJSON_AddStringToObject(ip_json, "PI_ip", (ptr + 8));
+		} else if (ptr = strstr(strline, "WebAPP_Port = ")) {
+			cJSON_AddStringToObject(port_json, "webapp_port", (ptr + 14));
 		}
 		bzero(strline, sizeof(char)*LINE_LEN);
 	}
@@ -1965,8 +1973,8 @@ static int get_customcfg(char **ret_f_content)
 			cJSON_AddStringToObject(root_json, "ctrl_ip", (ptr + 10));
 		} else if (ptr = strstr(strline, "PI_IP = ")) {
 			cJSON_AddStringToObject(root_json, "PI_ip", (ptr + 8));
-		} else if (ptr = strstr(strline, "Custom_Port = ")) {
-			cJSON_AddStringToObject(root_json, "port", (ptr + 14));
+		} else if (ptr = strstr(strline, "CTRL_Port = ")) {
+			cJSON_AddStringToObject(root_json, "port", (ptr + 12));
 		} else if (ptr = strstr(strline, "Protocol_Type = ")) {
 			cJSON_AddStringToObject(root_json, "type", (ptr + 16));
 		}
@@ -2220,8 +2228,8 @@ void get(Webs *wp)
 		ret = torque_get_custom_pause(&ret_f_content, data_json);
 	} else if(!strcmp(cmd, "torque_get_all_custom_pause")) {
 		ret = torque_get_all_custom_pause(&ret_f_content);
-	} else if(!strcmp(cmd, "get_ip")) {
-		ret = get_ip(&ret_f_content);
+	} else if(!strcmp(cmd, "get_network")) {
+		ret = get_network(&ret_f_content);
 	} else if(!strcmp(cmd, "get_customcfg")) {
 		ret = get_customcfg(&ret_f_content);
 	} else if(!strcmp(cmd, "get_blockly_workspace")) {
