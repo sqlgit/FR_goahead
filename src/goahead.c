@@ -68,7 +68,6 @@ MAIN(goahead, int argc, char **argv, char **envp)
     char    *argp, *home, *documents, *endpoints, *endpoint, *route, *auth, *tok, *lspec;
     int     argind;
 
-	init_sys_lifespan();
 #if WINDOWS
     if (windowsInit() < 0) {
         return 0;
@@ -237,7 +236,6 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_TORQUESYS);
 	create_dir(DIR_SYSVAR);
 	create_dir(DIR_BLOCK);
-	delete_log_file(0);
 
 	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
 	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {
@@ -251,12 +249,23 @@ MAIN(goahead, int argc, char **argv, char **envp)
 		}
 	}
 
-	/* 初始化 network 配置
+	/*
+	   初始化 language 和 log count
+	*/
+	delete_log_file(0);
+	/*
+	   初始化 WebAPP 系统无操作时的超时时间
+	*/
+	init_sys_lifespan();
+	/*
+	   初始化 network 配置
 	   控制器、树莓派 IP
 	   webapp Port
 	*/
 	init_network();
-	/* 初始化示教器树莓派配置*/
+	/*
+	   初始化示教器树莓派配置
+	*/
 	init_PI_cfg();
 
 #endif

@@ -663,7 +663,7 @@ static int set_sys_logcount(const cJSON *data_json)
 		return FAIL;
 	}
 
-	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateNumber(count->valueint));
+	cJSON_ReplaceItemInObject(cfg_json, "log_count", cJSON_CreateString(count->valuestring));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
@@ -707,9 +707,9 @@ static int set_sys_lifespan(const cJSON *data_json)
 		return FAIL;
 	}
 
-	cJSON_ReplaceItemInObject(cfg_json, "lifespan", cJSON_CreateNumber(lifespan->valueint));
+	cJSON_ReplaceItemInObject(cfg_json, "lifespan", cJSON_CreateString(lifespan->valuestring));
 
-	web_cfg.lifespan = lifespan->valueint;
+	web_cfg.lifespan = atoi(lifespan->valuestring);
 	//printf("web_cfg.lifespan = %d\n", web_cfg.lifespan);
 
 	buf = cJSON_Print(cfg_json);
@@ -718,7 +718,6 @@ static int set_sys_lifespan(const cJSON *data_json)
 	buf = NULL;
 	cJSON_Delete(cfg_json);
 	cfg_json = NULL;
-
 
 	return ret;
 }
@@ -754,7 +753,7 @@ static int set_sys_language(const cJSON *data_json)
 		return FAIL;
 	}
 
-	cJSON_ReplaceItemInObject(cfg_json, "language", cJSON_CreateNumber(language_json->valueint));
+	cJSON_ReplaceItemInObject(cfg_json, "language", cJSON_CreateString(language_json->valuestring));
 	buf = cJSON_Print(cfg_json);
 	ret = write_file(FILE_CFG, buf);
 	free(buf);
@@ -762,7 +761,7 @@ static int set_sys_language(const cJSON *data_json)
 	cJSON_Delete(cfg_json);
 	cfg_json = NULL;
 
-	language = language_json->valueint;
+	language = atoi(language_json->valuestring);
 
 	return ret;
 }

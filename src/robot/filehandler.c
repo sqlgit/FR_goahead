@@ -492,11 +492,17 @@ int update_file_dir()
 
 	/**
 	    V3.3.1 版本
-		* cfg 文件夹下，增加了 pi.txt 文件,并修改了 system.txt 文件格式
+		* cfg 文件夹下，增加了 pi.txt 文件,并修改了 system.txt 文件格式（修改为数字格式）
 		  拷贝恢复出厂值 cfg 文件夹下所有文件到 cfg 文件夹下
 		* points 文件夹下，新增 point_cfg.txt
 	*/
-	if (check_dir_filename(DIR_CFG, "PI.txt") == 0) {
+	/**
+	    V3.3.2 临时升级版本
+		恢复 system.txt 文件格式（字符串格式），为了支持 V3.3.0 之前的旧版本
+		如果当前版本为 V3.3.1 和 V3.3.2 必须升级到 V3.3.2 临时版本，目的是恢复 system.txt 文件格式（字符串格式），再往上升级
+	*/
+	/** TODO: 在 2021/10/19 V3.3.2 版本增加这两行 if 判断的注释， 待系统稳定后需要删除，目前注释了只是确保 system.txt 文件在升级时能够更新，是最新字符串格式 */
+	//if (check_dir_filename(DIR_CFG, "PI.txt") == 0) {
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cp -rf %scfg/* %s", DIR_FACTORY_RESET, DIR_CFG);
 		printf("cmd = %s\n", cmd);
@@ -506,7 +512,7 @@ int update_file_dir()
 		sprintf(cmd, "cp %spoints/point_cfg.txt %s", DIR_FACTORY_RESET, DIR_POINTS);
 		printf("cmd = %s\n", cmd);
 		system(cmd);
-	}
+	//}
 
 	return SUCCESS;
 }
@@ -884,6 +890,7 @@ void upload(Webs *wp)
 	//printf("filename = %s\n", filename);
 	if (strcmp(filename, FILE_CFG) == 0) {
 		delete_log_file(0);
+		init_sys_lifespan();
 	} else if (strcmp(filename, WEB_USER_CFG) == 0) {
 		//printf("before check robot type\n");
 		if (check_robot_type() == FAIL) {

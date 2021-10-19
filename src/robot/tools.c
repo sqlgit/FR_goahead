@@ -1041,7 +1041,7 @@ int delete_log_file(int flag)
 
 	f_content = get_file_content(FILE_CFG);
 	/* f_content is not NULL and f_content is not empty */
-	if (f_content != NULL && strcmp(f_content, "Empty") != 0 && strcmp(f_content, "NO_FILE")!= 0 ) {
+	if (f_content != NULL && strcmp(f_content, "Empty") != 0 && strcmp(f_content, "NO_FILE")!= 0) {
 		//printf("f_content = %s\n", f_content);
 		root_json = cJSON_Parse(f_content);
 		free(f_content);
@@ -1051,9 +1051,9 @@ int delete_log_file(int flag)
 			if (count != NULL) {
 				//printf("count = %d\n", count->valuestring);
 				if (flag) {//此时马上需要新增一个 log文件，所以需要多删除一个最旧的 log 文件
-					log_count = count->valueint - 1;
+					log_count = atoi(count->valuestring) - 1;
 				} else {
-					log_count = count->valueint;
+					log_count = atoi(count->valuestring);
 				}
 				sprintf(cmd, "sh %s %d", SHELL_DELETELOG, log_count);
 				system(cmd);
@@ -1061,7 +1061,7 @@ int delete_log_file(int flag)
 			/* 更新系统语言 */
 			sys_language = cJSON_GetObjectItem(root_json, "language");
 			if (sys_language != NULL) {
-				language = sys_language->valueint;
+				language = atoi(sys_language->valuestring);
 			}
 		}
 	}
@@ -1405,7 +1405,7 @@ int init_sys_lifespan()
 
 		return FAIL;
 	}
-	web_cfg.lifespan = lifespan_json->valueint;
+	web_cfg.lifespan = atoi(lifespan_json->valuestring);
 	//printf("web_cfg.lifespan = %d\n", web_cfg.lifespan);
 
 	cJSON_Delete(cfg_json);
