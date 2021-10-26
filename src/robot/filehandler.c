@@ -508,6 +508,9 @@ int update_file_dir()
 		printf("cmd = %s\n", cmd);
 		system(cmd);
 
+	/** V3.3.3 版本
+		在 2021/10/26 版本修改了 point_cfg.txt 文件，增加 flag 标志，在升级时能够更新, 待系统稳定后需要删除
+	*/
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cp %spoints/point_cfg.txt %s", DIR_FACTORY_RESET, DIR_POINTS);
 		printf("cmd = %s\n", cmd);
