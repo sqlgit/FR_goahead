@@ -40,6 +40,7 @@
 #define SHELL_RECOVER_WEBTARCP "/root/web_recover/webserver/shell/web_tar_cp.sh"
 #define SHELL_RECOVER_CRLUPGRADE "/root/web_recover/webserver/shell/fr_control_upgrade.sh"
 
+#define FILE_GENGKU_HOMELUA "/fruser/gengku_home.lua"
 #define FILE_STATEFB "/root/web/file/statefb/statefb.txt"
 #define FILE_STATEFB10 "/root/web/file/statefb/statefb10.txt"
 #define FILE_CFG "/root/web/file/cfg/system.txt"
@@ -47,10 +48,10 @@
 #define FILE_PI_CFG "/root/web/file/cfg/PI.txt"
 #define FILE_AUTH "/root/web/webserver/auth.txt"
 #define FILE_VISION "/root/robot/vision_pkg_des.txt"
+#define FILE_RBLOG "/root/robot/rblog.tar.gz"
 #define FILE_USERDATA "/root/fr_user_data.tar.gz"
 #define FILE_SN "/root/web/file/SN/SN.txt"
 #define FILE_DH_POINT "/root/web/file/points/DH_point.txt"
-#define FILE_GENGKU_POINT "/root/web/file/points/gengku_point.txt"
 #define FILE_ODM_CFG "/root/web/frontend/file/odm/cfg.txt"
 #define FILE_ROBOT_TYPE "/root/RobotType/RobotType.txt"
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
@@ -65,6 +66,7 @@
 #define DIR_LOG_JAP "/root/web/log_jap/"
 #define DIR_FILE "/root/web/file/"
 #define DIR_BLOCK "/root/web/file/block/"
+#define DIR_CUSTOMER "/root/web/file/customer/"
 #define DIR_USER "/root/web/file/user/"
 #define DIR_TEMPLATE "/root/web/file/template/"
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"
@@ -112,6 +114,7 @@
 #define ODM_PASSWORD	"ODM"
 #define RTS_PASSWORD	"frrts2021"
 #define POINT_HOME	"pHome"
+#define GENGKU_LUASIZE	10000
 
 typedef unsigned char BYTE;
 

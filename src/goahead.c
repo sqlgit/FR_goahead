@@ -236,6 +236,7 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_TORQUESYS);
 	create_dir(DIR_SYSVAR);
 	create_dir(DIR_BLOCK);
+	create_dir(DIR_CUSTOMER);
 
 	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
 	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {

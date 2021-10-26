@@ -3,6 +3,7 @@
 
 #include 	"robot_quene.h"
 #include    "statefb_quene.h"
+#include    "tools.h"
 /********************************* Defines ************************************/
 
 #define CMD_PORT 8060
@@ -170,6 +171,16 @@ typedef struct _CTRL_STATE
 } CTRL_STATE;
 #pragma pack(pop)
 
+/* DB JSON 结构体 */
+typedef struct _DB_JSON
+{
+	cJSON *point;
+	cJSON *cdsystem;
+	cJSON *wobj_cdsystem;
+	cJSON *et_cdsystem;
+	cJSON *sysvar;
+} DB_JSON;
+
 #pragma pack(push, 1)
 /** PI_STATUS 结构体 */
 typedef struct _PI_STATUS
@@ -300,6 +311,7 @@ typedef struct _SOCKET_SERVER_INFO
 	int serv_fd;					// server fd
 	char server_ip[20];
 	int server_port;
+	int server_sendcmd_TM_flag;				// 大于0: 代表 webserver 直接发送 cmd 指令到任务管理器， 0: 默认值，代表这是示教器发送指令或者 webserver 直接发送的 cmd 指令任务管理器已经回复了
 	SOCKET_CONNECT_CLIENT_INFO socket_connect_client_info[SOCKET_CONNECT_CLIENT_NUM_MAX];
 } SOCKET_SERVER_INFO;
 
@@ -309,6 +321,17 @@ typedef struct _POINT_HOME_INFO
 	int error_flag;			// 0: 初始值，代表正常， 1：检查 homepoint 发现出错
 	int pre_error_flag;
 } POINT_HOME_INFO;
+
+/* 更酷客户相关结构体信息 */
+typedef struct _ZHENGKU
+{
+	int setvar;							// 更酷程序标志 0: 初始值，代表未下发设置变量指令,或者设置变量指令运行程序已经结束， 1：代表已经下发设置变量指令   2: 正在运行程序
+	int backhome;						// 更酷回原点程序标志 0: 初始值，代表未下发回原点指令,或者回原点指令运行程序已经结束， 1：代表已经下发回原点指令   2: 正在运行程序
+	char result[100];					// "0": 初始值，代表未查询或者程序运行未结束， 程序运行结束时：存储运行的 lua 文件名
+	int line_num;						// 程序运行行号
+	char luaname[100];					// 运行程序名称
+	char lua_content[GENGKU_LUASIZE];	// 程序运行内容
+} ZHENGKU;
 
 /********************************* Function declaration ***********************/
 
@@ -322,6 +345,9 @@ void *socket_pi_cmd_thread(void *arg);
 int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const int cmd_type);
 int check_pointhome_data(char *arr[]);
 int init_network();
+int init_db_json(DB_JSON *p_db_json);
+void db_json_delete(DB_JSON *p_db_json);
+int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json);
 //int send_cmd_set_robot_type();
 
 #endif

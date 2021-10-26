@@ -1309,6 +1309,14 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of user data file successful", cur_account.username);
 		my_jap_syslog("普通の操作", "ユーザーデータファイルのエクスポートに成功", cur_account.username);
+	} else if (strcmp(pathfilename, FILE_RBLOG) == 0) {
+		char cmd[128] = {0};
+		sprintf(cmd, "rm -f %s", FILE_RBLOG);
+		system(cmd);
+		system("cd /root/robot/ && tar -zcvf rblog.tar.gz ./rblog");
+		my_syslog("普通操作", "导出控制器日志成功", cur_account.username);
+		my_en_syslog("normal operation", "Description Exporting controller logs succeeded", cur_account.username);
+		my_jap_syslog("普通の操作", "コントローラログの導出に成功", cur_account.username);
 	} else if (strstr(pathfilename, "torquesys")) {
 		export_torquesys(pathfilename);
 		my_syslog("普通操作", "导出工件配方成功", cur_account.username);
