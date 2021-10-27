@@ -587,7 +587,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 			//printf("array[4] = %s\n", array[4]);
 			StringToBytes(array[4], (BYTE *)&grippers_config_info, sizeof(GRIPPERS_CONFIG_INFO));
 			root_json = cJSON_CreateArray();
-			for(i = 0; i < MAXGRIPPER; i++) {
+			for (i = 0; i < MAXGRIPPER; i++) {
 				/*
 				printf("id = %d\n", (i+1));
 				printf("name = %d\n", grippers_config_info.id_company[i]);
@@ -1593,21 +1593,23 @@ void *socket_status_thread(void *arg)
 					// lua 程序运行结束了
 					if (state->program_state == 1) {
 						// 更酷程序标志: 正在运行程序
-						if (zhengku_info.setvar == 2) {
-							//更酷程序标志: 设置变量指令运行程序已经结束
-							zhengku_info.setvar = 0;
-							zhengku_info.line_num = 0;
-							strcpy(zhengku_info.result, zhengku_info.luaname);
-							// 更新原路返回的路径点 lua 文件, 保存当前运行程序的最后一个点
-							//update_homefile(state->line_number);
-						}
-						// 更酷回原点程序标志：正在运行程序
-						if (zhengku_info.backhome == 2) {
-							zhengku_info.backhome = 0;
-							char cmd[128] = {0};
-							sprintf(cmd, "rm %s", FILE_GENGKU_HOMELUA);
-							//printf("cmd = %s\n", cmd);
-							system(cmd);
+						if (zhengku_info.total_linenum == state->line_number) {
+							if (zhengku_info.setvar == 2) {
+								//更酷程序标志: 设置变量指令运行程序已经结束
+								zhengku_info.setvar = 0;
+								zhengku_info.line_num = 0;
+								strcpy(zhengku_info.result, zhengku_info.luaname);
+								// 更新原路返回的路径点 lua 文件, 保存当前运行程序的最后一个点
+								//update_homefile(state->line_number);
+							}
+							// 更酷回原点程序标志：正在运行程序
+							if (zhengku_info.backhome == 2) {
+								zhengku_info.backhome = 0;
+								char cmd[128] = {0};
+								sprintf(cmd, "rm %s", FILE_GENGKU_HOMELUA);
+								//printf("cmd = %s\n", cmd);
+								system(cmd);
+							}
 						}
 					}
 					//time_5 = clock();
@@ -2372,6 +2374,9 @@ static int gengku_servar(cJSON *data_json)
 	char *lua_content = NULL;
 	char user_luaname[100] = {0};
 	char cmd[128] = {0};
+	int line_num = 0;
+	char *tmp_file = NULL;
+	const char s = '\n';
 
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_file = &socket_file;
@@ -2410,6 +2415,16 @@ static int gengku_servar(cJSON *data_json)
 		socket_enquene(sock_file, 105, lua_filename, 1);
 		socket_upper_computer.server_sendcmd_TM_flag++;
 
+		tmp_file = zhengku_info.lua_content;
+		while (*tmp_file) {
+			if (*tmp_file == s) {
+				line_num++;
+			}
+			tmp_file++;
+		}
+
+		//printf("line_num = %d\n", line_num);
+		zhengku_info.total_linenum = line_num;
 		// 下发设置变量指令,正在运行程序
 		zhengku_info.setvar = 1;
 		zhengku_info.line_num = 0;
@@ -2429,6 +2444,10 @@ static int gengku_backtohome(cJSON *data_json)
 {
 	SOCKET_INFO *sock_cmd = NULL;
 	SOCKET_INFO *sock_file = NULL;
+	char *lua_content = NULL;
+	int line_num = 0;
+	char *tmp_file = NULL;
+	const char s = '\n';
 
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_cmd = &socket_cmd;
@@ -2444,6 +2463,23 @@ static int gengku_backtohome(cJSON *data_json)
 	socket_enquene(sock_file, 105, FILE_GENGKU_HOMELUA, 1);
 	socket_upper_computer.server_sendcmd_TM_flag++;
 
+    lua_content = get_complete_file_content(FILE_GENGKU_HOMELUA);
+	if (lua_content == NULL) {
+
+		return FAIL;
+	}
+	tmp_file = lua_content;
+	while (*tmp_file) {
+		if (*tmp_file == s) {
+			line_num++;
+		}
+		tmp_file++;
+	}
+
+	//printf("line_num = %d\n", line_num);
+	zhengku_info.total_linenum = line_num;
+	free(lua_content);
+	lua_content = NULL;
 	// 更酷回原点程序标志： 下发回原点指令
 	zhengku_info.backhome = 1;
 	/**
@@ -4436,9 +4472,9 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 7), (end_ptr - ptr - 8));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 8) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 10) {
 			perror("string to string list");
-			argc_error_info(8, "Spiral");
+			argc_error_info(10, "Spiral");
 
 			goto end;
 		}
@@ -4607,11 +4643,11 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			point_home_info.error_flag = 0;
 		}
-		if (cmd_array[3] == NULL || cmd_array[4] == NULL || cmd_array[5] == NULL || cmd_array[6] == NULL || cmd_array[7] == NULL) {
+		if (cmd_array[3] == NULL || cmd_array[4] == NULL || cmd_array[5] == NULL || cmd_array[6] == NULL || cmd_array[7] == NULL || cmd_array[8] == NULL || cmd_array[9] == NULL) {
 
 			goto end;
 		}
-		sprintf(content, "%sSpiral(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, j1_3->valuestring, j2_3->valuestring, j3_3->valuestring, j4_3->valuestring, j5_3->valuestring, j6_3->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, toolnum_3->valuestring, workpiecenum_3->valuestring, speed_3->valuestring, acc_3->valuestring, E1_3->valuestring, E2_3->valuestring, E3_3->valuestring, E4_3->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], end_ptr);
+		sprintf(content, "%sSpiral(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, j1_3->valuestring, j2_3->valuestring, j3_3->valuestring, j4_3->valuestring, j5_3->valuestring, j6_3->valuestring, x_3->valuestring, y_3->valuestring, z_3->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, toolnum_3->valuestring, workpiecenum_3->valuestring, speed_3->valuestring, acc_3->valuestring, E1_3->valuestring, E2_3->valuestring, E3_3->valuestring, E4_3->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], end_ptr);
 		strcat(file_content, content);
 	/* SCIRC */
 	} else if ((ptr = strstr(lua_cmd, "SCIRC(")) && strrchr(lua_cmd, ')')) {

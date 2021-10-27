@@ -329,6 +329,7 @@ typedef struct _ZHENGKU
 	int backhome;						// 更酷回原点程序标志 0: 初始值，代表未下发回原点指令,或者回原点指令运行程序已经结束， 1：代表已经下发回原点指令   2: 正在运行程序
 	char result[100];					// "0": 初始值，代表未查询或者程序运行未结束， 程序运行结束时：存储运行的 lua 文件名
 	int line_num;						// 程序运行行号
+	int total_linenum;				    // 程序总行号
 	char luaname[100];					// 运行程序名称
 	char lua_content[GENGKU_LUASIZE];	// 程序运行内容
 } ZHENGKU;

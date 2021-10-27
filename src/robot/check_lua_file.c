@@ -70,7 +70,7 @@ static int Spiral(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 65) {
+	if (argc != 67) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
