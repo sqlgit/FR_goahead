@@ -808,6 +808,36 @@ static int SplineEnd(lua_State* L)
 	return 1;
 }
 
+static int NewSplineStart(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int NewSplineEnd(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int NewSplinePoint(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 16) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int ActGripper(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1354,6 +1384,9 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "Stop", Stop);
 	lua_register(luaEnv, "SplineStart", SplineStart);
 	lua_register(luaEnv, "SplineEnd", SplineEnd);
+	lua_register(luaEnv, "NewSplineStart", NewSplineStart);
+	lua_register(luaEnv, "NewSplineEnd", NewSplineEnd);
+	lua_register(luaEnv, "NewSplinePoint", NewSplinePoint);
 	lua_register(luaEnv, "ActGripper", ActGripper);
 	lua_register(luaEnv, "FT_Guard", FT_Guard);
 	lua_register(luaEnv, "FT_Control", FT_Control);

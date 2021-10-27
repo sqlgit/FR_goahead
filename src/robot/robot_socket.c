@@ -3906,15 +3906,71 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
 			if (check_pointhome_data(joint_value_ptr) == FAIL) {
-		printf("[%s:%d] param error...\n", __FUNCTION__, __LINE__);
 				point_home_info.error_flag = 1;
 
 				goto end;
 			}
 			point_home_info.error_flag = 0;
 		}
-		printf("[%s:%d] param error...\n", __FUNCTION__, __LINE__);
 		sprintf(content,"%sSplinePTP(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], end_ptr);
+		strcat(file_content, content);
+	/* NewSplinePoint */
+	} else if ((ptr = strstr(lua_cmd, "NewSplinePoint(")) && strrchr(lua_cmd, ')')) {
+		end_ptr = strrchr(lua_cmd, ')') + 1;
+		strncpy(head, lua_cmd, (ptr - lua_cmd));
+		strncpy(cmd_arg, (ptr + 15), (end_ptr - ptr - 16));
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 1) {
+			perror("string to string list");
+			argc_error_info(1, "NewSplinePoint");
+
+			goto end;
+		}
+		point_1 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[0]);
+		if (point_1 == NULL || point_1->type != cJSON_Object) {
+			database_error_info();
+
+			goto end;
+		}
+		j1 = cJSON_GetObjectItem(point_1, "j1");
+		j2 = cJSON_GetObjectItem(point_1, "j2");
+		j3 = cJSON_GetObjectItem(point_1, "j3");
+		j4 = cJSON_GetObjectItem(point_1, "j4");
+		j5 = cJSON_GetObjectItem(point_1, "j5");
+		j6 = cJSON_GetObjectItem(point_1, "j6");
+		x = cJSON_GetObjectItem(point_1, "x");
+		y = cJSON_GetObjectItem(point_1, "y");
+		z = cJSON_GetObjectItem(point_1, "z");
+		rx = cJSON_GetObjectItem(point_1, "rx");
+		ry = cJSON_GetObjectItem(point_1, "ry");
+		rz = cJSON_GetObjectItem(point_1, "rz");
+		toolnum = cJSON_GetObjectItem(point_1, "toolnum");
+		workpiecenum = cJSON_GetObjectItem(point_1, "workpiecenum");
+		speed = cJSON_GetObjectItem(point_1, "speed");
+		acc = cJSON_GetObjectItem(point_1, "acc");
+		if (j1 == NULL || j2 == NULL || j3 == NULL || j4 == NULL || j5 == NULL || j6 == NULL || x == NULL || y == NULL || z == NULL || rx == NULL || ry == NULL || rz == NULL || toolnum == NULL || workpiecenum == NULL || speed == NULL || acc == NULL || j1->valuestring == NULL || j2->valuestring == NULL || j3->valuestring == NULL || j4->valuestring == NULL || j5->valuestring == NULL || j6->valuestring == NULL || x->valuestring == NULL || y->valuestring == NULL || z->valuestring == NULL || rx->valuestring == NULL || ry->valuestring == NULL || rz->valuestring == NULL || toolnum->valuestring == NULL || workpiecenum->valuestring == NULL || speed->valuestring == NULL || acc->valuestring == NULL) {
+
+			goto end;
+		}
+		/* 当点为 pHOME 原点时，进行检查 */
+		if (strcmp(cmd_array[0], POINT_HOME) == 0) {
+			sprintf(joint_value[0], "%.1lf", atof(j1->valuestring));
+			sprintf(joint_value[1], "%.1lf", atof(j2->valuestring));
+			sprintf(joint_value[2], "%.1lf", atof(j3->valuestring));
+			sprintf(joint_value[3], "%.1lf", atof(j4->valuestring));
+			sprintf(joint_value[4], "%.1lf", atof(j5->valuestring));
+			sprintf(joint_value[5], "%.1lf", atof(j6->valuestring));
+			for (i = 0; i < 6; i++) {
+				joint_value_ptr[i] = joint_value[i];
+			}
+			/* 置异常报错的标志位， 添加异常错误到 sta 状态反馈 error_info 中 */
+			if (check_pointhome_data(joint_value_ptr) == FAIL) {
+				point_home_info.error_flag = 1;
+
+				goto end;
+			}
+			point_home_info.error_flag = 0;
+		}
+		sprintf(content,"%sNewSplinePoint(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring,j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, end_ptr);
 		strcat(file_content, content);
 	/* PTP */
 	} else if ((ptr = strstr(lua_cmd, "PTP(")) && strrchr(lua_cmd, ')') && strstr(lua_cmd, "SplinePTP") == NULL) {
