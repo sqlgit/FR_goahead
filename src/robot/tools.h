@@ -8,6 +8,7 @@
 #define recover_mode 1 // 0 为进入 recover mode, 1 为 normal mode
 #define print_mode 0 // 1 为进入 print mode
 #define test_package 0
+#define FILE_VERSION "V1.0.0"
 
 #define SUCCESS 1
 #define FAIL 0
@@ -29,9 +30,11 @@
 #define README_WEB_UP "/tmp/software/README_WEB.txt"
 #define README_CTL_NOW "/root/README/README_CTL.txt"
 #define README_CTL_UP "/tmp/software/README_CTL.txt"
+#define README_FILE "/root/web/file/README_FILE.txt"
 #define UPGRADE_SOFTWARE "/tmp/software.tar.gz"
 #define UPGRADE_WEB "/tmp/software/web.tar.gz"
 #define UPGRADE_FR_CONTROL "/tmp/software/fr_control.tar.gz"
+#define UPGRADE_FILE_USERDATA "/tmp/fr_user_data.tar.gz"
 
 //#define SHELL_WEBUPGRADE "/root/web/webserver/shell/web_upgrade.sh"
 #define SHELL_DELETELOG "/root/web/webserver/shell/delete_file.sh"
@@ -72,7 +75,7 @@
 #define DIR_CDSYSTEM "/root/web/file/cdsystem/"
 #define DIR_POINTS "/root/web/file/points/"
 #define DIR_CFG "/root/web/file/cfg/"
-#define DIR_WELD "/root/web/file/weld/"
+//#define DIR_WELD "/root/web/file/weld/"
 #define DIR_ROBOT_CFG "/root/web/file/robotcfg/"
 #define DIR_STATEFB "/root/web/file/statefb/"
 #define DIR_FRUSER "/fruser/"

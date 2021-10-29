@@ -812,7 +812,7 @@ static int NewSplineStart(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 2) {
+	if (argc != 0) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -822,7 +822,7 @@ static int NewSplineEnd(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 0) {
+	if (argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;

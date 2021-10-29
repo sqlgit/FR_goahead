@@ -1414,6 +1414,8 @@ static int torque_ensure_points(const cJSON *data_json)
 	cJSON *name = NULL;
 	cJSON *id = NULL;
 	char sql[2048] = {0};
+	char *sql_left_insert = NULL;
+	char *sql_right_insert = NULL;
 	char temp[1024] = {0};
 	char wk_left[100] = "";
 	char wk_right[100] = "";
@@ -1478,37 +1480,51 @@ static int torque_ensure_points(const cJSON *data_json)
 		return FAIL;
 	}
 	/** 插入示教点信息 */
-	memset(sql, 0, sizeof(sql));
 	array_size_left = cJSON_GetArraySize(left_workstation);
+	sql_left_insert = (char *)calloc(1, sizeof(char)*array_size_left*100);
+	if (sql_left_insert == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
 	for (i = 0; i < array_size_left; i++) {
 		item = cJSON_GetArrayItem(left_workstation, i);
 		name = cJSON_GetObjectItem(item, "name");
 		id = cJSON_GetObjectItem(item, "id");
 		memset(temp, 0, sizeof(temp));
 		sprintf(temp, "insert into [%s] values ('%s', %d);", wk_left, name->valuestring, id->valueint);
-		strcat(sql, temp);
+		strcat(sql_left_insert, temp);
 	}
-	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql_left_insert) == -1) {
 		perror("insert");
 
 		return FAIL;
 	}
+	free(sql_left_insert);
+	sql_left_insert = NULL;
 
-	memset(sql, 0, sizeof(sql));
 	array_size_right = cJSON_GetArraySize(right_workstation);
+	sql_right_insert = (char *)calloc(1, sizeof(char)*array_size_right*100);
+	if (sql_right_insert == NULL) {
+		perror("calloc");
+
+		return FAIL;
+	}
 	for (i = 0; i < array_size_right; i++) {
 		item = cJSON_GetArrayItem(right_workstation, i);
 		name = cJSON_GetObjectItem(item, "name");
 		id = cJSON_GetObjectItem(item, "id");
 		memset(temp, 0, sizeof(temp));
 		sprintf(temp, "insert into [%s] values ('%s', %d); ", wk_right, name->valuestring, id->valueint);
-		strcat(sql, temp);
+		strcat(sql_right_insert, temp);
 	}
-	if (change_info_sqlite3(DB_TORQUE_POINTS, sql) == -1) {
+	if (change_info_sqlite3(DB_TORQUE_POINTS, sql_right_insert) == -1) {
 		perror("insert");
 
 		return FAIL;
 	}
+	free(sql_right_insert);
+	sql_right_insert = NULL;
 
 	memset(sql, 0, sizeof(sql));
 	sprintf(sql, "insert into [%s] values ('%s', %d);", wk_cfg, ptemp->valuestring, perscrew_pnum->valueint);

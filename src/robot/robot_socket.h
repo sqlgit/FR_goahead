@@ -22,7 +22,7 @@
 //#define BUFFSIZE 1300000*2
 #define BUFFSIZE 8192
 #define STATE_BUFFSIZE 16384
-#define STATE_SIZE 8192
+#define STATE_SIZE 10*1024
 #define PI_STATUS_BUFFSIZE 1024
 #define PI_STATUS_SIZE 32
 #define STATEFB_SIZE 25000 /** 4(sizeof(float))*100(row)*20(column)*3 + 1000(包头包尾分隔符等) */
@@ -37,6 +37,23 @@
 #define MAXSLAVES 8
 #define TM_SYS_VAR_NUM 20
 #define SOCKET_CONNECT_CLIENT_NUM_MAX 8
+#define REG_VAR_NB_MAX_NUM 20	/** 数值型变量个数 */
+#define REG_VAR_STR_MAX_NUM 10	/** 字符型变量个数 */
+
+#pragma pack(push, 1)
+/** 外部轴状态结构体 */
+typedef struct _REG_VAR
+{
+	uint8_t	num_full;			//数值型变量监控个数已满, 1:代表已满 0:代表未满
+	uint8_t	str_full;			//字符型变量监控个数已满, 1:代表已满 0:代表未满
+	uint8_t	num_cnt;			//数值型变量使用个数
+	uint8_t	str_cnt;			//字符型变量使用个数
+	double	num[REG_VAR_NB_MAX_NUM];			//数值型变量值
+	char	str[REG_VAR_STR_MAX_NUM][100];		//字符型变量值
+	char	num_name[REG_VAR_NB_MAX_NUM][20];	//数值型变量名
+	char	str_name[REG_VAR_STR_MAX_NUM][20];	//字符型变量名
+}REG_VAR;
+#pragma pack(pop)
 
 #pragma pack(push, 1)
 /** 外部轴状态结构体 */
@@ -77,6 +94,8 @@ typedef struct _CTRL_STATE
 	double     tl_jtforce[6];			/**< 工具合力DKR			        */
 	double     tl_tgt_pos[6];  			/**< 工具目标位置DKR	            */
 	double     tl_tgt_vel[6];			/**< 工具目标速度DKR                */
+	double     tl_cur_pos_base[6];  	/**< 工具当前位置Base	            */
+	double     tl_tgt_pos_base[6];		/**< 工具目标位置Base               */
 	uint8_t	   cl_dgt_input_h;          /**< 控制箱数字输入15-8             */
 	uint8_t     cl_dgt_input_l;	        /**< 控制箱数字输入7-0              */
 	uint8_t     tl_dgt_input_h;          /**< 工具数字输入15-8               */
@@ -153,7 +172,7 @@ typedef struct _CTRL_STATE
 	uint8_t	   btn_box_stop_signal;		/** 按钮盒急停信号, 1-按下急停 */
 	uint8_t	   motionAlarm;				/** 运动警告 */
 	uint8_t	   interfereAlarm;			/** 进入干涉区警告 */
-	double	   register_var[6];			/** 注册变量 */
+	REG_VAR	   reg_var;					/** 注册变量 */
 	uint8_t	   encoder_type_flag;		/** 编码器类型切换完成标志,0:未完成,1:完成,2:超时 */
 	uint8_t	   curEncoderType[6]; 		/** 当前各轴编码器类型,0:光编,1:磁编 */
 	uint8_t    alarm_check_emerg_stop_btn; /** 1-通信异常,检查急停按钮是否松开 */

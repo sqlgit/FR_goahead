@@ -221,22 +221,22 @@ MAIN(goahead, int argc, char **argv, char **envp)
 
 #if recover_mode
 
+	create_dir(DIR_BLOCK);
 	create_dir(DIR_CDSYSTEM);
 	create_dir(DIR_CFG);
+	create_dir(DIR_CUSTOMER);
 	create_dir(DIR_POINTS);
 	create_dir(DIR_ROBOT_CFG);
 	create_dir(DIR_STATEFB);
+	create_dir(DIR_SYSVAR);
 	create_dir(DIR_TEMPLATE);
+	create_dir(DIR_TORQUESYS);
 	create_dir(DIR_USER);
+
 	create_dir(DIR_LOG);
 	create_dir(DIR_LOG_EN);
 	create_dir(DIR_LOG_JAP);
-	create_dir(DIR_WELD);
 	create_dir(DIR_ROBOT_TYPE);
-	create_dir(DIR_TORQUESYS);
-	create_dir(DIR_SYSVAR);
-	create_dir(DIR_BLOCK);
-	create_dir(DIR_CUSTOMER);
 
 	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
 	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {

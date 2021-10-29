@@ -823,7 +823,7 @@ void upload(Webs *wp)
 				strcpy(filename, upfile);
 			/* web user data file */
 			} else if (strcmp(up->clientFilename, "fr_user_data.tar.gz") == 0) {
-				upfile = sfmt("%s", FILE_USERDATA);
+				upfile = sfmt("%s", UPGRADE_FILE_USERDATA);
 				my_syslog("普通操作", "导入用户数据文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import of user data file successfully", cur_account.username);
 				my_jap_syslog("普通の操作", "ユーザーデータファイルのインポートに成功しました", cur_account.username);
@@ -901,17 +901,34 @@ void upload(Webs *wp)
 
 			goto end;
 		}
-	} else if (strcmp(filename, FILE_USERDATA) == 0) {
-		system("rm -rf /root/web/file");
-		system("rm -f /root/robot/exaxis.config");
-		system("rm -f /root/robot/ex_device.config");
-		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
-		if (check_robot_type() == FAIL) {
-			perror("check_robot_type");
+	} else if (strcmp(filename, UPGRADE_FILE_USERDATA) == 0) {
+		//system("rm -rf /root/web/file");
+		//system("rm -f /root/robot/exaxis.config");
+		//system("rm -f /root/robot/ex_device.config");
+		system("cd /tmp/ && tar -zxvf fr_user_data.tar.gz");
+		// 用户数据包版本不匹配，导入失败
+		/*
+		if (check_file_version() == FAIL) {
+			perror("check_file_version");
 
 			goto end;
 		}
-		//system("rm -f /root/fr_user_data.tar.gz");
+		*/
+		system("cd /root/web/file/ && rm -rf ./block ./cdsystem ./points ./robotcfg ./sysvar ./template ./user");
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cp %s %s", UPGRADE_FILE_USERDATA, FILE_USERDATA);
+		system(cmd);
+		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
+		// 用户数据包中控制器日志--机器人型号不一致，导入失败
+		if (check_robot_type() == FAIL) {
+			perror("check_robot_type");
+			system("rm -f /root/fr_user_data.tar.gz");
+			system("rm -f /tmp/fr_user_data.tar.gz");
+
+			goto end;
+		}
+		system("rm -f /root/fr_user_data.tar.gz");
+		system("rm -f /tmp/fr_user_data.tar.gz");
 	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
 		/* 准备升级， 进入升级流程， 首先删除标志 “升级成功” 的文件（可能升级之前该文件就已经存在） */
 		bzero(cmd, sizeof(cmd));
@@ -1294,6 +1311,7 @@ static int avolfileHandler(Webs *wp)
 	char    *disposition; //临时保存 附件 标识  
 	char	*ext = '.';
 	char	*slash= '/';
+	char 	cmd[128] = {0};
 
 	assert(websValid(wp));
 	assert(wp->method);
@@ -1301,19 +1319,29 @@ static int avolfileHandler(Webs *wp)
 
 	pathfilename = websGetVar(wp, "pathfilename", NULL);
 	printf("pathfilename = %s\n", pathfilename);
-	if (pathfilename == NULL)
+	if (pathfilename == NULL) {
+
 		return 1;
+	}
 	if (strcmp(pathfilename, FILE_USERDATA) == 0) {
-		char cmd[128] = {0};
+		memset(cmd, 0, 128);
 		sprintf(cmd, "cp %s %s", USER_CFG, WEB_USER_CFG);
 		system(cmd);
+		memset(cmd, 0, 128);
+		sprintf(cmd, "cp %s %s", EXAXIS_CFG, WEB_EXAXIS_CFG);
+		system(cmd);
+		memset(cmd, 0, 128);
+		sprintf(cmd, "cp %s %s", EX_DEVICE_CFG, WEB_EX_DEVICE_CFG);
+		system(cmd);
+		// 写入 FILE VERSION
+		write_file(README_FILE, FILE_VERSION);
 		system("rm -f /root/fr_user_data.tar.gz");
-		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file ./robot/exaxis.config ./robot/ex_device.config");
+		system("cd /root/ && tar -zcvf fr_user_data.tar.gz ./web/file/README_FILE.txt ./web/file/block ./web/file/cdsystem ./web/file/points ./web/file/robotcfg ./web/file/sysvar ./web/file/template ./web/file/user");
 		my_syslog("普通操作", "导出用户数据文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of user data file successful", cur_account.username);
 		my_jap_syslog("普通の操作", "ユーザーデータファイルのエクスポートに成功", cur_account.username);
 	} else if (strcmp(pathfilename, FILE_RBLOG) == 0) {
-		char cmd[128] = {0};
+		memset(cmd, 0, 128);
 		sprintf(cmd, "rm -f %s", FILE_RBLOG);
 		system(cmd);
 		system("cd /root/robot/ && tar -zcvf rblog.tar.gz ./rblog");

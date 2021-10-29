@@ -76,7 +76,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *array_exAxisSpeedBack = NULL;
 	cJSON *array_exAxisHomeStatus = NULL;
 	cJSON *array_indentifydata = NULL;
-	cJSON *array_register_var = NULL;
 	cJSON *FT_data_json = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
@@ -86,6 +85,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *axis_plus = NULL;
 	cJSON *axis_minus = NULL;
 	cJSON *custom = NULL;
+	cJSON *var_json = NULL;
+	cJSON *array_num_name = NULL;
+	cJSON *array_num_value = NULL;
+	cJSON *array_str_name = NULL;
+	cJSON *array_str_value = NULL;
+	cJSON *tl_cur_pos_base_json = NULL;
 	int array[16] = {0};
 	int ret_connect_status = 0;
 	Qnode *p = NULL;
@@ -108,8 +113,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	torquesys_json = cJSON_CreateObject();
 	jiabao_torquesys_json = cJSON_CreateObject();
 	PI_IO_json = cJSON_CreateObject();
+	var_json = cJSON_CreateObject();
 	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddItemToObject(root_json, "alarm_info", alarm_json);
+	cJSON_AddItemToObject(root_json, "var", var_json);
 	cJSON_AddItemToObject(root_json, "set_feedback", feedback_json);
 	cJSON_AddItemToObject(root_json, "PI_IO", PI_IO_json);
 	cJSON_AddItemToObject(root_json, "torque_sys_state", torquesys_json);
@@ -137,6 +144,65 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	//printf("basic_index = %d\n", basic_index);
 	basic_index++;
 	cJSON_AddStringToObject(root_json, "time_now", time_now);
+
+
+	cJSON_AddNumberToObject(var_json, "num_total", state->reg_var.num_cnt);
+	cJSON_AddNumberToObject(var_json, "str_total", state->reg_var.str_cnt);
+	array_num_name = cJSON_CreateArray();
+	array_num_value = cJSON_CreateArray();
+	array_str_name = cJSON_CreateArray();
+	array_str_value = cJSON_CreateArray();
+	cJSON_AddItemToObject(var_json, "num_name", array_num_name);
+	cJSON_AddItemToObject(var_json, "num_value", array_num_value);
+	cJSON_AddItemToObject(var_json, "str_name", array_str_name);
+	cJSON_AddItemToObject(var_json, "str_value", array_str_value);
+	for (i = 0; i < REG_VAR_NB_MAX_NUM; i++) {
+		cJSON_AddStringToObject(array_num_name, "key", state->reg_var.num_name[i]);
+		cJSON_AddNumberToObject(array_num_value, "key", state->reg_var.num[i]);
+	}
+	for (i = 0; i < REG_VAR_STR_MAX_NUM; i++) {
+		cJSON_AddStringToObject(array_str_name, "key", state->reg_var.str_name[i]);
+		cJSON_AddStringToObject(array_str_value, "key", state->reg_var.str[i]);
+	}
+	if (state->reg_var.num_full == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(alarm_json, "key", "数值型变量监控个数已满");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(alarm_json, "key", "The number of numeric variables monitored was full. Procedure");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(alarm_json, "key", "数値型変数のモニタリング数は満杯");
+		}
+		if (pre_state->reg_var.num_full != 1) {
+			my_syslog("警告", "数值型变量监控个数已满", cur_account.username);
+			my_en_syslog("alarm", "The number of numeric variables monitored was full. Procedure", cur_account.username);
+			my_jap_syslog("戒告する", "数値型変数のモニタリング数は満杯", cur_account.username);
+			pre_state->reg_var.num_full = 1;
+		}
+	} else {
+		pre_state->reg_var.num_full = 0;
+	}
+	if (state->reg_var.str_full == 1) {
+		if (language == 0) {
+			cJSON_AddStringToObject(alarm_json, "key", "字符型变量监控个数已满");
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(alarm_json, "key", "The number of character variables monitored was full. Procedure");
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(alarm_json, "key", "文字型変数の監視個数が満杯");
+		}
+		if (pre_state->reg_var.str_full != 1) {
+			my_syslog("警告", "字符型变量监控个数已满", cur_account.username);
+			my_en_syslog("alarm", "The number of character variables monitored was full. Procedure", cur_account.username);
+			my_jap_syslog("戒告する", "文字型変数の監視個数が満杯", cur_account.username);
+			pre_state->reg_var.str_full = 1;
+		}
+	} else {
+		pre_state->reg_var.str_full = 0;
+	}
+
 
 	//printf("torquesys.enable = %d\n", torquesys.enable);
 	/** 扭矩管理系统状态反馈 */
@@ -314,6 +380,13 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "exaxisnum", state->exAxisNum);
 	cJSON_AddNumberToObject(root_json, "vel_radio", double_round(state->vel_ratio, 3));
 	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
+
+	tl_cur_pos_base_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "tl_cur_pos_base", tl_cur_pos_base_json);
+	for (i = 0; i < 6; i++) {
+		cJSON_AddNumberToObject(tl_cur_pos_base_json, "key", double_round(state->tl_cur_pos_base[i], 3));
+	}
+
 	for (i = 0; i < 6; i++) {
 		joint_value = double_round(state->jt_cur_pos[i], 3);
 		//printf("joint_value = %.3lf\n", joint_value);
@@ -2922,26 +2995,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	for (i = 0; i < 4; i++) {
 		cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[i], 3));
 	}
-	/*
-	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[0], 3));
-	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[1], 3));
-	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[2], 3));
-	cJSON_AddNumberToObject(array_indentifydata, "key", double_round(state->LoadIdentifyData[3], 3));
-	*/
-
-	array_register_var = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "register_var", array_register_var);
-	for (i = 0; i < 6; i++) {
-		cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[i], 3));
-	}
-	/*
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[0], 3));
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[1], 3));
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[2], 3));
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[3], 3));
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[4], 3));
-	cJSON_AddNumberToObject(array_register_var, "key", double_round(state->register_var[5], 3));
-	*/
 
 	if (state->motionAlarm == 1) {
 		if (language == 0) { 

@@ -498,6 +498,7 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 
 static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 {
+	char cmd[128] = {0};
 	cJSON *newitem = NULL;
 	cJSON *root_json = NULL;
 	char recvbuf[MAX_BUF] = {0};
@@ -802,20 +803,27 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(&msg_array, size_content);
-		} else if (atoi(array[2]) == 345) {//检测导入的机器人配置文件并生效
+		} else if (atoi(array[2]) == 345) {//检测导入的机器人配置文件
+			//printf("345: array[4] = %s\n", array[4]);
 			/*
 			   1. 用户恢复出厂值成功
 			   2. 导入控制器端用户配置文件成功
 			   3. 导入用户数据文件成功
 			*/
-			//printf("robot cfg : array[4] = %s\n", array[4]);
-			if (strcmp(array[4], "0") == 0) {
-				//printf("fail！\n");
-			}
-			if (strcmp(array[4], "1") == 0) {//生效导入的机器人配置文件
-				//printf("success！\n");
-				char cmd[128] = {0};
+			/** 拷贝 user.config 到 /root/robot 目录下 */
+			if (strcmp(array[4], "1") == 0) {
+				memset(cmd, 0, 128);
 				sprintf(cmd, "cp %s %s", WEB_USER_CFG, USER_CFG);
+				system(cmd);
+			/** 拷贝 exaxis.config 到 /root/robot 目录下 */
+			} else if (strcmp(array[4], "2") == 0) {
+				memset(cmd, 0, 128);
+				sprintf(cmd, "cp %s %s", WEB_EXAXIS_CFG, EXAXIS_CFG);
+				system(cmd);
+			/** 拷贝 ex_device.config 到 /root/robot 目录下 */
+			} else if (strcmp(array[4], "3") == 0) {
+				memset(cmd, 0, 128);
+				sprintf(cmd, "cp %s %s", WEB_EX_DEVICE_CFG, EX_DEVICE_CFG);
 				system(cmd);
 			}
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
@@ -823,6 +831,8 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 
 				continue;
 			}
+			// 延迟 300 ms, 防止 100ms 状态反馈内一次性插入多条 345 指令反馈，由于 json 格式特性会发生覆盖
+			usleep(300000);
 		} else if (atoi(array[2]) == 380) {//获取控制器计算后,修改示教点数据
 			root_json = cJSON_CreateObject();
 			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
@@ -5014,6 +5024,7 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10], end_ptr);
 		strcat(file_content, content);
 	/* RegisterVar */
+	/*
 	} else if ((ptr = strstr(lua_cmd, "RegisterVar(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
@@ -5024,10 +5035,10 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 
 			goto end;
 		}
-		/* 一个参数时 */
+		// 一个参数时
 		if (size == 1) {
 			sprintf(content, "%sRegisterVar(\"%s\")%s\n", head, cmd_array[0], end_ptr);
-		/* 多个参数时 */
+		// 多个参数时
 		} else {
 			memset(content, 0, MAX_BUF);
 			sprintf(content, "%sRegisterVar(\"%s\",", head, cmd_array[0]);
@@ -5041,6 +5052,7 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			sprintf(content, "\"%s\")%s\n", cmd_array[size - 1], end_ptr);
 		}
 		strcat(file_content, content);
+	*/
 	/* SetSysVarValue */
 	} else if ((ptr = strstr(lua_cmd, "SetSysVarValue(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
