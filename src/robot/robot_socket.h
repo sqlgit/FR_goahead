@@ -22,7 +22,7 @@
 //#define BUFFSIZE 1300000*2
 #define BUFFSIZE 8192
 #define STATE_BUFFSIZE 16384
-#define STATE_SIZE 10*1024
+#define STATE_SIZE 8192
 #define PI_STATUS_BUFFSIZE 1024
 #define PI_STATUS_SIZE 32
 #define STATEFB_SIZE 25000 /** 4(sizeof(float))*100(row)*20(column)*3 + 1000(包头包尾分隔符等) */

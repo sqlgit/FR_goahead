@@ -1452,11 +1452,10 @@ void *socket_status_thread(void *arg)
 	int port = (int)arg;
 	int recv_len = 0;
 	char buf_memory[STATE_BUFFSIZE] = {0};
-	char sec_buf_memory[STATE_BUFFSIZE] = {0};
+	int buf_memory_len = 0; /** buf 中已存储的数据，所占字节长度 */
 	char frame[STATE_SIZE] = {0};//提取出一帧, 存放buf
 	char recvbuf[STATE_SIZE] = {0};
-	char status_buf[STATE_SIZE] = {0};
-	int i = 0;
+	//int i = 0;
 
 	printf("port = %d\n", port);
 	switch(port) {
@@ -1501,9 +1500,11 @@ void *socket_status_thread(void *arg)
 		sock->connect_status = 1;
 		printf("Socket connect success: sockfd = %d\tserver_ip = %s\t server_port = %d\n", sock->fd, SERVER_IP, port);
 
+		memset(buf_memory, 0, STATE_BUFFSIZE);
+		buf_memory_len = 0;
 		/* recv ctrl status */
 		while (1) {
-			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 1221 bytes */
+			//printf("sizeof CTRL_STATE = %d\n", sizeof(CTRL_STATE)); /* Now struct is 3289 bytes */
 			bzero(recvbuf, STATE_SIZE);
 			recv_len = recv(sock->fd, recvbuf, STATE_SIZE, 0);
 			//printf("sock status recv_len = %d\n", recv_len);
@@ -1519,125 +1520,86 @@ void *socket_status_thread(void *arg)
 			}
 			//recvbuf[recv_len] = '\0';
 			//printf("recv len = %d\n", recv_len);
-			//printf("strlen(buf_memory) = %d\n", strlen(buf_memory));
-			//printf("sizeof(CTRL_STATE)*3+14 = %d\n", sizeof(CTRL_STATE)*3+14);
-			//clock_t time_1, time_2, time_3, time_4, time_5;
-
-			//time_1 = clock();
-			//printf("time_1, %d\n", time_1);
-			//printf("strlen(buf_memory) + recv len = %d\n", (strlen(buf_memory)+recv_len));
-			//printf("STATE_BUFFSIZE = %d\n", STATE_BUFFSIZE);
-			// 如果收到的数据包长度加上已有 buf_memory 长度已经超过 buf_memory 定义空间大小(STATE_BUFFSIZE), 清空 buf_memory
-			if ((strlen(buf_memory)+recv_len) > STATE_BUFFSIZE) {
-				bzero(buf_memory, STATE_BUFFSIZE);
+			// 如果收到的数据包长度加上已有 buf_memory_len, 已经超过 buf_memory 定义空间大小(STATE_BUFFSIZE), 清空 buf_memory
+			if ((buf_memory_len + recv_len) > STATE_BUFFSIZE) {
+				memset(buf_memory, 0, STATE_BUFFSIZE);
+				buf_memory_len = 0;
 			}
-
-			memcpy((buf_memory+strlen(buf_memory)), recvbuf, recv_len);
-
-			//time_2 = clock();
-			//printf("time_2, %d\n", time_2);
-
-			//获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
-			while (socket_pkg_handle(buf_memory, sec_buf_memory, frame, STATE_BUFFSIZE, STATE_SIZE) == sizeof(CTRL_STATE)*3+14) {
-				//time_3 = clock();
-				//printf("time_3, %d\n", time_3);
-				//printf("strlen frame = %d\n", strlen(frame));
-				bzero(status_buf, STATE_SIZE);
-				//strncpy(status_buf, (frame+7), (strlen(frame)-14));
-				memcpy(status_buf, (frame+7), (strlen(frame)-14));
-				//strrpc(status_buf, "/f/bIII", "");
-				//strrpc(status_buf, "III/b/f", "");
-				//printf("strlen status_buf = %d\n", strlen(status_buf));
-				//printf("recv status_buf = %s\n", status_buf);
+			memcpy((buf_memory + buf_memory_len), recvbuf, recv_len);
+			buf_memory_len = buf_memory_len + recv_len;
+			// 获取到的一帧长度等于期望长度（结构体长度，包头包尾长度，分隔符等）
+			while (buf_memory_handle(buf_memory, STATE_BUFFSIZE, &buf_memory_len, frame, STATE_SIZE) == (sizeof(CTRL_STATE) + 14)) {
 				//printf("state = %p\n", state);
-				if (strlen(status_buf) == 3*sizeof(CTRL_STATE)) {
-					//time_4 = clock();
-					//printf("time_4, %d\n", time_4);
 
-					StringToBytes(status_buf, (BYTE *)state, sizeof(CTRL_STATE));
+				bzero(state, sizeof(CTRL_STATE));
+				memcpy(state, (frame + 7), sizeof(CTRL_STATE));
 
-					//for (i = 11; i <= 13; i++) {
-					//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
-					//}
-					//for (i = 16; i <= 18; i++) {
-					//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
-					//}
-					//for (i = 0; i <= 5; i++) {
-					//	printf("state->FT_data[%d] = %lf\n", i, state->FT_data[i]);
-					//}
-					/* 系统变量发生改变时 */
-					if (jiabao_torque_pd_data.left_product_count != (int)state->sys_var[11] || jiabao_torque_pd_data.left_NG_count != (int)state->sys_var[12] || jiabao_torque_pd_data.left_work_time != (int)state->sys_var[13] || jiabao_torque_pd_data.right_product_count != (int)state->sys_var[16] || jiabao_torque_pd_data.right_NG_count != (int)state->sys_var[17] || jiabao_torque_pd_data.right_work_time != (int)state->sys_var[18]) {
-						/* 更新全局的结构体 */
-						jiabao_torque_pd_data.left_product_count = (int)state->sys_var[11];
-						jiabao_torque_pd_data.left_NG_count = (int)state->sys_var[12];
-						jiabao_torque_pd_data.left_work_time = (int)state->sys_var[13];
-						jiabao_torque_pd_data.right_product_count = (int)state->sys_var[16];
-						jiabao_torque_pd_data.right_NG_count = (int)state->sys_var[17];
-						jiabao_torque_pd_data.right_work_time = (int)state->sys_var[18];
-						/* 保存最新数据到生产数据数据库 */
-						update_torquesys_pd_data();
-					}
-					// lua 程序正在运行
-					if (state->program_state == 2) {
-						//printf("zhengku_info.line_num = %d\n", zhengku_info.line_num);
-						//printf("state->line_number = %d\n", state->line_number);
-						//printf("state->program_state = %d\n", state->program_state);
-						// 更酷：下发设置变量指令,代表正在运行路点程序
-						// 更酷程序标志： 已经下发设置变量指令
-						if (zhengku_info.setvar == 1) {
-							zhengku_info.setvar = 2;
-						}
-						// 更酷程序标志：正在运行程序
-						if (zhengku_info.setvar == 2) {
-							if (zhengku_info.line_num != state->line_number) {
-								zhengku_info.line_num = state->line_number;
-								// 更新原路返回的路径点 lua 文件
-								update_homefile(zhengku_info.line_num);
-							}
-						}
-						// 更酷回原点程序标志： 已经下发回原点指令
-						if (zhengku_info.backhome == 1) {
-							zhengku_info.backhome = 2;
-						}
-					}
-					// lua 程序运行结束了
-					if (state->program_state == 1) {
-						// 更酷程序标志: 正在运行程序
-						if (zhengku_info.total_linenum == state->line_number) {
-							if (zhengku_info.setvar == 2) {
-								//更酷程序标志: 设置变量指令运行程序已经结束
-								zhengku_info.setvar = 0;
-								zhengku_info.line_num = 0;
-								strcpy(zhengku_info.result, zhengku_info.luaname);
-								// 更新原路返回的路径点 lua 文件, 保存当前运行程序的最后一个点
-								//update_homefile(state->line_number);
-							}
-							// 更酷回原点程序标志：正在运行程序
-							if (zhengku_info.backhome == 2) {
-								zhengku_info.backhome = 0;
-								char cmd[128] = {0};
-								sprintf(cmd, "rm %s", FILE_GENGKU_HOMELUA);
-								//printf("cmd = %s\n", cmd);
-								system(cmd);
-							}
-						}
-					}
-					//time_5 = clock();
-					//printf("time_5, %d\n", time_5);
-				/*	printf("state->program_state = %d\n", state->program_state);
-					printf("state->cl_dgt_output_h = %d\n", state->cl_dgt_output_h);
-					printf("state->cl_dgt_output_l = %d\n", state->cl_dgt_output_l);
-					*/
-				/*	int i;
-					for (i = 0; i < 6; i++) {
-						printf("state->jt_cur_pos[%d] = %.3lf\n", i, state->jt_cur_pos[i]);
-					}*/
-				/*	int i;
-					for (i = 0; i < 20; i++) {
-						printf("state->sys_var[%d] = %.3f\n", i, state->sys_var[i]);
-					}*/
+				//for (i = 11; i <= 13; i++) {
+				//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
+				//}
+				//for (i = 16; i <= 18; i++) {
+				//	printf("state->sys_var[%d] = %d\n", i, (int)state->sys_var[i]);
+				//}
+				//for (i = 0; i <= 5; i++) {
+				//	printf("state->FT_data[%d] = %lf\n", i, state->FT_data[i]);
+				//}
+				/* 系统变量发生改变时 */
+				if (jiabao_torque_pd_data.left_product_count != (int)state->sys_var[11] || jiabao_torque_pd_data.left_NG_count != (int)state->sys_var[12] || jiabao_torque_pd_data.left_work_time != (int)state->sys_var[13] || jiabao_torque_pd_data.right_product_count != (int)state->sys_var[16] || jiabao_torque_pd_data.right_NG_count != (int)state->sys_var[17] || jiabao_torque_pd_data.right_work_time != (int)state->sys_var[18]) {
+					/* 更新全局的结构体 */
+					jiabao_torque_pd_data.left_product_count = (int)state->sys_var[11];
+					jiabao_torque_pd_data.left_NG_count = (int)state->sys_var[12];
+					jiabao_torque_pd_data.left_work_time = (int)state->sys_var[13];
+					jiabao_torque_pd_data.right_product_count = (int)state->sys_var[16];
+					jiabao_torque_pd_data.right_NG_count = (int)state->sys_var[17];
+					jiabao_torque_pd_data.right_work_time = (int)state->sys_var[18];
+					/* 保存最新数据到生产数据数据库 */
+					update_torquesys_pd_data();
 				}
-				//printf("after StringToBytes\n");
+				// lua 程序正在运行
+				if (state->program_state == 2) {
+					//printf("zhengku_info.line_num = %d\n", zhengku_info.line_num);
+					//printf("state->line_number = %d\n", state->line_number);
+					//printf("state->program_state = %d\n", state->program_state);
+					// 更酷：下发设置变量指令,代表正在运行路点程序
+					// 更酷程序标志： 已经下发设置变量指令
+					if (zhengku_info.setvar == 1) {
+						zhengku_info.setvar = 2;
+					}
+					// 更酷程序标志：正在运行程序
+					if (zhengku_info.setvar == 2) {
+						if (zhengku_info.line_num != state->line_number) {
+							zhengku_info.line_num = state->line_number;
+							// 更新原路返回的路径点 lua 文件
+							update_homefile(zhengku_info.line_num);
+						}
+					}
+					// 更酷回原点程序标志： 已经下发回原点指令
+					if (zhengku_info.backhome == 1) {
+						zhengku_info.backhome = 2;
+					}
+				}
+				// lua 程序 停止
+				if (state->program_state == 1) {
+					// 更酷程序标志: 正在运行程序
+					if (zhengku_info.total_linenum == state->line_number) {
+						if (zhengku_info.setvar == 2) {
+							//更酷程序标志: 设置变量指令运行程序已经结束
+							zhengku_info.setvar = 0;
+							zhengku_info.line_num = 0;
+							strcpy(zhengku_info.result, zhengku_info.luaname);
+							// 更新原路返回的路径点 lua 文件, 保存当前运行程序的最后一个点
+							//update_homefile(state->line_number);
+						}
+						// 更酷回原点程序标志：正在运行程序
+						if (zhengku_info.backhome == 2) {
+							zhengku_info.backhome = 0;
+							char cmd[128] = {0};
+							sprintf(cmd, "rm %s", FILE_GENGKU_HOMELUA);
+							//printf("cmd = %s\n", cmd);
+							system(cmd);
+						}
+					}
+				}
 			}
 		}
 		/* socket disconnected */
@@ -1645,8 +1607,6 @@ void *socket_status_thread(void *arg)
 		close(sock->fd);
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
-	//	free(buf_memory);
-	//	buf_memory = NULL;
 	}
 }
 
@@ -1832,7 +1792,7 @@ void *socket_TORQUE_SYS_thread(void *arg)
 				}
 				printf("\n");*/
 				bzero(&torque_sys_state, sizeof(TORQUE_SYS_STATE));
-				memcpy(&torque_sys_state, (recvbuf + 7), (recv_len - 14));
+				memcpy(&torque_sys_state, (frame + 7), sizeof(TORQUE_SYS_STATE));
 				//printf("torque_sys_state.task_runtime = %d\n", torque_sys_state.task_runtime);
 				//printf("torque_sys_state.feed_turns = %.2lf\n", torque_sys_state.feed_turns);
 			}
