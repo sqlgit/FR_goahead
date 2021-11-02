@@ -401,10 +401,11 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 	char *sendbuf = NULL;
 	//char buf[MAX_BUF+1] = {0};
 	int send_len = 0;
+	int sendbuf_len = 0;
 	int send_index = 0;
 
-	send_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
-	sendbuf = (char *)calloc(1, sizeof(char)*(send_len));
+	sendbuf_len = 4 + 3 + get_n_len(node->msghead) + 3 + get_n_len(node->type) + 3 + get_n_len(node->msglen) + 3 + node->msglen + 3 + 4 + 1; // +1 to save '\0
+	sendbuf = (char *)calloc(1, sizeof(char)*(sendbuf_len));
 	if (sendbuf == NULL) {
 		perror("calloc");
 
@@ -421,11 +422,12 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 		sprintf(sendbuf, "/b/f");
 	}
 #endif
-	printf("send_len = %d\n", send_len);
+	//printf("sendbuf_len = %d\n", sendbuf_len);
+	printf("strlen(sendbuf) = %d\n", strlen(sendbuf));
 	printf("send data to socket server is: %s\n", sendbuf);
 
 	/* send over 1024 bytes */
-	while ((send_len-send_index) > MAX_BUF) {
+	while ((sendbuf_len-send_index) > MAX_BUF) {
 		if (send(sock->fd, (sendbuf+send_index), MAX_BUF, 0) != MAX_BUF) {
 			perror("send");
 			free(sendbuf);
@@ -439,7 +441,8 @@ static int socket_send(SOCKET_INFO *sock, QElemType *node)
 	}
 
 	/* send normal (low) 1024 bytes */
-	if (send(sock->fd, (sendbuf+send_index), (send_len-send_index), 0) != (send_len-send_index)) {
+	send_len = sendbuf_len - send_index - 1; // -1 代表 '\0', '\0' 不要发送，否则会产生一个空格，导致发送异常
+	if (send(sock->fd, (sendbuf + send_index), send_len, 0) != send_len) {
 		perror("send");
 		/* set socket status: disconnected */
 		sock->connect_status = 0;
@@ -1234,9 +1237,9 @@ static void *socket_send_thread(void *arg)
 
 		//delay(1);
 		// 延迟 20 ms
-		usleep(20000);
+		//usleep(20000);
 		// 延迟 1 ms
-		//usleep(1000);
+		usleep(1000);
 	}
 }
 

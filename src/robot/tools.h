@@ -31,6 +31,7 @@
 #define README_CTL_NOW "/root/README/README_CTL.txt"
 #define README_CTL_UP "/tmp/software/README_CTL.txt"
 #define README_FILE "/root/web/file/README_FILE.txt"
+#define UPGRADE_README_FILE "/tmp/web/file/README_FILE.txt"
 #define UPGRADE_SOFTWARE "/tmp/software.tar.gz"
 #define UPGRADE_WEB "/tmp/software/web.tar.gz"
 #define UPGRADE_FR_CONTROL "/tmp/software/fr_control.tar.gz"

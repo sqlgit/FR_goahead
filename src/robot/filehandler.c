@@ -208,6 +208,39 @@ static int check_version(const char *readme_now_path, const char *readme_up_path
 }
 
 /**
+  check file version
+*/
+static int check_file_version()
+{
+	FILE *fp_up = NULL;
+	char strline_up[LINE_LEN] = {0};
+	char readme_file_version[100] = "";
+
+	// 如果上传的 README_FILE.txt 文件不存在，不比较，直接认为成功
+	if ((fp_up = fopen(UPGRADE_README_FILE, "r")) == NULL) {
+		perror("readme file: open file");
+
+		return SUCCESS;
+	}
+	while (fgets(strline_up, LINE_LEN, fp_up) != NULL) {
+		strcpy(readme_file_version, strline_up);
+	}
+	fclose(fp_up);
+
+	printf("readme_file_version = %s\n", readme_file_version);
+	//printf("strlen readme_file_version = %d\n", strlen(readme_file_version));
+	//printf("strlen FILE_VERSION = %d\n", strlen(FILE_VERSION));
+	if (strcmp(readme_file_version, FILE_VERSION) == 0) {
+
+		return SUCCESS;
+	} else {
+		perror("readme file version is not same!");
+
+		return FAIL;
+	}
+}
+
+/**
   check robot type
 */
 static int check_robot_type()
@@ -902,33 +935,30 @@ void upload(Webs *wp)
 			goto end;
 		}
 	} else if (strcmp(filename, UPGRADE_FILE_USERDATA) == 0) {
-		//system("rm -rf /root/web/file");
-		//system("rm -f /root/robot/exaxis.config");
-		//system("rm -f /root/robot/ex_device.config");
 		system("cd /tmp/ && tar -zxvf fr_user_data.tar.gz");
-		// 用户数据包版本不匹配，导入失败
-		/*
+		// 用户数据包版本号不匹配，导入失败
 		if (check_file_version() == FAIL) {
 			perror("check_file_version");
+			system("rm -f /tmp/fr_user_data.tar.gz && rm -f /root/fr_user_data.tar.gz && rm -rf /tmp/web");
 
 			goto end;
 		}
-		*/
-		system("cd /root/web/file/ && rm -rf ./block ./cdsystem ./points ./robotcfg ./sysvar ./template ./user");
+
+		system("cd /root/web/file/ && rm -rf ./README_FILE.txt ./block ./cdsystem ./points ./robotcfg ./sysvar ./template ./user");
+		system("rm -f /root/fr_user_data.tar.gz");
 		bzero(cmd, sizeof(cmd));
 		sprintf(cmd, "cp %s %s", UPGRADE_FILE_USERDATA, FILE_USERDATA);
 		system(cmd);
 		system("cd /root/ && tar -zxvf fr_user_data.tar.gz");
+
 		// 用户数据包中控制器日志--机器人型号不一致，导入失败
 		if (check_robot_type() == FAIL) {
 			perror("check_robot_type");
-			system("rm -f /root/fr_user_data.tar.gz");
-			system("rm -f /tmp/fr_user_data.tar.gz");
+			system("rm -f /tmp/fr_user_data.tar.gz && rm -f /root/fr_user_data.tar.gz && rm -rf /tmp/web");
 
 			goto end;
 		}
-		system("rm -f /root/fr_user_data.tar.gz");
-		system("rm -f /tmp/fr_user_data.tar.gz");
+		system("rm -f /tmp/fr_user_data.tar.gz && rm -f /root/fr_user_data.tar.gz && rm -rf /tmp/web");
 	} else if (strcmp(filename, UPGRADE_SOFTWARE) == 0) {
 		/* 准备升级， 进入升级流程， 首先删除标志 “升级成功” 的文件（可能升级之前该文件就已经存在） */
 		bzero(cmd, sizeof(cmd));
