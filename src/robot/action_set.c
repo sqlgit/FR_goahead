@@ -161,6 +161,7 @@ static int sendfile(const cJSON *data_json, char *content)
 	};
 	int line = 0;
 	char tmp_error_info[ERROR_SIZE] = { 0 };
+	int len = 0;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -208,6 +209,15 @@ static int sendfile(const cJSON *data_json, char *content)
 			//printf("time_6, %d\n", time_6);
 		}
 		db_json_delete(&db_json);
+		/**
+			Tips:
+			在 QNX 系统中，使用 fgets 在进行文件保存时，如果 str 最后一行是 \n，保存的文件最后会多一行 \n，所以需要提前删除 str 中的最后一行 \n
+			在 LINUX 系统中，使用 fgets 在进行文件保存时，如果 str 最后一行是 \n，保存的文件最后不会多一行 \n, 正常
+		*/
+		len = strlen(content);
+		if (content[len - 1] == '\n') {
+			content[len - 1] = '\0';
+		}
 	}
 
 	//printf("content = %s\n", content);
@@ -2530,6 +2540,20 @@ void set(Webs *wp)
 		strcpy(log_content, "传感器激活，0-复位，1-激活");
 		strcpy(en_log_content, "Sensor active, 0- reset, 1- active");
 		strcpy(jap_log_content, "センサー起動、0-リセット、1-起動");
+		ret = copy_content(data_json, content);
+		break;
+	case 556:
+		port = cmdport;
+		strcpy(log_content, "设置 TCP 4点法参考点");
+		strcpy(en_log_content, "Set the TCP 4-point method reference point");
+		strcpy(jap_log_content, "TCP 4点法の基準点を設定する");
+		ret = copy_content(data_json, content);
+		break;
+	case 557:
+		port = cmdport;
+		strcpy(log_content, "计算 TCP 四点法");
+		strcpy(en_log_content, "Calculate TCP four-point method");
+		strcpy(jap_log_content, "TCP 4点法を計算する");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */

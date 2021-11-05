@@ -1413,3 +1413,42 @@ int init_sys_lifespan()
 
 	return SUCCESS;
 }
+
+/**
+  描述：
+  	返回文件一共有多少行
+  参数:
+  	filename -- 这是指向一个文件名的指针
+  返回值:
+  	如果成功，该函数返回文件总行数
+  	如果文件不存在，返回 0
+*/
+int get_file_linenum(char *filename)
+{
+	int linenum = 0;
+	char line_content[1024] = { 0 };
+	FILE *fp;
+
+	fp = fopen(filename, "r");
+	if (fp) {
+		while (fgets(line_content, 1024, fp)) {
+			linenum++;
+		}
+		fclose(fp);
+	}
+
+	return linenum;
+}
+/**
+  fgets 函数：
+  描述: 
+  	从指定的流 stream 读取一行，并把它存储在 str 所指向的字符串内。当读取 (n-1) 个字符时，或者读取到换行符时，或者到达文件末尾时，它会停止，具体视情况而定
+  声明：char *fgets(char *str, int n, FILE *stream)
+  参数:
+  	str -- 这是指向一个字符数组的指针，该数组存储了要读取的字符串。
+  	n -- 这是要读取的最大字符数（包括最后的空字符）。通常是使用以 str 传递的数组长度。
+  	stream -- 这是指向 FILE 对象的指针，该 FILE 对象标识了要从中读取字符的流。
+  返回值:
+  	如果成功，该函数返回相同的 str 参数。如果到达文件末尾或者没有读取到任何字符，str 的内容保持不变，并返回一个空指针。
+  	如果发生错误，返回一个空指针。
+*/

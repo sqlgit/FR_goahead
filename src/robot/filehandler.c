@@ -548,6 +548,14 @@ int update_file_dir()
 		sprintf(cmd, "cp %spoints/point_cfg.txt %s", DIR_FACTORY_RESET, DIR_POINTS);
 		printf("cmd = %s\n", cmd);
 		system(cmd);
+
+	/** V3.3.4 版本
+		在 2021/11/04 版本增加了 web_status_showflag.txt 文件，增加 flag 标志，在升级时能够更新, 待系统稳定后需要删除
+	*/
+		bzero(cmd, sizeof(cmd));
+		sprintf(cmd, "cp %scustomer/web_status_showflag.txt %s", DIR_FACTORY_RESET, DIR_CUSTOMER);
+		printf("cmd = %s\n", cmd);
+		system(cmd);
 	//}
 
 	return SUCCESS;

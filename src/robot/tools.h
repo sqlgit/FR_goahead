@@ -61,6 +61,7 @@
 //#define FILE_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.txt"
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
+#define FILE_STATUS_SHOWFLAG "/root/web/file/customer/web_status_showflag.txt"
 #define FILENAME_UP_SUC "upgrade_success.txt"
 
 #define DIR_SHELL "/root/web/webserver/shell/"
@@ -175,5 +176,6 @@ int update_torquesys_pd_data();
 uint16_t TX_CheckSum(uint8_t *buf, uint8_t len);
 uint16_t RX_CheckSum(uint8_t *buf, uint8_t len);
 int init_sys_lifespan();
+int get_file_linenum(char *filename);
 
 #endif

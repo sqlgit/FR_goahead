@@ -40,7 +40,7 @@ static int get_plugin_config(char **ret_f_content, const cJSON *data_json);
 static int get_DH_file(char **ret_f_content);
 static int get_robot_serialnumber(char **ret_f_content);
 static int get_robot_type(char **ret_f_content);
-static int get_TSP_flg(char **ret_f_content);
+static int get_status_flag(char **ret_f_content);
 static int torque_get_wpname_list(char **ret_f_content);
 static int torque_get_cfg(char **ret_f_content, const cJSON *data_json);
 static int torque_get_points(char **ret_f_content, const cJSON *data_json);
@@ -1455,10 +1455,10 @@ static int get_robot_type(char **ret_f_content)
 	return SUCCESS;
 }
 
-/* get TSP flg and return to page */
-static int get_TSP_flg(char **ret_f_content)
+/* get status flg and return to page */
+static int get_status_flag(char **ret_f_content)
 {
-	*ret_f_content = get_file_content(FILE_TORQUE_PAGEFLAG);
+	*ret_f_content = get_file_content(FILE_STATUS_SHOWFLAG);
 	/* ret_f_content is NULL or no such file or empty */
 	if (*ret_f_content == NULL || strcmp(*ret_f_content, "NO_FILE") == 0 || strcmp(*ret_f_content, "Empty") == 0) {
 		*ret_f_content = NULL;
@@ -2217,8 +2217,8 @@ void get(Webs *wp)
 		ret = torque_get_main_list(&ret_f_content);
 	} else if(!strcmp(cmd, "get_DIO_cfg")) {
 		ret = get_DIO_cfg(&ret_f_content);
-	} else if(!strcmp(cmd, "get_TSP_flg")) {
-		ret = get_TSP_flg(&ret_f_content);
+	} else if(!strcmp(cmd, "get_status_flag")) {
+		ret = get_status_flag(&ret_f_content);
 	} else if(!strcmp(cmd, "torque_get_custom_pause")) {
 		data_json = cJSON_GetObjectItem(data, "data");
 		if (data_json == NULL || data_json->type != cJSON_Object) {

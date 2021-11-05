@@ -1143,6 +1143,39 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(&msg_array, size_content);
+		} else if (atoi(array[2]) == 557) {//计算 TCP 四点法
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 6) {
+				perror("string to string list");
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
+
+				continue;
+			}
+			cJSON_AddStringToObject(root_json, "x", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "y", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "z", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "rx", msg_array[3]);
+			cJSON_AddStringToObject(root_json, "ry", msg_array[4]);
+			cJSON_AddStringToObject(root_json, "rz", msg_array[5]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(&msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(&array, size_package);
@@ -1826,7 +1859,7 @@ void *socket_state_feedback_thread(void *arg)
 	int port = (int)arg;
 	int size = 0;
 	FILE *fp = NULL;
-	int linenum = 0;
+	//int linenum = 0;
 	char strline[LINE_LEN] = {0};
 	char *buf_memory = NULL;
 	char *sec_buf_memory = NULL;
@@ -2347,9 +2380,6 @@ static int gengku_servar(cJSON *data_json)
 	char *lua_content = NULL;
 	char user_luaname[100] = {0};
 	char cmd[128] = {0};
-	int line_num = 0;
-	char *tmp_file = NULL;
-	const char s = '\n';
 
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_file = &socket_file;
@@ -2379,6 +2409,7 @@ static int gengku_servar(cJSON *data_json)
 
 	// 记录 phome 点
 	if (strcmp(luaname->valuestring, "pHome.lua") == 0) {
+		memset(cmd, 0, sizeof(cmd));
 		sprintf(cmd, "rm %s", FILE_GENGKU_HOMELUA);
 		//printf("cmd = %s\n", cmd);
 		system(cmd);
@@ -2388,16 +2419,8 @@ static int gengku_servar(cJSON *data_json)
 		socket_enquene(sock_file, 105, lua_filename, 1);
 		socket_upper_computer.server_sendcmd_TM_flag++;
 
-		tmp_file = zhengku_info.lua_content;
-		while (*tmp_file) {
-			if (*tmp_file == s) {
-				line_num++;
-			}
-			tmp_file++;
-		}
-
-		//printf("line_num = %d\n", line_num);
-		zhengku_info.total_linenum = line_num;
+		zhengku_info.total_linenum = get_file_linenum(lua_filename);
+		//printf("zhengku_info.total_linenum = %d\n", zhengku_info.total_linenum);
 		// 下发设置变量指令,正在运行程序
 		zhengku_info.setvar = 1;
 		zhengku_info.line_num = 0;
@@ -2418,9 +2441,6 @@ static int gengku_backtohome(cJSON *data_json)
 	SOCKET_INFO *sock_cmd = NULL;
 	SOCKET_INFO *sock_file = NULL;
 	char *lua_content = NULL;
-	int line_num = 0;
-	char *tmp_file = NULL;
-	const char s = '\n';
 
 	if (robot_type == 1) { // "1" 代表实体机器人
 		sock_cmd = &socket_cmd;
@@ -2441,16 +2461,9 @@ static int gengku_backtohome(cJSON *data_json)
 
 		return FAIL;
 	}
-	tmp_file = lua_content;
-	while (*tmp_file) {
-		if (*tmp_file == s) {
-			line_num++;
-		}
-		tmp_file++;
-	}
 
-	//printf("line_num = %d\n", line_num);
-	zhengku_info.total_linenum = line_num;
+	zhengku_info.total_linenum = get_file_linenum(FILE_GENGKU_HOMELUA);
+	//printf("zhengku_info.total_linenum = %d\n", zhengku_info.total_linenum);
 	free(lua_content);
 	lua_content = NULL;
 	// 更酷回原点程序标志： 下发回原点指令

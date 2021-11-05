@@ -65,7 +65,7 @@ static int torque_save_cfg(const cJSON *data_json);
 static int generate_luafile(const cJSON *data_json);
 static int torque_ensure_points(const cJSON *data_json);
 static int set_DIO_cfg(const cJSON *data_json);
-static int set_TSP_flg(const cJSON *data_json);
+static int set_status_flag(const cJSON *data_json);
 static int rename_var(const cJSON *data_json);
 static int clear_product_info(const cJSON *data_json);
 static int move_to_home_point(const cJSON *data_json);
@@ -1563,14 +1563,14 @@ static int set_DIO_cfg(const cJSON *data_json)
 	return SUCCESS;
 }
 
-/** torque set pageflag */
-static int set_TSP_flg(const cJSON *data_json)
+/** set status showflag */
+static int set_status_flag(const cJSON *data_json)
 {
 	char *buf = NULL;
 	int write_ret = FAIL;
 
 	buf = cJSON_Print(data_json);
-	write_ret = write_file(FILE_TORQUE_PAGEFLAG, buf);
+	write_ret = write_file(FILE_STATUS_SHOWFLAG, buf);
 	free(buf);
 	buf = NULL;
 	if (write_ret == FAIL) {
@@ -2369,7 +2369,7 @@ void act(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "1"
-	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_ptn_cfg") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_TSP_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause") || !strcmp(cmd, "save_blockly_workspace")) {
+	} else if (!strcmp(cmd, "save_lua_file") || !strcmp(cmd, "remove_lua_file") || !strcmp(cmd, "save_template_file") || !strcmp(cmd, "remove_template_file") || !strcmp(cmd, "rename_lua_file") || !strcmp(cmd, "modify_tool_cdsystem") || !strcmp(cmd, "modify_wobj_tool_cdsystem") || !strcmp(cmd, "modify_ex_tool_cdsystem") || !strcmp(cmd, "modify_exaxis_cdsystem") || !strcmp(cmd, "save_point") || !strcmp(cmd, "save_laser_point") || !strcmp(cmd, "modify_point") || !strcmp(cmd, "remove_points") || !strcmp(cmd, "set_ptn_cfg") || !strcmp(cmd, "plugin_enable") || !strcmp(cmd, "plugin_remove") || !strcmp(cmd, "clear_DH_file") || !strcmp(cmd, "save_DH_point") || !strcmp(cmd, "rename_var") || !strcmp(cmd, "move_to_home_point") || !strcmp(cmd, "torque_save_cfg") || !strcmp(cmd, "torque_ensure_points") || !strcmp(cmd, "torque_generate_program") || !strcmp(cmd, "set_DIO_cfg") || !strcmp(cmd, "set_status_flg") || !strcmp(cmd, "clear_product_info") || !strcmp(cmd, "torque_save_custom_pause") || !strcmp(cmd, "save_blockly_workspace")) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 
@@ -2557,11 +2557,11 @@ void act(Webs *wp)
 		strcpy(log_content, "设置扭矩 DIO 配置");
 		strcpy(en_log_content, "torque: setting the DIO configuration");
 		strcpy(jap_log_content, "トルク: dio構成の設定");
-	} else if (!strcmp(cmd, "set_TSP_flg")) {
-		ret = set_TSP_flg(data_json);
-		strcpy(log_content, "设置扭矩页面显示标志位");
-		strcpy(en_log_content, "Set the display flag bit on the torque page");
-		strcpy(jap_log_content, "トルク表示表示ビットを設定します");
+	} else if (!strcmp(cmd, "set_status_flag")) {
+		ret = set_status_flag(data_json);
+		strcpy(log_content, "设置状态展示页面标志位");
+		strcpy(en_log_content, "Set the flag of the status display page");
+		strcpy(jap_log_content, "設定状態表示ページフラグビット");
 	} else if (!strcmp(cmd, "clear_product_info")) {
 		ret = clear_product_info(data_json);
 		strcpy(log_content, "扭矩: 生产数据清除");
