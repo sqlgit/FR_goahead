@@ -1614,10 +1614,12 @@ void *socket_status_thread(void *arg)
 						zhengku_info.backhome = 2;
 					}
 				}
+				//printf("state->abnormal_stop = %d\n", state->abnormal_stop);
 				// lua 程序 停止
 				if (state->program_state == 1) {
-					// 更酷程序标志: 正在运行程序
-					if (zhengku_info.total_linenum == state->line_number) {
+					// 正常停止
+					if (state->abnormal_stop == 0) {
+						// 更酷程序标志: 正在运行程序
 						if (zhengku_info.setvar == 2) {
 							//更酷程序标志: 设置变量指令运行程序已经结束
 							zhengku_info.setvar = 0;
@@ -2419,8 +2421,6 @@ static int gengku_servar(cJSON *data_json)
 		socket_enquene(sock_file, 105, lua_filename, 1);
 		socket_upper_computer.server_sendcmd_TM_flag++;
 
-		zhengku_info.total_linenum = get_file_linenum(lua_filename);
-		//printf("zhengku_info.total_linenum = %d\n", zhengku_info.total_linenum);
 		// 下发设置变量指令,正在运行程序
 		zhengku_info.setvar = 1;
 		zhengku_info.line_num = 0;
@@ -2462,8 +2462,6 @@ static int gengku_backtohome(cJSON *data_json)
 		return FAIL;
 	}
 
-	zhengku_info.total_linenum = get_file_linenum(FILE_GENGKU_HOMELUA);
-	//printf("zhengku_info.total_linenum = %d\n", zhengku_info.total_linenum);
 	free(lua_content);
 	lua_content = NULL;
 	// 更酷回原点程序标志： 下发回原点指令

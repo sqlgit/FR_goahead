@@ -35,7 +35,7 @@ static int program_stop(const cJSON *data_json, char *content);
 static int program_pause(const cJSON *data_json, char *content);
 static int program_resume(const cJSON *data_json, char *content);
 static int sendfilename(const cJSON *data_json, char *content);
-static int sendfile(const cJSON *data_json, char *content);
+static int sendfile_106(const cJSON *data_json, char *content);
 static int step_over(const cJSON *data_json, char *content);
 static int movej(const cJSON *data_json, char *content);
 static int set_state_id(const cJSON *data_json, char *content);
@@ -148,7 +148,7 @@ static int sendfilename(const cJSON *data_json, char *content)
 }
 
 /* 106 sendFile */
-static int sendfile(const cJSON *data_json, char *content)
+static int sendfile_106(const cJSON *data_json, char *content)
 {
 	const char s[2] = "\n";
 	char *token = NULL;
@@ -1171,7 +1171,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content);
+		ret = sendfile_106(data_json, content);
 		break;
 	case 101:
 		port = cmdport;
@@ -1232,7 +1232,7 @@ void set(Webs *wp)
 			goto end;
 		}
 		memset(content, 0, content_len);
-		ret = sendfile(data_json, content);
+		ret = sendfile_106(data_json, content);
 		break;
 	case 107:
 		port = cmdport;

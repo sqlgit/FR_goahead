@@ -9,10 +9,10 @@
 /********************************* Defines ************************************/
 
 WEBAPP_SYSCFG web_cfg;
-extern ACCOUNT_INFO cur_account;
+ACCOUNT_INFO cur_account;
 extern timer_t timerid;
-extern int robot_type;
-extern int language;
+int robot_type = 1;// 默认实体机器人
+int language = 0;// 默认中文
 extern SOCKET_INFO socket_cmd;
 extern SOCKET_INFO socket_vir_cmd;
 extern JIABAO_TORQUE_PRODUCTION_DATA jiabao_torque_pd_data;

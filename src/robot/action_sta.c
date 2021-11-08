@@ -3183,7 +3183,8 @@ static int vardata_feedback(char *ret_status)
 		//printf("state_fb.iCount= %d\n", state_fb.icount);
 		for (i = 0; i < state_fb.icount; i++) {
 			//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
-			itoa(state_fb.id[i], key, 10);
+			sprintf(key, "%d", state_fb.id[i]);
+			//itoa(state_fb.id[i], key, 10);
 			root = cJSON_CreateArray();
 			cJSON_AddItemToObject(value_json, key, root);
 			for (j = 0; j < STATEFB_PERPKG_NUM; j++) {
@@ -3215,7 +3216,8 @@ static int vardata_feedback(char *ret_status)
 
 			for (i = 0; i < state_fb.icount; i++) {
 				//printf("state_fb.id[%d] = %d\n", i, state_fb.id[i]);
-				itoa(state_fb.id[i], key, 10);
+				//itoa(state_fb.id[i], key, 10);
+				sprintf(key, "%d", state_fb.id[i]);
 				root[i] = cJSON_CreateArray();
 				cJSON_AddItemToObject(value_json, key, root[i]);
 			}

@@ -30,10 +30,7 @@
 /********************************* Defines ************************************/
 
 static int finished = 0;
-int robot_type = 1;// 默认实体机器人
-int language = 0;// 默认中文
 extern int WEBAPP_PORT;
-ACCOUNT_INFO cur_account;
 /********************************* Function declaration ***********************/
 
 static void initPlatform(void);
