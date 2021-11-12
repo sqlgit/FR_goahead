@@ -90,7 +90,7 @@ static int MoveL(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 9 && argc != 29 && argc != 2) {
+	if (argc != 9 && argc != 30 && argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -948,6 +948,46 @@ static int AxleSensorRegWrite(lua_State* L)
 	return 1;
 }
 
+static int WireSearchStart(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int WireSearchEnd(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 6) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int WireSearchWait(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetWireSearchOffset(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 38) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -972,7 +1012,7 @@ static int SocketReadString(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 1) {
+	if (argc != 2) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -982,7 +1022,7 @@ static int SocketSendString(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 2) {
+	if (argc != 3) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -992,7 +1032,7 @@ static int SocketReadAsciiFloat(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 2) {
+	if (argc != 3) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1398,6 +1438,10 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetSystemClock", GetSystemClock);
 	lua_register(luaEnv, "ConveyorCatchPointComp", ConveyorCatchPointComp);
 	lua_register(luaEnv, "AxleSensorRegWrite", AxleSensorRegWrite);
+	lua_register(luaEnv, "WireSearchStart", WireSearchStart);
+	lua_register(luaEnv, "WireSearchEnd", WireSearchEnd);
+	lua_register(luaEnv, "WireSearchWait", WireSearchWait);
+	lua_register(luaEnv, "GetWireSearchOffset", GetWireSearchOffset);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

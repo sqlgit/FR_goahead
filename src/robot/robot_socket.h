@@ -188,6 +188,8 @@ typedef struct _CTRL_STATE
 	uint8_t	   FT_ActStatus;			/** 力/扭矩传感器激活状态， 0-复位，1-激活 */
 	int	   	   motion_done;				/** 运动完成信号， 0-未完成，1-完成 */
 	uint8_t	   abnormal_stop;			/** 非正常停止  0-正常，1-非正常 */
+	uint8_t	   socket_conn_timeout;		/** socket连接超时，1-4 */
+	uint8_t	   socket_read_timeout;		/** socket读取超时，1-4 */
 } CTRL_STATE;
 #pragma pack(pop)
 

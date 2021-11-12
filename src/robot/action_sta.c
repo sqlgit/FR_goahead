@@ -478,6 +478,58 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		point_home_info.pre_error_flag = 0;
 	}
 
+	if (state->socket_conn_timeout >= 1) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "socket_%d: 连接超时", (state->socket_conn_timeout - 1));
+		sprintf(en_content, "socket_%d: connection timeout", (state->socket_conn_timeout - 1));
+		sprintf(jap_content, "ソケット%d: 接続タイムアウト", (state->socket_conn_timeout - 1));
+		if (language == 0) {
+			cJSON_AddStringToObject(alarm_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(alarm_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(alarm_json, "key", jap_content);
+		}
+		if (pre_state->socket_conn_timeout != 1) {
+			my_syslog("警告", content, cur_account.username);
+			my_en_syslog("alarm", en_content, cur_account.username);
+			my_jap_syslog("戒告する", jap_content, cur_account.username);
+			pre_state->socket_conn_timeout = 1;
+		}
+	} else {
+		pre_state->socket_conn_timeout = 0;
+	}
+
+	if (state->socket_read_timeout >= 1) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "socket_%d: 读取超时", (state->socket_conn_timeout - 1));
+		sprintf(en_content, "socket_%d: read timeout", (state->socket_conn_timeout - 1));
+		sprintf(jap_content, "ソケット%d: 読み取りタイムアウト", (state->socket_conn_timeout - 1));
+		if (language == 0) {
+			cJSON_AddStringToObject(alarm_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(alarm_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(alarm_json, "key", jap_content);
+		}
+		if (pre_state->socket_read_timeout != 1) {
+			my_syslog("警告", content, cur_account.username);
+			my_en_syslog("alarm", en_content, cur_account.username);
+			my_jap_syslog("戒告する", jap_content, cur_account.username);
+			pre_state->socket_read_timeout = 1;
+		}
+	} else {
+		pre_state->socket_read_timeout = 0;
+	}
+
 	if (state->btn_box_stop_signal == 1) {
 		if (language == 0) {
 			cJSON_AddStringToObject(alarm_json, "key", "按钮盒急停已按下");
@@ -2805,24 +2857,27 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	} else {
 		pre_state->safetydoor_alarm = 0;
 	}
-	if (state->weld_readystate == 0) {
-		if (language == 0) { 
-			cJSON_AddStringToObject(error_json, "key", "焊机未准备好");
+	/* 如果 web 与控制器通信正常 */
+	if (ret_connect_status == 1) {
+		if (state->weld_readystate == 0) {
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "焊机未准备好");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The welder is not ready");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "溶接機が準備できていない");
+			}
+			if (pre_state->weld_readystate != 1) {
+				my_syslog("错误", "焊机未准备好", cur_account.username);
+				my_en_syslog("error", "The welder is not ready", cur_account.username);
+				my_jap_syslog("さくご", "溶接機が準備できていない", cur_account.username);
+				pre_state->weld_readystate = 1;
+			}
+		} else {
+			pre_state->weld_readystate = 0;
 		}
-		if (language == 1) {
-			cJSON_AddStringToObject(error_json, "key", "The welder is not ready");
-		}
-		if (language == 2) {
-			cJSON_AddStringToObject(error_json, "key", "溶接機が準備できていない");
-		}
-		if (pre_state->weld_readystate != 1) {
-			my_syslog("错误", "焊机未准备好", cur_account.username);
-			my_en_syslog("error", "The welder is not ready", cur_account.username);
-			my_jap_syslog("さくご", "溶接機が準備できていない", cur_account.username);
-			pre_state->weld_readystate = 1;
-		}
-	} else {
-		pre_state->weld_readystate = 0;
 	}
 	for (i = 0; i < 4; i++) {
 		if ((int)state->exaxis_status[i].exAxisALM == 1) {

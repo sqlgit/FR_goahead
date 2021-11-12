@@ -3743,7 +3743,7 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		lua_cmd = new_lua_cmd_3;
 	}
 
-//兼容 V3.2.0 之前的旧版本，兼容性代码,未来可删除
+	//兼容 V3.2.0 之前的旧版本，兼容性代码,未来可删除
 	printf("lua_cmd = %s\n", lua_cmd);
 	if (old_ptr = strstr(lua_cmd, "WaitTime")) {
 		strncpy(old_head, lua_cmd, (old_ptr - lua_cmd));
@@ -3769,6 +3769,23 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		}
 		if (size == 9) {
 			sprintf(new_lua_cmd, "%s,%s,0,%s,%s,%s,%s,%s,%s,%s", cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8]);
+			lua_cmd = new_lua_cmd;
+		}
+		string_list_free(&cmd_array, size);
+	//兼容 V3.3.4 之前的旧版本, 兼容性代码, 未来可删除
+	/* Lin 添加了是否寻位参数 */
+	} else if (strstr(lua_cmd, "Lin") && (strstr(lua_cmd, "laserLin") == NULL)) {
+		if (string_to_string_list(lua_cmd, ",", &size, &cmd_array) == 0) {
+			perror("string to string list");
+
+			goto end;
+		}
+		if (size == 4 && (strstr(cmd_array[0], "cvrCatchPoint") == NULL) && (strstr(cmd_array[0], "cvrRaisePoint") == NULL)) {
+			sprintf(new_lua_cmd, "%s,%s,%s,0,%s", cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3]);
+			lua_cmd = new_lua_cmd;
+		}
+		if (size == 10) {
+			sprintf(new_lua_cmd, "%s,%s,%s,0,%s,%s,%s,%s,%s,%s,%s", cmd_array[0], cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9]);
 			lua_cmd = new_lua_cmd;
 		}
 		string_list_free(&cmd_array, size);
@@ -4109,9 +4126,9 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		printf("ptr + 4 = %s\n", (ptr + 4));
 		*/
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 4 && size != 6 && size != 10)) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 4 && size != 5 && size != 6 && size != 11)) {
 			perror("string to string list");
-			sprintf(error_info, "bad argument #%d #%d #%d to '%s' (Error number of parameters)", 4, 6, 10, "Lin");
+			sprintf(error_info, "bad argument #%d #%d #%d #%d to '%s' (Error number of parameters)", 4, 5, 6, 11, "Lin");
 
 			goto end;
 		}
@@ -4121,7 +4138,7 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 
 			goto end;
 		}
-		/* seamPos 下发参数为6个, 第6个参数为偏置，暂时不处理 */
+		/* seamPos 下发参数为 6 个, 第 6 个参数为偏置，暂时不处理 */
 		if (strcmp(cmd_array[0], "seamPos") == 0 && size == 6) {
 			speed = cJSON_GetObjectItem(lin, "speed");
 			acc = cJSON_GetObjectItem(lin, "acc");
@@ -4143,8 +4160,8 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 				goto end;
 			}
 			sprintf(content, "%sMoveL(\"%s\",%s,%s,%s,%s,%s,%s,0,0)%s\n", head, cmd_array[0], toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], end_ptr);
-		/* 正常 Lin 指令下发参数为 4 或者 10 个, 第 4 个参数为偏置位 */
-		} else if (size == 4 || size == 10) {
+		/* 正常 Lin 指令下发参数为 5 或者 11 个, 第 5 个参数为偏置位 */
+		} else if (size == 5 || size == 11) {
 			j1 = cJSON_GetObjectItem(lin, "j1");
 			j2 = cJSON_GetObjectItem(lin, "j2");
 			j3 = cJSON_GetObjectItem(lin, "j3");
@@ -4188,11 +4205,11 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 				}
 				point_home_info.error_flag = 0;
 			}
-			/* 参数个数为 10 时，即存在偏移 */
-			if (size == 10) {
-				sprintf(content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], end_ptr);
+			/* 参数个数为 11 时，即存在偏移 */
+			if (size == 11) {
+				sprintf(content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10], end_ptr);
 			} else {
-				sprintf(content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, end_ptr);
+				sprintf(content, "%sMoveL(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, cmd_array[1], cmd_array[2], E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[3], cmd_array[4], end_ptr);
 			}
 		}
 		strcat(file_content, content);
@@ -4998,35 +5015,25 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		sprintf(content, "%sPostureAdjustOn(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, cmd_array[0], rx->valuestring, ry->valuestring, rz->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, rx_3->valuestring, ry_3->valuestring, rz_3->valuestring, cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10], end_ptr);
 		strcat(file_content, content);
 	/* RegisterVar */
-	/*
 	} else if ((ptr = strstr(lua_cmd, "RegisterVar(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 12), (end_ptr - ptr - 13));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size < 1 || size > 6)) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || size != 2) {
 			perror("string to string list");
-			sprintf(error_info, "bad argument over than #%d and less than #%d to '%s' (Error number of parameters)", 0, 7, "RegisterVar");
+			argc_error_info(2, "RegisterVar");
 
 			goto end;
 		}
-		// 一个参数时
-		if (size == 1) {
-			sprintf(content, "%sRegisterVar(\"%s\")%s\n", head, cmd_array[0], end_ptr);
-		// 多个参数时
+		if ((strstr(cmd_array[0], "\"number\"") || strstr(cmd_array[0], "\"string\"")) && strstr(cmd_array[1], "\"")) {
+			strcat(file_content, lua_cmd);
+			strcat(file_content, "\n");
 		} else {
-			memset(content, 0, MAX_BUF);
-			sprintf(content, "%sRegisterVar(\"%s\",", head, cmd_array[0]);
-			strcat(file_content, content);
-			for (i = 1; i < (size - 1); i++) {
-				memset(content, 0, MAX_BUF);
-				sprintf(content, "\"%s\",", cmd_array[i]);
-				strcat(file_content, content);
-			}
-			memset(content, 0, MAX_BUF);
-			sprintf(content, "\"%s\")%s\n", cmd_array[size - 1], end_ptr);
+			perror("argv error");
+			argc_error_info(2, "RegisterVar");
+
+			goto end;
 		}
-		strcat(file_content, content);
-	*/
 	/* SetSysVarValue */
 	} else if ((ptr = strstr(lua_cmd, "SetSysVarValue(")) && strrchr(lua_cmd, ')')) {
 		end_ptr = strrchr(lua_cmd, ')') + 1;
