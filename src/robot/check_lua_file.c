@@ -50,7 +50,7 @@ static int MoveC(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 42) {
+	if (argc != 49) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -60,7 +60,7 @@ static int Circle(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 41) {
+	if (argc != 48) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -988,6 +988,16 @@ static int GetWireSearchOffset(lua_State* L)
 	return 1;
 }
 
+static int LoadTPD(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1442,6 +1452,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "WireSearchEnd", WireSearchEnd);
 	lua_register(luaEnv, "WireSearchWait", WireSearchWait);
 	lua_register(luaEnv, "GetWireSearchOffset", GetWireSearchOffset);
+	lua_register(luaEnv, "LoadTPD", LoadTPD);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

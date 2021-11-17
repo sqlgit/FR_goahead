@@ -184,6 +184,7 @@ typedef struct _CTRL_STATE
 	float	   sys_var[TM_SYS_VAR_NUM]; /** 系统变量 */
 	uint8_t	   tpd_record_state;		/** TPD记录状态， 1-记录中， 0-不记录 */
 	uint8_t	   tpd_record_scale;		/** TPD记录进度百分比，0-100 */
+	uint8_t	   tpd_num_limit;			/** TPD轨迹加载数量超限，0-未超限，1-超限 */
 	double	   FT_data[6];				/** 力/扭矩传感器数据，Fx,Fy,Fz,Tx,Ty,Tz */
 	uint8_t	   FT_ActStatus;			/** 力/扭矩传感器激活状态， 0-复位，1-激活 */
 	int	   	   motion_done;				/** 运动完成信号， 0-未完成，1-完成 */

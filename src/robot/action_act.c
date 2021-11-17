@@ -100,6 +100,7 @@ static int save_lua_file(const cJSON *data_json)
 static int remove_lua_file(const cJSON *data_json)
 {
 	char dir_filename[100] = {0};
+	char fruser_dir_filename[100] = {0};
 
 	cJSON *name = cJSON_GetObjectItem(data_json, "name");
 	if (name == NULL || name->valuestring == NULL) {
@@ -109,6 +110,12 @@ static int remove_lua_file(const cJSON *data_json)
 	}
 	sprintf(dir_filename, "%s%s", DIR_USER, name->valuestring);
 	if (remove(dir_filename) == -1) {
+		perror("remove");
+
+		return FAIL;
+	}
+	sprintf(fruser_dir_filename, "%s%s", DIR_FRUSER, name->valuestring);
+	if (remove(fruser_dir_filename) == -1) {
 		perror("remove");
 
 		return FAIL;

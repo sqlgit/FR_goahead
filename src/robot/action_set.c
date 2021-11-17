@@ -260,9 +260,6 @@ static int step_over(const cJSON *data_json, char *content)
 	/* PTP */
 	if (strstr(pgvalue->valuestring, "PTP(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 201;
-	/* ARC */
-	} else if (strstr(pgvalue->valuestring, "ARC(") && strrchr(pgvalue->valuestring, ')')) {
-		cmd = 202;
 	/* Lin */
 	} else if (strstr(pgvalue->valuestring, "Lin(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 203;
