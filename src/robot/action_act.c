@@ -2331,6 +2331,34 @@ static int robottype_password(const cJSON *data_json)
 	}
 }
 
+/** record 500 error */
+static int record_500_error(const cJSON *data_json)
+{
+	cJSON *error_info = NULL;
+	cJSON *en_error_info = NULL;
+	cJSON *jap_error_info = NULL;
+	char log_content[LOG_LEN] = { 0 };
+	char en_log_content[LOG_LEN] = { 0 };
+	char jap_log_content[LOG_LEN] = { 0 };
+
+	error_info = cJSON_GetObjectItem(data_json, "error_info");
+	en_error_info = cJSON_GetObjectItem(data_json, "en_error_info");
+	jap_error_info = cJSON_GetObjectItem(data_json, "jap_error_info");
+	if (error_info == NULL || error_info->valuestring == NULL || en_error_info == NULL || en_error_info->valuestring == NULL || jap_error_info == NULL || jap_error_info->valuestring == NULL) {
+		perror("json");
+
+		return FAIL;
+	}
+	sprintf(log_content, "错误 500: %s", error_info->valuestring);
+	sprintf(en_log_content, "Error 500: %s", en_error_info->valuestring);
+	sprintf(jap_log_content, "エラー500: %s", jap_error_info->valuestring);
+	my_syslog("错误", log_content, cur_account.username);
+	my_en_syslog("error", en_log_content, cur_account.username);
+	my_jap_syslog("さくご", jap_log_content, cur_account.username);
+
+	return SUCCESS;
+}
+
 /* do some user actions basic on web */
 void act(Webs *wp)
 {
@@ -2604,6 +2632,8 @@ void act(Webs *wp)
 		strcpy(log_content, "认证机器人型号配置密码");
 		strcpy(en_log_content, "Authentication robot model configures a password");
 		strcpy(jap_log_content, "認証ロボットモデル設定パスワード");
+	} else if (!strcmp(cmd, "record_500_error")) {
+		ret = record_500_error(data_json);
 	} else {
 		perror("cmd not found");
 		goto end;
@@ -2612,9 +2642,11 @@ void act(Webs *wp)
 		perror("ret fail");
 		goto end;
 	}
-	my_syslog("应用操作", log_content, cur_account.username);
-	my_en_syslog("apply operation", en_log_content, cur_account.username);
-	my_jap_syslog("応用オペレーション", jap_log_content, cur_account.username);
+	if (strcmp(cmd, "record_500_error") != 0) {
+		my_syslog("应用操作", log_content, cur_account.username);
+		my_en_syslog("apply operation", en_log_content, cur_account.username);
+		my_jap_syslog("応用オペレーション", jap_log_content, cur_account.username);
+	}
 	/* cjson delete */
 	cJSON_Delete(data);
 	data = NULL;

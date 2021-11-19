@@ -115,6 +115,7 @@
 #define MD5_STR_LEN		(MD5_SIZE * 2)
 #define LINE_LEN	1024
 #define SQL_LEN		1024
+#define LOG_LEN		1024
 #define LEN_100	100
 #define FILENAME_SIZE	1024
 #define ODM_PASSWORD	"ODM"
