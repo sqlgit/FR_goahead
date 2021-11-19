@@ -835,6 +835,12 @@ void upload(Webs *wp)
 				my_syslog("普通操作", "导入示教点文件成功", cur_account.username);
 				my_en_syslog("normal operation", "Import the teaching point file successfully", cur_account.username);
 				my_jap_syslog("普通の操作", "インポート web_point 文書が成功する", cur_account.username);
+			/* RTDEConfig.lua file */
+			} else if (strcmp(up->clientFilename, "RTDEConfig.lua") == 0) {
+				upfile = sfmt("%s", FILE_RTDE_CFG);
+				my_syslog("普通操作", "导入 RTDEConfig.lua 文件成功", cur_account.username);
+				my_en_syslog("normal operation", "Import RTDEConfig.lua file successfully", cur_account.username);
+				my_jap_syslog("普通の操作", "RTDEConfig.luaファイルのインポートに成功", cur_account.username);
 			/* user lua file */
 			} else if (is_in(up->clientFilename, ".lua") == 1) {
 				upfile = sfmt("%s%s", DIR_USER, up->clientFilename);
@@ -1391,6 +1397,10 @@ static int avolfileHandler(Webs *wp)
 		my_syslog("普通操作", "导出工件配方成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of workpiece package successful", cur_account.username);
 		my_jap_syslog("普通の操作", "ワークレシピを導き出すことに成功", cur_account.username);
+	} else if (strcmp(pathfilename, FILE_RTDE_CFG) == 0) {
+		my_syslog("普通操作", "导出 RTDEConfig.lua 文件成功", cur_account.username);
+		my_en_syslog("normal operation", "Export of RTDEConfig.lua file successful", cur_account.username);
+		my_jap_syslog("普通の操作", "rtdeconfig.luaファイルの導出に成功", cur_account.username);
 	} else if (strcmp(pathfilename, DB_POINTS) == 0) {
 		my_syslog("普通操作", "导出示教点文件成功", cur_account.username);
 		my_en_syslog("normal operation", "Export of points file successful", cur_account.username);

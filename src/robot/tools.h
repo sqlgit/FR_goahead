@@ -62,6 +62,7 @@
 #define FILE_TORQUE_PAGEFLAG "/root/web/file/torquesys/torquesys_pageflag.txt"
 #define FILE_TORQUE_DIO "/root/web/file/torquesys/torquesys_DIO.txt"
 #define FILE_STATUS_SHOWFLAG "/root/web/file/customer/web_status_showflag.txt"
+#define FILE_RTDE_CFG "/root/robot/RTDEConfig.lua"
 #define FILENAME_UP_SUC "upgrade_success.txt"
 
 #define DIR_SHELL "/root/web/webserver/shell/"

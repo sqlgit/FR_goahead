@@ -160,8 +160,8 @@ static int sendfile_106(const cJSON *data_json, char *content)
 		.sysvar = NULL,
 	};
 	int line = 0;
-	char tmp_error_info[ERROR_SIZE] = { 0 };
 	int len = 0;
+	cJSON *json_data = NULL;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -196,9 +196,14 @@ static int sendfile_106(const cJSON *data_json, char *content)
 			//printf("token = %s\n", token);
 			if (parse_lua_cmd(token, content, &db_json) == FAIL) {
 				perror("parse lua");
-				sprintf(tmp_error_info,"%s:%d: %s", lua_filename, line, error_info);
+				json_data = cJSON_CreateObject();
+				cJSON_AddStringToObject(json_data, "lua_name", lua_filename);
+				cJSON_AddNumberToObject(json_data, "line_num", line);
+				cJSON_AddStringToObject(json_data, "error_info", error_info);
 				memset(error_info, 0, ERROR_SIZE);
-				strcpy(error_info, tmp_error_info);
+				strcpy(error_info, cJSON_Print(json_data));
+				cJSON_Delete(json_data);
+				json_data = NULL;
 				db_json_delete(&db_json);
 
 				return FAIL;
@@ -1137,7 +1142,7 @@ void set(Webs *wp)
 			goto auth_end;
 		}
 	// cmd_auth "1"
-	} else if (cmd == 201 || cmd == 203 || cmd == 204 || cmd == 208 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 216 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 226 || cmd == 230 || cmd == 231 || cmd == 232 || cmd == 233 || cmd == 234 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 278 || cmd == 279 || cmd == 280 || cmd == 283 || cmd == 287 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 306 || cmd == 307 || cmd == 313 || cmd == 314 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 320 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356 || cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 393 || cmd == 403 || cmd == 404 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 415 || cmd == 422 || cmd == 426 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 524 || cmd == 525 || cmd == 526 || cmd == 528 || cmd == 529 || cmd == 530 || cmd == 531 || cmd == 532 || cmd == 545 || cmd == 547) {
+	} else if (cmd == 201 || cmd == 203 || cmd == 204 || cmd == 208 || cmd == 209 || cmd == 210 || cmd == 211 || cmd == 216 || cmd == 222 || cmd == 223 || cmd == 224 || cmd == 225 || cmd == 226 || cmd == 230 || cmd == 231 || cmd == 232 || cmd == 233 || cmd == 234 || cmd == 235 || cmd == 236 || cmd == 237 || cmd == 238 || cmd == 239 || cmd == 240 || cmd == 247 || cmd == 248 || cmd == 249 || cmd == 250 || cmd == 251 || cmd == 252 || cmd == 253 || cmd == 254 || cmd == 255 || cmd == 256 || cmd == 257 || cmd == 258 || cmd == 259 || cmd == 260 || cmd == 261 || cmd == 262 || cmd == 263 || cmd == 264 || cmd == 265 || cmd == 266 || cmd == 267 || cmd == 268 || cmd == 269 ||  cmd == 270 || cmd == 271 || cmd == 272 || cmd == 273 || cmd == 274 || cmd == 276 || cmd == 277 || cmd == 278 || cmd == 279 || cmd == 280 || cmd == 283 || cmd == 287 || cmd == 288 || cmd == 289 || cmd == 290 || cmd == 291 || cmd == 292 || cmd == 293 || cmd == 294 || cmd == 295 || cmd == 296 || cmd == 297 || cmd == 298 || cmd == 306 || cmd == 307 || cmd == 313 || cmd == 314 || cmd == 315 || cmd == 317 || cmd == 318 || cmd == 320 || cmd == 323 || cmd == 324 || cmd == 325 || cmd == 326 || cmd == 327 || cmd == 328 || cmd == 329 || cmd == 334 || cmd == 335 || cmd == 336 || cmd == 339 || cmd == 340 || cmd == 341 || cmd == 353 || cmd == 354 || cmd == 355 || cmd == 356 || cmd == 357 || cmd == 358 || cmd == 359 || cmd == 360 || cmd == 361 || cmd == 362 || cmd == 367 || cmd == 368 || cmd == 369 || cmd == 370 || cmd == 371 || cmd == 372 || cmd == 376 || cmd == 380 || cmd == 381 || cmd == 382 || cmd == 384 || cmd == 386 || cmd == 387 || cmd == 388 || cmd == 389 || cmd == 390 || cmd == 393 || cmd == 403 || cmd == 404 || cmd == 406 || cmd == 407 || cmd == 408 || cmd == 409 || cmd == 410 || cmd == 411 || cmd == 415 || cmd == 422 || cmd == 426 || cmd == 430 || cmd == 431 || cmd == 432 || cmd == 433 || cmd == 434 || cmd == 435 || cmd == 436 || cmd == 511 || cmd == 523 || cmd == 524 || cmd == 525 || cmd == 526 || cmd == 528 || cmd == 529 || cmd == 530 || cmd == 531 || cmd == 532 || cmd == 545 || cmd == 547 || cmd == 556 || cmd == 557 || cmd == 558 || cmd == 559) {
 		if (!authority_management("1")) {
 			perror("authority_management");
 
@@ -2551,6 +2556,20 @@ void set(Webs *wp)
 		strcpy(log_content, "计算 TCP 四点法");
 		strcpy(en_log_content, "Calculate TCP four-point method");
 		strcpy(jap_log_content, "TCP 4点法を計算する");
+		ret = copy_content(data_json, content);
+		break;
+	case 558:
+		port = cmdport;
+		strcpy(log_content, "加载基于Socket的RTDE的自定义通讯");
+		strcpy(en_log_content, "Load socket-based RTDE custom communication");
+		strcpy(jap_log_content, "ノードに基づいて「socket rtdeのカスタム通信");
+		ret = copy_content(data_json, content);
+		break;
+	case 559:
+		port = cmdport;
+		strcpy(log_content, "卸载基于Socket的RTDE的自定义通讯");
+		strcpy(en_log_content, "Unload socket-based RTDE custom communication");
+		strcpy(jap_log_content, "ソケットベースRTDEのカスタム通信をアンインストールする");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */

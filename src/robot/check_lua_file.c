@@ -998,6 +998,16 @@ static int LoadTPD(lua_State* L)
 	return 1;
 }
 
+static int MoveLTR(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1358,6 +1368,16 @@ static int SetPLCCustVar(lua_State* L)
 	return 1;
 }
 
+static int GetGripperMotionDone(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int pcall_lua(void *arg)
 {
 	int lua_pcall_result = 0;
@@ -1453,6 +1473,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "WireSearchWait", WireSearchWait);
 	lua_register(luaEnv, "GetWireSearchOffset", GetWireSearchOffset);
 	lua_register(luaEnv, "LoadTPD", LoadTPD);
+	lua_register(luaEnv, "MoveLTR", MoveLTR);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);
@@ -1505,6 +1526,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "PointsOffsetDisable", PointsOffsetDisable);
 	lua_register(luaEnv, "GetPLCCustVar", GetPLCCustVar);
 	lua_register(luaEnv, "SetPLCCustVar", SetPLCCustVar);
+	lua_register(luaEnv, "GetGripperMotionDone", GetGripperMotionDone);
 
 	//printf("lua_filename = %s\n", lua_filename);
 
