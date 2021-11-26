@@ -39,6 +39,9 @@
 #define SOCKET_CONNECT_CLIENT_NUM_MAX 8
 #define REG_VAR_NB_MAX_NUM 20	/** 数值型变量个数 */
 #define REG_VAR_STR_MAX_NUM 10	/** 字符型变量个数 */
+#define MAXPIOIN	1
+#define MAXADCIN 	2
+#define MAXAUXADCIN	1
 
 #pragma pack(push, 1)
 /** 外部轴状态结构体 */
@@ -191,6 +194,10 @@ typedef struct _CTRL_STATE
 	uint8_t	   abnormal_stop;			/** 非正常停止  0-正常，1-非正常 */
 	uint8_t	   socket_conn_timeout;		/** socket连接超时，1-4 */
 	uint8_t	   socket_read_timeout;		/** socket读取超时，1-4 */
+	uint16_t   virtual_cl_dgt_input[MAXPIOIN]; 		/** 控制箱模拟 DI 输入 */
+	uint16_t   virtual_tl_dgt_input[MAXPIOIN]; 		/** 末端模拟 DI 输入 */
+	float	   virtual_cl_analog_input[MAXADCIN];	/** 控制箱模拟 AI 输入 */
+	float	   virtual_tl_analog_input[MAXAUXADCIN];/** 末端模拟 AI 输入 */
 } CTRL_STATE;
 #pragma pack(pop)
 

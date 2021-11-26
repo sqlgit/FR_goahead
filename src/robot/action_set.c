@@ -162,6 +162,8 @@ static int sendfile_106(const cJSON *data_json, char *content)
 	int line = 0;
 	int len = 0;
 	cJSON *json_data = NULL;
+	char **array = NULL;
+	int size = 0;
 
 	cJSON *pgvalue = cJSON_GetObjectItem(data_json, "pgvalue");
 	if (pgvalue == NULL || pgvalue->valuestring == NULL || !strcmp(pgvalue->valuestring, "")) {
@@ -233,14 +235,28 @@ static int sendfile_106(const cJSON *data_json, char *content)
 		return FAIL;
 	}
 
-	/** 如果是内嵌脚本, 检查 lua 文件内容合法性 */
-//	if (is_in(lua_filename, "Embedded_") == 1) {
+	if (check_lua_file() == SUCCESS) {
+		return SUCCESS;
+	} else {
+		perror("parse lua");
+		if (string_to_string_list(error_info, ":", &size, &array) == 0 || size != 3) {
+			perror("string to string list");
+			string_list_free(&array, size);
 
-		return check_lua_file();
-//	} else {
-//
-//		return SUCCESS;
-//	}
+			return FAIL;
+		}
+		json_data = cJSON_CreateObject();
+		cJSON_AddStringToObject(json_data, "lua_name", array[0]);
+		cJSON_AddNumberToObject(json_data, "line_num", atoi(array[1]));
+		cJSON_AddStringToObject(json_data, "error_info", array[2]);
+		string_list_free(&array, size);
+		memset(error_info, 0, ERROR_SIZE);
+		strcpy(error_info, cJSON_Print(json_data));
+		cJSON_Delete(json_data);
+		json_data = NULL;
+
+		return FAIL;
+	}
 }
 
 /* 1001 step over */
@@ -388,6 +404,18 @@ static int step_over(const cJSON *data_json, char *content)
 	/* AxleSensorRegWrite */
 	} else if (strstr(pgvalue->valuestring, "AxleSensorRegWrite(") && strrchr(pgvalue->valuestring, ')')) {
 		cmd = 548;
+	/* SetVirtualDI */
+	} else if (strstr(pgvalue->valuestring, "SetVirtualDI(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 560;
+	/* SetVirtualToolDI */
+	} else if (strstr(pgvalue->valuestring, "SetVirtualToolDI(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 562;
+	/* SetVirtualAI */
+	} else if (strstr(pgvalue->valuestring, "SetVirtualAI(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 564;
+	/* SetVirtualToolAI */
+	} else if (strstr(pgvalue->valuestring, "SetVirtualToolAI(") && strrchr(pgvalue->valuestring, ')')) {
+		cmd = 566;
 	/* error */
 	} else {
 		return FAIL;

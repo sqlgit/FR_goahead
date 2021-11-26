@@ -462,7 +462,7 @@ static int LaserRecordPoint(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 2) {
+	if (argc != 3) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1332,7 +1332,7 @@ static int PointsOffsetEnable(lua_State* L)
 {
 	int argc = lua_gettop(L);
 
-	if (argc != 6) {
+	if (argc != 7) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1373,6 +1373,86 @@ static int GetGripperMotionDone(lua_State* L)
 	int argc = lua_gettop(L);
 
 	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetVirtualDI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetVirtualDI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetVirtualToolDI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetVirtualToolDI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetVirtualAI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetVirtualAI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int SetVirtualToolAI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int GetVirtualToolAI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 1) {
 		luaL_argerror(L, argc, "Error number of parameters");
 	}
 	return 1;
@@ -1527,6 +1607,14 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetPLCCustVar", GetPLCCustVar);
 	lua_register(luaEnv, "SetPLCCustVar", SetPLCCustVar);
 	lua_register(luaEnv, "GetGripperMotionDone", GetGripperMotionDone);
+	lua_register(luaEnv, "SetVirtualDI", SetVirtualDI);
+	lua_register(luaEnv, "GetVirtualDI", GetVirtualDI);
+	lua_register(luaEnv, "SetVirtualToolDI", SetVirtualToolDI);
+	lua_register(luaEnv, "GetVirtualToolDI", GetVirtualToolDI);
+	lua_register(luaEnv, "SetVirtualAI", SetVirtualAI);
+	lua_register(luaEnv, "GetVirtualAI", GetVirtualAI);
+	lua_register(luaEnv, "SetVirtualToolAI", SetVirtualToolAI);
+	lua_register(luaEnv, "GetVirtualToolAI", GetVirtualToolAI);
 
 	//printf("lua_filename = %s\n", lua_filename);
 

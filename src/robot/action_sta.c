@@ -79,6 +79,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON *FT_data_json = NULL;
 	cJSON *array_ai = NULL;
 	cJSON *array_ao = NULL;
+	cJSON *vir_array_ai = NULL;
 	cJSON *PI_IO_json = NULL;
 	cJSON *electric_quantity = NULL;
 	cJSON *switch_json = NULL;
@@ -194,6 +195,19 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		//printf("state->analog_output[%d] = %d\n", i, state->analog_output[i]);
 		cJSON_AddNumberToObject(array_ao, "key", double_round(1.0*state->analog_output[i]/40.95, 3));
 	}
+	/* virtual_cl_dgt_input */
+	memset(array, 0, sizeof(array));
+	uint16_to_array(state->virtual_cl_dgt_input[0], array);
+	cJSON_AddItemToObject(root_json, "vir_cl_di", cJSON_CreateIntArray(array, 16));
+	/* virtual_tl_dgt_input */
+	memset(array, 0, sizeof(array));
+	uint16_to_array(state->virtual_tl_dgt_input[0], array);
+	cJSON_AddItemToObject(root_json, "vir_tl_di", cJSON_CreateIntArray(array, 16));
+	vir_array_ai = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "vir_ai", vir_array_ai);
+	cJSON_AddNumberToObject(vir_array_ai, "key", double_round(state->virtual_cl_analog_input[0], 3));
+	cJSON_AddNumberToObject(vir_array_ai, "key", double_round(state->virtual_cl_analog_input[1], 3));
+	cJSON_AddNumberToObject(vir_array_ai, "key", double_round(state->virtual_tl_analog_input[0], 3));
 
 	/* gripper_state*/
 	memset(array, 0, sizeof(array));
