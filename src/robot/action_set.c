@@ -126,20 +126,18 @@ static int sendfilename(const cJSON *data_json, char *content)
 	bzero(lua_filename, FILENAME_SIZE);
 	strcpy(lua_filename, content);
 
-	/* 嘉宝程序： main 开头的 */
 	if (strstr(lua_filename, "main")) {
 		if (string_to_string_list(lua_filename, "_", &size, &cmd_array) == 0 || size != 3) {
 			perror("string to string list");
-			string_list_free(&cmd_array, size);
-
-			return FAIL;
+		/* 嘉宝程序： main 开头的 */
+		} else {
+			memset(jiabao_torque_pd_data.left_wk_id, 0, 100);
+			strcpy(jiabao_torque_pd_data.left_wk_id, cmd_array[1]);
+			memset(jiabao_torque_pd_data.right_wk_id, 0, 100);
+			strncpy(jiabao_torque_pd_data.right_wk_id, cmd_array[2], (strlen(cmd_array[2]) - 4));
+			/* 保存最新数据到生产数据数据库 */
+			update_torquesys_pd_data();
 		}
-		memset(jiabao_torque_pd_data.left_wk_id, 0, 100);
-		strcpy(jiabao_torque_pd_data.left_wk_id, cmd_array[1]);
-		memset(jiabao_torque_pd_data.right_wk_id, 0, 100);
-		strncpy(jiabao_torque_pd_data.right_wk_id, cmd_array[2], (strlen(cmd_array[2]) - 4));
-		/* 保存最新数据到生产数据数据库 */
-		update_torquesys_pd_data();
 		string_list_free(&cmd_array, size);
 	}
 	//printf("content = %s\n", content);

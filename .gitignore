@@ -4,6 +4,6 @@ test
 *.a
 *.so
 *.sw*
-tags
 *.dylib
+tags
 x86

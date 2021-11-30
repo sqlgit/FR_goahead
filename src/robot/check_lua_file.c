@@ -1008,6 +1008,16 @@ static int MoveLTR(lua_State* L)
 	return 1;
 }
 
+static int NewThread(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 2) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1554,6 +1564,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetWireSearchOffset", GetWireSearchOffset);
 	lua_register(luaEnv, "LoadTPD", LoadTPD);
 	lua_register(luaEnv, "MoveLTR", MoveLTR);
+	lua_register(luaEnv, "NewThread", NewThread);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

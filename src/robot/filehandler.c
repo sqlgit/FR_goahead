@@ -1443,12 +1443,12 @@ static int avolfileHandler(Webs *wp)
 		return 1;
 	}
 	//filenameExt = "txt";
-	filenameExt = strrchr(filename, ext) + 1;
-	if (filename)
-		printf("The filenameExt: %s\n", filenameExt);
-	else {
+	if (strrchr(filename, ext) == NULL) {
 		websError(wp, HTTP_CODE_NOT_FOUND, "The filenameExt was not found");
 		return 1;
+	} else {
+		filenameExt = strrchr(filename, ext) + 1;
+		printf("The filenameExt: %s\n", filenameExt);
 	}
 
 	if (wp->ext) wfree(wp->ext);
