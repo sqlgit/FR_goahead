@@ -94,7 +94,9 @@
 #define DB_ET_CDSYSTEM "/root/web/file/cdsystem/et_coordinate_system.db"
 #define DB_WOBJ_CDSYSTEM "/root/web/file/cdsystem/wobj_coordinate_system.db"
 #define DB_EXAXIS_CDSYSTEM "/root/web/file/cdsystem/exaxis_coordinate_system.db"
+
 #define DB_ACCOUNT "/root/web/account/account.db"
+
 #define DB_SYSVAR "/root/web/file/sysvar/sysvar.db"
 #define DB_TORQUE_CFG "/root/web/file/torquesys/torquesys_cfg.db"
 #define DB_TORQUE_POINTS "/root/web/file/torquesys/torquesys_points.db"
