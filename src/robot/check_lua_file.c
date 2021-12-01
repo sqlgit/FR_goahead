@@ -1338,6 +1338,16 @@ static int GetWObjOffset(lua_State* L)
 	return 1;
 }
 
+static int GetJointSoftLimitDeg(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int PointsOffsetEnable(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1613,6 +1623,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetVisionObjPos", GetVisionObjPos);
 	lua_register(luaEnv, "GetActualWObjNum", GetActualWObjNum);
 	lua_register(luaEnv, "GetWObjOffset", GetWObjOffset);
+	lua_register(luaEnv, "GetJointSoftLimitDeg", GetJointSoftLimitDeg);
 	lua_register(luaEnv, "PointsOffsetEnable", PointsOffsetEnable);
 	lua_register(luaEnv, "PointsOffsetDisable", PointsOffsetDisable);
 	lua_register(luaEnv, "GetPLCCustVar", GetPLCCustVar);
