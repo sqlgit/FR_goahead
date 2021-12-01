@@ -2,7 +2,6 @@
 #define tools_h
 
 /********************************* Defines ************************************/
-
 #define local 0
 #define virtual_robot 0
 #define recover_mode 1 // 0 为进入 recover mode, 1 为 normal mode
