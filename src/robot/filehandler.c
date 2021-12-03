@@ -537,7 +537,7 @@ int update_file_dir()
 	/** TODO: 在 2021/10/19 V3.3.2 版本增加这两行 if 判断的注释， 待系统稳定后需要删除，目前注释了只是确保 system.txt 文件在升级时能够更新，是最新字符串格式 */
 	//if (check_dir_filename(DIR_CFG, "PI.txt") == 0) {
 		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "cp -rf %scfg/* %s", DIR_FACTORY_RESET, DIR_CFG);
+		sprintf(cmd, "cp -rf %scfg/* %s", DIR_FACTORY, DIR_CFG);
 		printf("cmd = %s\n", cmd);
 		system(cmd);
 
@@ -545,7 +545,7 @@ int update_file_dir()
 		在 2021/10/26 版本修改了 point_cfg.txt 文件，增加 flag 标志，在升级时能够更新, 待系统稳定后需要删除
 	*/
 		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "cp %spoints/point_cfg.txt %s", DIR_FACTORY_RESET, DIR_POINTS);
+		sprintf(cmd, "cp %spoints/point_cfg.txt %s", DIR_FACTORY, DIR_POINTS);
 		printf("cmd = %s\n", cmd);
 		system(cmd);
 
@@ -553,7 +553,7 @@ int update_file_dir()
 		在 2021/11/04 版本增加了 web_status_showflag.txt 文件，增加 flag 标志，在升级时能够更新, 待系统稳定后需要删除
 	*/
 		bzero(cmd, sizeof(cmd));
-		sprintf(cmd, "cp %scustomer/web_status_showflag.txt %s", DIR_FACTORY_RESET, DIR_CUSTOMER);
+		sprintf(cmd, "cp %scustomer/web_status_showflag.txt %s", DIR_FACTORY, DIR_CUSTOMER);
 		printf("cmd = %s\n", cmd);
 		system(cmd);
 	//}
@@ -1054,12 +1054,7 @@ void upload(Webs *wp)
 
 		/** 更新 webserver 文件夹 */
 		bzero(cmd, sizeof(cmd));
-//#if recover_mode
-		//sprintf(cmd, "sh %s", SHELL_WEBTARCP);
 		sprintf(cmd, "sh %s", UPGRADE_WEBTARCP);
-//#else
-//		sprintf(cmd, "sh %s", SHELL_RECOVER_WEBTARCP);
-//#endif
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 5 秒 */
@@ -1072,12 +1067,7 @@ void upload(Webs *wp)
 
 		/** 更新 control 相关文件 */
 		bzero(cmd, sizeof(cmd));
-//#if recover_mode
-		//sprintf(cmd, "sh %s", SHELL_CRLUPGRADE);
 		sprintf(cmd, "sh %s", UPGRADE_CRLUPGRADE);
-//#else
-//		sprintf(cmd, "sh %s", SHELL_RECOVER_CRLUPGRADE);
-//#endif
 		do {
 			system(cmd);
 			/** 文件写入硬盘需要一定时间，等待 1 秒 */

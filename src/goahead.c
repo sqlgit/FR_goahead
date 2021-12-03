@@ -233,7 +233,6 @@ MAIN(goahead, int argc, char **argv, char **envp)
 	create_dir(DIR_LOG);
 	create_dir(DIR_LOG_EN);
 	create_dir(DIR_LOG_JAP);
-	create_dir(DIR_ROBOT_TYPE);
 
 	/* 如果标志 “升级成功” 的文件存在，需要检查并更新 file 文件夹下数据文件到最新 */
 	if (check_dir_filename(DIR_FILE, FILENAME_UP_SUC) == 1) {
