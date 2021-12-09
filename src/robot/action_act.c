@@ -101,24 +101,32 @@ static int remove_lua_file(const cJSON *data_json)
 {
 	char dir_filename[100] = {0};
 	char fruser_dir_filename[100] = {0};
+	cJSON *name_index = NULL;
+	int i = 0;
 
 	cJSON *name = cJSON_GetObjectItem(data_json, "name");
-	if (name == NULL || name->valuestring == NULL) {
+	if (name == NULL) {
 		perror("json");
 
 		return FAIL;
 	}
-	sprintf(dir_filename, "%s%s", DIR_USER, name->valuestring);
-	if (remove(dir_filename) == -1) {
-		perror("remove");
 
-		return FAIL;
-	}
-	sprintf(fruser_dir_filename, "%s%s", DIR_FRUSER, name->valuestring);
-	if (remove(fruser_dir_filename) == -1) {
-		perror("remove");
+	for (i = 0; i < cJSON_GetArraySize(name); i++) {
+		name_index = cJSON_GetArrayItem(name, i);
+		printf("name_index->valuestring = %s\n", name_index->valuestring);
 
-		return FAIL;
+		memset(dir_filename, 0, sizeof(dir_filename));
+		sprintf(dir_filename, "%s%s", DIR_USER, name_index->valuestring);
+		if (remove(dir_filename) == -1) {
+			perror("remove web/file/user");
+
+			return FAIL;
+		}
+		memset(fruser_dir_filename, 0, sizeof(fruser_dir_filename));
+		sprintf(fruser_dir_filename, "%s%s", DIR_FRUSER, name_index->valuestring);
+		if (remove(fruser_dir_filename) == -1) {
+			perror("remove fruser");
+		}
 	}
 
 	return SUCCESS;

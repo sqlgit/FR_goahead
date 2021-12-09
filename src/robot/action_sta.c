@@ -144,6 +144,8 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	cJSON_AddNumberToObject(root_json, "tpd_record_state", state->tpd_record_state);
 	cJSON_AddNumberToObject(root_json, "tpd_record_scale", state->tpd_record_scale);
 	cJSON_AddNumberToObject(root_json, "FT_ActStatus", state->FT_ActStatus);
+	cJSON_AddNumberToObject(root_json, "pushBtnBoxState", state->pushBtnBoxState);
+	cJSON_AddNumberToObject(root_json, "rbtEnableState", state->rbtEnableState);
 #if local
 	cJSON_AddNumberToObject(root_json, "mode", 1);
 #else
@@ -809,7 +811,7 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 			pre_state->safetydoor_alarm = 0;
 		}
 		if (state->motionAlarm == 1) {
-			if (language == 0) { 
+			if (language == 0) {
 				cJSON_AddStringToObject(alarm_json, "key", "警告： LIN 指令姿态变化过大");
 			}
 			if (language == 1) {
@@ -823,6 +825,44 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				my_en_syslog("alarm", "Warning: The LIN command posture has changed too much", cur_account.username);
 				my_jap_syslog("戒告する", "戒告する: linコマンドの姿勢変化が大きすぎる", cur_account.username);
 				pre_state->motionAlarm = 1;
+			}
+		} else {
+			pre_state->motionAlarm = 0;
+		}
+		if (state->motionAlarm == 2) {
+			if (language == 0) {
+				cJSON_AddStringToObject(alarm_json, "key", "警告： TCP 超速");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: TCP over speeding");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: TCPスピードオーバー");
+			}
+			if (pre_state->motionAlarm != 2) {
+				my_syslog("警告", "警告： TCP 超速", cur_account.username);
+				my_en_syslog("alarm", "Warning: TCP over speeding", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: TCPスピードオーバー", cur_account.username);
+				pre_state->motionAlarm = 2;
+			}
+		} else {
+			pre_state->motionAlarm = 0;
+		}
+		if (state->motionAlarm == 3) {
+			if (language == 0) {
+				cJSON_AddStringToObject(alarm_json, "key", "警告： 发生碰撞");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(alarm_json, "key", "Warning: A collision");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(alarm_json, "key", "戒告する: 衝突する");
+			}
+			if (pre_state->motionAlarm != 3) {
+				my_syslog("警告", "警告： 发生碰撞", cur_account.username);
+				my_en_syslog("alarm", "Warning: A collision", cur_account.username);
+				my_jap_syslog("戒告する", "戒告する: 衝突する", cur_account.username);
+				pre_state->motionAlarm = 3;
 			}
 		} else {
 			pre_state->motionAlarm = 0;

@@ -1161,7 +1161,7 @@ void set(Webs *wp)
 	}
 	cmd = command->valueint;
 	// cmd_auth "0"
-	if (cmd == 302 || cmd == 305 || cmd == 308 || cmd == 309 || cmd == 312 || cmd == 332 || cmd == 337 || cmd == 343 || cmd == 391 || cmd == 425 || cmd == 541 || cmd == 542 || cmd == 543 || cmd == 544) {
+	if (cmd == 302 || cmd == 305 || cmd == 308 || cmd == 309 || cmd == 312 || cmd == 332 || cmd == 337 || cmd == 343 || cmd == 391 || cmd == 425 || cmd == 541 || cmd == 542 || cmd == 543 || cmd == 544 || cmd == 567 || cmd == 568 || cmd == 569) {
 		if (!authority_management("0")) {
 			perror("authority_management");
 
@@ -2596,6 +2596,27 @@ void set(Webs *wp)
 		strcpy(log_content, "卸载基于Socket的RTDE的自定义通讯");
 		strcpy(en_log_content, "Unload socket-based RTDE custom communication");
 		strcpy(jap_log_content, "ソケットベースRTDEのカスタム通信をアンインストールする");
+		ret = copy_content(data_json, content);
+		break;
+	case 567:
+		port = cmdport;
+		strcpy(log_content, "设置安全停止模式");
+		strcpy(en_log_content, "Set the safe stop mode");
+		strcpy(jap_log_content, "安全停止モードを設定する");
+		ret = copy_content(data_json, content);
+		break;
+	case 568:
+		port = cmdport;
+		strcpy(log_content, "设置降速模式参数");
+		strcpy(en_log_content, "Set the speed reduction mode parameters");
+		strcpy(jap_log_content, "ダウンモードパラメータを設定する");
+		ret = copy_content(data_json, content);
+		break;
+	case 569:
+		port = cmdport;
+		strcpy(log_content, "设置碰撞后策略");
+		strcpy(en_log_content, "Set the post-collision policy");
+		strcpy(jap_log_content, "衝突後の戦略を立てる");
 		ret = copy_content(data_json, content);
 		break;
 	case 1001:/* 内部定义指令 */
