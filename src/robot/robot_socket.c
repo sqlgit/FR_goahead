@@ -1176,6 +1176,37 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 				msg_content = NULL;
 			}
 			string_list_free(&msg_array, size_content);
+		} else if (atoi(array[2]) == 570) {//获取段焊长度和三维段焊方向向量
+			root_json = cJSON_CreateObject();
+			if (string_to_string_list(array[4], ",", &size_content, &msg_array) == 0 || size_content != 4) {
+				perror("string to string list");
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
+
+				continue;
+			}
+			cJSON_AddStringToObject(root_json, "distance", msg_array[0]);
+			cJSON_AddStringToObject(root_json, "x", msg_array[1]);
+			cJSON_AddStringToObject(root_json, "y", msg_array[2]);
+			cJSON_AddStringToObject(root_json, "z", msg_array[3]);
+			msg_content = cJSON_Print(root_json);
+			cJSON_Delete(root_json);
+			root_json = NULL;
+			if (createnode(&node, atoi(array[2]), msg_content) == FAIL) {
+				string_list_free(&msg_array, size_content);
+				string_list_free(&array, size_package);
+				if (msg_content != NULL) {
+					free(msg_content);
+					msg_content = NULL;
+				}
+
+				continue;
+			}
+			if (msg_content != NULL) {
+				free(msg_content);
+				msg_content = NULL;
+			}
+			string_list_free(&msg_array, size_content);
 		} else {
 			if (createnode(&node, atoi(array[2]), array[4]) == FAIL) {
 				string_list_free(&array, size_package);
