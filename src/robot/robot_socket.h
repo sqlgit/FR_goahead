@@ -363,7 +363,8 @@ typedef struct _ZHENGKU
 	int line_num;						// 程序运行行号
 	char luaname[100];					// 运行程序名称
 	char lua_content[GENGKU_LUASIZE];	// 程序运行内容
-	char error_info[GENGKU_ERROR_INFO];	// 机器人报警错误信息
+	char alarm_info[GENGKU_ALARM_INFO];	// 机器人警告信息
+	char error_info[GENGKU_ERROR_INFO];	// 机器人错误信息
 } ZHENGKU;
 
 /********************************* Function declaration ***********************/
@@ -381,6 +382,7 @@ int init_network();
 int init_db_json(DB_JSON *p_db_json);
 void db_json_delete(DB_JSON *p_db_json);
 int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json);
+int get_robot_alarm_error_info(cJSON *alarm_json, cJSON *error_json);
 //int send_cmd_set_robot_type();
 
 #endif
