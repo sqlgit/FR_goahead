@@ -121,6 +121,7 @@
 #define RTS_PASSWORD	"frrts2021"
 #define POINT_HOME	"pHome"
 #define GENGKU_LUASIZE	10000
+#define GENGKU_ERROR_INFO	1024
 
 typedef unsigned char BYTE;
 

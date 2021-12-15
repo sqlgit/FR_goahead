@@ -793,18 +793,18 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 		if (state->safetydoor_alarm == 1) {
 			if (language == 0) { 
-				cJSON_AddStringToObject(alarm_json, "key", "安全门触发");
+				cJSON_AddStringToObject(alarm_json, "key", "安全停止（安全门）触发");
 			}
 			if (language == 1) {
-				cJSON_AddStringToObject(alarm_json, "key", "Safety door trigger");
+				cJSON_AddStringToObject(alarm_json, "key", "Safety stop (door) trigger");
 			}
 			if (language == 2) {
-				cJSON_AddStringToObject(alarm_json, "key", "安全扉トリガ");
+				cJSON_AddStringToObject(alarm_json, "key", "安全停止(セーフゲート)トリガー");
 			}
 			if (pre_state->safetydoor_alarm != 1) {
-				my_syslog("警告", "安全门触发", cur_account.username);
-				my_en_syslog("alarm", "Safety door trigger", cur_account.username);
-				my_jap_syslog("戒告する", "安全扉トリガ", cur_account.username);
+				my_syslog("警告", "安全停止（安全门）触发", cur_account.username);
+				my_en_syslog("alarm", "Safety stop (door) trigger", cur_account.username);
+				my_jap_syslog("戒告する", "安全停止(セーフゲート)トリガー", cur_account.username);
 				pre_state->safetydoor_alarm = 1;
 			}
 		} else {
