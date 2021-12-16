@@ -1028,6 +1028,16 @@ static int GetSegWeldDisDir(lua_State* L)
 	return 1;
 }
 
+static int GetPosSensorRawData(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 0) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1586,6 +1596,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "MoveLTR", MoveLTR);
 	lua_register(luaEnv, "NewThread", NewThread);
 	lua_register(luaEnv, "GetSegWeldDisDir", GetSegWeldDisDir);
+	lua_register(luaEnv, "GetPosSensorRawData", GetPosSensorRawData);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

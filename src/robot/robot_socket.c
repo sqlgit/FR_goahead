@@ -86,6 +86,7 @@ static int socket_bind_listen(SOCKET_SERVER_INFO *sock);
 static int socket_upper_computer_send(SOCKET_CONNECT_CLIENT_INFO *sock, const int cmd_id, const int data_len, const char *data_content);
 static int socket_gengku_send(SOCKET_CONNECT_CLIENT_INFO *sock, const char *data_content);
 static int movej_point(char *pname, char *ovl);
+static int check_lua_point_pos();
 static int gengku_servar(cJSON *data_json);
 static int gengku_getvar(cJSON *data_json);
 static int gengku_backtohome(cJSON *data_json);
@@ -2375,6 +2376,60 @@ static int movej_point(char *pname, char *ovl)
 	return SUCCESS;
 }
 
+static int check_lua_point_pos()
+{
+	char lua_content[GENGKU_LUASIZE] = { 0 };
+	const char s[2] = "\n";
+	char *token = NULL;
+	char **cmd_array = NULL;
+	int size = 0;
+	CTRL_STATE *state = NULL;
+	int ret = FAIL;
+	int i = 0;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		state = &ctrl_state;
+	} else { // "0" 代表虚拟机器人
+		state = &vir_ctrl_state;
+	}
+	strcpy(lua_content, zhengku_info.lua_content);
+
+	token = strtok(lua_content, s);
+	while (token != NULL) {
+		if (strstr(token, "MoveJ") || strstr(token, "MoveL")) {
+			if (string_to_string_list(token, ",", &size, &cmd_array) == 0) {
+				perror("string to string listi");
+				string_list_free(&cmd_array, size);
+
+				return FAIL;
+			}
+			/**
+			for (i = 0; i < 6; i++) {
+				printf("state->tl_cur_pos[%d] = %lf\n", i, state->tl_cur_pos[i]);
+			}
+			for (i = 6; i < 12; i++) {
+				printf("cmd_array[%d] = %lf\n", i, atof(cmd_array[i]));
+			}
+			*/
+			if (((atof(cmd_array[6]) - 0.2) < state->tl_cur_pos[0] && state->tl_cur_pos[0] < (atof(cmd_array[6]) + 0.2)) && ((atof(cmd_array[7]) - 0.2) < state->tl_cur_pos[1] && state->tl_cur_pos[1] < (atof(cmd_array[7]) + 0.2)) && ((atof(cmd_array[8]) - 0.2) < state->tl_cur_pos[2] && state->tl_cur_pos[2] < (atof(cmd_array[8]) + 0.2)) && ((atof(cmd_array[9]) - 0.2) < state->tl_cur_pos[3] && state->tl_cur_pos[3] < (atof(cmd_array[9]) + 0.2)) && ((atof(cmd_array[10]) - 0.2) < state->tl_cur_pos[4] && state->tl_cur_pos[4] < (atof(cmd_array[10]) + 0.2)) && ((atof(cmd_array[11]) - 0.2) < state->tl_cur_pos[5] && state->tl_cur_pos[5] < (atof(cmd_array[11]) + 0.2))) {
+
+				ret = SUCCESS;
+			} else {
+
+				ret = FAIL;
+			}
+			//printf("ret = %d\n", ret);
+			string_list_free(&cmd_array, size);
+
+			break;
+		}
+		/* get other line */
+		token = strtok(NULL, s);
+	}
+
+	return ret;
+}
+
 static int gengku_servar(cJSON *data_json)
 {
 	SOCKET_INFO *sock_file = NULL;
@@ -2418,14 +2473,19 @@ static int gengku_servar(cJSON *data_json)
 		update_homefile(1);
 		strcpy(zhengku_info.result, luaname);
 	} else {
-		socket_enquene(sock_file, 105, lua_filename, 1);
-		socket_upper_computer.server_sendcmd_TM_flag++;
+		if (check_lua_point_pos() == SUCCESS) {
+			socket_enquene(sock_file, 105, lua_filename, 1);
+			socket_upper_computer.server_sendcmd_TM_flag++;
 
-		// 下发设置变量指令,正在运行程序
-		zhengku_info.setvar = 1;
-		zhengku_info.line_num = 0;
-		strcpy(zhengku_info.result, "0");
-		strcpy(zhengku_info.luaname, luaname);
+			// 下发设置变量指令,正在运行程序
+			zhengku_info.setvar = 1;
+			zhengku_info.line_num = 0;
+			strcpy(zhengku_info.result, "0");
+			strcpy(zhengku_info.luaname, luaname);
+		} else {
+
+			return FAIL;
+		}
 	}
 
 	return SUCCESS;
