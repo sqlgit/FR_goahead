@@ -196,6 +196,16 @@ static int WaitDI(lua_State* L)
 	return 1;
 }
 
+static int WaitMultiDI(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 5) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int WaitToolDI(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1524,6 +1534,7 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "GetAI", GetAI);
 	lua_register(luaEnv, "GetToolAI", GetToolAI);
 	lua_register(luaEnv, "WaitDI", WaitDI);
+	lua_register(luaEnv, "WaitMultiDI", WaitMultiDI);
 	lua_register(luaEnv, "WaitToolDI", WaitToolDI);
 	lua_register(luaEnv, "WaitAI", WaitAI);
 	lua_register(luaEnv, "WaitToolAI", WaitToolAI);

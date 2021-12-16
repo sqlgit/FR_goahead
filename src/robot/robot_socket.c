@@ -2471,7 +2471,7 @@ static int gengku_servar(cJSON *data_json)
 		//printf("cmd = %s\n", cmd);
 		system(cmd);
 		update_homefile(1);
-		strcpy(zhengku_info.result, luaname);
+		strcpy(zhengku_info.result, luaname_json->valuestring);
 	} else {
 		if (check_lua_point_pos() == SUCCESS) {
 			socket_enquene(sock_file, 105, lua_filename, 1);
@@ -2481,7 +2481,7 @@ static int gengku_servar(cJSON *data_json)
 			zhengku_info.setvar = 1;
 			zhengku_info.line_num = 0;
 			strcpy(zhengku_info.result, "0");
-			strcpy(zhengku_info.luaname, luaname);
+			strcpy(zhengku_info.luaname, luaname_json->valuestring);
 		} else {
 
 			return FAIL;
