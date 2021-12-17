@@ -125,6 +125,8 @@
 #define LOG_LEN						1024
 #define FILENAME_SIZE				1024
 #define GENGKU_LUASIZE				10000
+#define GENGKU_ALARM_INFO	1024
+#define GENGKU_ERROR_INFO	1024
 
 #define FILENAME_UP_SUC 			"upgrade_success.txt"
 #define ODM_PASSWORD				"ODM"
