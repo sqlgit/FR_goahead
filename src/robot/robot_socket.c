@@ -7980,4 +7980,197 @@ int get_robot_alarm_error_info(cJSON *alarm_json, cJSON *error_json)
 	} else {
 		pre_state->ts_tm_state_com_error = 0;
 	}
+	switch(state->ctrlBoxError)
+	{
+		case 1:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "超时");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "timeout");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ターンオーバー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "超时", cur_account.username);
+				my_en_syslog("error", "timeout", cur_account.username);
+				my_jap_syslog("さくご", "ターンオーバー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 2:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "slave machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "スレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "从机错误", cur_account.username);
+				my_en_syslog("error", "slave machine error", cur_account.username);
+				my_jap_syslog("さくご", "スレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 3:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "master machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ホストエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "主机错误", cur_account.username);
+				my_en_syslog("error", "master machine error", cur_account.username);
+				my_jap_syslog("さくご", "ホストエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 4:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO slave machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOスレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO从机错误", cur_account.username);
+				my_en_syslog("error", "STO slave machine error", cur_account.username);
+				my_jap_syslog("さくご", "STOスレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 5:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO master machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOホストエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO主机错误", cur_account.username);
+				my_en_syslog("error", "STO master machine error", cur_account.username);
+				my_jap_syslog("さくご", "STOホストエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 6:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "急停模式下主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The master/slave machine fails in emergency stop mode");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "急停止モードで主従機エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "急停模式下主从机错误", cur_account.username);
+				my_en_syslog("error", "The master/slave machine fails in emergency stop mode", cur_account.username);
+				my_jap_syslog("さくご", "急停止モードで主従機エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 7:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO模式下主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The master/slave server fails in STO mode");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOモードでのマスタースレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO模式下主从机错误", cur_account.username);
+				my_en_syslog("error", "The master/slave server fails in STO mode", cur_account.username);
+				my_jap_syslog("さくご", "STOモードでのマスタースレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 8:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO slave enabled error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3位スイッチが作動しSTO誤作動");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO从机错误", cur_account.username);
+				my_en_syslog("error", "STO slave enabled error", cur_account.username);
+				my_jap_syslog("さくご", "3位スイッチが作動しSTO誤作動", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 9:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO host enabled by the three-digit switch fails");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3桁スイッチでSTOホストエラーが発生");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO主机错误", cur_account.username);
+				my_en_syslog("error", "STO host enabled by the three-digit switch fails", cur_account.username);
+				my_jap_syslog("さくご", "3桁スイッチでSTOホストエラーが発生", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 10:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO master/slave enabled error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3位スイッチで作動STO主従機エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO主从机错误", cur_account.username);
+				my_en_syslog("error", "STO master/slave enabled error", cur_account.username);
+				my_jap_syslog("さくご", "3位スイッチで作動STO主従機エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 11:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO输入错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO input error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STO入力エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO输入错误", cur_account.username);
+				my_en_syslog("error", "STO input error", cur_account.username);
+				my_jap_syslog("さくご", "STO入力エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		default:
+			pre_state->exaxis_out_slimit_error = 0;
+			break;
+	}
 }
