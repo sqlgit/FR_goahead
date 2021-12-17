@@ -240,15 +240,53 @@ static int get_tpd_name(char **ret_f_content)
 /* get log name */
 static int get_log_name(char **ret_f_content)
 {
-	if (language == 0){
-		*ret_f_content = get_dir_filename(DIR_LOG);
+	char *logname_array = NULL;
+	cJSON *logname_json = NULL;
+	int array_size = 0;
+	int i = 0;
+	int j = 0;
+	char arr[100] = { 0 };
+	char arr_cmp[100] = { 0 };
+	cJSON *root_json = NULL;
+
+	if (language == 0) {
+		logname_array = get_dir_filename(DIR_LOG);
+	} else if (language == 1) {
+		logname_array = get_dir_filename(DIR_LOG_EN);
+	} else if (language == 2) {
+		logname_array = get_dir_filename(DIR_LOG_JAP);
 	}
-	if (language == 1){
-		*ret_f_content = get_dir_filename(DIR_LOG_EN);
+
+	logname_json = cJSON_Parse(logname_array);
+	free(logname_array);
+	logname_array = NULL;
+	if (logname_json == NULL) {
+		perror("cjson parse");
+
+		return FAIL;
 	}
-	if (language == 2){
-		*ret_f_content = get_dir_filename(DIR_LOG_JAP);
+
+	root_json = cJSON_CreateArray();
+	array_size = cJSON_GetArraySize(logname_json);
+	//printf("array_size = %d\n", array_size);
+	for (i = 0; i < array_size; i++) {
+		memset(arr, 0, 100);
+		strcpy(arr, cJSON_GetArrayItem(logname_json, i)->valuestring);
+		for (j = (i + 1); j < array_size; j++) {
+			memset(arr_cmp, 0, 100);
+			strcpy(arr_cmp, cJSON_GetArrayItem(logname_json, j)->valuestring);
+			if (strcmp(arr, arr_cmp) < 0) {
+				cJSON_ReplaceItemInArray(logname_json, j, cJSON_CreateString(arr));
+				memset(arr, 0, 100);
+				strcpy(arr, arr_cmp);
+			}
+		}
+		cJSON_AddItemToArray(root_json, cJSON_CreateString(arr));
 	}
+	*ret_f_content = cJSON_Print(root_json);
+
+	cJSON_Delete(logname_json);
+	logname_json = NULL;
 	/* file is NULL */
 	if (*ret_f_content == NULL) {
 		perror("get dir content");

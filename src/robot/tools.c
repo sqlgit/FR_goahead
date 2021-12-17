@@ -474,8 +474,9 @@ char *get_dir_filename(const char *dir_path)
 	}
 	while ((ptr = readdir(dir)) != NULL) {
 		/* current dir OR parrent dir */
-		if(strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
+		if (strcmp(ptr->d_name, ".") == 0 || strcmp(ptr->d_name, "..") == 0)
 			continue;
+		//printf("ptr->d_name = %s\n", ptr->d_name);
 		//cJSON_AddStringToObject(root_json, "key", ptr->d_name);
 		//cJSON_AddItemToArray(root_json, cJSON_CreateString(ptr->d_name));
 		cJSON_InsertItemInArray(root_json, 0, cJSON_CreateString(ptr->d_name));
@@ -483,7 +484,7 @@ char *get_dir_filename(const char *dir_path)
 	buf = cJSON_Print(root_json);
 	//printf("buf = %s\n", buf);
 	content = (char *)calloc(1, strlen(buf)+1);
-	if(content != NULL) {
+	if (content != NULL) {
 		strcpy(content, buf);
 	} else {
 		perror("calloc");
@@ -841,7 +842,7 @@ int my_syslog(const char *class, const char *content, const char *user)
 	//printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
 	//printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
 	//printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
-	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
+	sprintf(filename, "%d-%02d-%02d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
 	//printf("filename = %s\n", filename);
 	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
 
@@ -911,7 +912,7 @@ int my_en_syslog(const char *class, const char *content, const char *user)
 	//printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
 	//printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
 	//printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
-	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
+	sprintf(filename, "%d-%02d-%02d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
 	//printf("filename = %s\n", filename);
 	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
 
@@ -981,7 +982,7 @@ int my_jap_syslog(const char *class, const char *content, const char *user)
 	//printf("Local mday is: %d\n", my_local->tm_mday); /* 一个月中的日期 - 取值区间为[1,31] */
 	//printf("Local mon is: %d\n", (my_local->tm_mon+1)); /* 月份（从一月开始，0代表一月） - 取值区间为[0,11] */
 	//printf("Local year is: %d\n", (my_local->tm_year+1900)); /* 年份，其值等于实际年份减去1900 */
-	sprintf(filename, "%d-%d-%d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
+	sprintf(filename, "%d-%02d-%02d", (my_local->tm_year+1900), (my_local->tm_mon+1), my_local->tm_mday);
 	//printf("filename = %s\n", filename);
 	sprintf(now_time, "%d:%d:%d", (my_local->tm_hour), (my_local->tm_min), my_local->tm_sec);
 
