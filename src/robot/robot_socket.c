@@ -517,6 +517,12 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	char frame[MAX_BUF] = {0};//提取出一帧, 存放buf
 	char sec_buf_memory[BUFFSIZE] = {0};
 	GRIPPERS_CONFIG_INFO grippers_config_info;
+	SOCKET_INFO *sock_cmd = NULL;
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
 	//printf("recv_len = %d\n", recv_len);
@@ -556,12 +562,6 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		if (socket_upper_computer.server_sendcmd_TM_flag > 0) {
 			// 更酷程序标志: 下发设置变量指令， 先发 105 文件名， 收到 105 的指令反馈后，再发 101 start
 			if ((zhengku_info.setvar == 1 || zhengku_info.backhome == 1) && atoi(array[2]) == 105) {
-				SOCKET_INFO *sock_cmd = NULL;
-				if (robot_type == 1) { // "1" 代表实体机器人
-					sock_cmd = &socket_cmd;
-				} else { // "0" 代表虚拟机器人
-					sock_cmd = &socket_vir_cmd;
-				}
 				//printf("更酷 send start\n");
 				socket_enquene(sock_cmd, 101, "START", 0);
 				socket_upper_computer.server_sendcmd_TM_flag++;
@@ -576,7 +576,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		if (websGetSessionCount() <= 0) {
 			if (atoi(array[2]) == 502) {//获取按钮盒 IO 状态
 				if (atoi(array[4]) == 3) {
-					socket_enquene(&socket_cmd, 101, "START", 0);
+					socket_enquene(sock_cmd, 101, "START", 0);
 				}
 			}
 			string_list_free(&array, size_package);
@@ -2969,7 +2969,13 @@ void *socket_pi_status_thread(void *arg)
 	char recvbuf[PI_STATUS_SIZE + 1] = { 0 };
 	uint8 frame[PI_STATUS_SIZE] = { 0 };
 	int i = 0;
+	SOCKET_INFO *sock_cmd = NULL;
 
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 	change_memory = buf_memory;
 	printf("port = %d\n", port);
 	sock = &socket_pi_status;
@@ -3044,6 +3050,14 @@ void *socket_pi_status_thread(void *arg)
 					//printf("update PI_STATUS\n");
 					memset(status, 0, sizeof(PI_STATUS));
 					memcpy(status, (frame + 3), (recv_len - 7));
+					// 连接 10.1寸示教器模式: 当没有账户登录时或者示教器（浏览器） 不存在时用户点击了面板上的　"开始"　按钮, 下发 101 start
+					/*
+					if (websGetSessionCount() <= 0) {
+						if (1) {
+							socket_enquene(sock_cmd, 101, "START", 0);
+						}
+					}
+					*/
 				}
 			}
 		}
@@ -3215,10 +3229,17 @@ int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const 
 
 static void init_torquesys()
 {
+	SOCKET_INFO *sock_cmd = NULL;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 	/** init torquesys on off status */
 	torquesys.enable = 0;
 	/** send get_on_off to TaskManagement */
-	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
+	socket_enquene(sock_cmd, 412, "TorqueSysGetOnOff()", 1);
 }
 
 /**
