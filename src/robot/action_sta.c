@@ -104,6 +104,12 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 	}*/
 	root_json = cJSON_CreateObject();
 
+	/** alarm json */
+	alarm_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "alarm_info", alarm_json);
+	/* error_json */
+	error_json = cJSON_CreateArray();
+	cJSON_AddItemToObject(root_json, "error_info", error_json);
 	cJSON_AddNumberToObject(root_json, "robot_type", robot_type);
 	/** "1" 代表实体机器人 */
 	if (robot_type == 1) {
@@ -385,6 +391,10 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 				cJSON_AddNumberToObject(custom, "key", pi_status.custom[i]);
 			}
 		}
+#if print_mode
+		printf("socket_pi_status.connect_status = %d\n", socket_pi_status.connect_status);
+		printf("socket_pi_cmd.connect_status = %d\n", socket_pi_cmd.connect_status);
+#endif
 		/* PI socket connect error */
 		if (socket_pi_status.connect_status == 0 || socket_pi_cmd.connect_status == 0) {
 			if (language == 0) {
@@ -442,13 +452,6 @@ static int basic(char *ret_status, CTRL_STATE *state, CTRL_STATE *pre_state)
 		}
 		//printf("cJSON_Print = %s\n", cJSON_Print(feedback_json));
 	}
-
-	/** alarm json */
-	alarm_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "alarm_info", alarm_json);
-	/* error_json */
-	error_json = cJSON_CreateArray();
-	cJSON_AddItemToObject(root_json, "error_info", error_json);
 
 	/* 如果 web 与控制器通信正常 */
 	if (WEB_TM_connect_status == 1) {

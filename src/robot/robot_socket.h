@@ -200,6 +200,7 @@ typedef struct _CTRL_STATE
 	float	   	virtual_tl_analog_input[MAXAUXADCIN];/** 末端模拟 AI 输入 */
 	uint8_t		pushBtnBoxState;		/** 按钮盒状态, 0-使用，1-禁用 */
 	int			rbtEnableState;			/** 机器人使能状态, 0-不使能，1-使能 */
+	uint16_t	ctrlBoxError;			/** 控制箱错误 */
 } CTRL_STATE;
 #pragma pack(pop)
 

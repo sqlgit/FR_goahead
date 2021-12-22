@@ -2245,9 +2245,13 @@ static int modify_PI_cfg(const cJSON *data_json)
 	pi_pt_status.enable = enable->valueint;
 	pi_pt_cmd.enable = enable->valueint;
 
+#if print_mode
+	printf("pi_pt_status.enable = %d\n", pi_pt_status.enable);
+	printf("pi_pt_cmd.enable = %d\n", pi_pt_cmd.enable);
 	printf("pthread_kill(pi_pt_status.t_pi, 0) = %d\n", pthread_kill(pi_pt_status.t_pi, 0));
 	printf("pthread_kill(pi_pt_cmd.t_pi, 0) = %d\n", pthread_kill(pi_pt_cmd.t_pi, 0));
 	printf("ESRCH = %d\n", ESRCH);
+#endif
 	/** 关闭使用示教器树莓派 */
 	if (enable->valueint == 0) {
 		if (old_enable->valueint == 1) {

@@ -1048,6 +1048,26 @@ static int GetPosSensorRawData(lua_State* L)
 	return 1;
 }
 
+static int ModbusRegRead(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 3) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
+static int ModbusRegWrite(lua_State* L)
+{
+	int argc = lua_gettop(L);
+
+	if (argc != 4) {
+		luaL_argerror(L, argc, "Error number of parameters");
+	}
+	return 1;
+}
+
 static int SocketOpen(lua_State* L)
 {
 	int argc = lua_gettop(L);
@@ -1608,6 +1628,8 @@ static int pcall_lua(void *arg)
 	lua_register(luaEnv, "NewThread", NewThread);
 	lua_register(luaEnv, "GetSegWeldDisDir", GetSegWeldDisDir);
 	lua_register(luaEnv, "GetPosSensorRawData", GetPosSensorRawData);
+	lua_register(luaEnv, "ModbusRegRead", ModbusRegRead);
+	lua_register(luaEnv, "ModbusRegWrite", ModbusRegWrite);
 
 	/** 机器人 程序示教 尚未实现 */
 	lua_register(luaEnv, "StartJOG", StartJOG);

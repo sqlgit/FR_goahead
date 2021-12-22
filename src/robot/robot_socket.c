@@ -517,6 +517,12 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 	char frame[MAX_BUF] = {0};//提取出一帧, 存放buf
 	char sec_buf_memory[BUFFSIZE] = {0};
 	GRIPPERS_CONFIG_INFO grippers_config_info;
+	SOCKET_INFO *sock_cmd = NULL;
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 
 	recv_len = recv(sock->fd, recvbuf, MAX_BUF, 0);
 	//printf("recv_len = %d\n", recv_len);
@@ -556,12 +562,6 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		if (socket_upper_computer.server_sendcmd_TM_flag > 0) {
 			// 更酷程序标志: 下发设置变量指令， 先发 105 文件名， 收到 105 的指令反馈后，再发 101 start
 			if ((zhengku_info.setvar == 1 || zhengku_info.backhome == 1) && atoi(array[2]) == 105) {
-				SOCKET_INFO *sock_cmd = NULL;
-				if (robot_type == 1) { // "1" 代表实体机器人
-					sock_cmd = &socket_cmd;
-				} else { // "0" 代表虚拟机器人
-					sock_cmd = &socket_vir_cmd;
-				}
 				//printf("更酷 send start\n");
 				socket_enquene(sock_cmd, 101, "START", 0);
 				socket_upper_computer.server_sendcmd_TM_flag++;
@@ -576,7 +576,7 @@ static int socket_recv(SOCKET_INFO *sock, char *buf_memory)
 		if (websGetSessionCount() <= 0) {
 			if (atoi(array[2]) == 502) {//获取按钮盒 IO 状态
 				if (atoi(array[4]) == 3) {
-					socket_enquene(&socket_cmd, 101, "START", 0);
+					socket_enquene(sock_cmd, 101, "START", 0);
 				}
 			}
 			string_list_free(&array, size_package);
@@ -2969,7 +2969,13 @@ void *socket_pi_status_thread(void *arg)
 	char recvbuf[PI_STATUS_SIZE + 1] = { 0 };
 	uint8 frame[PI_STATUS_SIZE] = { 0 };
 	int i = 0;
+	SOCKET_INFO *sock_cmd = NULL;
 
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 	change_memory = buf_memory;
 	printf("port = %d\n", port);
 	sock = &socket_pi_status;
@@ -3044,6 +3050,14 @@ void *socket_pi_status_thread(void *arg)
 					//printf("update PI_STATUS\n");
 					memset(status, 0, sizeof(PI_STATUS));
 					memcpy(status, (frame + 3), (recv_len - 7));
+					// 连接 10.1寸示教器模式: 当没有账户登录时或者示教器（浏览器） 不存在时用户点击了面板上的　"开始"　按钮, 下发 101 start
+					/*
+					if (websGetSessionCount() <= 0) {
+						if (1) {
+							socket_enquene(sock_cmd, 101, "START", 0);
+						}
+					}
+					*/
 				}
 			}
 		}
@@ -3215,10 +3229,17 @@ int socket_enquene(SOCKET_INFO *sock, const int type, char *send_content, const 
 
 static void init_torquesys()
 {
+	SOCKET_INFO *sock_cmd = NULL;
+
+	if (robot_type == 1) { // "1" 代表实体机器人
+		sock_cmd = &socket_cmd;
+	} else { // "0" 代表虚拟机器人
+		sock_cmd = &socket_vir_cmd;
+	}
 	/** init torquesys on off status */
 	torquesys.enable = 0;
 	/** send get_on_off to TaskManagement */
-	socket_enquene(&socket_cmd, 412, "TorqueSysGetOnOff()", 1);
+	socket_enquene(sock_cmd, 412, "TorqueSysGetOnOff()", 1);
 }
 
 /**
@@ -7979,5 +8000,198 @@ int get_robot_alarm_error_info(cJSON *alarm_json, cJSON *error_json)
 		}
 	} else {
 		pre_state->ts_tm_state_com_error = 0;
+	}
+	switch(state->ctrlBoxError)
+	{
+		case 1:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "超时");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "timeout");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ターンオーバー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "超时", cur_account.username);
+				my_en_syslog("error", "timeout", cur_account.username);
+				my_jap_syslog("さくご", "ターンオーバー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 2:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "slave machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "スレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "从机错误", cur_account.username);
+				my_en_syslog("error", "slave machine error", cur_account.username);
+				my_jap_syslog("さくご", "スレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 3:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "master machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "ホストエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "主机错误", cur_account.username);
+				my_en_syslog("error", "master machine error", cur_account.username);
+				my_jap_syslog("さくご", "ホストエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 4:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO slave machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOスレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO从机错误", cur_account.username);
+				my_en_syslog("error", "STO slave machine error", cur_account.username);
+				my_jap_syslog("さくご", "STOスレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 5:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO master machine error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOホストエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO主机错误", cur_account.username);
+				my_en_syslog("error", "STO master machine error", cur_account.username);
+				my_jap_syslog("さくご", "STOホストエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 6:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "急停模式下主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The master/slave machine fails in emergency stop mode");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "急停止モードで主従機エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "急停模式下主从机错误", cur_account.username);
+				my_en_syslog("error", "The master/slave machine fails in emergency stop mode", cur_account.username);
+				my_jap_syslog("さくご", "急停止モードで主従機エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 7:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO模式下主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "The master/slave server fails in STO mode");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STOモードでのマスタースレーブエラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO模式下主从机错误", cur_account.username);
+				my_en_syslog("error", "The master/slave server fails in STO mode", cur_account.username);
+				my_jap_syslog("さくご", "STOモードでのマスタースレーブエラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 8:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO slave enabled error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3位スイッチが作動しSTO誤作動");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO从机错误", cur_account.username);
+				my_en_syslog("error", "STO slave enabled error", cur_account.username);
+				my_jap_syslog("さくご", "3位スイッチが作動しSTO誤作動", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 9:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO主机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO host enabled by the three-digit switch fails");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3桁スイッチでSTOホストエラーが発生");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO主机错误", cur_account.username);
+				my_en_syslog("error", "STO host enabled by the three-digit switch fails", cur_account.username);
+				my_jap_syslog("さくご", "3桁スイッチでSTOホストエラーが発生", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 10:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "三位开关使能下STO主从机错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO master/slave enabled error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "3位スイッチで作動STO主従機エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "三位开关使能下STO主从机错误", cur_account.username);
+				my_en_syslog("error", "STO master/slave enabled error", cur_account.username);
+				my_jap_syslog("さくご", "3位スイッチで作動STO主従機エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		case 11:
+			if (language == 0) {
+				cJSON_AddStringToObject(error_json, "key", "STO输入错误");
+			}
+			if (language == 1) {
+				cJSON_AddStringToObject(error_json, "key", "STO input error");
+			}
+			if (language == 2) {
+				cJSON_AddStringToObject(error_json, "key", "STO入力エラー");
+			}
+			if (pre_state->ctrlBoxError != 1) {
+				my_syslog("错误", "STO输入错误", cur_account.username);
+				my_en_syslog("error", "STO input error", cur_account.username);
+				my_jap_syslog("さくご", "STO入力エラー", cur_account.username);
+				pre_state->ctrlBoxError = 1;
+			}
+			break;
+		default:
+			pre_state->exaxis_out_slimit_error = 0;
+			break;
 	}
 }
