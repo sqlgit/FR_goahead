@@ -116,8 +116,9 @@ typedef struct _CTRL_STATE
 	int        	collision_level;         /**< 碰撞等级,一级敏感,三级不敏感   */
 	double     	drag_enable;   			/**< 拖动使能                       */
 	double     	tl_acc[7];				/**< 工具加速度     			    */
-	double     	dr_com_err; 				/**< 与驱动器通信故障               */
-	double	   	dr_err;                  /**< 驱动器哪个轴故障,驱动器故障              */
+	double     	dr_com_err; 				/**< 与驱动器通信故障            */
+	double	   	dr_err;                  /**< 驱动器哪个轴故障,驱动器故障    */
+	double	   	dr_alarm;                /**< 驱动器哪个轴警告,驱动器警告    */
 	double     	out_sflimit_err;         /**< 超出软限位故障                 */
 	double     	collision_err;           /**< 碰撞故障                       */
 	double     	dr_err_code;  			/**< 驱动器故障代码 			    */
