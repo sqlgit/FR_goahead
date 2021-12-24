@@ -4160,9 +4160,9 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 		end_ptr = strrchr(lua_cmd, ')') + 1;
 		strncpy(head, lua_cmd, (ptr - lua_cmd));
 		strncpy(cmd_arg, (ptr + 4), (end_ptr - ptr - 5));
-		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 5 && size != 11)) {
+		if (string_to_string_list(cmd_arg, ",", &size, &cmd_array) == 0 || (size != 18)) {
 			perror("string to string list");
-			sprintf(error_info, "bad argument #%d #%d to '%s' (Error number of parameters)", 5, 11, "ARC");
+			sprintf(error_info, "bad argument #%d to '%s' (Error number of parameters)", 18, "ARC");
 
 			goto end;
 		}
@@ -4219,11 +4219,11 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			point_home_info.error_flag = 0;
 		}
-		if (cmd_array[1] == NULL) {
+		if (cmd_array[8] == NULL) {
 
 			goto end;
 		}
-		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[1]);
+		point_2 = cJSON_GetObjectItemCaseSensitive(p_db_json->point, cmd_array[8]);
 		if (point_2 == NULL || point_2->type != cJSON_Object) {
 			database_error_info();
 
@@ -4254,7 +4254,7 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			goto end;
 		}
 		/* 当点为 pHOME 原点时，进行检查 */
-		if (strcmp(cmd_array[1], POINT_HOME) == 0) {
+		if (strcmp(cmd_array[8], POINT_HOME) == 0) {
 			for (i = 0; i < 6; i++) {
 				memset(joint_value[i], 0, 10);
 			}
@@ -4275,17 +4275,11 @@ int parse_lua_cmd(char *lua_cmd, char *file_content, DB_JSON *p_db_json)
 			}
 			point_home_info.error_flag = 0;
 		}
-		if (cmd_array[2] == NULL || cmd_array[3] == NULL || cmd_array[4] == NULL) {
+		if (cmd_array[1] == NULL || cmd_array[2] == NULL || cmd_array[3] == NULL || cmd_array[4] == NULL || cmd_array[5] == NULL || cmd_array[6] == NULL || cmd_array[7] == NULL || cmd_array[9] == NULL || cmd_array[10] == NULL || cmd_array[11] == NULL || cmd_array[12] == NULL || cmd_array[13] == NULL || cmd_array[14] == NULL || cmd_array[15] == NULL || cmd_array[16] == NULL || cmd_array[17] == NULL) {
 
 			goto end;
 		}
-		/* 参数个数为 11 时，即存在偏移 */
-		if (size == 11) {
-			sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], cmd_array[8], cmd_array[9], cmd_array[10], end_ptr);
-		/* 参数个数为 5 时，即不存在偏移 */
-		} else {
-			sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,0,0,0,0,0,0)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[2], cmd_array[3], cmd_array[4], end_ptr);
-		}
+		sprintf(content, "%sMoveC(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)%s\n", head, j1->valuestring, j2->valuestring, j3->valuestring, j4->valuestring, j5->valuestring, j6->valuestring, x->valuestring, y->valuestring, z->valuestring, rx->valuestring, ry->valuestring, rz->valuestring, toolnum->valuestring, workpiecenum->valuestring, speed->valuestring, acc->valuestring, E1->valuestring, E2->valuestring, E3->valuestring, E4->valuestring, cmd_array[1], cmd_array[2], cmd_array[3], cmd_array[4], cmd_array[5], cmd_array[6], cmd_array[7], j1_2->valuestring, j2_2->valuestring, j3_2->valuestring, j4_2->valuestring, j5_2->valuestring, j6_2->valuestring, x_2->valuestring, y_2->valuestring, z_2->valuestring, rx_2->valuestring, ry_2->valuestring, rz_2->valuestring, toolnum_2->valuestring, workpiecenum_2->valuestring, speed_2->valuestring, acc_2->valuestring, E1_2->valuestring, E2_2->valuestring, E3_2->valuestring, E4_2->valuestring, cmd_array[9], cmd_array[10], cmd_array[11], cmd_array[12], cmd_array[13], cmd_array[14], cmd_array[15], cmd_array[16], cmd_array[17], end_ptr);
 		strcat(file_content, content);
 	/* laserCircle */
 	} else if ((ptr = strstr(lua_cmd, "laserCircle(")) && strrchr(lua_cmd, ')')) {
@@ -5634,6 +5628,31 @@ int get_robot_alarm_error_info(cJSON *alarm_json, cJSON *error_json)
 		}
 	} else {
 		pre_state->interfereAlarm = 0;
+	}
+	if ((int)state->dr_alarm != 0) {
+		memset(content, 0, sizeof(content));
+		memset(en_content, 0, sizeof(en_content));
+		memset(jap_content, 0, sizeof(jap_content));
+		sprintf(content, "%d 轴驱动器警告, 驱动器警告代码: %d", (int)state->dr_alarm, (int)state->dr_err_code);
+		sprintf(en_content, "%d axis drive alarm, drive alarm code:%d", (int)state->dr_alarm, (int)state->dr_err_code);
+		sprintf(jap_content, "%d ドライブ警告ドライブ警告コード: %d", (int)state->dr_alarm, (int)state->dr_err_code);
+		if (language == 0) {
+			cJSON_AddStringToObject(alarm_json, "key", content);
+		}
+		if (language == 1) {
+			cJSON_AddStringToObject(alarm_json, "key", en_content);
+		}
+		if (language == 2) {
+			cJSON_AddStringToObject(alarm_json, "key", jap_content);
+		}
+		if (pre_state->dr_alarm != 1) {
+			my_syslog("错误", content, cur_account.username);
+			my_en_syslog("error", en_content, cur_account.username);
+			my_jap_syslog("さくご", jap_content, cur_account.username);
+			pre_state->dr_alarm = 1;
+		}
+	} else {
+		pre_state->dr_alarm = 0;
 	}
 
 	/** error_info */
